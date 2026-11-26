@@ -24,7 +24,17 @@ type Judgment = {
 };
 type ResponseRequest = {
   requestId: string;
-  schema: { required: string[] };
+  schema: {
+    required: string[];
+    properties: {
+      operations: {
+        items: {
+          anyOf?: Array<{ required: string[]; properties: Record<string, { type?: string }> }>;
+          required?: string[];
+        };
+      };
+    };
+  };
   context: string;
 };
 type Config = {

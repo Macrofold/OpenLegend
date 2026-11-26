@@ -1,106 +1,126 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import type { CognitionLabWorkspace } from '@open-legend/protocol';
-import { createDisposableDatabase } from '../../scripts/disposable-postgres.mjs';
-import { createGameServer } from '../../apps/server/src/http.js';
-import { PostgresDatabase } from '../../apps/server/src/postgres.js';
-import { SqlGameRepository } from '../../apps/server/src/store.js';
-import { WorldService } from '../../apps/server/src/world-service.js';
-import { readConfig } from './database.js';
-import { fixtureCognitionAi } from './cognition-ai.js';
-import type { AppConfig } from '../../apps/server/src/config.js';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { expect, type Page } from '@playwright/test';
+import type { GameView } from '@open-legend/protocol';
+import { rustBrowserGame } from './rust-browser.js';
+import { startTypedProvider } from './witness/provider.js';
 
-/** Native HTTP/browser/profile specimens own both databases. No application database,
- * credentials, paid provider, or saved player progress enters this fixture. */
-export async function startCognitionLabFixture(
-  options: {
-    withAi?: boolean;
-    production?: boolean;
-    tick?: boolean;
-    /** Owned initial preparation runs before any runtime writer is constructed. */
-    prepareGame?: (store: SqlGameRepository, config: AppConfig) => Promise<void>;
-  } = {},
-) {
-  const [gameDatabase, labDatabase] = await Promise.all([
-    createDisposableDatabase(process.env['OPENLEGEND_TEST_DATABASE_URL']),
-    createDisposableDatabase(process.env['OPENLEGEND_TEST_DATABASE_URL']),
-  ]);
-  const directory = await mkdtemp(join(tmpdir(), 'openlegend-lab-http-'));
-  const config = readConfig({
-    OPEN_LEGEND_DATABASE_URL: gameDatabase.url,
-    OPEN_LEGEND_DATA_DIR: join(directory, 'game'),
-    OPEN_LEGEND_LAB_DATABASE_URL: labDatabase.url,
-    OPEN_LEGEND_LAB_DATA_DIR: join(directory, 'lab'),
-    OPEN_LEGEND_GOD_MODE: 'true',
-    ...(options.withAi
-      ? { TYPESAFE_API_KEY: 'fixture', OPENAI_API_KEY: 'fixture', OPEN_LEGEND_LAB_BUDGET_USD: '1' }
-      : {}),
+export const replyText = 'Yes, let us talk.';
+export const overrideNote = 'A note for this one browser request.';
+
+/** Serve Rust with two owned databases and a TLS listener that can only issue zero-cost receipts. */
+export async function startCognitionLabFixture(page: Page) {
+  const overrides: string[] = [];
+  const config: Parameters<typeof startTypedProvider>[0]['config'] = {
+    judge(request) {
+      if (typeof request.state === 'string' && request.state.includes(overrideNote))
+        overrides.push(request.requestId);
+      return { choices: { route: 'level2', reflection: 'no' } };
+    },
+  };
+  const provider = await startTypedProvider({
+    caseName: 'Signed Rust Cognition Lab',
+    config,
+    responses: {
+      npc_response({ schema }) {
+        const items = schema.properties.operations.items;
+        const operation =
+          items.anyOf?.find((item) => item.properties.talk?.type === 'object') ?? items;
+        assert(operation.required, 'The current release must offer speech to this NPC.');
+        const blank = (keys: string[]) => Object.fromEntries(keys.map((key) => [key, null]));
+        return {
+          ...blank(schema.required),
+          operations: [
+            {
+              ...blank(operation.required),
+              localId: 'speak',
+              requiresAccepted: [],
+              talk: {
+                text: replyText,
+                volume: 'normal',
+                addresseeEntityId: null,
+                selfIntroduction: null,
+              },
+            },
+          ],
+        };
+      },
+    },
   });
-  let store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(gameDatabase.url));
-  const ai = fixtureCognitionAi();
-  let game: Awaited<ReturnType<typeof createGameServer>> | undefined;
-  const listen = async (port = 0) => {
-    game = await createGameServer({
-      store,
-      config,
-      production: options.production ?? true,
-      tick: options.tick ?? false,
-      ...(options.withAi ? { aiClient: ai.client } : {}),
-    });
-    await new Promise<void>((resolve) => game!.server.listen(port, '127.0.0.1', resolve));
-  };
-  let closed = false;
-  const close = async () => {
-    if (closed) return;
-    closed = true;
-    if (game) await game.close();
-    else await store.close();
-    await gameDatabase.close();
-    await labDatabase.close();
-    await rm(directory, { recursive: true, force: true });
-  };
-  try {
-    await store.ready;
-    await options.prepareGame?.(store, config);
-    // Cognition specimens retain ordinary Main's native content, with native
-    // presentation. Art qualification needs its real publication catalogue;
-    // an empty fixture database must never fabricate approval for a real release.
-    const nativeOpening = new WorldService(store, config);
+  let host: Awaited<ReturnType<typeof rustBrowserGame>> | undefined;
+  async function close() {
     try {
-      await nativeOpening.ready;
+      await host?.close();
     } finally {
-      nativeOpening.releaseHostWork();
+      await provider.close();
     }
-    await listen();
-    const address = game!.server.address();
-    if (!address || typeof address === 'string') throw new Error('Missing fixture listener.');
-    const base = `http://127.0.0.1:${address.port}`;
-    const initial = await fetch(`${base}/api/cognition-lab/workspace`);
-    const cookie = initial.headers.get('set-cookie')?.split(';')[0] ?? '';
-    const workspace = (await initial.json()) as CognitionLabWorkspace;
-    if (initial.status !== 200) throw new Error('The native fixture lab did not open.');
-    return {
-      get game() {
-        return game!;
+  }
+  try {
+    assert(config.macrofoldUrl && config.macrofoldKey);
+    host = await rustBrowserGame({
+      godMode: true,
+      lab: {
+        budgetUsd: 1,
+        loopbackProvider: {
+          url: config.macrofoldUrl,
+          key: config.macrofoldKey,
+          certificate: provider.certPath,
+        },
       },
-      config,
-      directory,
-      base,
-      cookie,
-      workspace,
-      calls: ai.calls,
-      labDatabaseUrl: labDatabase.url,
-      gameDatabaseUrl: gameDatabase.url,
-      restart: async () => {
-        await game!.close();
-        game = undefined;
-        store = new SqlGameRepository(config.dataDirectory, new PostgresDatabase(gameDatabase.url));
-        await listen(address.port);
-        return game!;
-      },
-      close,
-    };
+    });
+    const base = host.base;
+    const prefix = '/api/cognition-lab';
+    let client: string | undefined;
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith(prefix))
+        client = request.headers()['x-ol-client'] ?? client;
+    });
+    await page.goto(base + '/auth/login?returnTo=/cognition');
+    await page.getByLabel('Starting point').selectOption('game');
+    await page.getByRole('button', { name: 'Prepare Lab', exact: true }).click();
+    await page.getByRole('button', { name: 'Take Lab control', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Release Lab control' })).toBeEnabled();
+    const gameClient = randomUUID();
+    async function view(lab = true): Promise<GameView> {
+      assert(client);
+      const result = await page.request.get(base + (lab ? prefix : '') + '/api/state', {
+        headers: { 'X-OL-Client': lab ? client : gameClient },
+      });
+      assert(result.ok(), 'Current signed state is required.');
+      return result.json();
+    }
+    async function request(path: string, body?: unknown) {
+      const state = await view();
+      const generation = state.historyEpoch?.split(':')[0];
+      assert(client && state.access?.scope && generation);
+      const headers = {
+        Origin: base,
+        'X-OL-Client': client,
+        'X-OL-Scope': state.access.scope,
+        'X-OL-Generation': generation,
+      };
+      return page.request.fetch(base + prefix + path, {
+        method: body === undefined ? 'GET' : 'POST',
+        headers,
+        data: body,
+      });
+    }
+    async function submit(words: string, held: boolean) {
+      await page.getByLabel('Hold before the next model call').setChecked(held);
+      const resume = page.getByRole('button', { name: 'Resume time', exact: true });
+      if (await resume.isVisible()) await resume.click();
+      const composer = page.getByRole('region', { name: 'Speak out loud' });
+      await composer.getByPlaceholder('Say something…').fill(words);
+      const receipt = page.waitForResponse(
+        (r) =>
+          new URL(r.url()).pathname === prefix + '/api/chat' && r.request().method() === 'POST',
+      );
+      await composer.getByRole('button', { name: 'Say', exact: true }).click();
+      const { jobId } = await (await receipt).json();
+      assert(typeof jobId === 'string');
+      return jobId;
+    }
+    return { base, close, submit, view, request, overrides, evidence: provider.summary };
   } catch (error) {
     await close();
     throw error;

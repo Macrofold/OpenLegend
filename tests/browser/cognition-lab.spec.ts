@@ -2184,377 +2184,208 @@ test('saved-work modal keeps its actions fixed at the bottom of a short collecti
   ).toBeLessThan(18);
 });
 
-test('native routes complete the default response and preserve an edited held checkpoint without loading the game', async ({
+test('signed Rust Lab replies, compares two independent checkpoint restores and leaves the game paused', async ({
   page,
 }, info) => {
   test.setTimeout(360_000);
-  page.setDefaultTimeout(15_000);
-  const { startCognitionLabFixture } = await import('../fixtures/cognition-lab.js');
-  const native = await startCognitionLabFixture({ withAi: true, production: true });
-  const requests: string[] = [];
-  const pageErrors: string[] = [];
-  page.on('request', (request) => requests.push(new URL(request.url()).pathname));
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-  const networkSnapshot = () =>
-    page.evaluate(async () => {
-      const path = '/assets/network-tools.js';
-      const diagnostics = await import(path);
-      return diagnostics.browserNetworkSnapshot() as Array<{
-        role: string;
-        capacity: number;
-        occupied: number;
-        quarantined: number;
-      }>;
-    });
-  const gameSequence = native.game.service.world.sequence;
-  try {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto(`${native.base}/cognition`);
-    await expect(
-      page.getByRole('button', { name: 'One response · Wait for Ada', exact: true }),
-    ).toBeVisible();
-    await expect(page.getByRole('combobox', { name: 'Speaker or actor', exact: true })).toHaveValue(
-      'Mike',
-    );
-    const words = page.getByRole('textbox', { name: 'Words to say', exact: true });
-    await words.fill('Ada, shall we share the berries while we talk?');
-    await page.getByRole('button', { name: 'Submit', exact: true }).click();
-    const timeline = page.getByRole('region', { name: 'Events and experiments', exact: true });
-    await expect(timeline.getByText('Ada: Yes, let us talk.', { exact: true })).toBeVisible({
-      timeout: 60_000,
-    });
-    await expect(page.locator('.cl-state > strong')).toHaveText('held');
-    await expect(words).toHaveValue('');
-    expect(native.calls.some((call) => 'task' in call && call.task === 'npc_response')).toBe(true);
-    const inspector = page.getByRole('region', { name: 'Recorded decisions', exact: true });
-    await expect(inspector.getByText('Ada: Yes, let us talk.', { exact: true })).toBeVisible();
-    await expect(
-      inspector.getByText('No additional evidence was captured for this section.'),
-    ).toBeHidden();
-    await inspector.getByRole('button', { name: 'Full request', exact: true }).click();
-    let artifact = page
-      .getByRole('dialog')
-      .filter({ has: page.getByRole('textbox', { name: 'Exact captured content', exact: true }) });
-    const capturedContent = artifact.getByRole('textbox', {
-      name: 'Exact captured content',
-      exact: true,
-    });
-    await expect(capturedContent).not.toHaveValue('');
-    const original = await capturedContent.inputValue();
-    await artifact.getByRole('button', { name: 'Close', exact: true }).click();
-    const current = page.getByRole('region', { name: 'Current character', exact: true });
-    await current.getByRole('button', { name: 'Body', exact: true }).click();
-    const food = current.getByRole('spinbutton', { name: 'Food', exact: true });
-    const hold = current
-      .locator('.cl-field')
-      .filter({ has: page.getByRole('spinbutton', { name: 'Food', exact: true }) })
-      .getByRole('checkbox', { name: 'Hold during this experiment', exact: true });
-    await food.fill('25');
-    await hold.check();
-    await current.getByRole('button', { name: 'Apply attribute (1)', exact: true }).click();
-    await expect(
-      current.getByText('Applied values · no changes here', { exact: true }),
-    ).toBeVisible();
-    await expect(food).toHaveValue('25');
-    await expect(hold).toBeChecked();
-    await expect(inspector.getByText('Ada: Yes, let us talk.', { exact: true })).toBeVisible();
-    await inspector.getByRole('button', { name: 'Full request', exact: true }).click();
-    artifact = page
-      .getByRole('dialog')
-      .filter({ has: page.getByRole('textbox', { name: 'Exact captured content', exact: true }) });
-    await expect(
-      artifact.getByRole('textbox', { name: 'Exact captured content', exact: true }),
-    ).toHaveValue(original);
-    await artifact.getByRole('button', { name: 'Close', exact: true }).click();
-    await page
-      .getByRole('combobox', { name: 'Save lab work', exact: true })
-      .selectOption('checkpoint');
-    const save = page.getByRole('dialog', { name: 'Save checkpoint', exact: true });
-    await save
-      .getByRole('textbox', { name: 'Name', exact: true })
-      .fill('Native browser held origin');
-    await save.getByRole('button', { name: 'Save checkpoint', exact: true }).click();
-    await expect(save).toBeHidden({ timeout: 30_000 });
-    await food.fill('60');
-    await current.getByRole('button', { name: 'Apply attribute (1)', exact: true }).click();
-    await expect(
-      current.getByText('Applied values · no changes here', { exact: true }),
-    ).toBeVisible();
-    await expect(food).toHaveValue('60');
-    await page.getByRole('button', { name: 'Library', exact: true }).click();
-    await page.getByRole('button', { name: 'Checkpoints', exact: true }).click();
-    await page.getByRole('button', { name: /Native browser held origin checkpoint/ }).click();
-    await page.getByRole('button', { name: 'Load checkpoint', exact: true }).click();
-    await page.getByRole('button', { name: 'Replace lab scenario', exact: true }).click();
-    await expect(page.locator('.cl-scenario-name')).toHaveText('Native browser held origin', {
-      timeout: 30_000,
-    });
-    await expect(page.getByRole('button', { name: 'Submit', exact: true })).toBeEnabled({
-      timeout: 30_000,
-    });
-    await expect(page.getByRole('button', { name: 'Reconnect', exact: true })).toHaveCount(0);
-    await current.getByRole('button', { name: 'Body', exact: true }).click();
-    await expect(food).toHaveValue('25');
-    await expect(hold).toBeChecked();
-    for (const viewport of [
-      { width: 1920, height: 1080 },
-      { width: 2560, height: 1440 },
-    ]) {
-      await page.setViewportSize(viewport);
-      const widths = await page
-        .locator('.cl-columns > .cl-column')
-        .evaluateAll((elements) =>
-          elements.map((element) => Math.round(element.getBoundingClientRect().width)),
-        );
-      expect(widths).toEqual(viewport.width === 1920 ? [420, 734, 734] : [480, 1024, 1024]);
-      await page.screenshot({ path: info.outputPath(`native-cognition-${viewport.width}.png`) });
-    }
-    await food.fill('60');
-    await page.getByRole('button', { name: 'Compare', exact: true }).click();
-    await page.getByRole('button', { name: 'Run variants…', exact: true }).click();
-    const compare = page.getByRole('dialog', { name: 'Serial matched comparison', exact: true });
-    await compare
-      .getByRole('combobox', { name: 'Starting scenario or checkpoint', exact: true })
-      .fill('Native browser held origin');
-    await page.getByRole('option', { name: 'Native browser held origin', exact: true }).click();
-    await compare
-      .getByRole('textbox', { name: 'Same sentence in both variants', exact: true })
-      .fill('Ada, shall we share the berries while we talk?');
-    await compare
-      .getByRole('combobox', { name: 'Native field factor', exact: true })
-      .nth(1)
-      .selectOption({ label: 'Ada · Food' });
-    await compare.getByRole('button', { name: 'Run variants serially', exact: true }).click();
-    await expect(compare).toBeHidden({ timeout: 90_000 });
-    const variantA = page.getByRole('region', { name: 'Variant A · captured run', exact: true });
-    const variantB = page.getByRole('region', { name: 'Variant B · captured run', exact: true });
-    await expect(variantA.locator('.cl-comparison-context')).toContainText('· Baseline');
-    await expect(variantB.locator('.cl-comparison-context')).toContainText('· Changed factor');
-    const originA = await variantA.locator('.cl-comparison-context > div').first().innerText();
-    const originB = await variantB.locator('.cl-comparison-context > div').first().innerText();
-    expect(originA).not.toContain('Not captured');
-    expect(originA.split(' · ')[0]).toBe(originB.split(' · ')[0]);
-    for (const [variant, value] of [
-      [variantA, 25],
-      [variantB, 60],
-    ] as const) {
-      await variant.getByRole('button', { name: 'Full request', exact: true }).click();
-      const exact = page.getByRole('textbox', { name: 'Exact captured content', exact: true });
-      await expect(exact).toHaveValue(new RegExp(`Food: ${value} \\(`));
-      await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
-    }
-    await expect(food).toHaveValue('60');
-    expect(native.game.service.world.sequence).toBe(gameSequence);
-    expect(pageErrors).toEqual([]);
-    expect(
-      requests.filter((path) =>
-        ['/api/state', '/api/presence', '/api/control', '/api/world-events'].includes(path),
-      ),
-    ).toEqual([]);
-    await expect(
-      page.getByText('Earlier server requests are still finishing. Wait before continuing.', {
-        exact: true,
-      }),
-    ).toHaveCount(0);
+  const { startCognitionLabFixture, replyText } = await import('../fixtures/cognition-lab.js');
+  const lab = await startCognitionLabFixture(page);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const words = 'Shall we share the berries while we talk?';
+  const game = async () => {
+    const v = await lab.view(false);
+    return {
+      timeline: v.saveTimeline,
+      cut: v.evaluationCut,
+      player: v.player.position,
+      paused: v.clock.paused,
+    };
+  };
+  const completed = async (id: string) => {
     await expect
-      .poll(async () => (await networkSnapshot()).every((owner) => owner.quarantined === 0))
-      .toBe(true);
-    const network = await networkSnapshot();
-    expect(network.find((owner) => owner.role === 'browser-api-reads')).toMatchObject({
-      capacity: 16,
-      quarantined: 0,
+      .poll(async () => (await lab.view()).ai.jobs.find((job) => job.id === id)?.status, {
+        timeout: 60_000,
+      })
+      .toBe('completed');
+    await page.getByRole('button', { name: 'Inspect next request' }).click();
+    await expect(page.getByText('Holding before model calls.')).toBeVisible();
+  };
+  const attributes = page.getByRole('group', { name: 'Character attributes and needs' });
+  const choose = attributes.getByLabel('Value', { exact: true });
+  async function editActor() {
+    if (!(await choose.isVisible()))
+      await page.getByText('Edit character, needs, goals and memories', { exact: true }).click();
+    await expect(choose).toBeEnabled();
+  }
+  async function setFood(value: number) {
+    await choose.selectOption({
+      label: await choose.getByRole('option', { name: /^Food \(/i }).innerText(),
     });
-    expect(network.find((owner) => owner.role === 'browser-presence')).toMatchObject({
-      occupied: 0,
+    await attributes.getByRole('spinbutton').fill(String(value));
+    await attributes.getByRole('button', { name: 'Apply value' }).click();
+    await expect(
+      choose.getByRole('option', { name: new RegExp('^Food \\(' + value + '\\b', 'i') }),
+    ).toHaveCount(1);
+  }
+  async function inspectFood() {
+    await choose.selectOption({
+      label: await choose.getByRole('option', { name: /^Food \(/i }).innerText(),
     });
-    expect(network.find((owner) => owner.role === 'browser-subscriptions')).toMatchObject({
-      occupied: 0,
-    });
-    await info.attach('native-network-owner-state', {
-      body: JSON.stringify(network, null, 2),
-      contentType: 'application/json',
-    });
+  }
+  try {
+    const gameBefore = await game();
+    expect(gameBefore.paused).toBe(true);
+    await completed(await lab.submit(words, false));
+    await expect(page.getByText(replyText, { exact: false }).first()).toBeVisible();
+    await editActor();
+    await setFood(25);
+    await inspectFood();
+    await attributes.getByRole('button', { name: 'Hold current value' }).click();
+    await expect(page.getByText('Value held.', { exact: true })).toBeVisible();
+    const checkpoint = crypto.randomUUID();
     expect(
-      requests.filter((path) =>
-        // Vite calls the tiny shared page selector "game"; main is the actual
-        // ordinary-game entry that imports the renderer and presence owner.
-        /playcanvas|\/src\/main\.tsx|\/src\/renderer\/|\/assets\/main-[^/]+\.js$/i.test(path),
+      (
+        await lab.request('/api/saves/create', {
+          id: checkpoint,
+          label: 'Held food',
+          scenario: true,
+        })
+      ).ok(),
+    ).toBe(true);
+    const variants: string[] = [];
+    for (const value of [25, 60]) {
+      const before = (await lab.view()).saveTimeline;
+      expect(
+        (
+          await lab.request('/api/saves/load', { id: checkpoint, requestId: crypto.randomUUID() })
+        ).ok(),
+      ).toBe(true);
+      await expect
+        .poll(
+          async () => {
+            try {
+              const v = await lab.view();
+              return v.saveTimeline && v.saveTimeline !== before;
+            } catch {
+              return false;
+            }
+          },
+          { timeout: 60_000 },
+        )
+        .toBe(true);
+      await page.getByRole('button', { name: 'Refresh Lab' }).click();
+      const take = page.getByRole('button', { name: 'Take Lab control', exact: true });
+      if (!(await lab.view()).access?.controlling) await take.click();
+      await editActor();
+      await inspectFood();
+      await expect(attributes.getByRole('spinbutton')).toHaveValue('25');
+      await expect(attributes.getByRole('button', { name: 'Release value' })).toBeEnabled();
+      if (value === 60) {
+        await attributes.getByRole('button', { name: 'Release value' }).click();
+        await expect(page.getByText('Value released.', { exact: true })).toBeVisible();
+        await setFood(value);
+        await inspectFood();
+        await attributes.getByRole('button', { name: 'Hold current value' }).click();
+        await expect(page.getByText('Value held.', { exact: true })).toBeVisible();
+      }
+      const jobId = await lab.submit(words, false);
+      await completed(jobId);
+      const { currentLoadId: loadId } = await (await lab.request('/runs')).json();
+      expect(loadId).toBeTruthy();
+      const id = crypto.randomUUID();
+      expect((await lab.request('/runs', { id, jobId, loadId, label: 'Food ' + value })).ok()).toBe(
+        true,
+      );
+      variants.push(id);
+    }
+    await page.getByText('Run Library', { exact: true }).click();
+    const [left, right] = variants;
+    if (!left || !right) throw new Error('Both restored runs must be retained.');
+    await page.getByLabel('First run').selectOption(left);
+    await page.getByLabel('Second run').selectOption(right);
+    await page.getByRole('button', { name: 'Compare runs' }).click();
+    await expect(
+      page.getByText(
+        /Verified independent restores of the same checkpoint.*Both runs used the same submitted stimulus/,
       ),
-    ).toEqual([]);
-    await info.attach('native-request-paths', {
-      body: JSON.stringify([...new Set(requests)].sort(), null, 2),
+    ).toBeVisible();
+    expect(await game()).toEqual(gameBefore);
+    const evidence = lab.evidence();
+    expect(evidence.problems).toEqual([]);
+    expect(evidence.exchanges.filter((e) => e.kind === 'generate')).toHaveLength(3);
+    expect(errors).toEqual([]);
+    await info.attach('signed-rust-lab-exchanges', {
+      body: JSON.stringify(evidence),
       contentType: 'application/json',
     });
-  } catch (error) {
-    const network = await networkSnapshot();
-    await info.attach('native-network-owner-state', {
-      body: JSON.stringify(network, null, 2),
-      contentType: 'application/json',
-    });
-    throw error;
   } finally {
     await page.close();
-    await native.close();
+    await lab.close();
   }
 });
 
-test('native prepared requests retain one handle, apply one override and reject it after native editing', async ({
+test('signed Rust Lab holds one request, sends one edit and invalidates a held call after a character edit', async ({
   page,
-}, info) => {
+}) => {
   test.setTimeout(240_000);
-  page.setDefaultTimeout(15_000);
-  const { startCognitionLabFixture } = await import('../fixtures/cognition-lab.js');
-  const native = await startCognitionLabFixture({ withAi: true, production: true });
-  const operations: CognitionLabOperation[] = [];
-  let client = '';
-  page.on('request', (request) => {
-    const path = new URL(request.url()).pathname;
-    if (!path.startsWith('/api/cognition-lab/')) return;
-    client = request.headers()['x-ol-client'] ?? client;
-    if (path.endsWith('/operations')) operations.push(request.postDataJSON());
-  });
-  const request = (path: string, operation?: CognitionLabOperation) =>
-    page.evaluate(
-      async ({ path, body, client }) => {
-        const modulePath = '/assets/network-tools.js';
-        const { browserRequest } = await import(modulePath);
-        const operation = body ? JSON.parse(body) : undefined;
-        const workspace = operation
-          ? await browserRequest('/api/cognition-lab/workspace', {
-              credentials: 'same-origin',
-              headers: { 'X-OL-Client': client },
-            })
-          : undefined;
-        return browserRequest(
-          `/api/cognition-lab${path}`,
-          {
-            credentials: 'same-origin',
-            headers: {
-              'X-OL-Client': client,
-              ...(operation
-                ? {
-                    'X-OL-Lab-Owner': (workspace!.body as CognitionLabWorkspace)
-                      .operationOwnerScope,
-                  }
-                : {}),
-              ...(operation ? { 'Content-Type': 'application/json' } : {}),
-            },
-            ...(body ? { method: 'POST', body } : {}),
-          },
-          operation,
-        );
-      },
-      { path, body: operation ? JSON.stringify(operation) : undefined, client },
-    );
-  const current = async () => (await request('/workspace')).body as CognitionLabWorkspace;
-  const prepare = async (text: string) => {
-    await page.getByRole('textbox', { name: 'Words to say', exact: true }).fill(text);
-    await page.getByRole('button', { name: 'Edit next model input', exact: true }).click();
-    const sheet = page.getByRole('dialog', { name: 'Prepare one real model call', exact: true });
-    await expect(sheet.getByRole('combobox', { name: 'Stage purpose', exact: true })).toHaveValue(
-      'nextDecision',
-    );
-    await sheet.getByRole('button', { name: 'Prepare and hold', exact: true }).click();
-    const editor = page.getByRole('dialog', { name: /^Held live call ·/ });
-    await expect(editor).toBeVisible({ timeout: 60_000 });
-    await editor
-      .getByRole('button', { name: 'Load complete original request for editing', exact: true })
-      .click();
-    await expect(
-      editor.getByRole('textbox', { name: 'Model-facing request', exact: true }),
-    ).not.toHaveValue('');
-    return editor;
-  };
+  const { startCognitionLabFixture, overrideNote } = await import('../fixtures/cognition-lab.js');
+  const lab = await startCognitionLabFixture(page);
+  const decisions = async () =>
+    (await (await lab.request('/decisions')).json()) as {
+      prepared: { jobId: string; attemptId: string; editableText: string } | null;
+    };
+  const inspect = page.getByRole('button', { name: 'Inspect next request' });
   try {
-    await page.goto(`${native.base}/cognition`);
-    await expect(
-      page.getByRole('button', { name: 'One response · Wait for Ada', exact: true }),
-    ).toBeVisible();
-    let editor = await prepare('Ada, what should we do next?');
-    const original = await editor
-      .getByRole('textbox', { name: 'Model-facing request', exact: true })
-      .inputValue();
-    const handle = (await current()).run?.prepared?.id;
-    expect(handle).toBeTruthy();
-    const callsBeforeClosing = native.calls.length;
-    await editor.getByRole('button', { name: 'Close editor', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Edit held input', exact: true })).toBeVisible();
-    expect(native.calls).toHaveLength(callsBeforeClosing);
-    await page.getByRole('button', { name: 'Edit held input', exact: true }).click();
-    editor = page.getByRole('dialog', { name: /^Held live call ·/ });
-    expect((await current()).run?.prepared?.id).toBe(handle);
-    await editor
-      .getByRole('button', { name: 'Load complete original request for editing', exact: true })
-      .click();
-    const input = editor.getByRole('textbox', { name: 'Model-facing request', exact: true });
-    await expect(input).toHaveValue(original);
-    const edited = JSON.parse(original);
-    expect(edited.kind).toBe('judge');
-    const note = 'Native browser one-shot experimental note.';
-    edited.request.state =
-      typeof edited.request.state === 'object' && edited.request.state !== null
-        ? { ...edited.request.state, experimentalNote: note }
-        : { suppliedState: edited.request.state, experimentalNote: note };
-    await input.fill(JSON.stringify(edited));
-    await editor.getByRole('button', { name: 'Submit this input once', exact: true }).click();
-    await expect(editor).toBeHidden({ timeout: 60_000 });
-    await expect(page.locator('.cl-state > strong')).toHaveText('held', { timeout: 60_000 });
-    expect(native.calls.some((call) => JSON.stringify(call).includes(note))).toBe(true);
-    const submitted = operations.find((operation) => operation.kind === 'submitPrepared');
-    expect(submitted).toBeTruthy();
-    const callsAfterOverride = native.calls.length;
-    const replay = (await request('/operations', submitted)).body as CognitionLabReceipt;
-    expect(replay).toMatchObject({ ok: true, commandId: submitted!.commandId });
-    expect(native.calls).toHaveLength(callsAfterOverride);
-    editor = await prepare('Ada, shall we share the berries while we talk?');
-    const staleRequest = JSON.parse(
-      await editor.getByRole('textbox', { name: 'Model-facing request', exact: true }).inputValue(),
+    const jobId = await lab.submit('What shall we do next?', true);
+    await expect
+      .poll(async () => (await decisions()).prepared?.jobId, { timeout: 60_000 })
+      .toBe(jobId);
+    await inspect.click();
+    const edit = page.getByLabel('Edit this call once');
+    const input = page.getByLabel('Input for this call only');
+    await edit.check();
+    const held = (await decisions()).prepared!;
+    await expect(input).toHaveValue(held.editableText);
+    await edit.uncheck();
+    await inspect.click();
+    expect((await decisions()).prepared?.attemptId).toBe(held.attemptId);
+    expect(lab.evidence().exchanges).toHaveLength(0);
+    await edit.check();
+    await input.fill(held.editableText + '\n' + overrideNote);
+    await page.getByRole('button', { name: 'Send this call' }).click();
+    await expect.poll(() => lab.overrides.length).toBe(1);
+    expect(
+      (await lab.request('/decisions/control', { action: 'step', attemptId: held.attemptId })).ok(),
+    ).toBe(false);
+    const next = async () => (await decisions()).prepared;
+    await expect
+      .poll(
+        async () => {
+          const p = await next();
+          return !!p && p.attemptId !== held.attemptId;
+        },
+        { timeout: 60_000 },
+      )
+      .toBe(true);
+    const stale = (await next())!;
+    await page.getByText('Edit character, needs, goals and memories', { exact: true }).click();
+    const character = page.getByRole('group', { name: 'Character', exact: true });
+    const description = character.getByLabel('Description', { exact: true });
+    await description.fill(
+      (await description.inputValue()) + ' Carefully considers nearby sounds.',
     );
-    const staleHandle = (await current()).run?.prepared?.id;
-    await editor.getByRole('button', { name: 'Close editor', exact: true }).click();
-    const beforeEdit = native.calls.length;
-    const character = page.getByRole('region', { name: 'Current character', exact: true });
-    await character.getByRole('button', { name: 'Body', exact: true }).click();
-    await character.getByRole('spinbutton', { name: 'Food', exact: true }).fill('55');
-    await character.getByRole('button', { name: 'Apply attribute (1)', exact: true }).click();
-    await expect(
-      character.getByText('Applied values · no changes here', { exact: true }),
-    ).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('button', { name: 'Edit held input', exact: true })).toHaveCount(0);
-    const afterEdit = await current();
-    const refused = (
-      await request('/operations', {
-        kind: 'submitPrepared',
-        commandId: crypto.randomUUID(),
-        expected: {
-          runtimeGeneration: afterEdit.runtimeGeneration,
-          scenarioRevision: afterEdit.scenarioRevision,
-        },
-        handleId: staleHandle!,
-        request: staleRequest,
-      })
-    ).body as CognitionLabReceipt;
-    expect(refused.ok).toBe(false);
-    expect(native.calls).toHaveLength(beforeEdit);
-  } catch (error) {
-    await info.attach('native-prepared-failure-state', {
-      body: JSON.stringify(
-        {
-          workspace: await current().catch(() => undefined),
-          errors: await page.locator('.cl-error').allTextContents(),
-          operations: operations.map((operation) => ({
-            commandId: operation.commandId,
-            kind: operation.kind,
-          })),
-        },
-        null,
-        2,
-      ),
-      contentType: 'application/json',
-    });
-    throw error;
+    await character.getByRole('button', { name: 'Apply character edits' }).click();
+    await expect.poll(async () => (await next())?.attemptId).not.toBe(stale.attemptId);
+    expect(
+      (
+        await lab.request('/decisions/control', { action: 'step', attemptId: stale.attemptId })
+      ).ok(),
+    ).toBe(false);
+    expect(lab.evidence().exchanges).toHaveLength(1);
+    expect(lab.evidence().problems).toEqual([]);
   } finally {
     await page.close();
-    await native.close();
+    await lab.close();
   }
 });

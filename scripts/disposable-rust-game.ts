@@ -23,11 +23,18 @@ export async function openDisposableRustGame({
   lab,
 }: {
   godMode?: boolean;
-  lab?: { budgetUsd: number; openingSha256: string; grantPath?: string };
+  lab?: {
+    budgetUsd: number;
+    openingSha256?: string;
+    grantPath?: string;
+    loopbackProvider?: { url: string; key: string; certificate: string };
+  };
   prepared?: { executable: string; release: string; backup: string; databaseAdmin: string };
   oidc?: { origin: string; issuer: string; clientId: string };
 } = {}) {
-  const executable = await realpath(prepared?.executable ?? input('OPENLEGEND_TEST_RUST_EXECUTABLE'));
+  const executable = await realpath(
+    prepared?.executable ?? input('OPENLEGEND_TEST_RUST_EXECUTABLE'),
+  );
   const release = prepared?.release ?? input('OPENLEGEND_TEST_RUST_RELEASE');
   const backup = prepared?.backup ?? input('OPENLEGEND_TEST_RUST_BACKUP');
   const origin = oidc ? new URL(oidc.origin) : undefined;
@@ -44,6 +51,21 @@ export async function openDisposableRustGame({
     )
       throw new Error(
         'The Rust browser fixture requires its loopback sign-in provider and origin.',
+      );
+  }
+  const provider = lab?.loopbackProvider;
+  if (provider) {
+    const url = new URL(provider.url);
+    if (
+      lab?.grantPath ||
+      url.protocol !== 'https:' ||
+      url.hostname !== '127.0.0.1' ||
+      !url.port ||
+      url.origin !== provider.url ||
+      !isAbsolute(provider.certificate)
+    )
+      throw new Error(
+        'Controlled inference requires its own loopback HTTPS origin and local certificate.',
       );
   }
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-browser-rust-'));
@@ -104,7 +126,14 @@ export async function openDisposableRustGame({
           labDb && {
             OPEN_LEGEND_LAB_DATABASE_URL: labDb.url,
             OPEN_LEGEND_LAB_DATA_DIR: join(directory, 'lab'),
-            OPEN_LEGEND_LAB_OPENING_SHA256: lab.openingSha256,
+            ...(lab.openingSha256 && { OPEN_LEGEND_LAB_OPENING_SHA256: lab.openingSha256 }),
+            ...(provider && {
+              MACROFOLD_BASE_URL: provider.url,
+              MACROFOLD_API_KEY: provider.key,
+              MACROFOLD_BILLING_MODE: 'byok',
+              SSL_CERT_FILE: provider.certificate,
+              AI_JEV_ONLY: 'false',
+            }),
             OPEN_LEGEND_CAPTURE_INTELLIGENCE: 'true',
             OPEN_LEGEND_LAB_BUDGET_USD: String(lab.budgetUsd),
             ...(lab.grantPath && { OPENLEGEND_JOB_EXECUTION: lab.grantPath }),
