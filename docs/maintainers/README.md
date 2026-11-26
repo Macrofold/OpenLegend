@@ -20,7 +20,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## Game production methods
 
-[MetaHuman foundation proof (MHP01–MHP06)](art/metahuman-poc.md) owns the standalone comparison of exported heads/bodies, independent sliders, modular fitting and browser quality. The [design](../projects/metahuman-foundation-poc-feature-spec.md) does not adopt MetaHuman or pause the existing [People pilot](art/people.md).
+[MetaHuman foundation proof (MHP01–MHP11)](art/metahuman-poc.md) owns the standalone comparison of exported heads/bodies, independent sliders, modular fitting and browser quality. The [design](../projects/metahuman-foundation-poc-feature-spec.md) does not adopt MetaHuman or pause the existing [People pilot](art/people.md).
 
 [Music and sound production (AUD01–AUD04)](audio-production.md) connects the [audio sourcing research](../research/audio/README.md) and [proposed musical direction](../research/audio/openlegend-direction.md) to a bounded audition, rights/source handoff, representative soundscape and any selected playback work. Existing hearing, speech-media and asset owners retain their contracts.
 

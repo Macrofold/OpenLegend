@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status  | Current progress                                                                                    | Last updated |
-| ------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | The private Main pilot is complete; broader foundation work awaits the masculine coverage decision. | 2026-11-10   |
+| Status  | Current progress                                                                           | Last updated |
+| ------- | ------------------------------------------------------------------------------------------ | ------------ |
+| Blocked | The fuller Peacock body transfer must qualify before the full motion and shirt fit checks. | 2026-11-12   |
 
 ## 1. Experiment and dependency boundary
 
@@ -11,6 +11,8 @@
 Use MetaHuman to supply the difficult anatomical foundation. Use Blender and the existing character-family machinery to prepare and evaluate a bounded set of shapes. Do not reconstruct MetaHuman's full identity solver or embed its editor, DNA evaluator or cloud services in the game. Exported assets retain their licenses even when the software is no longer required at runtime.
 
 Implementation covers the private foundation proof and MHP07's bounded integration into existing Main. Preserve the existing pilot and other tasks' work. MetaHuman authoring stays in its isolated external project; game creation and movement use only the exported kit and normal game machinery. Do not replace Main, reset its database, create another scene/viewer, change production selection, generate new art or edit the regular art skill for this unit.
+
+[MHP10](../maintainers/art/metahuman-poc.md#peacock-anatomy-controls) separately qualifies full donor shape transfer, three exported control fields with their necessary corrections, and one existing premade shirt using the shared compiler, recipe, fit and game actor. The selected canonical vertex order and UVs remain the authoring correspondence. The private study must verify the actual transfer, garment and motion before broader reuse.
 
 The [feature specification](metahuman-foundation-poc-feature-spec.md) owns the replacement recommendation and user-visible scope. Current [people authoring](people-from-parts-authoring-contract.md), [world appearance](../worlds/base/people-appearance.md), [art direction](../../art-direction/decisions.md#current-direction-at-a-glance) and [storage](../asset-workflow.md) remain authoritative outside this experiment.
 
@@ -33,6 +35,8 @@ Use these narrow authoring/study seams; unfinished responsibilities remain targe
 1. **[MetaHuman study exporter](../../scripts/art/metahuman-study-export.py)**, running inside the isolated Unreal project: duplicate a hash-pinned saved neutral for each explicitly supplied sample, commit ordered body constraints/paired face-landmark edits and export separate head/body FBXs with all native LODs and an incremental manifest. Its module documentation owns the plan format and invocation. Both complete source sets export with retained correspondence; actual actor and visual qualification remain open. This is authoring code, never a game dependency.
 2. **Foundation intake adapter**, `scripts/art/metahuman-study.py`, running in Blender: normalize imported samples, retain correspondence and prepare the existing master/descriptor format. Delegate compilation to `people.compile_family(master, descriptor, output, reference)` and reuse its geometry/UV/weight handling; do not write another compiler, recipe schema or deformation engine.
 3. **Private developer-study entry**, `apps/client/people-study.html`: four repeated `family`/`preset` query pairs explicitly select each wearer’s existing `AppearanceFamilyDefinition` and authored preset through the exact release/current-permission asset reader; repeated optional `part` parameters select the shared outfit IDs. Repeated family paths share one definition read. This accepts either three recipes from the masculine kit plus one feminine recipe, or four baked reference definitions for the controlled comparison, using the same actors. The comparison can show its selected wearer alone or all four. The existing appearance editor/draft supplies continuous editing, reset and recipe files; the comparison consumes the same four drafts through one `PersonActors` owner. Its movement choices call the actual game actor, including gait transitions/contact, rather than the single-clip preview path. Editor/comparison share one camera/light/floor setup; only the visible mode owns an application. Fixed study fields stay in recipe validation but are hidden from control selection. Implementation exists; actual-source browser/lifecycle qualification remains open. No MetaHuman branch enters generic actor logic or the ordinary world.
+
+The editor and comparison share the Gray clay toggle. Clay uses smooth neutral lighting and the current posed meshes' vertex normals. It keeps opacity cutouts and omits color and normal maps so artists can judge the sculpt at the same proportions, pose and camera angle.
 
 A source adapter may contain MetaHuman bone/material names and export conventions. Engine consumers receive ordinary family data and part definitions. The study's physique ranges, names and recipes are authored study content; future base-world installation would place selections in the existing world owner. Geometry sliders do not change gameplay strength, cognition, identity or permissions in this POC.
 

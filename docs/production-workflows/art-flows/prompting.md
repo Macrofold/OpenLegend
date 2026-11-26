@@ -44,7 +44,7 @@ Lead with the subject and the particular result. Give distinguishing shape, cons
 
 For example, an object's refinement instruction can identify a handle's open gap and attachment, the thickness of the rim and the direction of its grain. This is more actionable than asking for a better fantasy prop. It still does not specify a universal handle shape or invent an object's game function. Geometry, texture and lighting solve different problems: do not request new surface noise to compensate for missing form.
 
-Work from the largest identifying forms to construction details, then surface finish. Spend detail on the surfaces and movements the intended camera exposes. Procedural construction can produce convincing forms; replacing a primitive with more primitives or more polygons is not evidence of improvement. Judge the contour, anatomy, joins and material response that the result actually shows.
+Work from the largest identifying forms to construction details, then surface finish. Spend detail on the surfaces and movements the intended camera exposes. Follow [visual-source authority and the procedural-construction requirements](README.md#keep-the-visual-source-authoritative): detailed words or code do not substitute for the source images or a matching result. Judge the contour, anatomy, joins and material response that the result actually shows.
 
 The following is a brief-to-payload pattern, not a mandatory literal prefix:
 
