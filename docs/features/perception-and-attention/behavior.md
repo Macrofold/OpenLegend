@@ -131,7 +131,7 @@ A reason that only asks to register an already received fact can be satisfied wi
 
 ### Capacity
 
-The observer's installed profile supplies finite detailed-observation capacity. There is no universal one-subject limit, and this design does not change the native branch's ten-subject example into one. Multiple selected candidates can coexist when the observer's senses and real work permit it.
+The observer's installed profile supplies finite detailed-observation capacity. There is no universal one-subject limit. Multiple selected candidates can coexist when the observer's senses and real work permit it; the [world profile](../../worlds/base/perception-and-attention.md#selection-and-detail) owns its concrete capacity.
 
 A capacity slot does not prove simultaneous physical coverage. Following two people visually may be possible while both occupy the supported view; monitoring opposite directions may require turns and honest gaps. Hearing a sound can coexist with seeing a runner. A requested observation that needs an incompatible turn must pass ordinary action admission.
 
@@ -208,7 +208,7 @@ The bundled profile supplies a short assessment default. Existing look/listen/in
 
 ### Direct control
 
-The human controls voluntary movement, camera, speech, interpretation and action. Important cues can be presented and actual authored bodily effects can apply, but attention does not silently seize the camera, cancel an input, impose fear, select a target, reveal an enemy or choose a rescue.
+The human controls voluntary movement, camera, speech and action choices. Important cues can be presented and actual authored bodily or psychological effects can apply under their existing owners. Attention itself does not seize the camera, cancel an input, impose fear, select a target, reveal an enemy or choose a rescue. The emotion owner's selected rules for native psychological interpretation during direct control remain authoritative.
 
 Automatic focus presentation must preserve permitted information and offer accessible alternatives. A sound cue's visual equivalent must retain its actual uncertainty rather than draw an exact marker on an unknown source.
 

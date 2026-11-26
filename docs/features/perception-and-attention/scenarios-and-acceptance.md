@@ -16,7 +16,7 @@ Fire on a person and narrow manufacturing windows are examples of inputs a suffi
 
 ### 1. A nuisance pursuit meets a possible battle
 
-**Starting situation.** A guard has chosen to pursue a person for a minor disturbance. The pursuit names its actual subject and purpose. The guard is receiving sufficient current observations to steer; the person is not an eternally visible target. A separately supported explosion occurs in the distance.
+**Starting situation.** A guard has chosen to pursue a person for a minor disturbance. The pursuit names its actual subject and purpose. For this demonstration the guard has explicitly accepted the [brief-assessment contingency](../../worlds/base/perception-and-attention.md#brief-demands-and-bounded-assessment), including its stop, deadline and fallback. The guard is receiving sufficient current observations to steer; the person is not an eternally visible target. A separately supported explosion occurs in the distance.
 
 | Stage | Acquired evidence and resulting behavior | What remains undecided or unknown |
 | --- | --- | --- |
@@ -60,7 +60,8 @@ A future supported manufacturing process may have a narrow intervention window. 
 | The opener had permission | Opening can remain relevant without implying theft, hostility or a duty to intervene. Permission changes supported interpretation and available responses. |
 | The lid closes and opens again | A genuinely new observed occurrence can supply a new reason. A repeated report of the first opening cannot. |
 | A save is restored with the lid already open | Current visible state can be observed. Restoration does not invent another opening or reset a completed response's repetition state. |
-| The merchant was distracted throughout the opening | On returning, the merchant can see the current open box and investigate. They cannot retrospectively witness the act. |
+| A real turn or obstruction prevents acquisition of the opening | On returning, the merchant can see the current open box and investigate. They cannot retrospectively witness the act. |
+| The merchant is considering something else but still acquires the opening | The received opening remains evidence even without sustained customer tracking. Mental distraction alone does not erase it. |
 
 **Required pass:** concern about a watched object works for a previously untracked actor, responsibility remains evidence-bound, repetition follows real occurrences, and notice does not itself select punishment or intervention.
 
