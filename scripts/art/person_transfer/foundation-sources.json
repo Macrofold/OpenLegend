@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "foundationId": "peacock-masculine-adult-v3",
+  "worldId": "base",
+  "ownerDoc": "docs/production-workflows/art-flows/body-reference-family.md#12-data-and-module-ownership",
+  "worldAppearanceOwner": "docs/worlds/base/people-appearance.md#baseline-coverage",
+  "referenceStatureMetres": 2.0319,
+  "defaultSex": "male",
+  "controlAxes": {
+    "M": "muscle",
+    "F": "fullness"
+  },
+  "baselineCoverage": {
+    "partId": "linenBriefs",
+    "materialId": "undyedLinen",
+    "slot": "legs",
+    "promptSummary": "minimal, close-fitting, high-cut unbleached raw off-white linen pelvic briefs along the natural inguinal crease with zero short legs extending down the thighs, zero raised waistband ridge, zero drawstrings, zero modern elastic, and zero cloth folds (never baggy knee-length braies)"
+  },
+  "roles": {
+    "canonicalLod0": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-fit-evidence.index.json",
+      "archiveMember": "body-reference-family/stage-a/fit-evidence/workspace.tar.gz",
+      "innerPath": "exact-lean-inputs/authoring-controls.npz",
+      "workspaceRel": "person-transfer-foundation/v1/authoring-controls.npz",
+      "legacyStudyCandidates": [
+        "2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3/authoring-controls.npz"
+      ],
+      "bytes": 3144923,
+      "sha256": "5fb3dea0f1435f46880ff5b7b693042520953cb794d008f2c31830d686f85e6e"
+    },
+    "canonicalLod1": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-fit-evidence.index.json",
+      "archiveMember": "body-reference-family/stage-a/fit-evidence/workspace.tar.gz",
+      "innerPath": "exact-lean-inputs/runtime-controls.npz",
+      "workspaceRel": "person-transfer-foundation/v1/runtime-controls.npz",
+      "legacyStudyCandidates": [
+        "2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3/runtime-controls.npz"
+      ],
+      "bytes": 822414,
+      "sha256": "42f4919aa21b52489f12b64e293a9da39285822293cd710b160b3e4b57cb0999"
+    },
+    "canonicalTriangles": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-fit-evidence.index.json",
+      "archiveMember": "body-reference-family/stage-a/fit-evidence/workspace.tar.gz",
+      "innerPath": "exact-lean-inputs/transfer-arrays.npz",
+      "workspaceRel": "person-transfer-foundation/v1/transfer-arrays.npz",
+      "legacyStudyCandidates": [
+        "2026-11-11-peacock-full-transfer/study/transfer/final-belly/transfer-arrays.npz"
+      ],
+      "bytes": 6669879,
+      "sha256": "923a819451c2c71e2066b649bd6903e7cfca1c1dd6b4d7b29d328d1629223c57"
+    },
+    "canonicalInterface": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-fit-evidence.index.json",
+      "archiveMember": "body-reference-family/stage-a/fit-evidence/workspace.tar.gz",
+      "innerPath": "fit/canonical-interface.json",
+      "workspaceRel": "person-transfer-foundation/v1/canonical-interface.json",
+      "legacyStudyCandidates": [
+        "2026-11-12-body-reference-family/study/execution-20261112/stage-a/fit-evidence/workspace/fit/canonical-interface.json"
+      ],
+      "bytes": 3065,
+      "sha256": "c168b2261a73b14cad05cbf0fea9ae650f2f02751a69e3b383abba2c13e8f645"
+    },
+    "canonicalCompiled": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-renderer-evidence.index.json",
+      "archiveMember": "body-reference-family/stage-a/renderer-evidence/workspace.tar.gz",
+      "innerPath": "delivery/study/files/studies/peacock-body-continuation/full-transfer-20261111-47a6579e0c74/compiled.json",
+      "workspaceRel": "person-transfer-foundation/v1/compiled.json",
+      "legacyStudyCandidates": [
+        "2026-11-11-peacock-full-transfer/study/continuation/finish/root/body-audit/body-v3-kit/compiled.json"
+      ],
+      "bytes": 12442374,
+      "sha256": "b1949525f98b56b48cf48b117f6c5488da5078edcae20c6d55df33412a3713dc",
+      "acceptedAlternateSha256s": [
+        "99061449c8f83a60b9d28ef6d6127c27e69132e8c71d95af65302b1b85ed7519"
+      ]
+    },
+    "canonicalLeanSupport": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-m050-f100.index.json",
+      "memberPath": "supports/M050-F000-lean-v3.npz",
+      "workspaceRel": "person-transfer-foundation/v1/M050-F000-lean-v3.npz",
+      "legacyStudyCandidates": [
+        "2026-11-12-body-reference-family/study/family-20261113/supports/M050-F000-lean-v3.npz"
+      ],
+      "bytes": 308733,
+      "sha256": "7c5b76214ddf9555cda29891113c78358d813cfd23337a122d42123ba37fc3e9"
+    },
+    "sharedLod0ToLod1Map": {
+      "index": "art-direction/studies/2026-11-12-body-reference-family/stage-a-m050-f100.index.json",
+      "memberPath": "supports/shared-lod0-to-lod1-map.npz",
+      "workspaceRel": "person-transfer-foundation/v1/shared-lod0-to-lod1-map.npz",
+      "legacyStudyCandidates": [
+        "2026-11-12-body-reference-family/study/family-20261113/supports/shared-lod0-to-lod1-map.npz",
+        "2026-11-12-body-reference-family/study/family-20261113/fits/_raw_fit_cache/shared-lod0-to-lod1-map.npz"
+      ],
+      "bytes": 235444,
+      "sha256": "5ae42da8581f04ad2d9ee44b4f0ace452b227d90518b3712907b655573089830"
+    },
+    "witnessPackage": {
+      "index": "art-direction/studies/2026-11-11-peacock-full-transfer/full-body-transfer-review.index.json",
+      "archiveMember": "Peacock-full-body-transfer-review.zip",
+      "innerDirPrefix": "runtime/export-witness/package/",
+      "anchorRelativePath": "family.json",
+      "workspaceRel": "person-transfer-foundation/v1/export-witness/package/family.json",
+      "legacyStudyCandidates": [
+        "2026-11-11-peacock-full-transfer/study/runtime/export-witness/package/family.json"
+      ],
+      "bytes": 4387,
+      "sha256": "2d6713ea39321a26b782d6ba9cdf0ac97a91d03eba4da4bb9cabb0afcb5e6886"
+    }
+  },
+  "grid9ConceptSheets": {
+    "index": "art-direction/studies/2026-11-12-body-reference-family/grid-9.index.json",
+    "studySubdir": "2026-11-12-body-reference-family/study/grid-9-20261112",
+    "coordinates": {
+      "M000-F000": {
+        "cid": "c14",
+        "memberPath": "candidates/c14-M000-F000.png",
+        "bytes": 6023511,
+        "sha256": "d8841a32d1e0cf08540d4a5d775213109cdbb7f525f5fd1a5d6af16e47248d50",
+        "tposePhysiqueBrief": "Extreme slender sinewy ectomorphic adult man (0% muscle hypertrophy, 0% fat fullness): slender neck with prominent sternocleidomastoid cords and horizontal clavicles, small lean deltoids flowing into very thin outstretched upper arms, bony elbows, thin forearms and wrists, flat thin pectoral plates stretched tautly above visible costal ribs and a flat narrow waist, prominent scapular spines and spinous-process ridge across the back, compact lean glutes, and thin thighs with a clear open inner-thigh gap."
+      },
+      "M050-F000": {
+        "cid": "c15",
+        "memberPath": "candidates/c15-M050-F000.png",
+        "bytes": 5339350,
+        "sha256": "b7820ec720c0ab269c48efb92ecce569ca155410934949992519a53b5f4219cc",
+        "tposePhysiqueBrief": "Lean athletic adult man (50% moderate muscle mass, 0% fat fullness): defined lean deltoids settled naturally below chin height, elongated palms-down biceps and lean triceps, taut pectorals and clean armpit-to-waist V-taper with clear abdominal and serratus relief, sculpted athletic back, and lean athletic thighs and calves."
+      },
+      "M100-F000": {
+        "cid": "c16",
+        "memberPath": "candidates/c16-M100-F000.png",
+        "bytes": 5879694,
+        "sha256": "c3e1956b2a4d68497848b36cd3d21105e615bd3f133f23cc4bd1026d0b8377ad",
+        "tposePhysiqueBrief": "Extreme lean muscular adult man (100% maximum muscle mass, 0% fat fullness): thick muscular neck and full trapezius flowing into gravity-settled rounded deltoids, deep separated pectoral bellies stretching tautly across the anterior axillary fold into elongated palms-down biceps and massive settled horseshoe triceps/forearms, wide thick latissimus dorsi and teres major tapering in a taut straight line from armpit to muscular waist, deeply carved abdominals/serratus/rhomboids, and massive striated quadriceps, hamstrings, and diamond calves."
+      },
+      "M000-F050": {
+        "cid": "c17",
+        "memberPath": "candidates/c17-M000-F050.png",
+        "bytes": 4698208,
+        "sha256": "5b5401fa2e6c3bec9506d8ac8190f38d3080d1c9799f075d4c61a4014d67eb41",
+        "tposePhysiqueBrief": "Un-muscled soft adult man (0% muscle mass, 50% moderate everyday fullness): narrow un-toned shoulders and thin soft outstretched arms with gentle underarm softness, flat soft chest, smooth un-toned midsection with modest waist/lower-belly softness, and slender un-muscled legs."
+      },
+      "M050-F050": {
+        "cid": "c18",
+        "memberPath": "candidates/c18-M050-F050.png",
+        "bytes": 5810915,
+        "sha256": "7af3c89050c630791674fb3a4fa9ce0ae8d38f033dc139696337802904b9ea21",
+        "tposePhysiqueBrief": "Ordinary average everyday adult man (50% moderate muscle mass, 50% moderate fullness): moderate shoulders and outstretched smooth arms with natural gravity settle, soft-edged chest, smooth relaxed everyday stomach and flanks without visible abdominal blocks or large overhanging belly, smooth back, and average thighs and calves."
+      },
+      "M100-F050": {
+        "cid": "c19",
+        "memberPath": "candidates/c19-M100-F050.png",
+        "bytes": 5736452,
+        "sha256": "655ee7d1c852c221871d3c88c86d137f6dff89b4ee4c0877f8676f6713382f72",
+        "tposePhysiqueBrief": "Heavy muscular strongman/blacksmith build (100% muscle mass, 50% moderate everyday fullness): broad thick trapezius and heavy smooth shoulders, thick outstretched meaty upper arms and forearms settling under gravity with smooth un-striated skin, deep barrel chest and wide solid smooth-skinned powerhouse trunk, and massive smooth muscular thighs and calves."
+      },
+      "M000-F100": {
+        "cid": "c20",
+        "memberPath": "candidates/c20-M000-F100.png",
+        "bytes": 5208444,
+        "sha256": "2c1dd723c1d48cf52f810b42d4e4e105fc3b2e2fc08faee2d5fd78451d90e4a0",
+        "tposePhysiqueBrief": "Extreme high-fullness un-muscled adult man (0% muscle mass, 100% maximum fat fullness): full lower cheeks, submental double chin, and thick soft neck, narrow un-muscled shoulders, heavy soft tricep/underarm adipose drape hanging beneath outstretched arms, soft full chest rolls stretched slightly as arms extend, large heavy rounded protruding belly and wide soft love-handle flanks/back folds, and heavy soft thighs pressing together."
+      },
+      "M050-F100": {
+        "cid": "c21",
+        "memberPath": "candidates/c21-M050-F100.png",
+        "bytes": 6102333,
+        "sha256": "f38d7cfe285df78b81f284d7490d52775a9b4ab3366b36ab221f4d734153bf5d",
+        "tposePhysiqueBrief": "Extreme high-fullness adult man over moderate muscle (50% muscle mass, 100% maximum fat fullness): fuller cheeks, jowls, double chin, and thick neck, adipose-padded shoulders and heavy fleshy outstretched upper arms with natural downward tricep gravity drape, full soft chest stretched smoothly into the axilla, large rounded protruding abdomen and wide soft flanks/back folds, and thick full thighs and calves."
+      },
+      "M100-F100": {
+        "cid": "c22",
+        "memberPath": "candidates/c22-M100-F100.png",
+        "bytes": 5610562,
+        "sha256": "ad915a82c698afbce0c08594d68fa5970e597e712543ef961850622886ddf696",
+        "tposePhysiqueBrief": "Extreme super-heavyweight strongman adult man (100% maximum muscle mass AND 100% maximum fat fullness simultaneously): massive bull neck and heavy jawline/submental fullness, enormous fat-padded trapezius and shoulders, colossal meaty outstretched arms with heavy downward muscle-and-fat tricep drape, huge deep barrel chest and massive wide rounded power-belly with thick flanks/back folds under smooth soft skin (zero carved abs), and colossal tree-trunk thighs and calves."
+      }
+    }
+  },
+  "studyArchives": {
+    "concepts5Sample": "art-direction/studies/2026-11-12-body-reference-family/concepts-5-sample.index.json",
+    "grid9": "art-direction/studies/2026-11-12-body-reference-family/grid-9.index.json",
+    "stageAFitEvidence": "art-direction/studies/2026-11-12-body-reference-family/stage-a-fit-evidence.index.json",
+    "stageARendererEvidence": "art-direction/studies/2026-11-12-body-reference-family/stage-a-renderer-evidence.index.json",
+    "stageAM050F100": "art-direction/studies/2026-11-12-body-reference-family/stage-a-m050-f100.index.json",
+    "stageB6Support": "art-direction/studies/2026-11-12-body-reference-family/stage-b-6support.index.json"
+  }
+}
