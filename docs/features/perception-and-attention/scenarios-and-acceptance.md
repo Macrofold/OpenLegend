@@ -174,4 +174,5 @@ Relevant research interpretations are [Dishonored 2's agency after detection and
 - Bundled tuning and response policies: [base-world profile](../../worlds/base/perception-and-attention.md).
 - Mechanism and implementation sequencing: [technical design](../../projects/perception-and-attention-tech-design.md).
 - Unfinished delivery and qualification: [EPR06](../../maintainers/events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance).
+- Limits and constraints: [Perception and attention](../../limits/perception-and-attention.md).
 - Restrictions and their rationale: [limits](../../limits/perception-and-attention.md).

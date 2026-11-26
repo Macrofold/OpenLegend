@@ -68,6 +68,8 @@ Definitions may use exact supported equality/membership; numeric or spatial comp
 
 All clauses retain their evidence requirements. An all-condition is true only when all required clauses have current support. It is false when a required clause is supported false, otherwise unknown. An any-condition is true when a clause is supported true; false requires supported falsity of every alternative, otherwise it is unknown. Negation maps supported true to false and supported false to true; unknown remains unknown.
 
+For a received numeric interval, a strict greater-than threshold is true only when the lower bound exceeds it, false when the upper bound does not exceed it, and otherwise unknown. Inclusive comparison includes equality at the appropriate bound. Being within a range is true only when the entire supported interval is inside, false when disjoint, and otherwise unknown. Exact identity/category equality requires actual supported association. A separately declared “possibly compatible” predicate can establish a tentative relationship from overlapping uncertainty, but cannot report the relationship as certain.
+
 Time itself can make an observation stale or a check due. It cannot establish an unseen absence or clearance. A deadline for “the messenger did not arrive” yields unknown if the watcher slept or lacked the necessary coverage.
 
 Composition cannot grant a new sense, infer a hidden identity through equality of private source IDs, search everyone's memories, or treat prose as an executable condition. Additional supported forms can be added through their proper capability owner.
@@ -76,7 +78,7 @@ Composition cannot grant a new sense, infer a hidden identity through equality o
 
 ### Discrete occurrence
 
-One acquired occurrence can satisfy each relevant accepted obligation once. Multiple views of the same occurrence may refine its evidence, but cannot repeat its notification or prepared action. Separate actually witnessed occurrences remain separate, even when they concern the same subject.
+One acquired occurrence can satisfy each relevant accepted obligation once. Multiple views of the same occurrence may refine its evidence, but cannot count another occurrence or replay its prepared action. Materially new supported facts may update the same matched result or reopen a genuinely unresolved choice: for example, a legitimate later association can identify a previously anonymous participant. Preserve the original occurrence and previous disposition; a representation change alone buys no notification or decision. A later person standing nearby still does not prove they opened the box. Separate actually witnessed occurrences remain separate, even when they concern the same subject.
 
 For a closed-to-open rule, the observation family must expose an opening transition. Seeing an already open box establishes current state. It does not satisfy a rule that specifically requires witnessing the opening.
 
@@ -89,7 +91,7 @@ A current-state watch explicitly chooses one of:
 
 The bundled default for a level watch is report current. A request to catch a specific future event remains event-based. The authoring surface must not silently substitute one for the other.
 
-If initial coverage is unknown, later acquisition of truth can be reported as newly known current state where the definition permits it. It cannot be described as a witnessed arrival, opening or crossing without supporting transition evidence. A changes-only condition that requires such a transition remains unmatched until it is actually witnessed.
+If initial coverage is unknown, report-current produces one current-state report on the first supported true state. Changes-only instead uses the first reliable state, true or false, as its baseline without an onset report. After a false baseline, later supported truth can report newly known current state; after a true baseline, supported clearance is required before another onset can qualify. Reacquiring an already active or baseline-true episode does not create another onset. No level report may be described as a witnessed arrival, opening or crossing without supporting transition evidence. An independently acquired discrete event can still match its own event rule.
 
 ### Continuing condition
 

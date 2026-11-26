@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-25   |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-11-26   |
 
 ## Purpose and scope
 
@@ -30,6 +30,8 @@ The payoff is a useful choice under partial information, not an obligation to in
 Compare each activity with the capable ordinary alternative: keep walking, look once, continue work, ask a person, use an already known method, take a safe route or leave. Sustained watch should earn its time through better opportunities or useful assurance about a specific interval. It must not become a mandatory vigilance tax before normal travel, social interaction or crafting. Human play must later establish that these benefits are noticeable.
 
 ## Four different meanings of attention
+The [common perception and attention collection](../features/perception-and-attention/README.md) specifies how acquired cues earn priority, compete with work, combine into tentative situations and support bounded assessment. This document retains physical observation methods, actual coverage, compatible work and preparation evidence. General priorities do not grant a turn, a completed inspection or a chosen response.
+
 
 | Meaning                         | What changes                                                                                                     | What it cannot establish                                            |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |

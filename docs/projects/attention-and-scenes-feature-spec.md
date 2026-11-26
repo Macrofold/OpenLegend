@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                       | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Exact attended activity, compact background exchanges and independent personal reactions are designed; runtime delivery and qualification remain open. | 2026-10-22   |
+| In progress | Exact attended activity, compact background exchanges and independent personal reactions are designed; runtime delivery and qualification remain open. | 2026-11-26   |
 
 **Selected design, expanded October 15, 2026; not runtime delivery or implementation approval.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds and timed speech remain separate proposals; voice-media delivery and runtime implementation are outside this design assignment.
 
@@ -50,6 +50,8 @@ The later timed-speech mode is described fully in section 7 so its product choic
 Human camera position, selected object, keyboard focus and a character's attention are different. Panning the camera is not hearing through a wall. Selecting a caption must not accidentally walk the character. Turning down audio, hiding captions or reading a transcript changes presentation, not the evidence the character acquired.
 
 ## 4. Stable attention
+The [common perception and attention specification](../features/perception-and-attention/README.md) owns detailed reason priority, brief versus continuing demands, distraction, finite assessment and supported cue combinations. The social focus controls and exact/gist/scene boundaries below retain their own meaning. Winning attention does not select a new action or replace personal evidence.
+
 
 ### 4.1 What remains in focus
 

@@ -1,4 +1,6 @@
 # Current technical contracts
+[Perception and attention technical design](../projects/perception-and-attention-tech-design.md) specifies the proposed common reason lifecycle, selective matching and complete cost accounting; its [behavioral owner](../features/perception-and-attention/README.md) remains distinct from implementation evidence.
+
 
 Use the [architecture map](../architecture.md) to locate an implemented owner; read the affected contract rather than every entry here. Accepted targets remain labeled in their owners. Existing paths remain valid; new independent contracts use `docs/technical/<topic>.md`.
 

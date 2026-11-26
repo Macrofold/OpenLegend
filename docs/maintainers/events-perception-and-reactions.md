@@ -167,6 +167,24 @@ The [foundation follow-up](../verification/foundation-hardening.md#requested-fol
 **Exit:** expensive trigger discovery follows meaningful changes and deadlines rather than UI telemetry, all actors, and retained experience collections on every poll.
 
 ## EPR06 — Persistent stimuli and bounded actor-local relevance
+### Perception and attention framework
+
+The [behavior collection](../features/perception-and-attention/README.md), [technical counterpart](../projects/perception-and-attention-tech-design.md), [world profile](../worlds/base/perception-and-attention.md) and [limits](../limits/perception-and-attention.md) specify the selected target. The design is complete; this assignment does not authorize runtime changes or claim the target is implemented. Previously checked subsets below retain their original scope.
+
+| Scope | Status | Dependency and completion criterion |
+| --- | --- | --- |
+| Complete functional design | Completed as design | Behavior, authoring, 27 scenarios, world defaults, constraints and technical mechanisms agree; remaining evidence is explicitly tracked. |
+| Supported observations and reason lifecycle | Not started for this target | EPR03–EPR05 and actual producer capabilities; brief notice, continuing demand, strongest current reason and unknown/clear behavior work through personal evidence. |
+| Selective compiled conditions and active bindings | Not started | Supported input/dependency contracts; unrelated and same-family nonmatching definitions add no per-definition evaluation; broad unsupported monitors are refused. |
+| Continued pursuit, distraction and finite assessment | Not started | ATI01/ATI02/ATI04 and actual movement/sense consumers; compact honest steering, explicit suspension/fallback, urgent interruption and no provider-dependent freeze. |
+| Supported cue combinations | Not started | Bounded personal support and ordinary interpretation/intake; no hidden scene identity, duplicate corroboration or automatic action. |
+| Persistence, correction and pressure | Not started | EPR08; original deadlines, clear state, matched occurrences and failed/incomplete exact coverage survive the applicable lifecycle without replay. |
+| Gameplay, scaling and human acceptance | Not started | EPR09 and ATI08; connected camp/pursuit/watch cases, independent catalogue/match/witness growth, complete latency/CPU, and observed player understanding. |
+
+The main documentation base and separately inspected Rust branch are pinned in the technical design. Before implementation select the actual runtime base and reconcile its newer noticing/remembering owner; source inspection is not a merge or runtime qualification. Numerical defaults are provisional with complete specified behavior, not unanswered product questions.
+
+### Previously delivered subset
+
 
 **Dependencies:** EPR03–EPR05; use CR attention rather than a new LLM pipeline.
 

@@ -57,6 +57,8 @@ Dependencies: ATI01–ATI02; existing navigation, scoped queries, observation/ac
 **Exit:** AJ07–AJ08 produce useful machine/companion investigations and truthful gaps. A changed answer/purpose can change a plan; duplicate unchanged cues cannot run the same investigation forever.
 
 ## ATI04 — Intake, initiative and meaningful opportunities
+The [common attention framework](../features/perception-and-attention/README.md) and [EPR06 target](events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance) own shared priority/condition matching. ATI04 integrates its meaningful changes and finite assessment through these existing physical-method and intake consumers; no parallel controller or automatic turn is introduced.
+
 
 Dependencies: ATI01/ATI03; A/EPR durable sources, ActorWork, decision validity and existing funding/urgency. Parent: **AG06–AG07, EPR, DG02**.
 
@@ -107,6 +109,8 @@ Dependencies: ATI01–ATI06; current save/load, authority/lifecycle and G presen
 **Exit:** AJ06/AJ11/AJ12 are coherent across save/restore and interruption; no duplicate onset, RNG use, model dispatch or revived guard.
 
 ## ATI08 — Integration, performance and playable value
+Include the [perception and attention journeys](../features/perception-and-attention/scenarios-and-acceptance.md) when qualifying their supported shared scope: genuine coverage gaps, continued work, finite assessment/fallback, independent witnesses and useful distraction. EPR09 owns the associated catalogue/matching growth measurements; unrelated future physical mechanics are not silently added to this task.
+
 
 Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; complete runtime integration and qualification before claiming end-to-end readiness.
 

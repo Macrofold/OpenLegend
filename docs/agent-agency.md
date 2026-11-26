@@ -187,6 +187,8 @@ This is a behavioral scenario, not a canned recipe or a required route for every
 The same loop applies to a proposed shelter repair, a carrying device or a signaling technique when their trusted families exist. A boat is not automatically supported merely because the actor can describe one; buoyancy, containment and propulsion would need appropriate admitted mechanics.
 
 ## 8. Attention and initiation
+The [common attention behavior](features/perception-and-attention/behavior.md#6-distraction-changes-opportunities-not-goals-automatically) separates observation priority from changing an intention. A chosen [finite assessment](features/perception-and-attention/behavior.md#assessment-contract) can continue or suspend compatible work under explicit admission, deadline and fallback; an attention score or provider wait cannot impose that pause or select the next destination.
+
 
 Attention receives both bottom-up opportunities and top-down interests. A loud event, a change in need, an awaited result, an unfinished conversation or a material relevant to an adopted plan can matter. Evidence must first be perceptible or otherwise available to this actor; relevance never creates access.
 
