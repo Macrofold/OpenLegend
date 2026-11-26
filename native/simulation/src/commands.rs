@@ -268,13 +268,13 @@ pub(crate) enum NativeCommand {
         inputs: indexmap::IndexMap<String, String>,
     },
     PlaceHearth {
-    OperateGate {
-        envelope: CommandEnvelope,
-        intent: crate::assembly::gate::GateIntent,
-    },
         envelope: CommandEnvelope,
         definition: crate::values::DefinitionPin,
         site: crate::state::SurfacePoint,
+    },
+    OperateGate {
+        envelope: CommandEnvelope,
+        intent: crate::assembly::gate::GateIntent,
     },
     TendFire {
         envelope: CommandEnvelope,
@@ -669,7 +669,6 @@ fn scar_treatment_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     })
 }
 
-fn hearth_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
 fn gate_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -690,6 +689,7 @@ fn gate_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     })
 }
 
+fn hearth_input(raw: &str) -> Result<NativeCommand, serde_json::Error> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     struct Input {

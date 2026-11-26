@@ -175,7 +175,9 @@ pub(crate) async fn read_disclosure(
             .compute(move || -> Result<_, WorldError> {
                 let result = read
                     .geometry()
-                    .map(|query| geometry.compute(query, &budget))
+                    .map(|query| {
+                        geometry.current(read.structures.as_ref(), &budget)?.compute(query, &budget)
+                    })
                     .transpose()
                     .map_err(WorldError::Geometry)?;
                 Ok((read, result))

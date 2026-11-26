@@ -35,6 +35,7 @@ pub(crate) fn finish_selected_installation(
         remaining_children,
         archived_event_count,
         story_policy_revision: _,
+        assembly_geometry_revision: _,
     } = installation;
     remaining_children.finish()?;
     let cut = remaining_rows.finish()?;

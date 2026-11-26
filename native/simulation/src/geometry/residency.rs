@@ -52,7 +52,7 @@ impl HeapBytes for Bounds {
     }
 }
 
-pub(crate) struct OwnedGeometry {
+pub struct OwnedGeometry {
     value: GeometryMap,
     _storage: ResidentReservation,
 }

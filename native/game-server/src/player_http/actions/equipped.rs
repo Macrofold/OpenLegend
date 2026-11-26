@@ -79,7 +79,7 @@ pub(super) fn render(
                 selected,
                 None,
                 Some(menu),
-                &game.spatial,
+                &spatial,
                 controlling,
                 clock.manually_paused,
                 &references,

@@ -953,7 +953,6 @@ impl Action {
         self.kind == "cook" && self.food_preparation.is_some()
     }
 
-    pub(crate) fn is_placing_hearth(&self) -> bool {
     pub(crate) fn is_operating_gate(&self) -> bool {
         self.kind == "operate-gate" && self.gate_work.is_some() && self.destination.is_some()
     }
@@ -969,6 +968,7 @@ impl Action {
         action
     }
 
+    pub(crate) fn is_placing_hearth(&self) -> bool {
         self.kind == "place-hearth" && self.hearth_work.is_some() && self.construction_grant.is_some()
     }
 

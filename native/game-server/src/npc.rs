@@ -1158,7 +1158,7 @@ pub(crate) fn with_contact_choices<T>(
         |menu| {
             let choices = crate::player_http::actions::contact_choices(
                 menu.sequence(), selected, talk.as_ref().map(|target| &target.name), Some(menu),
-                &game.spatial, controls, clock.manually_paused, &references, budget,
+                &spatial, controls, clock.manually_paused, &references, budget,
             )?;
             consume.take().expect("one chosen context")(choices, &references)
         },
@@ -1170,7 +1170,7 @@ pub(crate) fn with_contact_choices<T>(
     let Some(talk) = talk else { return Ok(None); };
     let choices = crate::player_http::actions::contact_choices(
         session.accepted_progress()?.sequence, selected, Some(&talk.name), None,
-        &game.spatial, controls, clock.manually_paused, &references, budget,
+        &spatial, controls, clock.manually_paused, &references, budget,
     )?;
     consume.take().expect("one chosen context")(choices, &references).map(Some)
 }

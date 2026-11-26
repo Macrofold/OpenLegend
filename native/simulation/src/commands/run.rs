@@ -273,7 +273,7 @@ pub(crate) struct CommandCursor {
     materialized: bool,
     _reservation: ByteReservation,
 }
-fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
+pub(crate) fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
     Outcome {
         spent: None,
         outputs: None,

@@ -969,7 +969,7 @@ pub(crate) fn prepare_trade_lot<'a>(
     })
 }
 
-fn placement_revision(entity: &crate::state::Entity) -> Option<u64> {
+pub(crate) fn placement_revision(entity: &crate::state::Entity) -> Option<u64> {
     match entity.placement {
         Some(
             crate::state::Placement::Contained { revision, .. }

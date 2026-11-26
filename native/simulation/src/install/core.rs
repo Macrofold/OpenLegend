@@ -391,6 +391,9 @@ fn assemble_selected_core(
         &physical.entities,
         budget,
     )?;
+    if let Some(template) = person_creation.as_mut() {
+        template.install(&retained, budget)?;
+    }
     use crate::host::retained_size::HeapBytes;
     let mut definition_storage = meanings.storage;
     definition_storage
@@ -400,6 +403,9 @@ fn assemble_selected_core(
                     actor_response
                         .heap_bytes()
                         .and_then(|bytes| bytes.checked_add(meanings.calendar.heap_bytes()?))
+                        .and_then(|bytes| {
+                            bytes.checked_add(person_creation.as_ref().map_or(Some(0), |p| p.retained_bytes())?)
+                        })
                         .ok_or(InstallError::Capacity)?,
                 )
                 .map_err(|_| InstallError::Capacity)?,
@@ -412,9 +418,6 @@ fn assemble_selected_core(
         retained,
         schema: schema.clone(),
         content,
-    if let Some(template) = person_creation.as_mut() {
-        template.install(&retained, budget)?;
-    }
         attributes: meanings.attributes,
         senses: meanings.senses,
         default_senses: meanings.default_senses,
@@ -423,9 +426,6 @@ fn assemble_selected_core(
         status_policy: meanings.status_policy,
         calendar: meanings.calendar,
         capabilities: meanings.capabilities,
-                        .and_then(|bytes| {
-                            bytes.checked_add(person_creation.as_ref().map_or(Some(0), |p| p.retained_bytes())?)
-                        })
         status_work: meanings.status_work,
         population_work: meanings.population_work,
         status_rosters: crate::status::StatusRosters::new(),

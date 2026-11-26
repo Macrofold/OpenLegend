@@ -54,7 +54,7 @@ pub(super) async fn catalogue(State(state): State<PlayerRoutes>, headers: Header
                         &scope.account_id,
                         &scope.actor_id,
                         &grants,
-                        |ray| Ok(game.spatial.clear_interaction_line(ray)),
+                        |ray| Ok(spatial.clear_interaction_line(ray)),
                         |value| {
                             wire::encode(&value, b"", b"", game.host.budget())
                                 .map_err(RuntimeError::application_refused)
