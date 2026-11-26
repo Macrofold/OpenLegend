@@ -71,6 +71,7 @@ export class PersonStudyScene {
   private view: PersonStudyView = 'front';
   private elapsed = 0;
   private paused = true;
+  private clay = false;
   private disposed = false;
 
   constructor(
@@ -313,6 +314,7 @@ export class PersonStudyScene {
       view: this.view,
       movement: this.movement,
       paused: this.paused,
+      clay: this.clay,
       wearers: this.actors.map((actor, index) => ({
         recipe: actor.evaluation?.recipe,
         parts: actor.displayedParts,
@@ -437,6 +439,13 @@ export class PersonStudyScene {
     if (this.captureStart && view !== this.view) this.captureChanges++;
     this.view = view;
     this.frame();
+  }
+  setClay(clay: boolean): void {
+    if (this.disposed || this.clay === clay) return;
+    if (this.captureStart) this.captureChanges++;
+    this.clay = clay;
+    for (const actor of this.actors) actor.setClay(clay);
+    this.stage.setClay(clay);
   }
   setMovement(movement: PersonStudyMovement): void {
     if (this.captureStart && movement !== this.movement) this.captureChanges++;

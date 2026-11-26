@@ -170,6 +170,11 @@ export class PersonPreviewRenderer implements PersonPreview {
   setAppearance(recipe: AppearanceRecipe, parts: readonly string[], editing: boolean): void {
     this.pending = { recipe, parts, editing };
   }
+  setClay(clay: boolean): void {
+    if (this.disposed) return;
+    this.actor.setClay(clay);
+    this.stage.setClay(clay);
+  }
   setView(view: PersonPreviewView): void {
     this.view = view;
     this.yaw = view === 'profile' ? Math.PI / 2 : view === 'quarter' ? Math.PI / 4 : 0;

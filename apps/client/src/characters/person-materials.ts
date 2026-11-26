@@ -178,6 +178,7 @@ function finishKey(finishes: ReadonlyMap<string, SkinFinish>): string {
 
 interface PreparedMaterial {
   material: ShadowMaterial;
+  clay?: pc.StandardMaterial;
   tint: Float32Array;
   age: Float32Array;
 }
@@ -237,6 +238,7 @@ export class PersonMaterials {
     if (removed.length) this.invalidate(removed.map(([, value]) => value.material));
     for (const [id, value] of removed) {
       value.material.destroy();
+      value.clay?.destroy();
       this.values.delete(id);
     }
   }
@@ -300,8 +302,26 @@ export class PersonMaterials {
     return result;
   }
 
-  material(id: string): pc.StandardMaterial {
-    return (this.values.get(id) ?? this.create(id)).material;
+  material(id: string, clay = false): pc.StandardMaterial {
+    const prepared = this.values.get(id) ?? this.create(id);
+    if (!clay) return prepared.material;
+    if (!prepared.clay) {
+      const source = prepared.material;
+      const gray = new pc.StandardMaterial();
+      gray.name = 'Person / Gray clay';
+      gray.diffuse.set(0.52, 0.52, 0.52);
+      gray.gloss = 0.12;
+      gray.opacity = source.opacity;
+      gray.alphaTest = source.alphaTest;
+      // Keep cutout silhouettes (for example eyelashes) while inspecting mesh normals.
+      gray.opacityMap = source.opacityMap;
+      gray.opacityMapChannel = source.opacityMapChannel;
+      gray.twoSidedLighting = source.twoSidedLighting;
+      gray.cull = source.cull;
+      gray.update();
+      prepared.clay = gray;
+    }
+    return prepared.clay;
   }
 
   private uniforms(recipe: AppearanceRecipe, finishes: ReadonlyMap<string, SkinFinish>): void {
@@ -426,10 +446,14 @@ export class PersonMaterials {
           id,
           maps: [color, upperColor, normal, upperNormal, tintMask, coverage],
         } of loaded) {
-          const material = (this.values.get(id) ?? this.create(id)).material;
+          const { material, clay } = this.values.get(id) ?? this.create(id);
           material.diffuseMap = color ?? null;
           material.normalMap = normal ?? null;
           material.opacityMap = coverage ?? null;
+          if (clay && clay.opacityMap !== material.opacityMap) {
+            clay.opacityMap = material.opacityMap;
+            clay.update();
+          }
           const ageColor = upperColor ?? color;
           const ageNormal = upperNormal ?? normal;
           if (ageColor) material.setParameter('ol_personAgeColor', ageColor);
@@ -466,7 +490,10 @@ export class PersonMaterials {
     this.release(this.current);
     this.pending = this.current = undefined;
     this.invalidate([...this.values.values()].map(({ material }) => material));
-    for (const { material } of this.values.values()) material.destroy();
+    for (const { material, clay } of this.values.values()) {
+      material.destroy();
+      clay?.destroy();
+    }
     this.values.clear();
   }
 }
