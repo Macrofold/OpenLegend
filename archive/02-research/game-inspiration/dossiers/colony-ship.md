@@ -1,6 +1,6 @@
 # G182 — Colony Ship: A Post-Earth Role Playing Game
 
-**Full R01–R14 research pass, economics/enjoyment amendment, and R15 applicability screen.** Research: October 20, 2026. Scope: Iron Tower Studio's released PC game, with Early Access history distinguished from later rules and reviews. This is source-based reference research, not a playtest or an accepted OpenLegend design. **Spoilers:** faction histories, companion-development choices and some consequences of character specialization; major ending revelations are not reproduced. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
+**Full R01–R14 research pass, economics/enjoyment amendment, and R15 applicability screen.** Research: October 20, 2026. Scope: Iron Tower Studio's released PC game, with Early Access history distinguished from later rules and reviews. This is source-based reference research, not a playtest or an accepted Open Legend design. **Spoilers:** faction histories, companion-development choices and some consequences of character specialization; major ending revelations are not reproduced. Standards: [research requirements](../research-requirements.md), [economics, enjoyment and creation amendment](../research-economics-engagement-and-creation.md), and [roster](../research-roster.md).
 
 Colony Ship is especially relevant to the requested question about **people acquiring a history through what happens to them and what they repeatedly do**. Practice, habitual conduct, survival and companionship can all change later capabilities. [S03, S06, S07] These systems make a character's past consequential, but their scope differs: a relationship bonus, an authored conversation choice and an autonomous change of personality are separate achievements. The distinctions below matter as much as the successful examples.
 
@@ -53,7 +53,7 @@ The main economy is consequently **finite adventuring resources allocated across
 
 ## R04 — Progression, lasting consequences and return loops
 
-The distinction between experience and skill practice is intentional. In the 2023 community interview, Weller described learning through use as a way to reward playstyle and avoid hoarding freely assignable points until a difficult check appears. It also prevents a wholly martial history from instantly buying diplomatic expertise. [S03] This is particularly close to OpenLegend's interest in actions shaping later capability.
+The distinction between experience and skill practice is intentional. In the 2023 community interview, Weller described learning through use as a way to reward playstyle and avoid hoarding freely assignable points until a difficult check appears. It also prevents a wholly martial history from instantly buying diplomatic expertise. [S03] This is particularly close to Open Legend's interest in actions shaping later capability.
 
 | Source of change            | What changes                                                                                                                                                                         | What kind of character history it represents                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
@@ -62,7 +62,7 @@ The distinction between experience and skill practice is intentional. In the 202
 | Repeated preemptive attacks | At five Initiative Bonus dialogue choices, Ask Questions Later grants party initiative while lowering initial conversation disposition; later replacement tiers deepen the tradeoff. | A habitual approach earns a persistent social and tactical consequence. [S06, S08]                        |
 | Surviving incapacitation    | Near-death feats replace earlier stages. Still Alive trades one maximum HP for one evasion and an extra death-timer turn; later milestones progress toward Revenant.                 | A survivable setback leaves a mixed cost and benefit, rather than an unlimited linear HP deduction. [S06] |
 | Shared adventures           | Companion bonds can improve through shared experience and events.                                                                                                                    | A relationship state with mechanical effects; see R06 for its narrative limits. [S07]                     |
-| Technical discovery         | Research data can grant a situational feat such as Frog Hunter.                                                                                                                      | Knowledge of the world becomes practical competence. [S13]                                                |
+| Technical discovery         | Research data can grant a situational feat such as Frog Hunter.                                                                                                                      | Knowledge of the world can improve a character skill. [S13]                                                |
 
 These are useful forms of remembered experience, but they can be optimized as counters. Once the player knows that a particular action advances a valuable threshold, performing it may express a desired reward rather than the intended identity. That is a general design risk, not evidence that every Colony Ship player behaves this way.
 
@@ -158,7 +158,7 @@ Early Access was used for sequential feedback on locations and systems. The Octo
 
 The revisions changed the experience substantially. The December 2022 release introduced the death timer and major combat changes; the 2023 bonding system added another consequence of staying together. [S18, S07] Earlier reviews that complain about immediate losses or a particular difficulty balance must therefore retain their dates.
 
-In the 2023 interview, Weller identified programming, level design and scripting as important bottlenecks. His observation that reducing 2D-art effort would not remove those bottlenecks is relevant to OpenLegend: faster asset generation does not automatically make branching consequence logic cheap. [S03] The 2026 interview similarly distinguishes inexpensive dialogue variation from choices requiring follow-up quests or changes elsewhere. [S28]
+In the 2023 interview, Weller identified programming, level design and scripting as important bottlenecks. His observation that reducing 2D-art effort would not remove those bottlenecks is relevant to Open Legend: faster asset generation does not automatically make branching consequence logic cheap. [S03] The 2026 interview similarly distinguishes inexpensive dialogue variation from choices requiring follow-up quests or changes elsewhere. [S28]
 
 Postrelease work continued. The April 2025 update included presentation improvements, interactions, interface changes and stealth accessibility; 2026 updates included community localization testing. The studio also shifted attention to Heralds. [S25] These updates establish ongoing work, not that every complaint was fixed or that the new project is certain to finish.
 
@@ -252,7 +252,7 @@ Rewards create another fault line. Consumable expenditure can make a narrow vict
 
 Finally, **mechanical individuality and emotional attachment are related but separate**. A reliable hacker or survivor can acquire a memorable role through use. A player seeking warmer banter, expressive performances or a stronger personal epilogue may still feel that the party lacks life. The positive and mixed accounts support both experiences. No single improvement has been shown to convert the second audience without tradeoffs.
 
-## R13 — Transferable inspiration and limits for OpenLegend
+## R13 — Transferable inspiration and limits for Open Legend
 
 These are research hypotheses to consider with [gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) and the [compelling characters feature specification](../../../../docs/projects/compelling-characters-feature-spec.md). They do not amend either owner.
 

@@ -174,7 +174,7 @@ All sampled review bodies above are positive-rated, sometimes with significant c
 
 ## 9. Transferable inspiration and limits
 
-These are **research interpretations, not accepted OpenLegend requirements**.
+These are **research interpretations, not accepted Open Legend requirements**.
 
 1. **Separate word recognition, supported behavior and objective completion.** An understandable object name does not prove that the intended action occurred. Explain what changed and what remains unmet. Counterpoint: excessive diagnostic detail can spoil a playful discovery loop; surface it when needed rather than turn every action into a debug session.
 2. **Preserve distinct creator and player roles.** A godlike editor and an embodied character solve different problems. A challenge mode may need costs and consequences, while a toy mode can legitimately prioritize immediate expression. Do not make punitive scarcity the definition of meaningful play.

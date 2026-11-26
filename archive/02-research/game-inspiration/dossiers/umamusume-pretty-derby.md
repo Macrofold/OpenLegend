@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -115,7 +115,7 @@ Individual goals prevent the roster from being only a set of stat distributions.
 
 The game's main story, individual career stories and other media are distinct delivery routes. Main-story chapter **Little Big Ambition** features Rice Shower, Mihono Bourbon and Mejiro McQueen, references named historical races and uses playable race gates between episodes. One gate requires a top-two Japanese Derby finish; later practice races require first place. This connects a prepared Veteran to continued narrative access. The wiki's linked transcript is a missing page, so this mechanics account does not invent its dialogue or transfer an anime ending into the game. [Chapter record](https://umamusu.wiki/Game:Main_Story_-_Act_1/Little_Big_Ambition).
 
-**Interpretation:** helping a particular person overcome a recognizable limitation provides an emotional reason to care about preparation. A disappointing finish can concern both the build and the person represented by it. The fictional institution gives numerical success an audience, while concerts make recognition visible. OpenLegend can study that relationship between understandable desire, preparation, consequence and acknowledgment without importing the copyrighted cast or asserting that their authored personalities demonstrate emergent AI.
+**Interpretation:** helping a particular person overcome a recognizable limitation provides an emotional reason to care about preparation. A disappointing finish can concern both the build and the person represented by it. The fictional institution gives numerical success an audience, while concerts make recognition visible. Open Legend can study that relationship between understandable desire, preparation, consequence and acknowledgment without importing the copyrighted cast or asserting that their authored personalities demonstrate emergent AI.
 
 ### Presentation and production evidence
 
@@ -137,7 +137,7 @@ Durability is a central cost: multiple native mods may conflict; Android game up
 
 The work is community-maintained, with donation/support links and contributor attribution, rather than an official royalty marketplace. Source-code availability does not release Cygames' assets or every translation under an open license. UmaTL describes restrictions on its own data and requests support for ongoing labor. [Legacy maintainer account and usage terms](https://github.com/noccu/umamusu-translate).
 
-**Transfer and limit:** OpenLegend can learn from separating translated presentation from underlying rules, previewing a complete interaction before publication, crediting distinct tool and content authors, and budgeting for update breakage. The demonstrated native injection and extracted game assets are not a security or rights model to copy. This research grants no implementation authorization and does not change the [current root policies](../../../../AGENTS.md), including the repository's generated-content and compatibility boundaries.
+**Transfer and limit:** Open Legend can learn from separating translated presentation from underlying rules, previewing a complete interaction before publication, crediting distinct tool and content authors, and budgeting for update breakage. The demonstrated native injection and extracted game assets are not a security or rights model to copy. This research grants no implementation authorization and does not change the [current root policies](../../../../AGENTS.md), including the repository's generated-content and compatibility boundaries.
 
 ### Source register and uncertainty
 
@@ -223,7 +223,7 @@ Long-term success remains visible without inventing current lifetime receipts: S
 
 The Konami patent dispute also ended in a **November 7, 2025 settlement**. CyberAgent says terms are confidential and the consolidated financial impact is minor. This closes the historical litigation account without fabricating a settlement amount or treating settlement as a finding of infringement. ([Primary disclosure](https://www2.jpx.co.jp/disc/47510/140120251107591535.pdf))
 
-**Judgment:** a major commercial success for the publisher at the game level, with continuing demand and a demonstrable contribution to a profitable business. Precise project profitability remains undisclosed. For OpenLegend, the transferable idea is to make a particular character's development worth caring about, then let meaningful repeated choices deepen that attachment. Character affection, legible competition and varied attempts are useful research hypotheses. Randomized paid power, expiring exchange progress and expensive multimedia production are consequential business choices with different requirements and costs; they do not become OpenLegend requirements merely because this example earned billions.
+**Judgment:** a major commercial success for the publisher at the game level, with continuing demand and a demonstrable contribution to a profitable business. Precise project profitability remains undisclosed. For Open Legend, the transferable idea is to make a particular character's development worth caring about, then let meaningful repeated choices deepen that attachment. Character affection, legible competition and varied attempts are useful research hypotheses. Randomized paid power, expiring exchange progress and expensive multimedia production are consequential business choices with different requirements and costs; they do not become Open Legend requirements merely because this example earned billions.
 
 ### Annotated source register and access limits
 
@@ -309,7 +309,7 @@ The evidence suggests several different loops rather than one universal explanat
 
 An important commercial hypothesis follows: the same freely enjoyable game can support a paying minority with very expensive collection or competitive goals. These reviews help explain why such goals might matter to people; they do not prove which mechanism generated the game's reported spending. Validating that would require payer cohorts, purchase distribution, retention curves and attribution data unavailable in this reception sample.
 
-### OpenLegend research hypotheses, not approved requirements
+### Open Legend research hypotheses, not approved requirements
 
 **Test whether a character's goal makes a mechanical outcome matter.** A hypothetical contest involving a known resident may be more engaging than the identical contest involving a disposable competitor. Compare what players remember and why they care. A counterexample would be players finding the character's goal irrelevant while valuing the contest's decisions alone.
 
@@ -317,7 +317,7 @@ An important commercial hypothesis follows: the same freely enjoyable game can s
 
 **Test presentation's contribution independently of complexity.** Race commentary and identifiable competitors are plausible ways to make an autonomous outcome understandable. More internal simulation alone may not improve the player's experience. Compare clarity and emotional response, and also ask whether players understand what their preparation actually influenced.
 
-**Separate desired return from scheduled obligation.** Any future retention study should ask why the player returned and whether they felt comfortable stopping. A satisfying completed story is not a retention defect. These hypotheses concern research methods and possible experiential patterns, not directions to add gacha, time gates or racing to OpenLegend.
+**Separate desired return from scheduled obligation.** Any future retention study should ask why the player returned and whether they felt comfortable stopping. A satisfying completed story is not a retention defect. These hypotheses concern research methods and possible experiential patterns, not directions to add gacha, time gates or racing to Open Legend.
 
 ### Viewing routes and retrieval limits
 

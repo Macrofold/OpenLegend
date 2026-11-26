@@ -8,7 +8,7 @@ The [interface production route](../../../docs/production-workflows/scenes-and-i
 
 The research does not establish that OpenAI is inherently unable to produce a strong game interface, that Claude is universally better at game design, or that React prevents a convincing inventory. It does establish that **art inputs, visual decisions, implementation, and feedback are separate contributors**. The supplied WoW-style demonstration changes all of them simultaneously. Its result is a good reason to study its production process and audition alternatives, not a controlled model comparison.
 
-OpenLegend should first give its existing browser interface a coherent, approved family of art and a repeatable review loop. Then compare agents on the same representative screen. This is a small experiment that directly addresses Mike's concern while retaining useful work regardless of which model wins.
+Open Legend should first give its existing browser interface a coherent, approved family of art and a repeatable review loop. Then compare agents on the same representative screen. This is a small experiment that directly addresses Mike's concern while retaining useful work regardless of which model wins.
 
 The distinction is practical: an item illustration, an ornamental frame, a selected-slot treatment, a readable name, and a working drag interaction are different deliverables. Asking one agent to invent and implement all of them from a broad adjective such as “beautiful” leaves many important decisions open.
 
@@ -22,11 +22,11 @@ Two existing distinctions should survive any improvement. Utility symbols for co
 
 ## Evidence that web technology can support game UI
 
-React Aria explicitly ships without visual styling and permits custom CSS, state styling, and interaction treatments. It does not prescribe rounded dashboard cards, generic blue buttons, or an enterprise inventory. Its value here is consistent behavior while OpenLegend supplies the appearance. [Adobe's styling documentation](https://react-aria.adobe.com/styling).
+React Aria explicitly ships without visual styling and permits custom CSS, state styling, and interaction treatments. It does not prescribe rounded dashboard cards, generic blue buttons, or an enterprise inventory. Its value here is consistent behavior while Open Legend supplies the appearance. [Adobe's styling documentation](https://react-aria.adobe.com/styling).
 
 Standard CSS can divide a border image into corners, edges and a center. This allows a decorated frame to resize while preserving its corners. A browser can therefore use a small authored frame family around live text and controls rather than stretching a complete screenshot of a panel. This is an available construction technique, not a claim that every frame needs ornate raster decoration. [MDN border-image-slice](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-image-slice).
 
-For a production comparison, Firaxis describes using Coherent's HTML/CSS-based Gameface technology for Civilization VII across several platforms. That is evidence of web-style UI technology in a commercial game, not an endorsement of every design decision in that game's interface. Gameface is a specialized renderer with its own restrictions; OpenLegend runs in an actual browser. [Firaxis UI team interview, June 2025](https://coherent-labs.com/blog/casestudies/firaxis-case-study/).
+For a production comparison, Firaxis describes using Coherent's HTML/CSS-based Gameface technology for Civilization VII across several platforms. That is evidence of web-style UI technology in a commercial game, not an endorsement of every design decision in that game's interface. Gameface is a specialized renderer with its own restrictions; Open Legend runs in an actual browser. [Firaxis UI team interview, June 2025](https://coherent-labs.com/blog/casestudies/firaxis-case-study/).
 
 These sources answer the capability question. They do not establish our frame-time budget, resolve input routing, or choose the visual style. Those remain questions for the actual client.
 
@@ -36,7 +36,7 @@ Coherent Labs' September 2026 experiments include eight RPG screens built from a
 
 Its supporting documentation describes explicit visual decisions, agent-accessible renderer documentation, and checks of the real result. It also warns that a technically functional interface can remain visually inconsistent. [Design input](https://guide.coherent-labs.com/building-with-ai/design-first/), [toolchain overview](https://guide.coherent-labs.com/building-with-ai/overview/).
 
-The useful inference for us is that an agent needs both a target and evidence of what it actually produced. The vendor's stronger assertions about what agents can never design are not universal scientific results. Its unsupported-CSS list also must not become a browser restriction in OpenLegend.
+The useful inference for us is that an agent needs both a target and evidence of what it actually produced. The vendor's stronger assertions about what agents can never design are not universal scientific results. Its unsupported-CSS list also must not become a browser restriction in Open Legend.
 
 ## Diagnose the competing explanations
 

@@ -2,7 +2,7 @@
 
 Evidence cutoff: **2026-10-23**. This chapter uses current Unreal 5.8 documentation and Unity 6.6 documentation against the collection's [verified released-engine baseline](01-evidence-and-version-baseline.md): UE **5.8.4** and Unity **6000.6.7f1**. It examines how authored instructions become executable behavior, supplementing [data and concurrency](05-data-concurrency-memory.md), [content tooling](09-content-tools-ui-and-platforms.md), and [gameplay frameworks](11-gameplay-frameworks-and-semantic-systems.md).
 
-For OpenLegend, the relevant existing distinction is between an authored rule, its execution mechanism, and permission to affect a world. The [engine/world owner](../../docs/engine-and-world-boundaries.md) explicitly does not require an immediate scripting runtime. This chapter makes no such proposal.
+For Open Legend, the relevant existing distinction is between an authored rule, its execution mechanism, and permission to affect a world. The [engine/world owner](../../docs/engine-and-world-boundaries.md) explicitly does not require an immediate scripting runtime. This chapter makes no such proposal.
 
 ## 1. Unreal: native code, reflected interfaces, and Blueprint bytecode
 

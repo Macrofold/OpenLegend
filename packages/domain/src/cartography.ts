@@ -49,18 +49,17 @@ export function editMapMarker(world: WorldState, actorId: string, edit: MapMarke
   const previous = markers[edit.id];
   if ('remove' in edit) {
     if (!previous) return outcome(true, 'marker-absent', 'The marker is already removed.');
-    const note = knowledgeDocument(world, actorId, edit.id, 'map-marker');
+    const note = knowledgeDocument(world, actorId, { kind: 'map-marker', markerId: edit.id });
     if (note?.text) {
       const cleared = editKnowledge(
         world,
         actorId,
         {
-          subjectId: edit.id,
-          subjectKind: 'map-marker',
+          subjectId: { kind: 'map-marker', markerId: edit.id },
           expectedRevision: note.revision,
           text: '',
         },
-        [edit.id],
+        [{ kind: 'map-marker', markerId: edit.id }],
       );
       if (!cleared.ok) return cleared;
     }
@@ -111,14 +110,9 @@ export function editMapMarker(world: WorldState, actorId: string, edit: MapMarke
   return outcome(true, 'marker-saved', 'Marker saved.');
 }
 
-export function validateCartography(world: WorldState): void {
-  const record = (value: unknown) =>
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
-  if (world.mapMarkers !== undefined && !record(world.mapMarkers))
-    throw new Error('Invalid map marker collection.');
+/** Validate only the authored map descriptor; actual markers require actors
+ * and their saved ownership and are checked by validateMapMarkers below. */
+export function validateMapArtwork(world: Pick<WorldState, 'presentation'>): void {
   const art = world.presentation?.mapArt;
   if (art) {
     const b = art.bounds;
@@ -155,6 +149,17 @@ export function validateCartography(world: WorldState): void {
     )
       throw new Error('Invalid installed map artwork.');
   }
+}
+
+export function validateMapMarkers(world: WorldState): void {
+  const record = (value: unknown) =>
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+  if (world.mapMarkers !== undefined && !record(world.mapMarkers))
+    throw new Error('Invalid map marker collection.');
+  const art = world.presentation?.mapArt;
   for (const [actorId, markers] of Object.entries(world.mapMarkers ?? {})) {
     if (
       !record(markers) ||

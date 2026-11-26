@@ -1,12 +1,20 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import type { StrikeDefinition } from '../../strikes.js';
+import display from './config/ordinary-activity-display.json' with { type: 'json' };
+
+export const BASE_STRIKE_BODY_RULES = {
+  unrestrictedBodyPlans: ['biped'],
+} as const;
 
 export function weaponStrikeWording(weapon: Named | string, target?: Named | string) {
+  const words = display.strike;
   return {
     label: target
-      ? `Attack ${namePhrase(target)} with ${namePhrase(weapon)}`
-      : `Strike with ${namePhrase(weapon)}`,
-    pastTense: `struck with ${namePhrase(weapon, 'definite')}`,
+      ? words.weaponTarget.replace(/\{(target|weapon)\}/g, (_, role) =>
+          namePhrase(role === 'target' ? target : weapon),
+        )
+      : words.weaponName.replace('{weapon}', () => namePhrase(weapon)),
+    pastTense: words.weaponPast.replace('{weapon}', () => namePhrase(weapon, 'definite')),
   };
 }
 

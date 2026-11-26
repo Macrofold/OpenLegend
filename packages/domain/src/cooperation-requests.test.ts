@@ -180,7 +180,7 @@ describe('world-owned cooperation request forms', () => {
       (entry) => entry.recipeId !== multi.id,
     );
     expect(
-      cooperationRequestDescriptors(world, PLAYER_ID).some(
+      cooperationRequestDescriptors(world, {world: world, id: PLAYER_ID}).some(
         (entry) => entry.id === COOPERATION_REQUESTS.prepare,
       ),
     ).toBe(false);
@@ -257,7 +257,7 @@ describe('world-owned cooperation request forms', () => {
   });
   it('keeps unavailable carry forms out of actor-scoped generation without hiding the installed native family', () => {
     const { world } = nearbyCompanion();
-    const actorForms = cooperationRequestDescriptors(world, PLAYER_ID);
+    const actorForms = cooperationRequestDescriptors(world, {world: world, id: PLAYER_ID});
     expect(actorForms.some((entry) => entry.id === COOPERATION_REQUESTS.carry)).toBe(false);
     expect(
       cooperationRequestDescriptors(world).some((entry) => entry.id === COOPERATION_REQUESTS.carry),
@@ -350,7 +350,7 @@ describe('world-owned cooperation request forms', () => {
     });
     expect(dropped.outcome.ok, dropped.outcome.message).toBe(true);
     expect(
-      cooperationRequestDescriptors(dropped.world, PLAYER_ID).some(
+      cooperationRequestDescriptors(dropped.world, {world: dropped.world, id: PLAYER_ID}).some(
         (entry) => entry.id === COOPERATION_REQUESTS.carry,
       ),
     ).toBe(false);

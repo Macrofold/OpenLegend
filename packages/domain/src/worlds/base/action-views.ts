@@ -1,8 +1,16 @@
 import { selectedExpressions } from '../../expressions.js';
+import activityDisplay from './config/ordinary-activity-display.json' with { type: 'json' };
+import hearthCopy from '../../hearth-placement-messages.json' with { type: 'json' };
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
-import { observedBodyHealth } from './hunting.js';
-import { equippedItem } from '../../equipment.js';
+import { observedBodyHealthValue } from './hunting.js';
+import {
+  ordinaryActivityView,
+  appendObservedActivityFacts,
+  sharedOrdinaryActivityName,
+} from './ordinary-activity-view.js';
+import { equippedItem, type EquipmentUse } from '../../equipment.js';
+import contextActions from './config/context-actions.json' with { type: 'json' };
 import { bodyPolicy } from '../../body-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
 import { practiceDefinition, toolPracticeDefinition } from '../../practical-competence.js';
@@ -21,9 +29,15 @@ import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../..
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { attributeDefinition } from '../../world-modules.js';
 import { reincarnationPolicy } from '../../reincarnation.js';
-import { guardDescription, equipmentChangeDescription } from './shield-defense.js';
+import {
+  BASE_EQUIPMENT_COPY,
+  guardDescription,
+  equipmentChangeDescription,
+} from './shield-defense.js';
 import { evasionDescription } from './combat-views.js';
-import { FOLLOW_RULES } from './navigation.js';
+import gatheringCopy from './gathering-copy.json' with { type: 'json' };
+import castCopy from './cast-copy.json' with { type: 'json' };
+import preparationCopy from '../../food-preparation-messages.json' with { type: 'json' };
 
 export const BASE_FOOD_ACTION_WORDING = {
   cookingDescription:
@@ -33,7 +47,7 @@ export const BASE_FOOD_ACTION_WORDING = {
     'Choose an installed preparation, its ingredients and a perceived heat source.',
   cookingHeatRequiredText: 'A perceived lit heat source is needed.',
   fishingDescription: 'Choose one cast at a compatible finite source using the selected tool.',
-  fishingLabel: 'Fish once',
+  fishingLabel: castCopy.label,
   fishingHereLabel: 'Fish here',
   fishingRequiredText: 'Choose a perceived compatible reach and an accessible fishing tool.',
   fishingBindingText: 'Choose a river reach and an exact fishing tool.',
@@ -47,11 +61,10 @@ type ViewPossessions = {
 
 /** This world's preferred held item for the explicit target-use gesture. */
 export function preferredTargetEquipment(world: WorldState, actorId: string) {
-  return (
-    equippedItem(world, actorId, 'ranged') ??
-    equippedItem(world, actorId, 'melee') ??
-    equippedItem(world, actorId, 'gather')
-  );
+  for (const use of contextActions.equippedUseOrder as EquipmentUse[]) {
+    const item = equippedItem(world, actorId, use);
+    if (item) return item;
+  }
 }
 
 /** Select the same preferred use regardless of catalogue construction order.
@@ -64,17 +77,18 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 ): T | undefined {
   if (!equipment) return;
   const definition = world.itemDefinitions[equipment.definitionId];
-  const exact = offers.filter((offer) => offer.command.itemId === equipment.id);
-  return (
-    (exact.find((offer) => offer.command.type === 'strike') ??
-      (definition?.rangedWeapon &&
-        exact.find((offer) => ['aim', 'shoot-once'].includes(offer.command.type))) ??
-      (definition?.gatheringTool?.resourceId === target.resource?.definitionId &&
-        exact.find((offer) => offer.command.type === 'gather')) ??
-      (definition?.rangedWeapon && exact.find((offer) => offer.command.type === 'hunt')) ??
-      exact.find((offer) => offer.command.type === 'practice-shot')) ||
-    undefined
-  );
+  for (const kind of contextActions.equippedActionOrder) {
+    if (['aim', 'shoot-once', 'hunt'].includes(kind) && !definition?.rangedWeapon) continue;
+    if (
+      kind === 'gather' &&
+      definition?.gatheringTool?.resourceId !== target.resource?.definitionId
+    )
+      continue;
+    const exact = offers.find(
+      (offer) => offer.command.itemId === equipment.id && offer.command.type === kind,
+    );
+    if (exact) return exact;
+  }
 }
 
 /** Bundled-world disclosure and wording; the engine stores the permitted view.
@@ -82,8 +96,14 @@ export function equippedTargetAction<T extends { command: { type: string; itemId
 export function nativeActivityView(world: WorldState, command: Command): ActivityView {
   return activityView(world, command);
 }
+
+export function craftStartedText(recipeName: string): string {
+  return activityDisplay.craft.started.replace('{recipe}', () => recipeName);
+}
 function toolName(name: string, ordinal: number, count: number): string {
-  return count > 1 ? `${name}, item ${ordinal} among my same-named items` : name;
+  return count > 1
+    ? name + gatheringCopy.sameNamedToolSuffix.replace('{ordinal}', String(ordinal))
+    : name;
 }
 function activityView(
   world: WorldState,
@@ -111,6 +131,58 @@ function activityView(
   const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const perceived =
     !!actor && !!target && (actor.id === target.id || seesEntity(world, actor, target));
+  const actorView =
+    actor && (perceived || command.type === 'move')
+      ? { position: worldPosition(actor), heading: actor.spatial.heading }
+      : undefined;
+  const targetView = perceived
+    ? {
+        name: observerDescription(world, command.actorId, target.id),
+        position: worldPosition(target),
+        health: observedBodyHealthValue(world, command.actorId, target.id),
+      }
+    : undefined;
+  if (
+    command.type === 'move' ||
+    command.type === 'say' ||
+    command.type === 'status-effect' ||
+    command.type === 'follow' ||
+    (command.type === 'strike' && !command.weaponItemId && !command.manualExecution)
+  ) {
+    const purpose = { purpose: command.purpose, chosenPurpose: command.chosenPurpose?.description };
+    const effect =
+      command.type === 'status-effect'
+        ? world.statusEffectPolicy.definitions.find((effect) => effect.id === command.definitionId)
+        : undefined;
+    return ordinaryActivityView({
+      command:
+        command.type === 'move'
+          ? { ...purpose, type: 'move', destination: command.destination }
+          : command.type === 'say'
+            ? { ...purpose, type: 'say', text: command.text }
+            : command.type === 'status-effect'
+              ? { ...purpose, type: 'status-effect', operation: command.operation }
+              : command.type === 'follow'
+                ? {
+                    ...purpose,
+                    type: 'follow',
+                    complete: command.complete,
+                    distance: command.distance,
+                    until: command.until,
+                  }
+                : { ...purpose, type: 'strike' },
+      actor: actorView,
+      target: targetView,
+      effect: effect
+        ? {
+            label: effect.label,
+            activate: effect.actions?.activate,
+            deactivate: effect.actions?.deactivate,
+          }
+        : undefined,
+      strike: command.type === 'strike' ? strikeDefinition(command.definitionId, world) : undefined,
+    });
+  }
   const itemId =
     heldAim?.weaponItemId ??
     heldStrike?.weaponItemId ??
@@ -132,27 +204,24 @@ function activityView(
     'shoot-once': BASE_RANGED_TEXT.shotName,
     'release-shot': BASE_RANGED_TEXT.shootingName,
     harvest: 'Harvest',
-    cook: 'Cook',
+    cook: activityDisplay.cookName,
     fish: BASE_FOOD_ACTION_WORDING.fishingLabel,
     'tend-fire': 'Tend a fire',
-    eat: 'Eat',
-    equip: 'Equip',
+    eat: activityDisplay.eatName,
+    equip: BASE_EQUIPMENT_COPY.equipLabel,
     guard: 'Guard with shield',
-    move: 'Move',
     evade: bodyPolicy(world)?.evasion?.label,
-    gather: 'Gather',
-    craft: 'Make',
+    gather: gatheringCopy.name,
+    craft: activityDisplay.craft.name,
     pickup: 'Pick up',
     drop: 'Put down',
     'transfer-item': 'Move an item',
     'split-item': 'Separate part of a stack',
     'merge-item': 'Combine stacks',
-    unequip: 'Put away equipment',
-    follow: 'Follow',
+    unequip: BASE_EQUIPMENT_COPY.unequipActivity,
     replenish: 'Replenish',
     recover: 'Recover',
     'treat-scar': 'Treat a scar',
-    say: 'Speak',
     teach: 'Teach',
     'learn-record': 'Learn a recorded method',
   };
@@ -183,12 +252,6 @@ function activityView(
       value: command.chosenPurpose.description,
       critical: true,
     });
-  if (command.type === 'follow' && command.complete)
-    view.facts.push({
-      name: 'finite approach',
-      value: `End on reaching the selected ${command.distance ?? FOLLOW_RULES.defaultDistance} m proximity, or at game time ${command.until}. This movement performs no attack.`,
-      critical: true,
-    });
   if (command.type === 'treat-scar') {
     const treatment = reincarnationPolicy(world)?.treatment;
     if (treatment)
@@ -198,50 +261,7 @@ function activityView(
         critical: true,
       });
   }
-  if (perceived) {
-    view.target = observerDescription(world, command.actorId, target.id);
-    const a = worldPosition(actor),
-      b = worldPosition(target);
-    view.facts.push({
-      name: 'distance',
-      value: `${Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z).toFixed(1)} m`,
-      critical: true,
-    });
-    // Right-handed, Y-up (packages/spatial): facing +Z puts the right hand at -X.
-    const bearing = actor.spatial.heading - Math.atan2(b.x - a.x, b.z - a.z);
-    const directions = [
-      'ahead',
-      'ahead and to my right',
-      'to my right',
-      'behind and to my right',
-      'behind',
-      'behind and to my left',
-      'to my left',
-      'ahead and to my left',
-    ];
-    view.facts.push({
-      name: 'direction',
-      value: directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
-      critical: true,
-    });
-    const health = observedBodyHealth(world, command.actorId, target.id);
-    if (health)
-      view.facts.push({
-        name: 'health',
-        value: health,
-        critical: true,
-      });
-  }
-  if (command.type === 'move' && actor) {
-    const from = worldPosition(actor),
-      to = command.destination;
-    view.target = `the chosen place at ${to.x.toFixed(1)}, ${to.z.toFixed(1)}`;
-    view.facts.push({
-      name: 'distance',
-      value: `${Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z).toFixed(1)} m directly; the route length is not known`,
-      critical: true,
-    });
-  }
+  appendObservedActivityFacts(view, actorView, targetView);
   if (definition) {
     if (possessions) view.tool = possessions.names.get(item!.id);
     else {
@@ -307,15 +327,12 @@ function activityView(
     }
   }
   const rangedCommand = heldAim ?? command;
+  const ranged =
+    heldAim || ['hunt', 'aim', 'shoot-once'].includes(command.type) ? rangedPolicy(world) : null;
   const rangedWithoutApproach =
     (command.type === 'aim' || command.type === 'shoot-once') &&
     (!!command.aimPoint || (command.type === 'aim' && command.manualExecution));
-  if (
-    (heldAim || ['hunt', 'aim', 'shoot-once'].includes(command.type)) &&
-    'ammoItemId' in rangedCommand &&
-    definition?.rangedWeapon &&
-    rangedPolicy(world)
-  ) {
+  if (ranged && 'ammoItemId' in rangedCommand && definition?.rangedWeapon) {
     const compatible = (item: ItemInstance) =>
       world.itemDefinitions[item.definitionId]?.ammunition?.kind ===
       definition.rangedWeapon!.ammunitionKind;
@@ -331,9 +348,18 @@ function activityView(
               compatible(item),
           );
     const ammo = ammunition && world.itemDefinitions[ammunition.definitionId];
+    const shot = definition.rangedWeapon;
+    const words = activityDisplay.ranged;
+    const requirement = rangedWithoutApproach ? words.withoutApproach : words.afterApproach;
     view.facts.push({
       name: 'shot',
-      value: `${definition.rangedWeapon.damage + (ammo?.ammunition?.damageBonus ?? 0)} injury before protection; range ${definition.rangedWeapon.range} m; base aim steadiness ${Math.round(definition.rangedWeapon.accuracy * 100)}%; straight flight ${definition.rangedWeapon.flightSpeed} m per game second. Movement and solid cover determine contact.`,
+      value: rangedFact(words.shot, {
+        damage: Math.max(0, shot.damage + (ammo?.ammunition?.damageBonus ?? 0)),
+        range: shot.range,
+        steadiness: Math.round(shot.accuracy * 100),
+        speed: shot.flightSpeed,
+        contact: ranged.accuracyExplanation,
+      }),
       critical: false,
     });
     view.facts.push({
@@ -342,19 +368,29 @@ function activityView(
         ? heldAim.ranged?.ready
           ? 'Releases the selected prepared aim now; no further approach or preparation'
           : `Requests release when the selected aim is ready; ${heldAim.remainingSeconds} game seconds of preparation remain. You control movement.`
-        : `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds${rangedWithoutApproach ? ' without automatic approach' : ' after any approach'}; ${command.type === 'aim' ? 'then choose Shoot or Cancel aim' : 'then releases one projectile automatically'}`,
+        : command.type === 'aim'
+          ? `${shotPreparationSeconds(world, toolPracticeDefinition(world, definition)?.practice)} game seconds${requirement}; then choose Shoot or Cancel aim`
+          : rangedFact(words.automaticPreparation, {
+              seconds: shotPreparationSeconds(
+                world,
+                toolPracticeDefinition(world, definition)?.practice,
+              ),
+              approach: requirement,
+            }),
       critical: true,
     });
     if (!heldAim && !rangedWithoutApproach)
       view.facts.push({
         name: 'approach',
-        value: `Move to within ${rangedApproachRange(world, definition.rangedWeapon.range).toFixed(2)} m; the route length is not known`,
+        value: rangedFact(words.approach, {
+          distance: rangedApproachRange(world, shot.range).toFixed(2),
+        }),
         critical: true,
       });
     view.facts.push({
       name: 'ammunition',
       value: ammunition
-        ? `Uses one ${ammo!.name}; ${ammunition.quantity} in this carried stack`
+        ? rangedFact(words.stock, { ammunition: ammo!.name, quantity: ammunition.quantity })
         : 'No compatible carried projectile is currently known; a projectile is required',
       critical: true,
     });
@@ -378,26 +414,13 @@ function activityView(
       view.facts.push({ name: 'effect', value: expression.description, critical: true });
     }
   }
-  if (command.type === 'say') {
-    for (let at = 0; at < command.text.length; at += 500)
-      view.facts.push({
-        name: at ? 'more of my words' : 'my words',
-        value: command.text.slice(at, at + 500),
-        critical: true,
-      });
-    view.facts.push({
-      name: 'reply',
-      value: 'Speaking does not promise that anyone hears, answers or agrees',
-      critical: true,
-    });
-  }
   if (command.type === 'cook') {
     const preparation = preparationDefinition(world, command);
     if (preparation) {
       view.name = command.purpose ?? preparation.name;
       view.facts.push({
         name: 'cost',
-        value: `Uses the selected ingredients at work start; ${preparation.workSeconds} game seconds; requires a lit fire throughout; spent ingredients are not returned on interruption`,
+        value: `${preparationCopy.costPrefix}${preparation.workSeconds}${preparationCopy.costSuffix}`,
         critical: true,
       });
       const products = preparation.outputs.map((output) => ({
@@ -407,7 +430,7 @@ function activityView(
       view.facts.push({
         name: 'output',
         value: products,
-        sentence: `On completion: ${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+        sentence: `${preparationCopy.outputPrefix}${products.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
         critical: true,
       });
       const ingredients = preparation.inputs.map((input) => {
@@ -429,10 +452,10 @@ function activityView(
         view.facts.push({
           name: at ? `more ingredients ${at / ACTIVITY_LIMITS.detailEntries + 1}` : 'ingredients',
           value: portions,
-          sentence: `Ingredients: ${portions
+          sentence: `${preparationCopy.ingredientsPrefix}${portions
             .map((portion) => {
               const carried = portion['selected carried quantity'];
-              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried} in the selected carried stack` : carried})`;
+              return `${portion.role}: ${portion['required quantity']} ${portion.material} (${typeof carried === 'number' ? `${carried}${preparationCopy.carriedSuffix}` : carried})`;
             })
             .join('; ')}`,
           critical: true,
@@ -456,8 +479,7 @@ function activityView(
       });
       view.facts.push({
         name: 'approach',
-        value:
-          'Use the selected dry bank stance with a clear line into the declared water; time is spent even on an empty attempt',
+        value: castCopy.approach,
         critical: true,
       });
     }
@@ -497,12 +519,16 @@ function activityView(
       view.name = hearth.actionLabel;
       view.facts.push(
         {
-          name: 'material',
-          value: `${hearth.input.quantity} ${world.itemDefinitions[hearth.input.definition.id]?.name ?? 'material units'}; held during work, spent only on completion`,
+          name: hearthCopy.activity.materialName,
+          value: `${hearth.input.quantity} ${world.itemDefinitions[hearth.input.definition.id]?.name ?? 'material units'}${hearthCopy.activity.materialSuffix}`,
           critical: true,
         },
-        { name: 'work', value: `${hearth.workSeconds} game seconds plus approach`, critical: true },
-        { name: 'placement', value: hearth.help, critical: true },
+        {
+          name: hearthCopy.activity.workName,
+          value: `${hearth.workSeconds}${hearthCopy.activity.workSuffix}`,
+          critical: true,
+        },
+        { name: hearthCopy.activity.placementName, value: hearth.help, critical: true },
       );
     }
   }
@@ -520,7 +546,7 @@ function activityView(
         critical: true,
       });
   }
-  if (['harvest', 'cook', 'gather', 'pickup', 'replenish', 'tend-fire'].includes(command.type))
+  if (['harvest', 'cook', 'pickup', 'replenish', 'tend-fire'].includes(command.type))
     view.facts.push({
       name: 'approach',
       value: `Move to within ${command.type === 'pickup' ? world.itemHandling.reach : BASE_ACTION_DEFAULTS.interactionRadius} m; the route length is not known`,
@@ -531,32 +557,37 @@ function activityView(
       name: 'fire',
       value: perceived
         ? target.heat?.lit
-          ? 'Lit now; it must stay lit until cooking ends'
+          ? preparationCopy.fireCondition
           : 'Not lit now; cooking cannot start'
         : 'The fire condition is not currently known',
       critical: true,
     });
-  if (command.type === 'gather' && perceived && target.resource)
+  if (command.type === 'gather') {
     view.facts.push({
-      name: 'work',
-      value: `${target.resource.workSeconds} game seconds; ${target.resource.quantity} ${world.itemDefinitions[target.resource.definitionId]?.name ?? 'material'} remains here; actual yield depends on available material and tools`,
+      name: gatheringCopy.approachName,
+      value: gatheringCopy.approach.replace(
+        '{reach}',
+        String(BASE_ACTION_DEFAULTS.interactionRadius),
+      ),
       critical: true,
     });
-  const recipe = command.type === 'craft' ? world.recipes[command.recipeId] : undefined;
-  if (recipe) {
-    if (recipe.retainedTools.length)
+    if (perceived && target.resource) {
+      const { workSeconds, quantity, definitionId } = target.resource;
       view.facts.push({
-        name: 'kept tools',
-        value: recipe.retainedTools
-          .map(
-            (tool) =>
-              `${tool.quantity} ${tool.allowedDefinitions.map((pin) => world.itemDefinitions[pin.id]!.name).join(' or ')}`,
-          )
-          .join('; '),
+        name: gatheringCopy.workName,
+        value: gatheringCopy.work
+          .replace('{seconds}', String(workSeconds))
+          .replace('{quantity}', String(quantity))
+          .replace('{material}', () => world.itemDefinitions[definitionId]?.name ?? 'material'),
         critical: true,
       });
+    }
+  }
+  if (command.type === 'craft' && world.recipes[command.recipeId]) {
+    const recipe = world.recipes[command.recipeId]!;
+    const copy = activityDisplay.craft;
     view.facts.push({
-      name: 'materials',
+      name: copy.materials,
       value: recipe.inputs
         .map(
           (input) =>
@@ -565,9 +596,28 @@ function activityView(
         .join(', '),
       critical: true,
     });
+    if (recipe.retainedTools.length)
+      view.facts.push({
+        name: copy.keptTools,
+        value: recipe.retainedTools
+          .map((tool) => {
+            const itemId = command.tools?.[tool.role];
+            const item =
+              itemId && accessiblePossession(world, command.actorId, itemId)
+                ? itemFor(world, itemId)
+                : undefined;
+            const definitions =
+              item && tool.allowedDefinitions.some((pin) => pin.id === item.definitionId)
+                ? [item.definitionId]
+                : tool.allowedDefinitions.map((pin) => pin.id);
+            return `${tool.quantity} ${definitions.map((id) => world.itemDefinitions[id]!.name).join(' or ')}`;
+          })
+          .join('; '),
+        critical: true,
+      });
     view.facts.push({
-      name: 'work',
-      value: `${recipe.workSeconds} game seconds; materials are spent when work starts and are not returned on interruption`,
+      name: copy.workName,
+      value: copy.work.replace('{seconds}', String(recipe.workSeconds)),
       critical: true,
     });
   }
@@ -577,21 +627,6 @@ function activityView(
     command.quantity !== undefined
   )
     view.facts.push({ name: 'quantity', value: command.quantity, critical: true });
-  if (command.type === 'status-effect') {
-    const effect = world.statusEffectPolicy.definitions.find(
-      (effect) => effect.id === command.definitionId,
-    );
-    if (effect)
-      view.name =
-        command.operation === 'activate'
-          ? (effect.actions?.activate ?? `Begin ${effect.label}`)
-          : (effect.actions?.deactivate ?? `End ${effect.label}`);
-    view.facts.push({
-      name: 'result',
-      value: 'An attempt; the actual applied or resisted change is recorded when it happens',
-      critical: true,
-    });
-  }
   if (command.type === 'eat' && definition?.nutrition)
     view.facts.push({
       name: 'food',
@@ -604,6 +639,39 @@ function activityView(
 /** Shared method names admit authored public purposes only. Personal prose stays
  * in the actor's own occurrence, never the world-wide structural catalogue. */
 export function sharedNativeActivityName(world: WorldState, command: Command): string {
+  if (
+    command.type === 'move' ||
+    command.type === 'say' ||
+    command.type === 'status-effect' ||
+    command.type === 'follow' ||
+    command.type === 'cook' ||
+    command.type === 'eat' ||
+    (command.type === 'strike' && !command.weaponItemId && !command.manualExecution)
+  ) {
+    const effect =
+      command.type === 'status-effect'
+        ? world.statusEffectPolicy.definitions.find((effect) => effect.id === command.definitionId)
+        : undefined;
+    return sharedOrdinaryActivityName({
+      command: {
+        type: command.type,
+        purpose: command.purpose,
+        ...(command.type === 'status-effect' ? { operation: command.operation } : {}),
+      },
+      ...(command.type === 'cook'
+        ? { preparationName: preparationDefinition(world, command)?.name }
+        : {}),
+      ...(effect
+        ? {
+            effect: {
+              label: effect.label,
+              activate: effect.actions?.activate,
+              deactivate: effect.actions?.deactivate,
+            },
+          }
+        : {}),
+    });
+  }
   return nativeActivityView(world, {
     ...command,
     purpose: command.purpose === 'Hunt once' ? 'Hunt once' : undefined,
@@ -702,8 +770,8 @@ function nativeCatalogueCommitments(
     command.type === 'strike'
   )
     facts.push([
-      'Uncertainty',
-      'An attempt, not a promised hit or kill; range and line of effect are checked at impact',
+      activityDisplay.strike.catalogue.uncertaintyName,
+      activityDisplay.strike.catalogue.uncertainty,
     ]);
   return facts;
 }
@@ -722,6 +790,12 @@ export function nativeCatalogueView(
     return view;
   };
 }
+function rangedFact(template: string, fields: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (token, key: string) =>
+    Object.hasOwn(fields, key) ? String(fields[key]) : token,
+  );
+}
+
 /** Share physical naming and exact ammunition reads without adding catalogue-only facts. */
 export function nativeActivityViews(
   world: WorldState,

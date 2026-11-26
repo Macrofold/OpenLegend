@@ -39,11 +39,23 @@ export type QueryResult<T> =
   | { status: 'complete'; values: readonly T[]; dependencies: readonly Dependency[] }
   | { status: 'budget-exhausted' | 'unavailable'; dependencies: readonly Dependency[] };
 export type SemanticChange =
-  | { kind: 'spatial'; entityId: string; before: Position | null; after: Position | null }
+  | {
+      kind: 'spatial';
+      entityId: string;
+      before: Position | null;
+      after: Position | null;
+      discontinuity?: true;
+      /** Only the spatial owner may certify that positional motion leaves the
+       * support-dependent status inputs unchanged. Shape/unknown writers omit it. */
+      supportUnchanged?: true;
+    }
   | { kind: 'membership'; family: QueryFamily; scopeId: string }
   | {
       kind: 'state';
       entityId: string;
+      /** A mutation owner may prove its changed fields have no outward sensory
+       * projection. Other consumers still receive the actual semantic change. */
+      outwardChange?: boolean;
       field:
         | 'body'
         | 'behavior'
@@ -67,6 +79,7 @@ const pending = new WeakMap<
     changes: Map<string, SemanticChange>;
     conservative: boolean;
     states: Map<StateField, number>;
+    outwardBehavior: number;
     stateSequence: number;
     stateAt: Map<string, number>;
   }
@@ -76,6 +89,12 @@ type StateField = Extract<SemanticChange, { kind: 'state' }>['field'];
  * This rebuildable token is not a persisted revision or permission to reuse across commands. */
 export function stateChangeRevision(world: WorldState, field: StateField): number {
   return pending.get(world)?.states.get(field) ?? 0;
+}
+/** Private controller preparation still changes mechanical/status inputs, but
+ * cannot invalidate another body's unchanged sensory danger assessment.
+ * docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation */
+export function outwardBehaviorRevision(world: WorldState): number {
+  return pending.get(world)?.outwardBehavior ?? 0;
 }
 /** A cursor covers this exact editable phase, including repeated writes to an already
  * coalesced entity/field. It certifies recorded state owners only, never direct writes,
@@ -204,12 +223,15 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
         changes: new Map(),
         conservative: false,
         states: new Map(),
+        outwardBehavior: 0,
         stateSequence: 0,
         stateAt: new Map(),
       }),
     );
   if (change.kind === 'state')
     set.states.set(change.field, (set.states.get(change.field) ?? 0) + 1);
+  if (change.kind === 'state' && change.field === 'behavior' && change.outwardChange !== false)
+    set.outwardBehavior++;
   const key =
     change.kind === 'spatial'
       ? `spatial:${change.entityId}`
@@ -229,11 +251,29 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
   set.changes.set(
     key,
     change.kind === 'spatial' && prior?.kind === 'spatial'
-      ? { ...change, before: prior.before }
+      ? {
+          ...change,
+          before: prior.before,
+          ...(prior.discontinuity ? { discontinuity: true as const } : {}),
+        }
       : change.kind === 'geometry' && prior?.kind === 'geometry'
         ? { ...change, before: prior.before }
         : change,
   );
+}
+/** Private command forks preserve the batch's coalesced mutation notices without
+ * sharing writable maps with a sibling that may later be refused or rolled back. */
+export function inheritSemanticChanges(world: WorldState, base: WorldState): void {
+  const recorded = pending.get(base);
+  if (recorded)
+    pending.set(world, {
+      changes: new Map(recorded.changes),
+      conservative: recorded.conservative,
+      states: new Map(recorded.states),
+      outwardBehavior: recorded.outwardBehavior,
+      stateSequence: recorded.stateSequence,
+      stateAt: new Map(recorded.stateAt),
+    });
 }
 export function captureSemanticChanges(
   world: WorldState,

@@ -1,3 +1,18 @@
+import {
+  selectedActivityResultMetadata,
+  selectedRoutineMovement,
+  selectedTemporalPolicy,
+  selectedOrdinaryActionRules,
+} from './world-composition.js';
+import { appendTemporalReceipt } from './temporal-evidence.js';
+import activityResultCopy from './activity-result-copy.json' with { type: 'json' };
+import activityLearningCopy from './activity-learning-copy.json' with { type: 'json' };
+import { hasMemory } from './living.js';
+import {
+  accountResultEvidence,
+  validResultEvidence,
+  type ResultEvidence,
+} from './result-evidence.js';
 import { validAttackExecutionEvidence, validAimPointSubject } from './combat-execution.js';
 import { finitePoint } from '@open-legend/spatial';
 import { validTimedReleaseInput } from './execution-input.js';
@@ -11,6 +26,7 @@ import { endOwnOffense } from './combat-encounters.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   activityInvocationFields,
+  activitySelfBinding,
   commandEntityFields,
   nativeBindingKind,
   nativeOutputBinding,
@@ -23,7 +39,7 @@ import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { appendMemory, canonicalJson } from './events.js';
 
-import { isActivityCommand } from './agency.js';
+import { isActivityCommand, activityCommandSyntax, type ActivityCommandSyntax } from './agency.js';
 import {
   nativeCommandSupported,
   installedActivityHost,
@@ -71,6 +87,9 @@ export const ACTIVITY_LIMITS = {
   recordBytes: 32768,
   retainedRecords: 100000,
 } as const;
+
+/** Ordinary bounded activity projection, also used by received-result validation. */
+export const ACTIVITY_DISPLAY_BYTES = 16000;
 
 export interface ActivityOutput {
   port: string;
@@ -146,7 +165,7 @@ export interface ActivityOccurrence {
   outcome?: Outcome;
   evidenceIds: string[];
   /** Reference to the personal result; the execution record is not a recall store. */
-  resultMemoryId?: string;
+  resultEvidence?: ResultEvidence;
   effects?: {
     id: string;
     subjectId: string;
@@ -163,6 +182,41 @@ export interface ActivityOccurrence {
   stockResolution?: import('./stock-transfer.js').StockTransferAdmission;
   /** Requested guarded controls are one-session evidence, not inferred methods. */
   noLearningControl?: boolean;
+}
+
+/** Snapshot only the facts used by selected recording policy before an event batch
+ * can finish or replace the activity. No live occurrence escapes into a memory. */
+export function activityRecordingContext(
+  entry: ActivityOccurrence,
+): import('./attention.js').ActivityRecordingContext {
+  const result = entry.outcome;
+  return {
+    commandType: entry.command.type,
+    status: entry.status,
+    bound: !!(
+      entry.parentId ||
+      entry.methodId ||
+      entry.cooperation ||
+      entry.command.cooperation ||
+      entry.command.chosenPurpose ||
+      entry.command.combatHelpId ||
+      entry.connections.length ||
+      entry.incomplete ||
+      entry.revoked ||
+      result?.goalId ||
+      result?.planId
+    ),
+    effects: !!entry.effects?.length,
+    outputs: !!(
+      entry.outputs.length ||
+      result?.outputs?.length ||
+      result?.itemId ||
+      result?.entityId ||
+      result?.recipeId
+    ),
+    spending: result?.spent !== undefined && result.spent !== 0,
+    ...(result ? { outcome: { ok: result.ok, code: result.code } } : {}),
+  };
 }
 
 export type ActivityPredicate =
@@ -322,8 +376,11 @@ export const emptyActionExperience = (): ActionExperienceState => ({
 
 /** Recording a committed transaction does not make its revision-bound command a
  * reusable plan. Such transactions remain inspectable through the same history. */
-export function isRecordedActivityCommand(command: Command): boolean {
-  if (isActivityCommand(command)) return true;
+export function isRecordedActivityCommand(
+  command: Command,
+  syntax: ActivityCommandSyntax,
+): boolean {
+  if (isActivityCommand(command, syntax)) return true;
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   if (command.type === 'release-shot')
     return (
@@ -399,7 +456,7 @@ export function activityRecordText(view: ActivityView): string {
 export function projectActivity(
   view: ActivityView,
   header?: 'Can do' | 'Doing now' | 'What happened' | 'Remaining',
-  byteLimit = 16000,
+  byteLimit = ACTIVITY_DISPLAY_BYTES,
   detailDepth = ACTIVITY_LIMITS.depth as number,
 ) {
   if (!Number.isInteger(detailDepth) || detailDepth < 0 || detailDepth > ACTIVITY_LIMITS.depth)
@@ -501,8 +558,7 @@ export function renderActivity(
 ): string {
   return projectActivity(view, header).text;
 }
-export const ACTIVITY_SYNTAX =
-  'Each action says what to do and with what. When brackets appear, they contain smaller actions in order; semicolons separate them. Results say what actually happened.';
+export const ACTIVITY_SYNTAX = activityLearningCopy.syntax;
 
 export function occurrenceFor(
   world: WorldState,
@@ -520,19 +576,25 @@ export function activityResultFacts(
   recorded?: readonly ActivityFact[],
 ): ActivityFact[] {
   if (recorded)
-    return recorded.filter((fact) => fact.name === 'produced' || fact.name === 'observed changes');
+    return recorded.filter(
+      (fact) => fact.name === activityResultCopy.produced || fact.name === 'observed changes',
+    );
   const produced = outputs.map((output) => ({
     quantity: output.quantity,
-    material: world.itemDefinitions[output.definitionId]?.name ?? 'items',
+    material:
+      world.itemDefinitions[output.definitionId]?.name ?? activityResultCopy.unknownMaterial,
   }));
   return produced.length
     ? [
         {
-          name: 'produced',
+          name: activityResultCopy.produced,
           // Each admitted label retains its own text bound; several valid outputs
           // must not fail because their combined sentence exceeds one label's limit.
-          value: produced,
-          sentence: `produced: ${produced.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
+          value: produced.map(({ quantity, material }) => ({
+            [activityResultCopy.quantity]: quantity,
+            [activityResultCopy.material]: material,
+          })),
+          sentence: `${activityResultCopy.producedPrefix}${produced.map(({ quantity, material }) => `${quantity} ${material}`).join(', ')}`,
           critical: true,
         },
       ]
@@ -764,10 +826,13 @@ function recordConsumedSources(
     });
   }
   if (ambiguous) entry.incomplete = true;
-  if (ambiguous && !entry.view.facts.some((fact) => fact.name === 'ingredient history'))
+  if (
+    ambiguous &&
+    !entry.view.facts.some((fact) => fact.name === activityResultCopy.ingredientHistory)
+  )
     entry.view.facts.push({
-      name: 'ingredient history',
-      value: 'This stack contains mixed sources; individual units cannot be traced exactly',
+      name: activityResultCopy.ingredientHistory,
+      value: activityResultCopy.mixedIngredientHistory,
       critical: true,
     });
 }
@@ -864,11 +929,11 @@ export function endActivity(
   actorId: string,
   actionId: string,
   result: Outcome,
-): string | undefined {
+): ResultEvidence | undefined {
   const work = entityGet(world.entities, actorId)?.actor?.action;
   if (work?.id === actionId && work.gateWork) releaseGateWork(world, actorId, work);
   const entry = occurrenceFor(world, actorId, actionId);
-  if (!entry || entry.status !== 'running') return entry?.resultMemoryId;
+  if (!entry || entry.status !== 'running') return entry?.resultEvidence;
   if ('targetId' in entry.command && entry.command.targetId !== undefined)
     endOwnOffense(world, actorId, entry.command.targetId, actionId);
   applyActivityResult(world, entry, result);
@@ -889,28 +954,76 @@ export function endActivity(
   // Forgetting a running attempt revokes its personal evidence, not its already
   // admitted physical work. Completion must not recreate the forgotten episode.
   if (!entry.revoked && !world.experience?.forgotten[actorId]?.includes(entry.id)) {
-    entry.resultMemoryId ??= appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: world.cognitionPolicy.recording.actionResultImportance,
-      activityId: entry.id,
-      // Retain the completed speech in personal history without making a speaker
-      // answer their own output after the original decision's saved watermark.
-      ...(entry.command.type === 'say' ? { eventType: 'speech-result', speakerId: actorId } : {}),
-      summary: {
+    if (
+      hasMemory(entityGet(world.entities, actorId)) &&
+      selectedRoutineMovement(world, actorId, activityRecordingContext(entry), 'result')
+    ) {
+      const text = personalText(world, actorId, {
         parts: [
           person(actorId, 'possessive'),
           ` action ${entry.status} at simulation time ${world.simTime}: ${activityRecordText(entry.view)}`,
         ],
-      },
-      entityIds: [actorId],
-    });
+      });
+      const receipt = appendTemporalReceipt(
+        world,
+        actorId,
+        {
+          subject: entry.id,
+          change: 'occurrence',
+          required: true,
+          sourceIds: [entry.id],
+          facets: [
+            {
+              role: 'direct',
+              asOf: world.simTime,
+              measuredFrom: world.simTime,
+              measuredThrough: world.simTime,
+              acquiredAt: world.simTime,
+              value: {
+                kind: 'action-result',
+                id: entry.id,
+                text,
+                status: result.ok ? 'completed' : 'cancelled',
+                outcome: { ok: result.ok, code: result.code },
+                facts: cloneValue(entry.view.facts),
+              },
+            },
+          ],
+        },
+        selectedTemporalPolicy(world).recent,
+      );
+      if (!receipt) throw new Error('Required personal result could not be received.');
+      entry.resultEvidence = { kind: 'recent', subject: entry.id, receipt };
+    } else
+      entry.resultEvidence ??= accountResultEvidence(
+        appendMemory(
+          world,
+          actorId,
+          {
+            kind: 'episode',
+            source: 'internal',
+            importance: world.cognitionPolicy.recording.actionResultImportance,
+            activityId: entry.id,
+            // Retain the completed speech in personal history without making a speaker
+            // answer their own output after the original decision's saved watermark.
+            ...selectedActivityResultMetadata(world, actorId, entry.command.type),
+            summary: {
+              parts: [
+                person(actorId, 'possessive'),
+                ` action ${entry.status} at simulation time ${world.simTime}: ${activityRecordText(entry.view)}`,
+              ],
+            },
+            entityIds: [actorId],
+          },
+          activityRecordingContext(entry),
+        ),
+      );
   }
-  entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = entry.resultMemoryId;
+  entityGet(world.entities, actorId)!.actor!.agency.lastResultEvidence = entry.resultEvidence;
   const cursor = world.actionExperience.learning[actorId]!;
   if (!cursor.pending.includes(entry.id)) cursor.pending.push(entry.id);
   if (cursor.pending.length > ACTIVITY_LIMITS.page) cursor.pending.shift();
-  return entry.resultMemoryId;
+  return entry.resultEvidence;
 }
 function applyActivityResult(world: WorldState, entry: ActivityOccurrence, result: Outcome): void {
   entry.status = result.ok ? 'completed' : result.code === 'cancelled' ? 'cancelled' : 'blocked';
@@ -920,10 +1033,10 @@ function applyActivityResult(world: WorldState, entry: ActivityOccurrence, resul
   entry.view.result = result.message;
   const last = entry.view.children?.at(-1);
   if (last && !last.result) last.result = result.message;
-  for (const fact of entry.view.facts) {
-    if (fact.name === 'health') fact.name = 'health before the attempt';
-    if (fact.name === 'distance') fact.name = 'distance before the attempt';
-  }
+  const priorFactNames: Readonly<Record<string, string>> =
+    selectedOrdinaryActionRules(world).beforeAttemptFacts;
+  for (const fact of entry.view.facts)
+    if (Object.hasOwn(priorFactNames, fact.name)) fact.name = priorFactNames[fact.name]!;
   entry.view.facts.push(...activityResultFacts(world, entry.outputs));
 }
 /** Refuse an unsaveable native capture before it replaces work or spends resources. */
@@ -965,7 +1078,7 @@ export function activityCompletionProblem(
     recordConsumedSources(proposed, sources, material.quantity, ambiguous);
   }
   applyActivityResult(world, proposed, result);
-  proposed.resultMemoryId ??= `memory-${Number.MAX_SAFE_INTEGER}`;
+  proposed.resultEvidence ??= accountResultEvidence(`memory-${Number.MAX_SAFE_INTEGER}`);
   return activityRecordProblem(proposed);
 }
 /** Executable fields are closed even when a save or a model supplies extra JSON.
@@ -1388,7 +1501,7 @@ export function validateActionExperience(world: WorldState): void {
         (rule.kind === 'text' &&
           rule.commandFields.some((field) => nativeBindingKind(field) !== 'text')) ||
         (rule.kind === 'self' &&
-          (rule.commandFields.some((field) => !['sourceId', 'destinationId'].includes(field)) ||
+          (rule.commandFields.some((field) => !activitySelfBinding(field)) ||
             rule.definitionId !== undefined ||
             rule.entityKind !== undefined ||
             rule.maximumHealth !== undefined ||
@@ -1465,7 +1578,10 @@ export function validateActionExperience(world: WorldState): void {
         ids.has(entry.id) ||
         entry.actorId !== actorId ||
         !isSafeRecordId(entry.actionId) ||
-        (entry.resultMemoryId !== undefined && !isSafeRecordId(entry.resultMemoryId)) ||
+        (entry.resultEvidence !== undefined &&
+          (!validResultEvidence(entry.resultEvidence, actorId) ||
+            (entry.resultEvidence.kind === 'recent' &&
+              entry.resultEvidence.subject !== entry.id))) ||
         (entry.parentId !== undefined && !isSafeRecordId(entry.parentId)) ||
         (entry.parentName !== undefined &&
           (typeof entry.parentName !== 'string' ||
@@ -1474,7 +1590,7 @@ export function validateActionExperience(world: WorldState): void {
         (entry.methodId !== undefined && !state.methods[entry.methodId]) ||
         entry.command.id !== entry.id ||
         entry.command.actorId !== actorId ||
-        !isRecordedActivityCommand(entry.command) ||
+        !isRecordedActivityCommand(entry.command, activityCommandSyntax(world)) ||
         (entry.command.chosenPurpose !== undefined &&
           !validResponsePurpose(entry.command.chosenPurpose)) ||
         !Number.isFinite(entry.at) ||

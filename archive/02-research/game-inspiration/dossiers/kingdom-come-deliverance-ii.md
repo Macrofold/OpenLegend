@@ -8,7 +8,7 @@ Warhorse's sequel launched February 4, 2025 for PC, PS5 and Xbox Series consoles
 
 Royal Edition includes three delivered story expansions, additional equipment and The Lion's Crest. The Saga package also contains the first game and its expansions; those earlier systems must not be silently assigned to the sequel. [Publisher](#s-publisher) A **Switch 2 Royal Edition was announced in September 2026 for 2027**. Its proposed mouse controls and enlarged menus are future-port features, not evidence of shipped performance. The follow-up retrieved the primary announcement again and confirmed those future-tense boundaries; its malformed resolution text is still excluded. [Portable announcement](#s-port)
 
-The central analytical distinction is between **permission to attempt**, **practical competence**, and **social acceptance**. A road may be open while Henry is hungry, poorly equipped or unwelcome at its destination. Initial vulnerability contrasts with later resources, habits and relationships. This explains why mundane preparation can become meaningful without assuming all friction is beneficial.
+The central analytical distinction is between **permission to attempt**, **practical ability**, and **social acceptance**. A road may be open while Henry is hungry, poorly equipped or unwelcome at its destination. Initial vulnerability contrasts with later resources, habits and relationships. This explains why mundane preparation can become meaningful without assuming all friction is beneficial.
 
 ## Character development and action families
 
@@ -208,7 +208,7 @@ Narrower player testimony is available in quest comments: **GotrekAK** identifie
 
 **Evaluate friction over repeated use.** Critics differ on when rich routine becomes busywork. Study the first procedure, tenth repetition and late shortcut separately. Overall completion time cannot explain why the same action changes value.
 
-These hypotheses do not authorize implementation, copy names or settings, or establish OpenLegend architecture requirements.
+These hypotheses do not authorize implementation, copy names or settings, or establish Open Legend architecture requirements.
 
 ## Annotated sources and limits
 

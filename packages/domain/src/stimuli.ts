@@ -34,9 +34,13 @@ export interface ActiveStimulus {
 }
 
 /** Physical salience of one source under a policy: the strongest salient outward state. */
-export function stimulusSalience(entity: Entity, policy: StimulusPolicy): number {
+export function stimulusSalience(
+  world: Pick<WorldState, 'profile'>,
+  entity: Entity,
+  policy: StimulusPolicy,
+): number {
   let salience = 0;
-  for (const state of outwardStates(entity))
+  for (const state of outwardStates(world, entity))
     if (state) salience = Math.max(salience, policy.salience[state] ?? 0);
   return salience;
 }
@@ -59,10 +63,15 @@ export function activeStimuli(
   ]) {
     const source = entityGet(world.entities, sourceId);
     if (!source) continue;
-    const salience = stimulusSalience(source, policy);
+    const salience = stimulusSalience(world, source, policy);
     if (salience <= 0) continue;
     const seen = episodeStartedAt(episodes[sourceId]) ?? world.simTime;
-    salient.push({ sourceId, states: outwardStates(source).filter(Boolean), salience, seen });
+    salient.push({
+      sourceId,
+      states: outwardStates(world, source).filter(Boolean),
+      salience,
+      seen,
+    });
   }
   // A source that became salient while already in view (a fire lit) starts its period at the
   // observer's latest private outward-change record for it, not at first exposure. Only
@@ -86,10 +95,35 @@ export function activeStimuli(
         changedAt.set(entry.targetId, entry.at);
     }
   }
+  return activeStimuliFromRead(
+    world.simTime,
+    salient.map(({ sourceId, states, seen }) => ({
+      sourceId,
+      states,
+      since: Math.max(seen, changedAt.get(sourceId) ?? seen),
+    })),
+    policy,
+  );
+}
+
+/** A scoped native read supplies only the same visible states and actual private
+ * onset. It grants no sensing and carries no hidden target state to a model. */
+export interface StimulusRead {
+  readonly sourceId: string;
+  readonly states: readonly string[];
+  readonly since: number;
+}
+export function activeStimuliFromRead(
+  at: number,
+  inputs: readonly StimulusRead[],
+  policy: StimulusPolicy,
+): { stimuli: ActiveStimulus[]; omitted: number } {
   const stimuli: ActiveStimulus[] = [];
-  for (const { sourceId, states, salience, seen } of salient) {
-    const since = Math.max(seen, changedAt.get(sourceId) ?? seen);
-    const age = Math.max(0, world.simTime - since);
+  for (const { sourceId, states: inputStates, since } of inputs) {
+    const states = inputStates.filter(Boolean),
+      salience = Math.max(0, ...states.map((state) => policy.salience[state] ?? 0));
+    if (salience <= 0) continue;
+    const age = Math.max(0, at - since);
     const reviews = policy.reviewSeconds ? Math.floor(age / policy.reviewSeconds) : 0;
     stimuli.push({
       sourceId,

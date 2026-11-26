@@ -2,7 +2,7 @@
 
 **G19 · Complete research pass, September 26, 2026.** This dossier treats *Ultima Online* as a continuously operated virtual world whose rules changed substantially across 29 years. Historical mechanics are labeled where they differ from the current production shards. **New Legacy** is a separate seasonal shard/ruleset inside Ultima Online, not a replacement description for the main shards; Season 2 is scheduled for **October 15, 2026** and therefore remains future as of this research date. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Ultima Online is one of OpenLegend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its most famous failed subsystem—the original simulated ecology—is equally valuable: elegant simulation collapsed when actual players harvested creatures far more aggressively than the designers' assumptions.
+Ultima Online is one of Open Legend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its most famous failed subsystem—the original simulated ecology—is equally valuable: elegant simulation collapsed when actual players harvested creatures far more aggressively than the designers' assumptions.
 
 ## 1. Identity, release and current status
 
@@ -60,7 +60,7 @@ When a capped character gains a skill, points can be pulled from skills set to L
 
 So changing profession is not a respec token that erases the character. It is **learning one capability while allowing another to decay**.
 
-OpenLegend could use the same idea for:
+Open Legend could use the same idea for:
 - practiced skills;
 - forgotten expertise;
 - physical conditioning;
@@ -97,7 +97,7 @@ That gives the world causal legibility:
 - practice blacksmithing → become a blacksmith;
 - practice hiding → become better at hiding.
 
-**OpenLegend lesson:** when a capability has a natural practice action, use that action as progression evidence rather than routing everything through generic XP.
+**Open Legend lesson:** when a capability has a natural practice action, use that action as progression evidence rather than routing everything through generic XP.
 
 ### Grinding danger
 
@@ -201,7 +201,7 @@ UO later added additional schools such as:
 
 Different schools use different costs/requirements: Magery, Necromancy and Mysticism use reagents; Chivalry uses tithing; some others do not require reagents. [UO11](#uo11)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A “magic system” is richer when spells interact with:
 - travel;
@@ -291,7 +291,7 @@ Later crafting progression includes bulk-order jobs:
 - store/trade orders in Bulk Order Books;
 - sell individual orders through player vendors. [UO16](#uo16)
 
-### Why this matters for OpenLegend
+### Why this matters for Open Legend
 
 A profession becomes meaningful when:
 - it has inputs from the world;
@@ -321,7 +321,7 @@ This retains an important spatial fact:
 
 Search improves usability without fully deleting place.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Markets can preserve:
 - seller identity;
@@ -372,7 +372,7 @@ This is a rich design tension:
 - persistent property creates attachment;
 - permanent scarce property can crowd the world and entrench incumbents.
 
-OpenLegend should distinguish:
+Open Legend should distinguish:
 - private instanced property;
 - scarce public land;
 - creator/admin land;
@@ -401,7 +401,7 @@ This creates a sequence:
 
 Modern insurance softens item consequences, but the underlying death-state model is unusually diegetic.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Death does not have to be:
 > screen fades → reload checkpoint.
@@ -426,7 +426,7 @@ Restrictions matter:
 
 This is systemically powerful because **the item and property model actually allows theft** rather than treating inventory as metaphysically private.
 
-OpenLegend should borrow the principle only with clear consent/safety design:
+Open Legend should borrow the principle only with clear consent/safety design:
 - capability;
 - permission/ruleset;
 - witnesses;
@@ -454,7 +454,7 @@ The system connects:
 - travel permissions;
 - future combat vulnerability.
 
-### OpenLegend inspiration
+### Open Legend inspiration
 
 Crime should be **an interpreted event**:
 - who had jurisdiction?
@@ -478,13 +478,13 @@ They affect titles and some systems such as Chivalry/Necromancy. [UO26](#uo26)
 
 The **Virtue System** layers Ultima's eight virtues into gameplay. [UO27](#uo27)
 
-This is a more abstract morality layer than OpenLegend's intended observer-specific knowledge/reputation.
+This is a more abstract morality layer than Open Legend's intended observer-specific knowledge/reputation.
 
 The lesson is mixed:
 - broad moral identity is readable;
 - one global karma number can erase disagreement/context.
 
-OpenLegend should prefer:
+Open Legend should prefer:
 - per-person/faction beliefs;
 - evidence/provenance;
 - institutional law
@@ -526,7 +526,7 @@ A tamed creature is:
 - vulnerable enough to care about;
 - customized.
 
-OpenLegend can deepen this by adding:
+Open Legend can deepen this by adding:
 - memory;
 - personality;
 - needs;
@@ -561,7 +561,7 @@ The failure was a **model of player behavior**:
 - the game rewarded harvesting;
 - thousands of players optimized extraction.
 
-### OpenLegend application
+### Open Legend application
 
 Any simulated resource/ecology must be stress-tested against:
 - maximum harvesting;
@@ -588,7 +588,7 @@ It also became one of MMO design's enduring arguments:
 
 A GameFAQs Renaissance review from one player specifically argues the split damaged player towns/community; that is **one player interpretation**, not an established population-wide outcome. [UO32](#uo32)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Consent modes change the *social ecology*, not just damage flags.
 
@@ -607,7 +607,7 @@ then:
 
 matter differently.
 
-OpenLegend can support worlds with different governance/violence contracts instead of assuming one universal risk model.
+Open Legend can support worlds with different governance/violence contracts instead of assuming one universal risk model.
 
 ## 18. Guilds, factions and player society
 
@@ -632,7 +632,7 @@ Housing + trade + guild identity + PvP + speech + persistent names already allow
 - territorial identity;
 - reputational knowledge.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 AI inhabitants can make those institutions persist even with one human player:
 - town councils;
@@ -642,7 +642,7 @@ AI inhabitants can make those institutions persist even with one human player:
 - family obligations;
 - religious organizations.
 
-UO shows the power of the substrate; OpenLegend can supply persistent non-player society inside it.
+UO shows the power of the substrate; Open Legend can supply persistent non-player society inside it.
 
 ## 19. NPCs and AI
 
@@ -663,9 +663,9 @@ Current player-owned vendor NPCs have highly bounded functions; they are not aut
 
 The world feels social primarily because of **other human players**, not because NPCs possess deep cognition.
 
-This is the key OpenLegend contrast:
+This is the key Open Legend contrast:
 - UO gives strong **economic/legal/object/world affordances**;
-- OpenLegend aims to give inhabitants much stronger **memory/planning/conversation** inside similar affordances.
+- Open Legend aims to give inhabitants much stronger **memory/planning/conversation** inside similar affordances.
 
 ## 20. World map, travel and dungeons
 
@@ -692,7 +692,7 @@ Third Dawn's Ilshenar deliberately disabled Mark/Recall/Gate travel in its revie
 This is a useful pattern:
 - **the same engine can give regions different mobility laws**.
 
-OpenLegend world packages can similarly define:
+Open Legend world packages can similarly define:
 - teleport prohibited;
 - flight impossible;
 - magic unstable;
@@ -815,13 +815,13 @@ As of this research date:
 
 Do not write as though Season 2 is already live.
 
-### OpenLegend comparison
+### Open Legend comparison
 
 New Legacy demonstrates:
 - same underlying world/content;
 - alternate progression/persistence contract.
 
-OpenLegend can support:
+Open Legend can support:
 - persistent main worlds;
 - seasonal scenario worlds;
 - challenge worlds
@@ -951,9 +951,9 @@ This dossier adds the broader context:
 - UO succeeded as a virtual world despite this subsystem failing;
 - player economies and social systems worked partly because they *embraced* optimization and human incentives rather than assuming ecologically gentle behavior.
 
-OpenLegend should stress-test every simulated commons against adversarial use.
+Open Legend should stress-test every simulated commons against adversarial use.
 
-## 29. Transferable inspiration for OpenLegend
+## 29. Transferable inspiration for Open Legend
 
 ### A. Make professions own real world capability
 
@@ -964,7 +964,7 @@ The UO chain:
 
 is powerful because each step is a world fact.
 
-OpenLegend can do this for:
+Open Legend can do this for:
 - medicine;
 - construction;
 - farming;
@@ -995,7 +995,7 @@ UO houses distinguish:
 - secure container access;
 - vendor tenancy.
 
-OpenLegend's object/place permission model can support:
+Open Legend's object/place permission model can support:
 - homes;
 - guild halls;
 - labs;
@@ -1007,7 +1007,7 @@ OpenLegend's object/place permission model can support:
 
 Vendor Search improves convenience while preserving that the item belongs to a vendor at a house.
 
-OpenLegend can expose search without collapsing all commerce into an omnipresent store UI.
+Open Legend can expose search without collapsing all commerce into an omnipresent store UI.
 
 ### E. Death can create a social recovery state
 
@@ -1017,7 +1017,7 @@ Ghost → healer/player resurrection → corpse recovery creates:
 - rescue;
 - memory.
 
-OpenLegend can make death consequences world-specific rather than defaulting to save reload.
+Open Legend can make death consequences world-specific rather than defaulting to save reload.
 
 ### F. Crime requires ownership + witnesses/knowledge + institutions
 
@@ -1057,7 +1057,7 @@ It also produces:
 - scarce land;
 - inactive-owner problems.
 
-OpenLegend needs explicit land/property lifecycle policies.
+Open Legend needs explicit land/property lifecycle policies.
 
 ### I. Let worlds choose their risk contract
 
@@ -1093,7 +1093,7 @@ Twenty-nine years of:
 
 creates enormous complexity.
 
-OpenLegend's invention packs need:
+Open Legend's invention packs need:
 - provenance;
 - versioning;
 - dependency visibility;

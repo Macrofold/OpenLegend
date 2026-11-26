@@ -1,12 +1,12 @@
-# PlayCanvas, Godot, and the engine decision for OpenLegend
+# PlayCanvas, Godot, and the engine decision for Open Legend
 
 **Research date:** 17 October 2026. **Reviewed:** 17 October 2026. **Status:** proposed recommendation within the accepted browser-only product direction, not an engine decision or a migration plan accepted by the project.
 
 ## Recommendation
 
-Keep PlayCanvas as the current production default and improve the asset, lighting, animation, UI, and visual-review workflows around it. Run a bounded comparison with Godot or another authoring environment when it can answer a specific question about visual iteration, animation, scene assembly, contributor access, or browser delivery. A useful experiment does not require first proving that PlayCanvas prevents a feature. OpenLegend's accepted distribution remains browser-only; assess alternatives against the [platform and offline decision](../../../docs/projects/completed/platform-and-offline-decision-brief.md).
+Keep PlayCanvas as the current production default and improve the asset, lighting, animation, UI, and visual-review workflows around it. Run a bounded comparison with Godot or another authoring environment when it can answer a specific question about visual iteration, animation, scene assembly, contributor access, or browser delivery. A useful experiment does not require first proving that PlayCanvas prevents a feature. Open Legend's accepted distribution remains browser-only; assess alternatives against the [platform and offline decision](../../../docs/projects/completed/platform-and-offline-decision-brief.md).
 
-This recommendation follows OpenLegend's existing architecture and immediate gameplay priorities. It is not a claim that PlayCanvas is universally superior. The project already has a renderer-independent authoritative world, a browser client, direct PlayCanvas scene code, React interfaces, and substantial presentation work. Its next goal is a convincing playable loop in which survival needs lead to useful invention and independent characters create consequences. Rebuilding the client must earn its place against that work. See [architecture](../../../docs/architecture.md), [engine and world boundaries](../../../docs/engine-and-world-boundaries.md), and [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md).
+This recommendation follows Open Legend's existing architecture and immediate gameplay priorities. It is not a claim that PlayCanvas is universally superior. The project already has a renderer-independent authoritative world, a browser client, direct PlayCanvas scene code, React interfaces, and substantial presentation work. Its next goal is a convincing playable loop in which survival needs lead to useful invention and independent characters create consequences. Rebuilding the client must earn its place against that work. See [architecture](../../../docs/architecture.md), [engine and world boundaries](../../../docs/engine-and-world-boundaries.md), and [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md).
 
 The linked skills catalog is not evidence that we chose the wrong engine. PlayCanvas has an official collection with more relevant instructions than that catalog's omission suggests.
 
@@ -18,11 +18,11 @@ GitHub metadata puts the catalog's creation on 24 June 2026, and the official Pl
 
 The [official PlayCanvas skills repository](https://github.com/playcanvas/skills/tree/38d8fa75ab56d628dc2dac7daea5383aee783903) has 16 actual skill files covering application conventions, official examples and reusable scripts, GLB inspection, model calibration, animation, asset loading, lighting, effects, runtime inspection, image verification, draw calls, shader modifications, and baking. They support code-based Engine, React, and web-component workflows. They are authoring instructions and helper scripts, not a new runtime dependency. See [the official guide](https://developer.playcanvas.com/user-manual/getting-started/use-playcanvas-skills/) and the [tooling review](04-skills-and-tooling.md).
 
-One compatibility detail matters immediately: OpenLegend pins PlayCanvas **2.22.2**, while the current official `inspect-runtime` skill requires **2.23 or newer**. If the inspector would resolve a useful scene problem, include the engine update and regression risk in the proposed trial. Tool availability alone does not establish the benefit of that update. [Client dependencies](../../../apps/client/package.json), [runtime inspection skill](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md).
+One compatibility detail matters immediately: Open Legend pins PlayCanvas **2.22.2**, while the current official `inspect-runtime` skill requires **2.23 or newer**. If the inspector would resolve a useful scene problem, include the engine update and regression risk in the proposed trial. Tool availability alone does not establish the benefit of that update. [Client dependencies](../../../apps/client/package.json), [runtime inspection skill](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/inspect-runtime/SKILL.md).
 
 ## Start from the engine arrangement we actually have
 
-OpenLegend uses the standalone PlayCanvas Engine directly. `scene.ts` imports PlayCanvas and implements the wilderness presentation; the client package uses React and React Aria but does not depend on `@playcanvas/react`. Thus “React versus PlayCanvas” is the wrong distinction for this client: React renders the surrounding interface, and PlayCanvas renders the world. [Client dependencies](../../../apps/client/package.json), [scene implementation](../../../apps/client/src/scene.ts).
+Open Legend uses the standalone PlayCanvas Engine directly. `scene.ts` imports PlayCanvas and implements the wilderness presentation; the client package uses React and React Aria but does not depend on `@playcanvas/react`. Thus “React versus PlayCanvas” is the wrong distinction for this client: React renders the surrounding interface, and PlayCanvas renders the world. [Client dependencies](../../../apps/client/package.json), [scene implementation](../../../apps/client/src/scene.ts).
 
 The scene includes lit camera-facing sprites, actual 3D scenery, shadows, and a mercenary model path. It would be inaccurate to describe every 3D capability as hypothetical. The broader [3D pixel-art feature proposal](../../../docs/projects/3d-pixel-art-feature-spec.md) and [asset-pipeline proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md) set out additional staged work; their ambitions should not be confused with everything already delivered.
 
@@ -38,7 +38,7 @@ PlayCanvas explicitly supports HTML/CSS overlays in code-based applications and 
 
 That establishes capability, not automatic quality or unlimited performance. Many translucent overlays, expensive effects, unnecessary DOM work, and poor input coordination can still degrade a browser game. The relevant question is whether our actual interface has those problems, measured in the complete running client. Switching engines before that diagnosis changes too many variables.
 
-OpenLegend already has a design system and current design direction: a world-first interface, item-centered inventory, restrained forest/ivory/sage/gold colors, a distinction between utility icons and world art, and accessible interaction components. The hypothesis to investigate is inconsistent execution and insufficient shared visual references, assets, and review, rather than the absence of all design guidance. [Current UI brief](../../../docs/ui-design-brief.md), [UI foundations](../../../docs/ui-ux/foundations.md), [inventory](../../../docs/ui-ux/inventory.md), [client design system](../../../apps/client/src/design-system/README.md).
+Open Legend already has a design system and current design direction: a world-first interface, item-centered inventory, restrained forest/ivory/sage/gold colors, a distinction between utility icons and world art, and accessible interaction components. The hypothesis to investigate is inconsistent execution and insufficient shared visual references, assets, and review, rather than the absence of all design guidance. [Current UI brief](../../../docs/ui-design-brief.md), [UI foundations](../../../docs/ui-ux/foundations.md), [inventory](../../../docs/ui-ux/inventory.md), [client design system](../../../apps/client/src/design-system/README.md).
 
 The current UI brief also supersedes older transcript-oriented descriptions. An imported fantasy dashboard template that crowds out the world would fail this brief even if its borders were beautiful.
 
@@ -52,7 +52,7 @@ Godot is a credible option with shipped games, not a fallback for unsuccessful d
 
 Its strongest relevant advantages are integrated visual authoring and game-oriented resources:
 
-| Area                | What Godot supplies                                                                                            | Why it could matter to OpenLegend                                                                                                                  |
+| Area                | What Godot supplies                                                                                            | Why it could matter to Open Legend                                                                                                                  |
 | ------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Interface authoring | Reusable Theme resources with fonts, icons, colors, style boxes, and live preview of controls and states.      | A designer can inspect an inventory family inside one editor. This is an authoring advantage, not a guarantee of better illustration or hierarchy. |
 | Animation           | AnimationPlayer resources plus AnimationTree state machines, blend trees, blend spaces, and one-shot playback. | Complex authored character motion can be reviewed and adjusted visually. Good imported rigs and clip contracts remain necessary.                   |
@@ -67,7 +67,7 @@ These are useful reasons for a focused prototype whenever the expected authoring
 
 The current stable export documentation specifies WebAssembly and WebGL 2 with the Compatibility renderer, not the Forward+ or Mobile renderers. Godot 4 C# projects cannot currently export to the web. Single-threaded export has been available since 4.3 and is now the default; optional threading and extensions bring cross-origin-isolation requirements. Browser audio offers a low-latency sample path with feature limits and a stream path with different latency tradeoffs. Browser networking also has platform constraints. These must be checked on the chosen export, browser, and device. [Godot web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html).
 
-It is therefore inaccurate both to say “Godot cannot run in a browser” and to imply that all native Godot capabilities transfer unchanged to the web. This research did not measure its download, startup, memory, frame time, or audio latency against OpenLegend. No numerical performance ranking is justified.
+It is therefore inaccurate both to say “Godot cannot run in a browser” and to imply that all native Godot capabilities transfer unchanged to the web. This research did not measure its download, startup, memory, frame time, or audio latency against Open Legend. No numerical performance ranking is justified.
 
 Godot can communicate with JavaScript through JavaScriptBridge, including callbacks and external libraries. Keeping a React interface around a Godot canvas is possible. It introduces an explicit communication boundary, callback lifetime and value conversion concerns, and two presentation systems to package and verify. It does not make the interface redesign free. [JavaScriptBridge](https://docs.godotengine.org/en/stable/tutorials/platform/web/javascript_bridge.html).
 
@@ -87,7 +87,7 @@ Unity's current 6.6 web documentation is more nuanced than older blanket claims 
 
 The official Unreal browser route investigated here is Pixel Streaming: an Unreal application runs on a host and sends rendered frames/audio to browser clients, which send input back. That can serve demanding visuals, but it moves rendering to hosted infrastructure and introduces transport latency and session-capacity work. It is not equivalent to distributing the current client to render locally in each player's browser. [Epic Pixel Streaming overview](https://dev.epicgames.com/documentation/en-us/unreal-engine/pixel-streaming-in-unreal-engine), [infrastructure](https://dev.epicgames.com/documentation/unreal-engine/pixel-streaming-infrastructure).
 
-Deep editor tooling or authored cinematics can justify an authoring comparison, but native-only advantages do not satisfy OpenLegend's accepted browser-only distribution. Any proposal to change that product decision belongs with its [existing owner](../../../docs/projects/completed/platform-and-offline-decision-brief.md). The cited clone video's UI supplies no such argument.
+Deep editor tooling or authored cinematics can justify an authoring comparison, but native-only advantages do not satisfy Open Legend's accepted browser-only distribution. Any proposal to change that product decision belongs with its [existing owner](../../../docs/projects/completed/platform-and-offline-decision-brief.md). The cited clone video's UI supplies no such argument.
 
 ## What migration would actually require
 
@@ -95,7 +95,7 @@ The authoritative TypeScript world may remain largely reusable behind the existi
 
 - Scene construction, model loading, material setup, and resource cleanup.
 - World camera behavior, picking, targeting, construction previews, and pointer routing.
-- Lit sprites, relief effects, read-through visibility, shadows, day/night presentation, and actual 3D models.
+- Lit sprites, relief effects, see-through reveal visibility, shadows, day/night presentation, and actual 3D models.
 - Animation graphs, clip binding, asset scale/pivot conventions, and export round trips.
 - React/engine data exchange or a deliberate UI rewrite.
 - Browser packaging, loading, device behavior, and diagnostics.

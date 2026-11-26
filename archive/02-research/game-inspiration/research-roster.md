@@ -115,7 +115,7 @@ Read [requirements](research-requirements.md), [earlier research progress](resea
 | G108 | Octopath Traveler II | `octopath-traveler-ii.md` | Added as a high-value sequel contrast; revised path actions, latent powers, jobs, day/night, crossed paths and world structure. |
 | G109 | Star Wars: Knights of the Old Republic | `star-wars-knights-of-the-old-republic.md` | Classes/Feats/Force powers, party, alignment, dialogue, equipment, quests, planets and consequences. |
 | G110 | Star Wars: Knights of the Old Republic II — The Sith Lords | `star-wars-knights-of-the-old-republic-ii.md` | Added as a high-value sequel contrast; influence, companions, crafting/upgrades, Force alignment, restored-content boundary and narrative reactivity. |
-| G111 | The Legend of Zelda: Tears of the Kingdom | `the-legend-of-zelda-tears-of-the-kingdom.md` | Curated OpenLegend-relevant addition: Ultrahand/Fuse/Recall/Ascend, Zonai devices, physics construction, world layers and systemic experimentation. |
+| G111 | The Legend of Zelda: Tears of the Kingdom | `the-legend-of-zelda-tears-of-the-kingdom.md` | Curated Open Legend-relevant addition: Ultrahand/Fuse/Recall/Ascend, Zonai devices, physics construction, world layers and systemic experimentation. |
 | G112 | Fallout: New Vegas | `fallout-new-vegas.md` | Curated addition: factions/reputation, skills/perks, dialogue/quests, companions, survival/crafting and consequence-heavy world structure. |
 | G113 | The Elder Scrolls III: Morrowind | `the-elder-scrolls-iii-morrowind.md` | Curated addition: skills-by-use, spellmaking/enchanting, factions/reputation, travel, hand-authored world knowledge and permissive simulation. |
 | G114 | Kingdom Come: Deliverance II | `kingdom-come-deliverance-ii.md` | Curated addition: needs, reputation/crime, skills, crafting, layered NPC/world simulation, historical questing and systemic interaction. |
@@ -254,7 +254,7 @@ G167 adds Starfield without renumbering any earlier subject. Its [dossier](dossi
 
 Mike requested five notable successful and five unsuccessful mobile games, motivated by Umamusume's reported lifetime spending. G168–G172 cover five sustained commercial successes across different kinds of play; G173–G177 cover five released services whose publishers ended operation. Shutdown establishes a discontinued service, not automatically an accounting loss, bad design or a particular cause. The dossiers test these distinctions using dated, scoped evidence.
 
-Each subject receives an independent R01–R14 pass and conditional R15 screen. The [mobile research ledger](research-progress-mobile-2026-10-17.md) owns the sequence, completion and limitations. Other queued subjects and earlier whole-library gates remain outside this task. These additions do not authorize OpenLegend implementation or a change to its platform or business model.
+Each subject receives an independent R01–R14 pass and conditional R15 screen. The [mobile research ledger](research-progress-mobile-2026-10-17.md) owns the sequence, completion and limitations. Other queued subjects and earlier whole-library gates remain outside this task. These additions do not authorize Open Legend implementation or a change to its platform or business model.
 
 ## Supplementary tabletop research
 
@@ -266,7 +266,7 @@ G179 Sea of Thieves and G180 ATLAS are newly authorized full-game subjects. Appl
 
 ## October 20 tactical RPG and character-history study
 
-Mike requested full research into the five games suggested by the supplied RPG video: existing **G121 Battle Brothers**, plus **G181–G184**. Battle Brothers retains its identity and earlier material; it is not counted twice. The four additions bring the inventory to **184 subjects**. The [scoped ledger](research-progress-tactical-rpgs-2026-10-20.md) owns completed coverage and evidence limits; the [comparison](essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) connects the findings to OpenLegend's independent people, useful progression and playable adventure. These are research hypotheses, not approved new gameplay contracts. Other video subjects remain contextual leads, and the unrelated G150–G166 queue remains unchanged.
+Mike requested full research into the five games suggested by the supplied RPG video: existing **G121 Battle Brothers**, plus **G181–G184**. Battle Brothers retains its identity and earlier material; it is not counted twice. The four additions bring the inventory to **184 subjects**. The [scoped ledger](research-progress-tactical-rpgs-2026-10-20.md) owns completed coverage and evidence limits; the [comparison](essays/tactical-rpgs-character-histories-and-commercial-outcomes.md) connects the findings to Open Legend's independent people, useful progression and playable adventure. These are research hypotheses, not approved new gameplay contracts. Other video subjects remain contextual leads, and the unrelated G150–G166 queue remains unchanged.
 
 ## October 26 Crimson Desert addition
 

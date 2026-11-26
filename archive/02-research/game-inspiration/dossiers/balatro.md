@@ -1,6 +1,6 @@
 # Balatro — full research dossier
 
-**G42 · Research pass and targeted audit remedies, September 26, 2026.** This dossier covers the shipped base-game grammar and separately identified platform/mobile/cosmetic releases. It does **not** invent a shipped “2.0” or major gameplay expansion that could not be verified in the official announcement history available during the research. The audit corrects target selection and platform chronology and replaces untraceable reception generalizations with actually inspected accounts. The prior chapter and detailed scoring-operators study remain preserved owners for earlier examples and low-level activation analysis. OpenLegend adaptations below are research interpretations, not accepted implementation requirements; no gameplay or compatibility test is claimed.
+**G42 · Research pass and targeted audit remedies, September 26, 2026.** This dossier covers the shipped base-game grammar and separately identified platform/mobile/cosmetic releases. It does **not** invent a shipped “2.0” or major gameplay expansion that could not be verified in the official announcement history available during the research. The audit corrects target selection and platform chronology and replaces untraceable reception generalizations with actually inspected accounts. The prior chapter and detailed scoring-operators study remain preserved owners for earlier examples and low-level activation analysis. Open Legend adaptations below are research interpretations, not accepted implementation requirements; no gameplay or compatibility test is claimed.
 
 [Preserved overview](../games/balatro.md) · [Detailed mechanics study](../mechanics/balatro-scoring-operators-risk-and-readable-combinations.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
@@ -44,7 +44,7 @@ This creates the central rhythm:
 4. encounter a stronger or differently constrained test;
 5. adapt or fail.
 
-OpenLegend can borrow the general rhythm without copying run resets: let a system periodically **test the assumptions** of a player's construction.
+Open Legend can borrow the general rhythm without copying run resets: let a system periodically **test the assumptions** of a player's construction.
 
 ## 3. Playing cards are ingredients, not the main source of identity
 
@@ -65,7 +65,7 @@ The detailed mechanics study preserves examples:
 
 The key design move is that the same object can matter through different verbs.
 
-**OpenLegend implication:** an object system becomes richer when one item can participate in use, hold, equip, discard, break, transform, lend, display, sacrifice and combine. Avoid creating a bespoke object type for every interaction.
+**Open Legend implication:** an object system becomes richer when one item can participate in use, hold, equip, discard, break, transform, lend, display, sacrifice and combine. Avoid creating a bespoke object type for every interaction.
 
 ## 4. Poker hands become upgradeable recipes
 
@@ -144,7 +144,7 @@ The two effects sound similar — “copy a Joker” — but they create differe
 
 **Constructed counterexample:** a compatible scoring Joker sits second while an incompatible utility Joker occupies the left edge. Buying Brainstorm does not automatically select the scoring Joker. The player must rearrange the layout, choose another target or accept that this copy is presently unproductive. Selection and eligibility are different operations.
 
-**OpenLegend application:** a copying spell/device/procedure should specify target binding, copied facet, duration, exclusions, ownership and cost. “Copy object” is too broad to be a useful primitive.
+**Open Legend application:** a copying spell/device/procedure should specify target binding, copied facet, duration, exclusions, ownership and cost. “Copy object” is too broad to be a useful primitive.
 
 ## 8. Retriggering turns one condition into a reusable payoff
 
@@ -157,7 +157,7 @@ If the first scoring card is also the qualifying face card, Photograph can trigg
 
 The meaningful design unit is an **eligibility condition** plus a **repeat operator**. The same retrigger effect can discover different partners later. [BA-D](#ba-d)
 
-This is the sort of reusable grammar OpenLegend should favor over bespoke “combo recipes.”
+This is the sort of reusable grammar Open Legend should favor over bespoke “combo recipes.”
 
 ## 9. Consumables: modify the ingredients, recipe or run
 
@@ -195,7 +195,7 @@ Balatro therefore has several modification scopes:
 - shop/economy;
 - whole run.
 
-OpenLegend should similarly model effect scope explicitly.
+Open Legend should similarly model effect scope explicitly.
 
 ## 11. Money, shops and opportunity cost
 
@@ -216,7 +216,7 @@ Therefore a strong purchase has two costs:
 
 This makes “don't buy anything” a meaningful economic action.
 
-**OpenLegend lesson:** an economy becomes more strategic when capital has liquidity value and future-option value, not only immediate purchasing power.
+**Open Legend lesson:** an economy becomes more strategic when capital has liquidity value and future-option value, not only immediate purchasing power.
 
 ## 12. Booster packs and probabilistic selection
 
@@ -224,7 +224,7 @@ Booster packs reveal a small choice set rather than simply awarding one random o
 
 The player can often inspect candidates and choose one or some. This is a useful compromise between deterministic build planning and random discovery.
 
-OpenLegend random generation can similarly offer **constrained options + visible tradeoffs** rather than opaque loot rolls.
+Open Legend random generation can similarly offer **constrained options + visible tradeoffs** rather than opaque loot rolls.
 
 ## 13. Skipping Blinds: sacrifice reward for a different reward
 
@@ -244,7 +244,7 @@ This can be exciting because it forces adaptation, or frustrating when it hard-c
 
 PC Gamer's review notes both sides, including a recovery where the reviewer sold parts of a construction to finance rerolls and survive. [BA-F](#ba-f)
 
-**OpenLegend lesson:** distinguish a challenge to a plan from arbitrary invalidation of a plan. Counterplay is strongest when warning and alternatives exist and the player can trade something meaningful to adapt.
+**Open Legend lesson:** distinguish a challenge to a plan from arbitrary invalidation of a plan. Counterplay is strongest when warning and alternatives exist and the player can trade something meaningful to adapt.
 
 ## 15. Deck editing changes probability, not only power
 
@@ -266,7 +266,7 @@ A smaller focused deck can be stronger than a larger deck full of individually g
 
 This is an important transferable pattern: removing options can improve a system by increasing the probability of the options you actually want.
 
-OpenLegend inventories, abilities and agent toolsets may benefit from pruning, specialization and prioritization, not only accumulation.
+Open Legend inventories, abilities and agent toolsets may benefit from pruning, specialization and prioritization, not only accumulation.
 
 ## 16. Run failure and meta progression
 
@@ -290,7 +290,7 @@ The most important persistent progression is **player knowledge**:
 - what a Boss can punish;
 - how economy compounds.
 
-OpenLegend likely wants durable world/character state, but it can still borrow systems whose mastery lives partly in the player and rules stable enough that knowledge itself is progress.
+Open Legend likely wants durable world/character state, but it can still borrow systems whose mastery lives partly in the player and rules stable enough that knowledge itself is progress.
 
 ## 17. Decks, Stakes, Challenges and seeded play
 
@@ -306,7 +306,7 @@ Together these create replayability, comparable experiments, community discussio
 
 In a heavily random game, a seed lets multiple players compare route, choices, build and outcome under the same generated conditions.
 
-OpenLegend could use deterministic world seeds/receipts similarly for reproduction, debugging, challenge sharing and benchmark scenarios.
+Open Legend could use deterministic world seeds/receipts similarly for reproduction, debugging, challenge sharing and benchmark scenarios.
 
 ## 18. Story and social systems: largely absent by design
 
@@ -351,7 +351,7 @@ The presentation makes huge scores feel physical:
 
 The detailed study notes LocalThunk's own timeline describing early card-art work, commissioned music by Luis Clemente and a friend's suggestion for the flaming score effect. [BA-D](#ba-d)
 
-**OpenLegend lesson:** when many systems compose, explanation is presentation. Do not merely show the final consequence; show what triggered, in what order and why.
+**Open Legend lesson:** when many systems compose, explanation is presentation. Do not merely show the final consequence; show what triggered, in what order and why.
 
 ## 20. Production: from hobby project to public-feedback game
 
@@ -559,7 +559,7 @@ These are constructed rules-based illustrations, not a claim of personal play.
 
 **Lesson:** counterplay is compelling when the player can trade something meaningful for adaptation.
 
-## 27. Transferable inspiration for OpenLegend
+## 27. Transferable inspiration for Open Legend
 
 ### A. Favor operators over content inflation
 
@@ -578,7 +578,7 @@ Invisible evaluation order feels like a bug. Visible order becomes strategy.
 
 ### D. Different modification scopes should compose
 
-OpenLegend inventions can target object, actor, action, event, area, relationship, rule or institution. Scope is part of the mechanic.
+Open Legend inventions can target object, actor, action, event, area, relationship, rule or institution. Scope is part of the mechanic.
 
 ### E. Pruning is a design tool
 
@@ -590,7 +590,7 @@ A world can challenge a strategy without pretending the player's accumulated inv
 
 ### G. A demo/test world should expose repetition, not only spectacle
 
-Balatro's content-limited replayable demo showed the actual discovery loop. An OpenLegend demo should let a player try, combine, fail, retry and see different outcomes.
+Balatro's content-limited replayable demo showed the actual discovery loop. An Open Legend demo should let a player try, combine, fail, retry and see different outcomes.
 
 ### H. System-generated stories need readable causality
 

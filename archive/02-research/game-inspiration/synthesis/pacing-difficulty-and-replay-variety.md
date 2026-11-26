@@ -14,7 +14,7 @@ How do challenges and possibilities stay well matched as players learn?
 
 ## Ownership boundary
 
-Owns challenge and temporal structure. Motivations/compulsion belong to FUN, reset consequences to LOSS, and update cadence to LIVE. This is research, not an approved OpenLegend specification.
+Owns challenge and temporal structure. Motivations/compulsion belong to FUN, reset consequences to LOSS, and update cadence to LIVE. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -72,7 +72,7 @@ Use the [source and goal map](source-and-goal-map.md#topic-pacing) to locate rel
 
 For a comparative test, offer a more demanding inner route after reconnaissance and make its expected commitment visible. One participant may practice it repeatedly; another may stop after mapping the entrance. A later return should preserve what each learned without assuming they remember every cue or menu setting. Observe preparation, route choice, attempt length, recovery and the reason for stopping. These observations would distinguish a welcome challenge from friction without assigning a universal ideal session length.
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 Compare a repeatable outing, a deliberately finite project and an optional harder route within an existing selected activity. Test whether mastery leaves useful choices or only repeated administration. Campaign replay does not establish how shared calendars, durable homes or participants with different attendance patterns should work.
 
@@ -80,7 +80,7 @@ Compare a repeatable outing, a deliberately finite project and an optional harde
 
 The sampled accounts reveal possibilities, not completion rates or an ideal session length. Track where actual players choose to stop, what they remember on return, and which difficulty they seek. Broader evidence on adaptive pacing, procedural variety and asynchronous shared-world pressure remains open. G77’s public accounts are selected contrasts, not a controlled study. Its dated interface complaints must be read with the dossier’s current patch record before being used to claim present feature absences.
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Quiet life, wanted pressure and worthwhile stopping
 

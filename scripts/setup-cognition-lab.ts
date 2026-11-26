@@ -1,17 +1,22 @@
-import { readConfig } from '../apps/server/src/config.js';
+import { readStorageLocation } from '../apps/server/src/storage-location.js';
 import { provisionCognitionLab } from '../apps/server/src/cognition-lab-setup.js';
+import { localLabEnvironment } from './lab-environment.mjs';
 
 try {
-  await provisionCognitionLab(readConfig());
-  console.log(
-    'Cognition Lab database and directory are ready. Game data and AI defaults are unchanged.',
+  const game = readStorageLocation();
+  const lab = localLabEnvironment(process.env);
+  await provisionCognitionLab(
+    game.databaseUrl,
+    lab.OPEN_LEGEND_LAB_DATABASE_URL!,
+    game.dataDirectory,
+    lab.OPEN_LEGEND_LAB_DATA_DIR!,
   );
+  console.log('The local Cognition Lab database and checkpoint directory are ready.');
 } catch (error) {
-  // Driver failures can contain connection details. Expose only our actionable configuration errors.
-  const message =
-    error instanceof Error && !('code' in error)
+  console.error(
+    error instanceof Error && !('code' in error) && !(error instanceof TypeError)
       ? error.message
-      : 'Local lab database setup failed. Check PostgreSQL access and the configured separate lab database.';
-  console.error(message);
+      : 'Check the local PostgreSQL connection and separate Lab locations.',
+  );
   process.exitCode = 1;
 }

@@ -176,7 +176,7 @@ Repeated summary-plus-new-turns compaction is accepted for v1 because it is simp
 
 ## 7. Provider execution
 
-Use the existing OpenLegend AI generation boundary with a model route qualified for attributed compaction and strict output-size validation. Live qualification selected the configured complex reasoning route at low effort after smaller routes lost material distinctions; see the [implementation policy](#17-tradeoffs-and-open-decisions). No Letta, LangChain, Zep, Mem0 or provider-specific opaque compaction dependency is required.
+Use the existing Open Legend AI generation boundary with a model route qualified for attributed compaction and strict output-size validation. Live qualification selected the configured complex reasoning route at low effort after smaller routes lost material distinctions; see the [implementation policy](#17-tradeoffs-and-open-decisions). No Letta, LangChain, Zep, Mem0 or provider-specific opaque compaction dependency is required.
 
 The input contains:
 

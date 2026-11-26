@@ -1,6 +1,6 @@
 # Baldur's Gate 3: utility magic, identities, and consequential choice
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Baldur's Gate 3 chapter](../games/baldur-s-gate-3.md), preserving its prior review, history, and viewing material. **Spoiler scope:** basic companion premises and general spell interactions are discussed; major plot outcomes are not explained. No gameplay session or proprietary code was tested. Rules are attributed to their sources, and the interpretation is not an OpenLegend implementation specification.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Baldur's Gate 3 chapter](../games/baldur-s-gate-3.md), preserving its prior review, history, and viewing material. **Spoiler scope:** basic companion premises and general spell interactions are discussed; major plot outcomes are not explained. No gameplay session or proprietary code was tested. Rules are attributed to their sources, and the interpretation is not an Open Legend implementation specification.
 
 ## 1. A spell can change what counts as available evidence
 
@@ -100,7 +100,7 @@ A creator platform should notice the distinction: players may want to share what
 | A potion is thrown rather than drunk | A consumable effect, delivery geometry, and action cost | The same resource can enable a different social or tactical role |
 | A maintained spell is replaced and its ending consequence matters first | Effect lifetime, interruption, and the next action | Composition includes transitions, not just simultaneous bonuses |
 
-These summarize documented rules above. They are not claims that every analogous combination works, nor new tasks for OpenLegend. A good reference case includes its limits as well as its spectacular use.
+These summarize documented rules above. They are not claims that every analogous combination works, nor new tasks for Open Legend. A good reference case includes its limits as well as its spectacular use.
 
 ## Sources and limits
 

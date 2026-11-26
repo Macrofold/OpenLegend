@@ -12,7 +12,7 @@ This is unusually relevant because the ordinary activity is not just visual ambi
 
 ## What to borrow, and what not to assume
 
-**Amortize a decision over ordinary activity.** Choosing a bounded routine can avoid selecting each destination or work step independently. For OpenLegend, the routine should express a character's adopted intention rather than a universally compulsory occupation schedule. A later choice can change its importance even when all physical prerequisites still hold.
+**Amortize a decision over ordinary activity.** Choosing a bounded routine can avoid selecting each destination or work step independently. For Open Legend, the routine should express a character's adopted intention rather than a universally compulsory occupation schedule. A later choice can change its importance even when all physical prerequisites still hold.
 
 **Retain the causal trail that the experience needs.** An investigation requires more than a plausible answer when questioned. Who was where, what was observable, which person noticed it and what they later say are distinct facts. The underlying event can remain exact while a person's recollection becomes uncertain. A generated testimony should not retroactively create the sighting it claims to recall.
 
@@ -20,7 +20,7 @@ This is unusually relevant because the ordinary activity is not just visual ambi
 
 **Do not import a global observation loop unchanged.** The reported sighting approach makes the authoring intention clear, but it does not establish a scalable all-pairs solution. A spatial candidate query could reduce repeated comparisons while preserving actual visibility checks. This is our engineering hypothesis, not a claim that the later game uses that exact method.
 
-## A hypothetical OpenLegend encounter
+## A hypothetical Open Legend encounter
 
 A person stops at a workshop on the way to an agreed meeting. Another person briefly sees them carrying an unfamiliar object. The meeting is missed after a real interruption. Later, the witness can describe only what was actually visible, with their own uncertainty; they cannot identify the object's hidden owner or explain why the traveler was delayed.
 
@@ -38,4 +38,4 @@ The useful unit of optimization is the represented consequence, not only the num
 
 **SD1.** Cole Jefferies, *Shadows of Doubt DevBlog 8: Simulating a City*, September 15, 2018. [Developer post](https://colepowered.com/shadows-of-doubt-devblog-8-simulating-a-city/). The complete main article was read. Its timing figures, sighting rules and planned deception concern that prototype; no current executable, source code, player study or performance benchmark was inspected.
 
-Full mechanics, release evolution, critical/player reception, production history and modding remain outside this topic-only pass. No new OpenLegend schedule, forgetting policy or investigation subsystem is approved here.
+Full mechanics, release evolution, critical/player reception, production history and modding remain outside this topic-only pass. No new Open Legend schedule, forgetting policy or investigation subsystem is approved here.

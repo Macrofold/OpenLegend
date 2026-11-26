@@ -2,13 +2,13 @@
 
 ## E07 — October 15, 2026
 
-**Decision: defer application integration.** The static technique ran on physical hardware with the existing starting scene's geometry. It can keep coarse samples attached to captured surfaces, but newly revealed surfaces and capture replacement still change the sampling. Thin deck details and grazing surfaces remain poor fits for the present character-first art revision. No OpenLegend graphics backend, world initializer, gameplay state or active playtesting world was changed.
+**Decision: defer application integration.** The static technique ran on physical hardware with the existing starting scene's geometry. It can keep coarse samples attached to captured surfaces, but newly revealed surfaces and capture replacement still change the sampling. Thin deck details and grazing surfaces remain poor fits for the present character-first art revision. No Open Legend graphics backend, world initializer, gameplay state or active playtesting world was changed.
 
 This completes the standalone investigation in [V3D01.9](../maintainers/3d-pixel-art.md#v3d019--standalone-perspective-texel-splatting-investigation), including a rejection/defer decision; it does not qualify animated characters or adopt texel splatting for production. The [research owner](../../art-direction/research/3d-pixel-worlds/texel-splatting.md) explains the method and integration boundary.
 
 ### Source, workload and reproducibility
 
-- OpenLegend source baseline: `codex/starting-scene-pixel-art` at `1438ea137`; initial tool checkpoint `1338d8f02`. The scene export came from the current public starting-world presentation. It contained 46 existing static meshes, 1,224 vertices and 602 triangles: supported ground, existing terrain/cover blocks, lookout pillars/wall, deck, ramp and thin plank seams. Native positions and geometry were preserved. No alternate playable map or art-only initializer was created.
+- Open Legend source baseline: `codex/starting-scene-pixel-art` at `1438ea137`; initial tool checkpoint `1338d8f02`. The scene export came from the current public starting-world presentation. It contained 46 existing static meshes, 1,224 vertices and 602 triangles: supported ground, existing terrain/cover blocks, lookout pillars/wall, deck, ramp and thin plank seams. Native positions and geometry were preserved. No alternate playable map or art-only initializer was created.
 - Input SHA-256: `ed0b6d371064e1f476e6d03da3be3511aa86011d19dc5b317c61fc0c399f871e`. The static export and generated results remain outside Git, under `/private/tmp/openlegend-texel-e07-geometry.json` and `/private/tmp/openlegend-texel-e07-reviewed-{96,192,384}/`.
 - Renderer: [Dylan Ebert's MIT source](https://github.com/dylanebert/texel-splatting/tree/394d350f91842779ed4c45760bd4ea9a07ce5c4c), pinned at `394d350f91842779ed4c45760bd4ea9a07ce5c4c`. It was fetched into temporary directories. Only the temporary cubemap sampling constant changed. The existing eye/grid/previous capture, shading, edge-mask, culling and quad reconstruction remained intact. The adapter initialization retains its [MIT notice](../../scripts/art/texel-splatting/UPSTREAM-LICENSE).
 - Pinned `src/splat.ts` SHA-256 before changing its sampling constant: `6a3d5c810d2b9ccb277a7d863303c719212d483894138037d9e8c51a66703e20`. `src/lighting.ts`: `026a021650e0a539bc6e404de42a29f0675629c846aa9fd07d4670bb6a233930`. The JSON records the additional direct-renderer/license hashes.
@@ -31,7 +31,7 @@ Each density ran seven matched paths with ordinary rasterization and splatting: 
 | Zoom                                    | The fixed capture resolution stayed unchanged. Captured cells grew on screen rather than acquiring additional source detail.                                                                                                                              | Fixed capture density is separate from final display resolution; it is still not a model built from permanent colored cubes.                         |
 | Changed sun elevation                   | Both variants changed illumination and shadows on unchanged geometry. Surface sampling alone did not freeze the light.                                                                                                                                    | Material placement and illumination stability must be judged separately. Lighting changes can require shading without requiring new source geometry. |
 
-The source's static rendering worked; there were **no uncaught browser exceptions or uncaptured GPU validation errors** in the final three runs. Each owned standalone browser/server closed, and each WebGPU device was explicitly destroyed. This does not establish application selection, read-through, asset replacement, context-loss recovery or an animated-character resource lifecycle.
+The source's static rendering worked; there were **no uncaught browser exceptions or uncaptured GPU validation errors** in the final three runs. Each owned standalone browser/server closed, and each WebGPU device was explicitly destroyed. This does not establish application selection, see-through reveal, asset replacement, context-loss recovery or an animated-character resource lifecycle.
 
 ### Complete operation and memory measurements
 
@@ -66,7 +66,7 @@ Preparation before the first scene draw took approximately 1,627 / 92 / 1,570 ms
 
 ### Resulting decision
 
-Retain the repeatable tool and **defer production integration** for this scene revision. The static experiment demonstrates an interesting stability mechanism, but its capture transitions, newly revealed sample changes and grazing/thin-detail tradeoffs remain visible. The public implementation uses WebGPU while the application still uses its qualified WebGL path. Porting/migrating that path would also need to preserve permitted visibility, depth, selection, read-through and resource cleanup. None of those costs is justified by a static neutral-material result alone.
+Retain the repeatable tool and **defer production integration** for this scene revision. The static experiment demonstrates an interesting stability mechanism, but its capture transitions, newly revealed sample changes and grazing/thin-detail tradeoffs remain visible. The public implementation uses WebGPU while the application still uses its qualified WebGL path. Porting/migrating that path would also need to preserve permitted visibility, depth, selection, see-through reveal and resource cleanup. None of those costs is justified by a static neutral-material result alone.
 
 Animated heads, faces, skinning, cloth deformation/body coverage, transparent effects and view-dependent specular behavior remain unqualified. This experiment cannot solve or close the mercenary's face/clothing acceptance. If the technique is reconsidered, the existing V3D01.9 owner requires a scoped integration decision and those relevant failures to be addressed; the current ordinary-renderer art work continues independently.
 
@@ -74,7 +74,7 @@ The tool's entire affected source was reviewed. Node syntax checks, targeted Pre
 
 ## Static stability revisit — October 15, 2026
 
-Mike explicitly reopened technique selection after rejecting the first scene's ordinary-3D environment and identifying shimmer/artifacts as critical failures. This follow-up changes the experiment, preserves the original modes, and tests two concrete alternatives. **Fixed cubemap capture is rejected for uncovered surfaces. Full-resolution surface-grid rasterization is a promising static-material candidate, requiring application and moving-boundary qualification.** No OpenLegend backend change or static-to-animated inference follows.
+Mike explicitly reopened technique selection after rejecting the first scene's ordinary-3D environment and identifying shimmer/artifacts as critical failures. This follow-up changes the experiment, preserves the original modes, and tests two concrete alternatives. **Fixed cubemap capture is rejected for uncovered surfaces. Full-resolution surface-grid rasterization is a promising static-material candidate, requiring application and moving-boundary qualification.** No Open Legend backend change or static-to-animated inference follows.
 
 ### Changed controls and workload
 
@@ -124,7 +124,7 @@ The fixed variant records six capture faces on each path's first reset frame and
 
 All four controls stayed resident together. Descriptor estimates, now accounting for multisample storage, were **74.40 MiB** combined. Fixed-splat resources added **20.25 MiB** (its preserved 18-layer layout); surface resources added **31.69 MiB**, including multisample color/depth, resolved color and its flat-plane buffer. These are described allocations rather than driver VRAM high-water marks or application integration cost. An application could share existing targets; that was not implemented or measured here. Final preparation was 3,578 ms before the initial scene draw; caches/driver state were uncontrolled, so this is not production startup latency. A separate `cold` profile records first reset/capture and a warm frame without pretending that its already-created pipelines represent a cold driver.
 
-The final sweep and short first-capture run reported **zero browser exceptions and zero uncaptured GPU errors**. Each explicitly destroyed its WebGPU device and closed its isolated browser/server. No user browser, active game, save, initializer, selection/read-through mechanism or provider account was modified. Node syntax, targeted Prettier, source-patch seam assertions, local documentation references and affected-diff review passed. Application checks remain with the integration owner.
+The final sweep and short first-capture run reported **zero browser exceptions and zero uncaptured GPU errors**. Each explicitly destroyed its WebGPU device and closed its isolated browser/server. No user browser, active game, save, initializer, selection/see-through reveal mechanism or provider account was modified. Node syntax, targeted Prettier, source-patch seam assertions, local documentation references and affected-diff review passed. Application checks remain with the integration owner.
 
 ### Reproduction, applicability and decision
 

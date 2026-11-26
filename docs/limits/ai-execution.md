@@ -296,7 +296,7 @@ Original recommendation: **Review**.
 
 **Removed by the Worker cutover — absence rechecked 2026-10-06 · Restrictiveness: — (removed).**
 
-The old `MACROFOLD_COMPUTE_MAX_USD` default of $0 and maximum of $100 belonged to finite Sandbox allocation. Current configuration does not read it. OpenLegend selects an existing operator-owned Worker; it does not allocate compute or translate that old allowance into an hourly Worker ceiling. Run/model limits do not cap shared allocation or idle spend.
+The old `MACROFOLD_COMPUTE_MAX_USD` default of $0 and maximum of $100 belonged to finite Sandbox allocation. Current configuration does not read it. Open Legend selects an existing operator-owned Worker; it does not allocate compute or translate that old allowance into an hourly Worker ceiling. Run/model limits do not cap shared allocation or idle spend.
 
 **Reason / tradeoff:** Preserve the [application/world compute owner's controls](../ai-providers.md#shared-worker-setup-and-cutover), explicit authorization and settlement of real historical obligations. The removal does not authorize unlimited compute, restoring a legacy allocator or refunding uncertain charges. The original **Review** recommendation is superseded by the accepted Worker ownership contract.
 
@@ -436,15 +436,24 @@ Active-release delivery target: **at least 95.00%** of opportunities declared im
 
 ### DE-L02 — Bounded scheduling and context retention
 
-**Implemented; default apply · Restrictiveness: Medium.** Share **100 simultaneous background-generation operations per server process** across reconsideration, existing maintenance/indexing and urgent decisions. This replaces the initial single-operation allowance at Mike's explicit October 22 request; it is not measured provider capacity or additional funding. Allow **16 queued escalation descriptors per process**, at most **one queued or running child per actor**, and at most **8 KiB of scalar/reference metadata per queued descriptor**. Required current execution/accounting records are not discarded on overflow. Each execution with unknown completion retains one occupied position, including across restart through its exact durable attempt identity; ending local waiting is not proof that remote work stopped. Settling one attempt releases only its position. A definitively completed call with missing price frees execution capacity but retains its financial obligation.
-
-Retain a separate **one-primary-inference execution allowance per process**, including an original request that is still running after immediate deferral. Deferral retains its admitted pipeline until completion or actual handoff; current per-world admission allows two active pipelines, at most one ordinary and one per actor. If every occupied primary has ended locally but remains externally uncertain, **one independent ordinary request at a time** may borrow an available background position. The original position and financial hold remain occupied; the borrower records its actual background class. This allows unrelated decisions to continue without adding capacity or retrying the uncertain decision. Active primary work still blocks borrowing; saturation causes native/explicit deferral. Both execution classes reconstruct uncertain leases after restart. Ordinary stages inherit their root usefulness boundary; DE-L01 removes the former per-stage one-second restriction for admitted useful-later roots without changing capacity.
+**Implemented; default apply · Restrictiveness: Medium.** Primary inference,
+reconsideration, paid maintenance and indexing share the process allowance in
+[LA231](cognition.md#la231). The primary and background receipt classes preserve
+the exact execution identity without reserving separate subsets of positions.
+The queue for optional work uses the same configured count independently, at most
+one queued or running decision child per actor and 8 KiB of scalar/reference
+metadata per descriptor. Required accounting records cannot be discarded on
+overflow. Each unknown execution remains occupied through its exact durable
+attempt identity, including after restart; a definitive completion with missing
+pricing releases execution capacity while retaining its monetary obligation.
+Saturation defers or refuses truthfully. It buys no fallback solely to bypass the
+limit, and no new primary stage starts after its immediate deadline.
 
 Queue full, too-old work or oversized metadata ends optional admission with an inspectable reason; it never stalls native simulation or silently erases evidence. Hydrate request bodies only for admitted active preparation, under DE-L04. Distinct player messages and events remain in their normal stores. No payload copies containing hundreds of memories accumulate in the waiting queue.
 
-Eligible decision and maintenance classes alternate when both have work; decisions order by trusted urgency, original eligibility time and stable ID. No preemption of another actor's paid fallback. No queued coalescing across distinct events. Only one existing urgent-evidence refresh is shared across primary and higher preparation before higher reservation, within unchanged deadlines; further change ends stale. Optional generation defers when all 100 positions are occupied; a single uncertain execution no longer prevents unrelated background work.
+Eligible decision and maintenance classes alternate when both have work; decisions order by trusted urgency, original eligibility time and stable ID. No preemption of another actor's paid fallback. No queued coalescing across distinct events. Only one existing urgent-evidence refresh is shared across primary and higher preparation before higher reservation, within unchanged deadlines; further change ends stale. Optional generation defers when the shared capacity is occupied.
 
-Reason: the owner expanded the initial conservative allowance so one unconfirmed cancellation cannot monopolize background execution. Existing per-call/account spending, prepared-input limits, deadlines and per-world immediate admission still apply. Up to 100 prepared requests can now be retained concurrently; provider throughput, memory and complete gameplay performance at that concurrency remain unqualified under DE04. Owner: [scheduling](../projects/decision-escalation-tech-design.md#scheduling-without-blocking-other-characters).
+Reason: independent funded jobs can progress using real available resources. Per-call and account spending, actual provider limits, request/memory admission and deadlines still apply. Provider throughput, memory and complete gameplay performance at the development ceiling remain unqualified under DE04. Owner: [scheduling](../projects/decision-escalation-tech-design.md#scheduling-without-blocking-other-characters).
 
 ### DE-L03 — Attempts, permissions and spending
 

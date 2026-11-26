@@ -1,4 +1,8 @@
-import { decisionEscalationConfigSchema, defaultDecisionEscalation } from './decision-state.js';
+import {
+  DEFAULT_NPC_AI_CONCURRENCY,
+  decisionEscalationConfigSchema,
+  defaultDecisionEscalation,
+} from './decision-state.js';
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
@@ -7,12 +11,12 @@ import {
   numberSetting,
   readGenerationConfig,
 } from './generation-config.js';
-import { resolve } from 'node:path';
+import { readStorageLocation } from './storage-location.js';
 import {
-  configuredCreationTargetSchema,
   creationDestinationSchema,
+  readCreationSourceConfig,
 } from './creation-target-contracts.js';
-import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
+import { BASE_STARTING_WORLD_PRESETS } from '@open-legend/domain';
 
 export const DEFAULT_JEV_INPUT_USD_PER_MILLION = 0.042;
 
@@ -22,19 +26,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const { macrofoldKey } = generation;
   const macrofoldJevModel = env['MACROFOLD_JEV_MODEL'] ?? 'typesafe/jev-1.13';
   const jevModel = env['JEV_MODEL'] ?? 'jev-1.13.0';
-  const databaseUrl = env['OPEN_LEGEND_DATABASE_URL']?.trim() ?? '';
-  try {
-    const url = databaseUrl ? new URL(databaseUrl) : undefined;
-    if (
-      !url ||
-      !['postgres:', 'postgresql:'].includes(url.protocol) ||
-      !url.hostname ||
-      url.pathname.length < 2
-    )
-      throw new Error();
-  } catch {
-    throw new Error('OPEN_LEGEND_DATABASE_URL is required and must be a PostgreSQL URL.');
-  }
+  const { databaseUrl, dataDirectory } = readStorageLocation(env);
   const sqlWriteGroups = z.enum(['on', 'off']).parse(env['OPEN_LEGEND_SQL_WRITE_GROUPS'] ?? 'on');
   const selectedWorldPreset = z
     .enum(BASE_STARTING_WORLD_PRESETS)
@@ -91,20 +83,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const creationStartup = z
     .enum(['ordinary', 'awaiting-creation'])
     .parse(env['OPEN_LEGEND_STARTUP_MODE'] ?? 'ordinary');
-  const creationInstallationId = env['OPEN_LEGEND_INSTALLATION_ID']?.trim();
-  const creationTargets = z
-    .array(configuredCreationTargetSchema)
-    .max(256)
-    .parse(JSON.parse(env['OPEN_LEGEND_CREATION_TARGETS_JSON'] ?? '[]'));
+  const creationSource = readCreationSourceConfig(env);
   const creationDestination = env['OPEN_LEGEND_CREATION_DESTINATION_JSON']
     ? creationDestinationSchema.parse(JSON.parse(env['OPEN_LEGEND_CREATION_DESTINATION_JSON']))
     : undefined;
-  if (creationTargets.length && !creationInstallationId)
-    throw new Error('Configured creation targets require OPEN_LEGEND_INSTALLATION_ID.');
-  if (creationInstallationId)
-    z.string().min(1).max(100).refine(isSafeRecordId).parse(creationInstallationId);
-  if (new Set(creationTargets.map((target) => target.id)).size !== creationTargets.length)
-    throw new Error('Configured creation target identities must be unique.');
   if (creationStartup === 'awaiting-creation' && !creationDestination)
     throw new Error('Awaiting creation requires OPEN_LEGEND_CREATION_DESTINATION_JSON.');
   if (creationDestination) {
@@ -139,15 +121,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .number()
     .int()
     .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
-  const dataDirectory = resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data');
-  const labUrl = new URL(databaseUrl);
-  labUrl.pathname = `${labUrl.pathname}_cognition_lab`;
   return {
     ...generation,
     creation: {
       startup: creationStartup,
-      installationId: creationInstallationId,
-      targets: creationTargets,
+      ...creationSource,
       destination: creationDestination,
     },
     capacity: {
@@ -169,32 +147,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
-    cognitionLab: {
-      databaseUrl: env['OPEN_LEGEND_LAB_DATABASE_URL']?.trim() || labUrl.href,
-      dataDirectory: resolve(env['OPEN_LEGEND_LAB_DATA_DIR'] ?? `${dataDirectory}/cognition-lab`),
-      // A second database never duplicates the game's real spending entitlement.
-      budgetUsd: numberSetting(env, 'OPEN_LEGEND_LAB_BUDGET_USD', 0, 0, 100),
-      storageAllowanceBytes:
-        numberSetting(
-          env,
-          'OPEN_LEGEND_LAB_STORAGE_MIB',
-          2048,
-          1,
-          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
-        ) *
-        1024 *
-        1024,
-      runCaptureAllowanceBytes:
-        numberSetting(
-          env,
-          'OPEN_LEGEND_LAB_CAPTURE_MIB',
-          64,
-          1,
-          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
-        ) *
-        1024 *
-        1024,
-    },
     sqlWriteGroups: sqlWriteGroups === 'on',
     profiling: z.enum(['off', 'on']).parse(env['OPEN_LEGEND_PROFILING'] ?? 'off') === 'on',
     mcpRead: readMcpConfig(env),
@@ -213,6 +165,18 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
+    npcAiConcurrency: z
+      .number()
+      .int()
+      .parse(
+        numberSetting(
+          env,
+          'OPEN_LEGEND_NPC_AI_CONCURRENCY',
+          DEFAULT_NPC_AI_CONCURRENCY,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 2),
+        ),
+      ),
     jevOnly: env['AI_JEV_ONLY'] === 'true',
     decisionEscalation: env['DECISION_ESCALATION_JSON']
       ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))

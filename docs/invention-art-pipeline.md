@@ -169,9 +169,9 @@ Deleting an unused draft can reclaim unreferenced assets after the relevant rete
 
 ## 11. Provider and orchestrator boundaries
 
-Use replaceable image/asset execution adapters returning artifacts and actual receipts. OpenLegend chooses the needed visual, permitted inputs, resource limits, validation/review policy, publication, and payer. Macrofold or another execution backend may coordinate a bounded job but cannot decide the world state or activate a mechanic.
+Use replaceable image/asset execution adapters returning artifacts and actual receipts. Open Legend chooses the needed visual, permitted inputs, resource limits, validation/review policy, publication, and payer. Macrofold or another execution backend may coordinate a bounded job but cannot decide the world state or activate a mechanic.
 
-An image-generation API, procedural generator, authored source, rigging tool, or future 3D bake path can all produce candidates for the same presentation contract. Qualify their output on the actual in-game scale, materials, states, directions, animation, and equipment alignment. A provider's advertised generation time is not OpenLegend's end-to-end usable-asset latency.
+An image-generation API, procedural generator, authored source, rigging tool, or future 3D bake path can all produce candidates for the same presentation contract. Qualify their output on the actual in-game scale, materials, states, directions, animation, and equipment alignment. A provider's advertised generation time is not Open Legend's end-to-end usable-asset latency.
 
 Start with one asset class, one adapter, one durable manifest, and a readable fallback. Add stage-specific providers only when measurements justify extra complexity. No per-entity permanent sandbox, provider call in the render loop, or mandatory new workflow platform is required.
 

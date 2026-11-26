@@ -1,6 +1,6 @@
 # Feature documentation structure
 
-Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md) decides when to create paired feature-spec and technical-design files; this structure does not require retroactively splitting every established specification. Project history must link current contracts rather than duplicate them.
+Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) decides whether to update an existing document or use a feature-spec and technical-design pair. Apply the content requirements below to the selected documents. Project history must link current contracts rather than duplicate them.
 
 Project feature specifications and technical designs follow [Project status and completion](../.agents/rules/documentation.md#project-status-and-completion). Update dates for meaningful changes, not unchanged rereads. At completion, use [contract promotion and filing](documentation-system.md#current-contracts-and-completed-projects): current contracts remain discoverable, while genuinely completed project material is filed with repaired references. Supporting evidence and navigation need no duplicate live status table.
 
@@ -12,7 +12,7 @@ When the selected feature needs new or changed visuals or motion, identify the i
 
 For costly qualification, specify the workload and distinguish a required pass, required measurement, exploration and human/external acceptance. State what a failed result means; do not silently create a capacity promise.
 
-Its technical design describes semantic owners and callers, contracts/data flow, persistence/migration, security/privacy and authority, performance, extension seams, stages, verification and tradeoffs/open decisions. Relevant world-specific choices remain under the world’s own contract.
+Its technical design identifies who makes each change, who calls that code, how data flows, what gets saved and restored, and how permissions and privacy are enforced. Cover performance, extension points, stages, verification, tradeoffs and open decisions. For a change to stored data, follow the [development save policy](../AGENTS.md#development-save-policy). Relevant world-specific choices remain under the world’s own contract.
 
 Each new or substantially changed feature spec, technical design or persistent feature document includes a **Maintained records** section linking:
 
@@ -22,7 +22,7 @@ Each new or substantially changed feature spec, technical design or persistent f
 
 Guidance-only workflow changes keep operational decisions in their guidance owner and history; they need no gameplay limits inventory. Filing changes and ordinary implementation plans do not require extra feature/design pairs.
 
-If a newly assessed feature has no discretionary limits, say so explicitly in its limits inventory, with the reason and applicable shared limits links. Do not invent a cap just to fill a template. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.
+Apply the [shared rule for choosing limits](limits/README.md#entry-structure) before selecting a feature restriction. If a newly assessed feature needs no discretionary limits, explain why in its inventory and link the applicable shared protections. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.
 
 ## Minimal navigation example
 

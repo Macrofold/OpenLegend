@@ -70,7 +70,7 @@ The central recommendation is to preserve five useful stopping points. The compl
 | DG29  | Walk with normal belongings to another real camp, talk or demonstrate something useful, and return normally.  | The wanted encounter repays transfer preparation; compatible bodies, belongings, clocks and funded recovery support the advertised route.                                                            |
 | DG30  | Fund one or two genuinely useful contributions or honest explorations through a finite manual round.          | Their value justifies application/review burden and the full settled operating budget; another round or software addresses an observed need.                                                         |
 
-No group number changes project priority. Small local creative play, independent resident choices and clear ordinary controls remain the central experience. A marketplace cannot make an unwanted kit useful, physical travel cannot manufacture an interesting destination, and a grant council cannot substitute for a game people want to improve. Existing open directions remain available without becoming compulsory prerequisites.
+No group number changes project priority. Small local creative play, independent NPC choices and clear ordinary controls remain the central experience. A marketplace cannot make an unwanted kit useful, physical travel cannot manufacture an interesting destination, and a grant council cannot substitute for a game people want to improve. Existing open directions remain available without becoming compulsory prerequisites.
 
 ### Changes made after critique
 

@@ -2,7 +2,7 @@
 
 **G05 · Full research pass completed September 25, 2026.** Major systems and R01–R14 categories are covered below. This is not an exhaustive current-price database, personal playthrough or proprietary source-code audit. Version uncertainty is localized to specific claims rather than hidden.
 
-Read with the [preserved Grow a Garden subsection](../games/roblox.md), [Roblox platform dossier](roblox.md), [requirements](../research-requirements.md) and [resume ledger](../research-progress.md). This is **The Garden Game's place 126884695634066**, not Grow a Garden 2, a modded copy or a separately hosted trading lobby. The research is inspiration, not an OpenLegend implementation plan.
+Read with the [preserved Grow a Garden subsection](../games/roblox.md), [Roblox platform dossier](roblox.md), [requirements](../research-requirements.md) and [resume ledger](../research-progress.md). This is **The Garden Game's place 126884695634066**, not Grow a Garden 2, a modded copy or a separately hosted trading lobby. The research is inspiration, not an Open Legend implementation plan.
 
 ## 1. A small action loop acquires several purposes
 
@@ -176,7 +176,7 @@ Professional material is stronger here as original reporting, creator interviews
 
 **Abundance is not automatically purpose:** an economy, a collection and a friendship group can each sustain play, but one does not prove the others exist. Avoid making an optimized or wealthy player relevant only by inflating the next cost.
 
-These are inspiration lenses, not instructions to copy rare-drop timers, premium relief, visual assets or names into OpenLegend.
+These are inspiration lenses, not instructions to copy rare-drop timers, premium relief, visual assets or names into Open Legend.
 
 ## 14. Reading routes, coverage and preservation
 
@@ -220,7 +220,7 @@ Read the original creator interview for development history, the GameSpot guide 
 | R13 inspiration/limits | §13 and labeled interpretation throughout |
 | R14 sources/navigation/preservation | This section and annotated sources |
 
-**Per-game preservation:** the supplied master's Grow a Garden subsection and its unchanged repository owner `games/roblox.md` were inspected. The original creator-growth history, offline-progress appeal, event/monetization criticism, dated milestone qualifications and OpenLegend interpretations remain intact. The new dossier adds independent mechanics and reception depth. It neither replaces the Roblox platform analysis nor counts Steal a Brainrot as finished. Original source, economic and video material remains in its owners; packet-wide reconciliation is a separate pending gate.
+**Per-game preservation:** the supplied master's Grow a Garden subsection and its unchanged repository owner `games/roblox.md` were inspected. The original creator-growth history, offline-progress appeal, event/monetization criticism, dated milestone qualifications and Open Legend interpretations remain intact. The new dossier adds independent mechanics and reception depth. It neither replaces the Roblox platform analysis nor counts Steal a Brainrot as finished. Original source, economic and video material remains in its owners; packet-wide reconciliation is a separate pending gate.
 
 **Limits:** no personal gameplay, full video playback, source-code audit, private finances or representative review survey. Community text was often accessible only through the search index. The Raccoon reversion date and some current trade thresholds conflict across those references; they are not falsely resolved. Fan-made update proposals were excluded rather than mistaken for delivered mechanics.
 

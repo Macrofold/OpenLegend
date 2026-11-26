@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend design. Scope: the 2017 game, the materially revised post-July-2018 experience, its two story expansions and separate Nemesis expansions. Five full original base-game reviews, a separate accessibility account, an expansion review and helpful Steam narratives were read in the original pass. The follow-up read the entire dossier and checked all R01–R14; newly inspected sources are identified separately rather than implying a second reading of every original source. No gameplay, footage, current-server test or proprietary-code inspection was performed. Contemporary guides and patch milestones do not establish the exact latest executable on every platform.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted Open Legend design. Scope: the 2017 game, the materially revised post-July-2018 experience, its two story expansions and separate Nemesis expansions. Five full original base-game reviews, a separate accessibility account, an expansion review and helpful Steam narratives were read in the original pass. The follow-up read the entire dossier and checked all R01–R14; newly inspected sources are identified separately rather than implying a second reading of every original source. No gameplay, footage, current-server test or proprietary-code inspection was performed. Contemporary guides and patch milestones do not establish the exact latest executable on every platform.
 
 ## 1. Identity and changing player promise
 

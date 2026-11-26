@@ -1,5 +1,7 @@
 import type { GameView } from '@open-legend/protocol';
 
+import { workspaceStoragePrefix } from './lab-location';
+
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 type GetStorage = () => DraftStorage;
 export type ComposerMode = 'speak' | 'act';
@@ -11,6 +13,7 @@ export interface ComposerDraft {
   text: string;
   revision: string;
   item?: ComposerItem;
+  publicAppeal?: string;
 }
 export const emptyDraft = (): ComposerDraft => ({ text: '', revision: '' });
 
@@ -34,7 +37,7 @@ export function composerDraftKey(
   itemId: string | null = null,
 ): string | null {
   if (!scope) return null;
-  return `open-legend:composer-draft:${JSON.stringify([scope, mode, recipientId, itemId])}`;
+  return `${workspaceStoragePrefix}composer-draft:${JSON.stringify([scope, mode, recipientId, itemId])}`;
 }
 
 /** Session storage keeps exact text in this tab, for this character and recipient only. */
@@ -73,7 +76,13 @@ export function readDraft(
         item: { itemId: item.itemId, name: item.name },
       };
     }
-    return { text: draft.text, revision: draft.revision };
+    return {
+      text: draft.text,
+      revision: draft.revision,
+      ...('publicAppeal' in draft && typeof draft.publicAppeal === 'string'
+        ? { publicAppeal: draft.publicAppeal }
+        : {}),
+    };
   } catch {
     // Privacy and quota failures must not prevent editing in memory.
     return emptyDraft();
@@ -85,7 +94,7 @@ export function clearDraft(getStorage: GetStorage = () => window.sessionStorage)
   try {
     const storage = getStorage();
     for (const key of Object.keys(storage))
-      if (key.startsWith('open-legend:composer-draft:')) storage.removeItem(key);
+      if (key.startsWith(workspaceStoragePrefix + 'composer-draft:')) storage.removeItem(key);
   } catch {
     // Storage can be disabled independently of in-memory editing.
   }

@@ -98,7 +98,7 @@ Managed and imported operator-trusted endpoints are production-eligible when the
 
 The deployment credential has deployment read/use and existing owned-Run submit/read/cancel rights, scoped to its authorized workspace/resources. Server deployment discovery, submission and recovery prefer `MACROFOLD_MODEL_API_KEY`, falling back to `MACROFOLD_API_KEY` when omitted. Non-deployment Macrofold features retain the backend key. Keep the chosen credential inside the existing adapter; do not expose it in public configuration, receipts or saves. It has no deployment-management or hosting credentials. Source/license/account prerequisites and standing host policy are Macrofold/operator concerns, not fields injected into NPC context or gameplay saves.
 
-SystemOne declares `accepted_parameters:["state","questions"]`, false chat/schema/tool/streaming flags, empty schema keywords and a null schema dialect. Native preparation reduces the output allowance to the declared maximum without requiring chat JSON support. Existing local input-size checks remain in force; Macrofold and the serving runtime enforce the model's context limit. OpenLegend does not claim an exact local token count from the descriptor's context-window value. A protocol mismatch fails before dispatch; the chat and native preparation paths share target metadata and deadline ownership.
+SystemOne declares `accepted_parameters:["state","questions"]`, false chat/schema/tool/streaming flags, empty schema keywords and a null schema dialect. Native preparation reduces the output allowance to the declared maximum without requiring chat JSON support. Existing local input-size checks remain in force; Macrofold and the serving runtime enforce the model's context limit. Open Legend does not claim an exact local token count from the descriptor's context-window value. A protocol mismatch fails before dispatch; the chat and native preparation paths share target metadata and deadline ownership.
 
 ### 3.3 Output modes and streaming
 
@@ -134,7 +134,7 @@ The sibling cost attribution is:
 
 Existing billing fields describe the request fee only. Custom deployment inference uses BYOK with an explicit zero separate inference fee and zero native request reservation; per-call provider infrastructure cost is null because shared hosting is billed independently. Zero actor allowance still refuses dispatch. Fixed known zero request charging does not depend on complete token counters; missing usage remains missing telemetry. Uncertain dispatch/completion retains occupied execution capacity and independently known financial evidence; zero request reservation does not establish completed work or free hosting.
 
-Macrofold's deployment cost view owns startup, idle/busy capacity, storage and provider billing uncertainty over time. Show those costs separately; never duplicate a whole host bill per NPC call, invent a zero token rate or require invoice finality before accepting a valid answer. OpenLegend's monthly/per-call inference budget does not claim to cap an independently funded GPU deployment. Standing service authorization and its limits stay with Macrofold; the game does not reserve an entire hosting period on each turn.
+Macrofold's deployment cost view owns startup, idle/busy capacity, storage and provider billing uncertainty over time. Show those costs separately; never duplicate a whole host bill per NPC call, invent a zero token rate or require invoice finality before accepting a valid answer. Open Legend's monthly/per-call inference budget does not claim to cap an independently funded GPU deployment. Standing service authorization and its limits stay with Macrofold; the game does not reserve an entire hosting period on each turn.
 
 ### 3.5 Errors and recovery
 
@@ -189,7 +189,7 @@ Freeze one effective request record containing the target, chosen format, output
 
 The existing world-host operating review shows the configured workspace and each judgment/fast/complex deployment, revision selection, output reduction, chat output policy and native thinking setting. Its existing configuration fingerprint includes those same safe values, so changing a target invalidates an earlier prepared operating review. The displayed native model identifies the actual selected deployment; neither the review nor its fingerprint contains credentials. No second review workflow or per-call approval is added.
 
-OpenLegend config changes take effect under its existing controlled restart. Macrofold-side revision updates and same-revision recovery work through the stable deployment reference without restarting OpenLegend. There is no speculative hot-reload subsystem or extra per-turn configuration lookup.
+Open Legend config changes take effect under its existing controlled restart. Macrofold-side revision updates and same-revision recovery work through the stable deployment reference without restarting Open Legend. There is no speculative hot-reload subsystem or extra per-turn configuration lookup.
 
 ## 5. Lifecycle and world boundaries
 
@@ -211,7 +211,7 @@ Reuse immutable revision/capability data and current prepared schema validation.
 
 Use existing cognition concurrency/backpressure and deadlines; Macrofold owns shared serving capacity. No per-NPC GPU process, second game scheduler or universal serialization is added. A shared host can batch/concurrently serve supported requests while the game retains its own publication/order semantics. Native movement and other zero-call work must not await hosting administration.
 
-Measure end-to-end accepted/usable output latency, request bytes, throughput, capacity refusals and actual host cost on a representative supported workload. Separate warm steady-state, startup/recovery and concurrent service. Count additional control-plane round trips and verify warm requests add none from OpenLegend. Streaming first useful permitted output and full completion are distinct. Existing PF/PS population qualification remains authoritative; this design supplies no invented town-scale capacity claim.
+Measure end-to-end accepted/usable output latency, request bytes, throughput, capacity refusals and actual host cost on a representative supported workload. Separate warm steady-state, startup/recovery and concurrent service. Count additional control-plane round trips and verify warm requests add none from Open Legend. Streaming first useful permitted output and full completion are distinct. Existing PF/PS population qualification remains authoritative; this design supplies no invented town-scale capacity claim.
 
 ## 7. Production implementation acceptance
 

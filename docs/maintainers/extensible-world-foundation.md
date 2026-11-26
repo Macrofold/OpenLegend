@@ -10,7 +10,7 @@ The [requested full review](../verification/world-engine-boundaries.md#requested
 
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification/attributes-and-actor-state.md#extensible-attribute-runtime).
 
-**October 5 DG14 selection, now delivered in its finite scope:** [Practical competence](practical-competence.md) supplies sling-handling, inert-target practice and voluntary coaching through the existing authored-stats owners. EWF02/EWF04 supply state and permitted presentation. [World-owned rules](../worlds/base/practical-competence.md), [evidence](../verification/practical-competence.md) and [ST-L08–ST-L13](../limits/authored-stats.md) retain the selected tuning and limits. The later finite-flight result-observation repair remains open in PC04, alongside PC06 human appreciation and broader qualification; neither delivered state nor the earlier immediate-outcome coaching evidence closes those criteria.
+**October 5 DG14 selection, now delivered in its finite scope:** [Character skill](practical-competence.md) supplies sling-handling, inert-target practice and voluntary coaching through the existing authored-stats owners. EWF02/EWF04 supply state and permitted presentation. [World-owned rules](../worlds/base/practical-competence.md), [evidence](../verification/practical-competence.md) and [ST-L08–ST-L13](../limits/authored-stats.md) retain the selected tuning and limits. The later finite-flight result-observation repair remains open in PC04, alongside PC06 human appreciation and broader qualification; neither delivered state nor the earlier immediate-outcome coaching evidence closes those criteria.
 
 **Proposed ND03 consumer:** [authored stats and consequential checks](../projects/authored-stats-feature-spec.md) uses EWF02/EWF04 and existing action/state owners only when competence improves a real playable activity. Predictable effects are valid; the finite practical-work check remains an optional candidate. [ST limits](../limits/authored-stats.md) retain its scope and tuning. This revised product recommendation does not reopen delivered typed state or complete consumer qualification.
 
@@ -128,6 +128,8 @@ Batch 06's [boundary review](../verification/rivals-and-contested-ground.md#worl
 **Exit:** the default game uses the new extension boundary rather than retaining a privileged side path, and a second meaningful need works without changing the generic runtime's vocabulary.
 
 ## EWF04 — Generic permitted inspection, context, and presentation
+
+The native choice formatter's direct selection of bundled-world activity labels has a scoped [NRF12 implementation and alternate-presentation check](../projects/native-runtime-foundations-bridge.md#nrf12--keep-executable-npc-offers-with-their-rust-owner).
 
 **Dependencies:** EWF02–EWF03. **Files:** protocol `index.ts`, server `view.ts`, `decision-context.ts`, response/context helpers, god editor projections, React condition/editor components. Coordinate CR/NC presentation owners.
 

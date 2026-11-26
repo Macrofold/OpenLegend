@@ -21,4 +21,4 @@ Supporting context: [extensibility roadmap](../../docs/extensibility-roadmap.md)
 
 ## Supporting research
 
-[Hindsight memory evaluation](../02-research/hindsight-memory-evaluation.md) documents the framework, the reviewed OpenLegend implementation, proposed retrieval-only integration, lifecycle/privacy constraints, economics and dependency/fork tradeoffs. It is a dated recommendation with unrun evaluation criteria, not an adopted service or a replacement for [Memory architecture](../../docs/memory-architecture.md) and [Knowledge](../../docs/knowledge.md).
+[Hindsight memory evaluation](../02-research/hindsight-memory-evaluation.md) documents the framework, the reviewed Open Legend implementation, proposed retrieval-only integration, lifecycle/privacy constraints, economics and dependency/fork tradeoffs. It is a dated recommendation with unrun evaluation criteria, not an adopted service or a replacement for [Memory architecture](../../docs/memory-architecture.md) and [Knowledge](../../docs/knowledge.md).

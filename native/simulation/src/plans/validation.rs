@@ -1,0 +1,426 @@
+//! Current-format ordinary frontiers use the same finite bounds and reference
+//! rules as Source validateAgency. Activity graphs remain a separate family.
+use super::*;
+use crate::install::InstallError;
+use crate::values::is_safe_record_id;
+
+/// Discovery also describes current syntax with no selected physical executor.
+/// A prepared option is not an executable frontier or a permission to queue it.
+pub(crate) fn valid_choice_command(
+    command: &NativeCommand,
+    world: &crate::simulation::InstalledWorld,
+) -> bool {
+    match command {
+        NativeCommand::Strike {
+            target_id,
+            definition_id,
+            weapon_item_id,
+            ..
+        } => {
+            is_safe_record_id(target_id)
+                && is_safe_record_id(definition_id)
+                && weapon_item_id.as_deref().is_none_or(is_safe_record_id)
+        }
+        NativeCommand::InspectInventory { .. } => true,
+        NativeCommand::InspectActivities {
+            history_after,
+            method_after,
+            ..
+        } => {
+            *history_after >= -1
+                && *history_after <= crate::identity::MAX_SAFE_INTEGER as i64
+                && *method_after <= crate::identity::MAX_SAFE_INTEGER
+        }
+        _ => valid_command(command, world),
+    }
+}
+
+pub(crate) fn valid_command(
+    command: &NativeCommand,
+    world: &crate::simulation::InstalledWorld,
+) -> bool {
+    if command
+        .envelope()
+        .cooperation
+        .as_ref()
+        .is_some_and(|b| b.revision == 0)
+    {
+        return false;
+    }
+    match command {
+        NativeCommand::Move { destination, .. } | NativeCommand::Evade { destination, .. } => {
+            [destination.x, destination.y, destination.z]
+                .iter()
+                .all(|n| n.is_finite())
+                && is_safe_record_id(&destination.surface_id)
+        }
+        NativeCommand::Follow {
+            target_id,
+            target_life,
+            distance,
+            parameters,
+            envelope,
+        } => {
+            is_safe_record_id(target_id)
+                && target_life.is_none_or(|life| life <= crate::identity::MAX_SAFE_INTEGER)
+                && parameters
+                    .distance(
+                        &world.occurrence_rules.value().response.offers,
+                        *distance,
+                        0.0,
+                        *target_id == envelope.actor_id,
+                    )
+                    .is_ok()
+        }
+        NativeCommand::Strike {
+            target_id,
+            target_life,
+            definition_id,
+            weapon_item_id,
+            auto_equip,
+            envelope,
+        } => {
+            is_safe_record_id(target_id)
+                && envelope.human_initiated != Some(true)
+                && match (weapon_item_id, target_life, auto_equip) {
+                    (None, None, None) => world
+                        .retained
+                        .native_strike_read
+                        .contains_key(definition_id),
+                    (Some(item), Some(life), Some(true)) => {
+                        is_safe_record_id(item)
+                            && *life <= crate::identity::MAX_SAFE_INTEGER
+                            && world
+                                .retained
+                                .items
+                                .get(definition_id)
+                                .is_some_and(|definition| definition.melee_profile().is_some())
+                    }
+                    _ => false,
+                }
+        }
+        NativeCommand::Ranged { intent, envelope } => {
+            world.manifest.ranged_policy.is_some()
+                && envelope.human_initiated.is_none()
+                && intent
+                    .npc_subject()
+                    .is_some_and(|target| target != envelope.actor_id)
+        }
+        NativeCommand::Guard {
+            envelope,
+            facing: crate::commands::guard_input::GuardFacing::Subject { id, life },
+            item_id,
+            ..
+        } => {
+            envelope.human_initiated.is_none()
+                && is_safe_record_id(id)
+                && *life <= crate::identity::MAX_SAFE_INTEGER
+                && is_safe_record_id(item_id)
+        }
+        NativeCommand::Guard {
+            envelope,
+            facing: crate::commands::guard_input::GuardFacing::Recent(threat),
+            item_id,
+            auto_equip,
+        } => {
+            envelope.human_initiated.is_none()
+                && *auto_equip
+                && is_safe_record_id(item_id)
+                && threat.valid(world)
+        }
+        NativeCommand::StatusEffect {
+            target_id,
+            definition_id,
+            ..
+        } => is_safe_record_id(target_id) && is_safe_record_id(definition_id),
+        NativeCommand::Fish {
+            target_id, item_id, ..
+        } => is_safe_record_id(target_id) && is_safe_record_id(item_id),
+        NativeCommand::Pickup {
+            target_id,
+            item_id,
+            quantity,
+            ..
+        } => {
+            is_safe_record_id(target_id)
+                && item_id.as_deref().is_none_or(is_safe_record_id)
+                && quantity.is_none_or(|quantity| quantity > 0 && item_id.is_some())
+        }
+        NativeCommand::Craft { recipe_id, .. } => is_safe_record_id(recipe_id),
+        NativeCommand::Cook {
+            heat_id,
+            definition,
+            inputs,
+            ..
+        } => {
+            is_safe_record_id(heat_id)
+                && definition.is_valid()
+                && crate::food_preparation::valid_inputs(inputs)
+        }
+        NativeCommand::TendFire {
+            target_id,
+            operation,
+            item_id,
+            ..
+        } => {
+            world.fire_care.is_some()
+                && is_safe_record_id(target_id)
+                && operation.admits_item(item_id.as_deref())
+        }
+        NativeCommand::Say {
+            text,
+            target_id,
+            volume,
+            public_appeal,
+            ..
+        } => {
+            !text.trim_is_empty()
+                && public_appeal.is_none()
+                && (text.units_len() as u64) <= world.speech_action.value().maximum_characters
+                && target_id.as_ref().is_none_or(|id| is_safe_record_id(id))
+                && volume
+                    .as_ref()
+                    .is_none_or(|v| world.acoustics.value().volume(v).is_some())
+        }
+        NativeCommand::Eat { item_id, .. } => is_safe_record_id(item_id),
+        NativeCommand::Gather {target_id,tool,..}=>is_safe_record_id(target_id) && tool.item_id.as_deref().is_none_or(is_safe_record_id),
+        NativeCommand::TransferStock{request,..}=>request.definition.is_valid() && request.source!=request.destination &&
+            is_safe_record_id(&request.source) && is_safe_record_id(&request.destination) && request.quantity>0,
+        NativeCommand::Outing { .. }
+        | NativeCommand::EncounterPreference { .. }
+        | NativeCommand::Handover { .. }
+        | NativeCommand::Feed { .. }
+        | NativeCommand::Drop { .. }
+        | NativeCommand::Harvest {..}
+            | NativeCommand::Express { .. }
+                | NativeCommand::TransferItem { .. }
+        | NativeCommand::Equipment { .. }
+        | NativeCommand::Guard { .. }
+        | NativeCommand::Coaching {..}
+        | NativeCommand::PracticeShot { .. }
+        | NativeCommand::ReleaseStrike { .. }
+        | NativeCommand::Cancel { .. }
+        | NativeCommand::WithdrawAttempt { .. }
+        | NativeCommand::InspectInventory { .. }
+        | NativeCommand::InspectActivities { .. }
+        | NativeCommand::LearnRecord { .. }
+        | NativeCommand::DescriptiveAct { .. }
+        | NativeCommand::OperateGate { .. }
+        | NativeCommand::PlaceHearth { .. }
+        | NativeCommand::TreatScar { .. }
+        | NativeCommand::Teach { .. }
+        | NativeCommand::Respawn { .. } => false,
+    }
+}
+fn valid_evidence(value: Option<&ResultEvidence>, actor: &str) -> bool {
+    value.is_none_or(|value| value.validate(actor).is_ok())
+}
+fn step(
+    step: &PlanStep,
+    actor: &str,
+    world: &crate::simulation::InstalledWorld,
+) -> Result<(), InstallError> {
+    if step.activity_key.as_ref().is_some_and(|key| {
+        !crate::values::is_safe_record_text(key)
+            || !(crate::worlds::base_request_forms::work::step_supported(&step.command)
+                || step.command.is_learned_leaf())
+    }) {
+        return Err(InstallError::UnsupportedFamily("activity graph plan step"));
+    }
+    if !is_safe_record_id(&step.id)
+        || step.command.envelope().id != step.id
+        || step.command.envelope().actor_id != actor
+        || !valid_command(&step.command, world)
+        || !valid_evidence(step.result_evidence.as_ref(), actor)
+        || (step.status == StepStatus::Running
+            && !step
+                .action_id
+                .as_ref()
+                .is_some_and(|id| is_safe_record_id(id)))
+        || (matches!(
+            step.status,
+            StepStatus::Completed | StepStatus::Blocked | StepStatus::Cancelled
+        ) && step.outcome.is_none())
+        || step.target_episodes.as_ref().is_some_and(|episodes| {
+            episodes.len() > 16
+                || episodes.iter().any(|(id, episode)| {
+                    !is_safe_record_id(id)
+                        || episode.as_ref().is_some_and(|e| !is_safe_record_id(e))
+                })
+        })
+    {
+        return Err(InstallError::CurrentFormat);
+    }
+    // These reference-bearing consent families have no admitted selected writer.
+    // Refuse their actual data before any command can treat them as authorization.
+    if step.command.envelope().cooperation.is_some()
+        || step.command.envelope().combat_help_id.is_some()
+    {
+        return Err(InstallError::UnsupportedFamily(
+            "plan cooperation or combat consent",
+        ));
+    }
+    if matches!(&step.command,NativeCommand::StatusEffect{resting_place_id,resting_bay,..}if resting_place_id.is_some()||resting_bay.is_some())
+    {
+        return Err(InstallError::UnsupportedFamily("rest-place plan binding"));
+    }
+    Ok(())
+}
+pub(crate) fn validate_installation(
+    state: &crate::simulation::SimulationState,
+    budget: &crate::host::ByteBudget,
+) -> Result<(), InstallError> {
+    let physical = &state.physical;
+    let world = &state.installed;
+    let activity_limits = &state.activity.limits;
+    for id in physical.entities.ordered_ids() {
+        let entity = physical
+            .entities
+            .get(id)
+            .ok_or(InstallError::CurrentFormat)?;
+        let Some(actor) = entity.actor.as_ref() else {
+            continue;
+        };
+        let agency = &actor.agency;
+        let limits = &world.agency_limits;
+        attempts::validate_installed(&agency.attempts, limits)?;
+        if !valid_evidence(agency.last_result_evidence.as_ref(), id)
+            || agency.goals.len() as u64
+                > limits
+                    .goals
+                    .checked_add(limits.goal_history)
+                    .ok_or(InstallError::CurrentFormat)?
+            || agency.history.len() as u64 > limits.history
+        {
+            return Err(InstallError::CurrentFormat);
+        }
+        if agency
+            .goals
+            .iter()
+            .filter(|g| matches!(g.status.as_str(), "active" | "paused"))
+            .count() as u64
+            > limits.goals
+        {
+            return Err(InstallError::CurrentFormat);
+        }
+        for (index, goal) in agency.goals.iter().enumerate() {
+            if !is_safe_record_id(&goal.id)
+                || agency.goals[..index].iter().any(|g| g.id == goal.id)
+                || goal.objective.trim_is_empty()
+                || goal.objective.units_len() > 500
+                || !matches!(
+                    goal.status.as_str(),
+                    "active" | "paused" | "completed" | "abandoned"
+                )
+                || !matches!(goal.author.as_str(), "creator" | "actor" | "player" | "god")
+                || !is_safe_record_id(&goal.source_id)
+                || goal
+                    .parent_id
+                    .as_ref()
+                    .is_some_and(|id| !is_safe_record_id(id))
+                || goal
+                    .completion
+                    .as_ref()
+                    .is_some_and(|c| c != "actor-declared")
+            {
+                return Err(InstallError::CurrentFormat);
+            }
+            let mut parent = goal.parent_id.as_deref();
+            let mut depth = 0;
+            while let Some(parent_id) = parent {
+                depth += 1;
+                if parent_id == goal.id || depth > agency.goals.len() {
+                    return Err(InstallError::CurrentFormat);
+                }
+                let parent_goal = agency
+                    .goals
+                    .iter()
+                    .find(|g| g.id == parent_id)
+                    .ok_or(InstallError::CurrentFormat)?;
+                parent = parent_goal.parent_id.as_deref();
+            }
+        }
+        if let Some(places) = &agency.places {
+            if places.len() as u64 > limits.places {
+                return Err(InstallError::CurrentFormat);
+            }
+            for (index, place) in places.iter().enumerate() {
+                if !is_safe_record_id(&place.subject_id)
+                    || places[..index]
+                        .iter()
+                        .any(|p| p.subject_id == place.subject_id)
+                    || place.label.trim_is_empty()
+                    || place.label.units_len() > 120
+                    || place
+                        .episode
+                        .as_ref()
+                        .is_some_and(|id| !is_safe_record_id(id))
+                    || ![place.point.x, place.point.y, place.point.z, place.at]
+                        .iter()
+                        .all(|n| n.is_finite())
+                    || !is_safe_record_id(&place.point.surface_id)
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
+            }
+        }
+        if agency.suspended_plan().is_some_and(|p| {
+            p.status != PlanStatus::Active
+                || p.steps.iter().any(|s| s.status == StepStatus::Running)
+        }) {
+            return Err(InstallError::CurrentFormat);
+        }
+        for plan in [agency.plan.as_ref(), agency.suspended_plan()]
+            .into_iter()
+            .flatten()
+        {
+            if let Some(activity) = &plan.activity {
+                activity.validate_structure(
+                    activity_limits,
+                    physical.header.sim_time,
+                    world,
+                    budget,
+                )?;
+            }
+            super::activity::validate_installed_activity(plan, id, state)
+                .map_err(|_| InstallError::UnsupportedFamily("chosen activity graph"))?;
+            if !is_safe_record_id(&plan.id)
+                || plan.revision == 0
+                || !valid_evidence(plan.result_evidence.as_ref(), id)
+                || (plan.steps.is_empty() && plan.activity.is_none())
+                || plan.steps.len() as u64 > limits.steps
+                || plan.goal_id.as_ref().is_some_and(|goal| {
+                    !goal.is_empty() && !agency.goals.iter().any(|g| g.id == *goal)
+                })
+                || plan
+                    .steps
+                    .iter()
+                    .filter(|s| s.status == StepStatus::Running)
+                    .count()
+                    > 1
+            {
+                return Err(InstallError::CurrentFormat);
+            }
+            for (index, entry) in plan.steps.iter().enumerate() {
+                if plan.steps[..index].iter().any(|s| s.id == entry.id) {
+                    return Err(InstallError::CurrentFormat);
+                }
+                if entry
+                    .watch
+                    .as_ref()
+                    .is_some_and(|watch| !watch.valid_saved(entry, id, state))
+                {
+                    return Err(InstallError::CurrentFormat);
+                }
+                step(entry, id, world)?;
+            }
+        }
+        for entry in &agency.history {
+            if entry.watch.is_some() {
+                return Err(InstallError::CurrentFormat);
+            }
+            step(entry, id, world)?;
+        }
+    }
+    Ok(())
+}

@@ -16,7 +16,7 @@ This is primary implementation testimony, not a controlled study proving that th
 
 There are three different product promises here: an activity completes competently; a teammate is trustworthy within a cooperative game; and the encounter has a satisfying rhythm. They do not require the same authority.
 
-OpenLegend should be able to borrow the first without automatically importing the other two. A character may be dependable at a chosen task while refusing the player's request. A creator may author dramatic pressure, but a character should not learn secret facts merely because an encounter-management system knows them.
+Open Legend should be able to borrow the first without automatically importing the other two. A character may be dependable at a chosen task while refusing the player's request. A creator may author dramatic pressure, but a character should not learn secret facts merely because an encounter-management system knows them.
 
 ### Interruption should preserve the possibility of finishing
 

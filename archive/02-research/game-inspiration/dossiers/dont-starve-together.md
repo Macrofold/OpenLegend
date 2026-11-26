@@ -1,6 +1,6 @@
 # G140 — Don't Starve Together
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Don't Starve Together (DST) is a useful reference because its deepest progression is not a gear ladder. It is **collective competence against a calendar**. Hunger, health, sanity, darkness, weather, seasonal bosses, hound waves, food spoilage and world-state threats create overlapping deadlines; asymmetric characters and multiplayer turn those pressures into roles. A good group becomes stronger not merely because it has more hands, but because one player can cook while another scouts, one can fight while another farms, and one can resurrect a dead teammate at real personal cost.
 
@@ -364,7 +364,7 @@ Woby can already serve as Walter's storage/mount companion. With current Walter 
 
 [Klei 2025 skill release](https://store.steampowered.com/news/posts/?appids=322330&enddate=1743552403&feed=steam_community_announcements) · [Woby](https://dontstarve.wiki.gg/wiki/Woby) · [Walter skills](https://dontstarve.wiki.gg/wiki/Special_Treat).
 
-The courier action is particularly relevant to OpenLegend: it delegates **physical logistics** rather than abstractly teleporting items. Travel time depends on distance, the recipient/container must be resolvable through the map/marking rules, and Woby remains an embodied companion with hunger/mobility.
+The courier action is particularly relevant to Open Legend: it delegates **physical logistics** rather than abstractly teleporting items. Travel time depends on distance, the recipient/container must be resolvable through the map/marking rules, and Woby remains an embodied companion with hunger/mobility.
 
 ### Followers, animal relationships and domestication
 
@@ -1235,7 +1235,7 @@ These are self-selected direct accounts, not prevalence estimates. The high aggr
 
 The central design tension is unusually clear: **DST's ignorance-driven difficulty creates discovery and community knowledge, but the same opacity often crosses from mystery into arbitrary punishment.**
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research interpretations, not accepted implementation requirements.
 
@@ -1269,7 +1269,7 @@ Warly cooking, Wendy/Abigail, Winona engineering and character-specific economie
 
 Insight survives servers/worlds even though bases/items do not.
 
-**Potential OpenLegend lesson:** separate **player knowledge/mastery** from **world-state persistence**.  
+**Potential Open Legend lesson:** separate **player knowledge/mastery** from **world-state persistence**.  
 **Limit:** account progression can undermine a world's intended fresh-start fiction.
 
 ### 6. A negative state can be a resource source

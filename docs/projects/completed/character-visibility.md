@@ -8,7 +8,7 @@ The agreed experience and measurements below retain the October 3 delivery. The 
 
 ## Agreed experience
 
-An unselected campfire behind a person must stay behind that person. Read-through may reveal currently perceived targets through walls, floors and decorative trees, but never through another person or ordinary object. A selected, currently perceived thing is drawn in front, independently of read-through preferences. Selection does not change what the controlled character knows.
+An unselected campfire behind a person must stay behind that person. See-through reveal may reveal currently perceived targets through walls, floors and decorative trees, but never through another person or ordinary object. A selected, currently perceived thing is drawn in front, independently of see-through reveal preferences. Selection does not change what the controlled character knows.
 
 Clicking a remembered image or an image hidden by the character's sight-focus mask must refuse selection with the controlled character's name and “can't see this.” It must not issue a movement command or reveal the remembered thing's identity. Completely undisclosed things have no image or click target. Losing current perception clears selection and all visual emphasis immediately.
 
@@ -18,7 +18,7 @@ Holding the pointer over one selectable thing for more than one real second fade
 
 The server's existing scoped entity projection remains the authority for current perception. No world rules, save format, provider calls or protocol disclosures change. React validates list/menu inspection against its latest projection; the renderer validates canvas selection against its current projection and existing sight-focus restriction. One renderer callback reports refusal through the existing notice surface.
 
-The existing presentation owner marks camera-obstructing scenery in the world stencil buffer. Ordinary read-through checks that mark before drawing hidden fragments. People and ordinary objects clear it when their normally visible fragments win depth testing. A preliminary color-free pass protects the full alpha silhouette of eligible characters, including faded edges; object read-through then precedes character read-through. This preserves character readability where both are hidden by scenery. A separate final layer draws only the permitted selected target. Sprite fronts and the pixel-rendered model use their existing alpha/depth representations.
+The existing presentation owner marks camera-obstructing scenery in the world stencil buffer. Ordinary see-through reveal checks that mark before drawing hidden fragments. People and ordinary objects clear it when their normally visible fragments win depth testing. A preliminary color-free pass protects the full alpha silhouette of eligible characters, including faded edges; object see-through reveal then precedes character see-through reveal. This preserves character readability where both are hidden by scenery. A separate final layer draws only the permitted selected target. Sprite fronts and the pixel-rendered model use their existing alpha/depth representations.
 
 A renderer-owned outline helper reuses PlayCanvas's pinned outline renderer, borrowed mesh transforms and alpha textures, with isolated material copies. Only one hovered target is processed, after the delay; materials, meshes, layers, cameras and targets have explicit replacement/destruction. Character pixel composites supply their existing silhouette rather than a rectangular box. The outline blend excludes foreground people for any unselected target.
 
@@ -26,7 +26,7 @@ Estimated implementation: roughly 400–650 changed logic lines across presentat
 
 ## Delivery and verification
 
-1. Restrict scenery read-through and add selected foreground presentation across sprites, crates and the live pixel character.
+1. Restrict scenery see-through reveal and add selected foreground presentation across sprites, crates and the live pixel character.
 2. Unify perception checks at selection entrypoints, refusal feedback and immediate revocation; preserve drag/context-menu behavior.
 3. Add delayed, fading hover silhouettes and lifecycle cleanup.
 4. Reconcile the presentation contract, UI guidance, limits and spatial tracker with actual delivered behavior.

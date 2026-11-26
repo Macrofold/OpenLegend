@@ -1,6 +1,6 @@
 # Hades I — builds, obligations, and productive returns
 
-**G22 · Completed research pass · September 26, 2026.** Original Hades, not Hades II. Research inspiration, not an accepted OpenLegend specification. No gameplay, performance measurement, source-code inspection or full video viewing was performed. The coverage and evidence limits are recorded in §11.
+**G22 · Completed research pass · September 26, 2026.** Original Hades, not Hades II. Research inspiration, not an accepted Open Legend specification. No gameplay, performance measurement, source-code inspection or full video viewing was performed. The coverage and evidence limits are recorded in §11.
 
 [Original chapter and field guide](../games/hades-and-hades-ii.md) · [Preserved granular study](../mechanics/hades-builds-character-callbacks-and-return-rhythm.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
@@ -12,7 +12,7 @@ The initial fantasy is immediate: become good enough to escape. The established 
 
 **Boundary:** Zagreus is not a custom-created class or an open-ended life-simulation citizen. The customization is chiefly his loadout, permanent talents, run-specific powers and relationships. There is no general player-authored spell language, survival hunger loop, freely built settlement, loot-armor wardrobe or controllable adventuring party in this scope. The six weapons and their supported modifications supply much of the mechanical identity instead. [S1][S2][S7]
 
-**Interpretation:** the interesting promise is not simply that death is cheap. It is that a failed objective need not invalidate every other intention the player brought into the attempt. That distinction is important for OpenLegend: preserving something meaningful is different from removing consequences.
+**Interpretation:** the interesting promise is not simply that death is cheap. It is that a failed objective need not invalidate every other intention the player brought into the attempt. That distinction is important for Open Legend: preserving something meaningful is different from removing consequences.
 
 ## 2. The action and encounter vocabulary
 
@@ -59,7 +59,7 @@ Chthonic Keys unlock the base arsenal; Titan Blood develops aspects. Aspects are
 | **Malphon / Twin Fists** | Fast close-range attacks and an uppercut-style special. **Talos** pulls a target toward the player; **Demeter** rewards accumulated attacks with an enhanced special. The question becomes when and on whom to spend a prepared burst. [S12] |
 | **Exagryph / Adamant Rail** | Shooting, reloading and an explosive special. **Eris** rewards catching Zagreus in his own special's blast; **Hestia** rewards deliberate reloading with a stronger next shot. The same gun can invite quite different rhythms. [S13] |
 
-These examples make a useful distinction between an **upgrade to a number**, an **alteration of a verb**, and an **alteration of the sequence that makes a verb useful**. OpenLegend's invention ideas should be evaluated at all three levels. A description saying “legendary” does not by itself create a new decision.
+These examples make a useful distinction between an **upgrade to a number**, an **alteration of a verb**, and an **alteration of the sequence that makes a verb useful**. Open Legend's invention ideas should be evaluated at all three levels. A description saying “legendary” does not by itself create a new decision.
 
 ### Divine powers are a finite compositional vocabulary
 
@@ -168,7 +168,7 @@ The relevant criticism is specific rather than a blanket “good graphics” ver
 
 The prior granular owner preserves the reported collaboration between Kasavin and art director Jen Zee: visual character ideas and writing informed each other. It also retains the importance of voice and sound. This is a production account, not proof that the script alone produces the resulting attachment. [S21]
 
-**Interpretation:** visual simplicity of viewpoint is not simplicity of craft. For OpenLegend, a generated actor that remembers everything but changes silhouette, tone or values unpredictably may feel less continuous than a smaller authored cast with fewer, better-placed responses.
+**Interpretation:** visual simplicity of viewpoint is not simplicity of craft. For Open Legend, a generated actor that remembers everything but changes silhouette, tone or values unpredictably may feel less continuous than a smaller authored cast with fewer, better-placed responses.
 
 ## 8. Development, distribution, marketing, and economics
 
@@ -204,7 +204,7 @@ The parameterized top-rated URLs failed initially. The accessible positive and n
 
 **Synthesis:** the disagreement is not whether progression exists. It is whether the activity between the progress beats remains pleasurable. A design can successfully reward failure and still lose someone who does not enjoy repeating the central action.
 
-## 10. Transferable patterns for OpenLegend
+## 10. Transferable patterns for Open Legend
 
 These are research hypotheses, not newly accepted engine requirements.
 

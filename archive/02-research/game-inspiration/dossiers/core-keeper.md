@@ -4,7 +4,7 @@
 
 [Preserved overview](../games/core-keeper.md) · [Detailed mechanics study](../mechanics/core-keeper-resource-circuits-food-and-inhabited-discovery.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
-Core Keeper's strongest OpenLegend lesson is the relationship between **place, resource, automation and return**. A location is not consumed when first discovered: a cavern can become a road, an ore deposit an extraction site, a biome a farm source, and a base a means of converting discoveries into durable capability. These are research interpretations, not accepted OpenLegend requirements.
+Core Keeper's strongest Open Legend lesson is the relationship between **place, resource, automation and return**. A location is not consumed when first discovered: a cavern can become a road, an ore deposit an extraction site, a biome a farm source, and a base a means of converting discoveries into durable capability. These are research interpretations, not accepted Open Legend requirements.
 
 ## 1. Identity and current scope
 
@@ -302,7 +302,7 @@ After obtaining the Mysterious Idol, a player creates suitable accommodation for
 
 An explorer using minions compares an attacking pet with Earie's support. The latter can improve the group's contribution without personally supplying another attack pattern. **Next choice:** develop that pet or choose a different companion for a different loadout. **Limit:** a benefit tied to minions has less value when the owner is not using them; affection and appearance can still justify another choice. [CK-X](#ck-x)
 
-## 31. Transferable inspiration for OpenLegend
+## 31. Transferable inspiration for Open Legend
 
 ### A. Let places change roles
 

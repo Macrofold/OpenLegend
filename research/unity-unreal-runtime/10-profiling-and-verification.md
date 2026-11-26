@@ -1,6 +1,6 @@
 # Profiling, verification, and the meaning of determinism
 
-Research date: **23 October 2026**. This chapter uses the [UE 5.8.4 / Unity 6000.6.7f1 baseline](01-evidence-and-version-baseline.md) and explicitly identifies separately versioned tooling. It describes what the engines' tools observe, how measurement changes execution, and which conclusions the evidence supports. It is research, not a proposed OpenLegend testing program or a set of implementation tasks.
+Research date: **23 October 2026**. This chapter uses the [UE 5.8.4 / Unity 6000.6.7f1 baseline](01-evidence-and-version-baseline.md) and explicitly identifies separately versioned tooling. It describes what the engines' tools observe, how measurement changes execution, and which conclusions the evidence supports. It is research, not a proposed Open Legend testing program or a set of implementation tasks.
 
 An authored persistent world has more than one meaningful outcome: a frame appears, a simulated action resolves, a character receives an observation, a record becomes durable, and a client catches up. These outcomes can happen on different timelines. A renderer's frame rate cannot establish that all of them remain timely or correct. Conversely, an expensive offline import is not automatically a runtime bottleneck. The distinction between work, waiting, memory retention, and semantic correctness organizes the discussion below.
 
@@ -22,7 +22,7 @@ Ordinary Unity profiling reports instrumented regions. Deep Profiling adds instr
 
 Unity's standalone Profiler places the profiling UI in another process. This reduces the self-profiling and shared-process overhead of inspecting Editor or Play-mode execution. It does not claim that an Editor workload becomes identical to the target Player workload. [Standalone Profiler](https://docs.unity3d.com/6000.6/Documentation/Manual/profiler-standalone-process.html)
 
-Brian Will's Unity engineering article, updated **29 September 2026**, emphasizes representative hardware and workload measurements. It explains that unnecessary dependency edges can serialize otherwise independent jobs and that parallelization can lose to scheduling or memory contention. It also distinguishes Burst compilation from merely writing code intended for Burst: compilation status can be inspected. These mechanisms support inspecting actual execution paths. The article's illustrative speedup ranges and rough operation counts are not adopted here as transferable OpenLegend performance estimates. [General C# and DOTS performance](https://learn.unity.com/article/c-and-dots-specific-performance-tips)
+Brian Will's Unity engineering article, updated **29 September 2026**, emphasizes representative hardware and workload measurements. It explains that unnecessary dependency edges can serialize otherwise independent jobs and that parallelization can lose to scheduling or memory contention. It also distinguishes Burst compilation from merely writing code intended for Burst: compilation status can be inspected. These mechanisms support inspecting actual execution paths. The article's illustrative speedup ranges and rough operation counts are not adopted here as transferable Open Legend performance estimates. [General C# and DOTS performance](https://learn.unity.com/article/c-and-dots-specific-performance-tips)
 
 ## 2. Memory evidence: allocation, occupancy, retention, and residency
 
@@ -81,7 +81,7 @@ For the mechanisms in this research, the following variables change what an othe
 | Low average frame time  | Tail pauses, cold transitions, correction bursts, work performed outside the render loop                   |
 | Fast save completion    | State extraction and serialization time, snapshot consistency, storage completion semantics                |
 
-This table is a synthesis of the lifecycle mechanisms in chapters 05–07. It contains no unmeasured capacity target and makes no recommendation to redesign OpenLegend around a particular engine counter.
+This table is a synthesis of the lifecycle mechanisms in chapters 05–07. It contains no unmeasured capacity target and makes no recommendation to redesign Open Legend around a particular engine counter.
 
 ## 5. Testing facilities: assertions, execution environments, and fault conditions
 
@@ -111,7 +111,7 @@ Entities 6.6 marks the **Journaling window deprecated**, with removal planned. T
 
 The current component lifecycle callbacks provide another targeted debugging surface. `IDebugOnAdded` and `IDebugOnRemoved` run when the component is added or removed, with read-only component access. They are included in the Editor and Development builds and excluded from release builds. They therefore cannot supply runtime behavior that a shipped world depends on. The page presents them as a way to inspect what caused a structural transition, not a general event-sourcing facility. [Component lifecycle callbacks](https://docs.unity3d.com/Packages/com.unity.entities@6.6/manual/entities-component-lifecycle-callbacks.html)
 
-**Independent interpretation for OpenLegend's domain:** a trace saying that a system obtained write access is weaker evidence than an accepted world transition; a retained observation is different from the authoritative event that produced it. Debugging information can expose execution details without defining which character was entitled to know those details. Diagnostic history, persistence history, and private memory consequently cannot be equated solely because all three have timestamps.
+**Independent interpretation for Open Legend's domain:** a trace saying that a system obtained write access is weaker evidence than an accepted world transition; a retained observation is different from the authoritative event that produced it. Debugging information can expose execution details without defining which character was entitled to know those details. Diagnostic history, persistence history, and private memory consequently cannot be equated solely because all three have timestamps.
 
 ## 7. Determinism has a scope
 
@@ -141,7 +141,7 @@ Research implication: structural validity, runtime behavior, and verifier covera
 
 The current tools provide complementary evidence: execution timelines, allocation lifetimes, chunk occupancy, packet contents, asset diagnostics, controlled fault conditions, and explicit behavior checks. Their value depends on their capture boundaries and the question asked. Newer tooling also changes the evidence itself: Memory Profiler's preview introduces root-based attribution, Profile Analyzer adds allocation distributions, Entities deprecates a debug window, and component callbacks differ between development and release execution.
 
-No Unity or Unreal build, benchmark, memory capture, network scenario, or CraftBench experiment was executed for this research. No measured capacity or predicted speedup is claimed. The cited documentation and paper establish mechanisms and documented constraints. OpenLegend's server authority, character privacy, durable transitions, and browser presentation remain the context for interpreting those mechanisms; this chapter does not substitute engine diagnostics for those existing semantic contracts.
+No Unity or Unreal build, benchmark, memory capture, network scenario, or CraftBench experiment was executed for this research. No measured capacity or predicted speedup is claimed. The cited documentation and paper establish mechanisms and documented constraints. Open Legend's server authority, character privacy, durable transitions, and browser presentation remain the context for interpreting those mechanisms; this chapter does not substitute engine diagnostics for those existing semantic contracts.
 
 ## Source provenance register
 

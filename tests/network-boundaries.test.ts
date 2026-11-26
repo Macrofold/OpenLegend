@@ -117,6 +117,10 @@ describe('network boundary acquisition checks using the pinned compiler', () => 
       },
       { path: 'tests/exact-fixture.ts', source: 'fetch("http://127.0.0.1"); export {};' },
       {
+        path: 'scripts/assets/serve.ts',
+        source: 'import { createServer } from "node:http"; createServer(); export {};',
+      },
+      {
         path: 'apps/server/src/http.ts',
         source: 'import { createServer } from "node:http"; createServer(); export {};',
       },
@@ -150,7 +154,8 @@ describe('network boundary acquisition checks using the pinned compiler', () => 
       expect(paths.has(`apps/client/src/approved-${name}.ts`), name).toBe(false);
     expect(paths.has('packages/network/src/http.ts')).toBe(false);
     expect(paths.has('tests/exact-fixture.ts')).toBe(false);
-    expect(paths.has('apps/server/src/http.ts')).toBe(false);
+    expect(paths.has('scripts/assets/serve.ts')).toBe(false);
+    expect(paths.has('apps/server/src/http.ts')).toBe(true);
     expect(paths.has('apps/server/src/new.ts')).toBe(false);
     expect(paths.has('packages/network/src/events.ts')).toBe(false);
     expect(paths.has('packages/network/src/network.test.ts')).toBe(false);
@@ -325,11 +330,11 @@ describe('network boundary acquisition checks using the pinned compiler', () => 
     const lines = new Set(inspectNetworkSources(root, sources).map((failure) => failure.line));
     cases.forEach(([name, approved], index) => expect(lines.has(index + 1), name).toBe(!approved));
   });
-  it('permits only reviewed local Node entry files and startup flags', () => {
+  it('denies local Node children from retired entry files', () => {
     const sources = [
       [
         'scripts/stress-native.ts',
-        true,
+        false,
         'spawn(process.execPath,["--import","tsx",fileURLToPath(new URL("./profile-native.ts",import.meta.url)),"local-input"]);',
       ],
       ['scripts/stress-native.ts', false, 'spawn(process.execPath,["--eval","fetch(1)"]);'],
@@ -380,7 +385,7 @@ describe('network boundary acquisition checks using the pinned compiler', () => 
       ],
       [
         'scripts/performance/profile-server.mjs',
-        true,
+        false,
         'fork(fileURLToPath(import.meta.url),["--client"],{execArgv:["--import","tsx"]});',
       ],
       [

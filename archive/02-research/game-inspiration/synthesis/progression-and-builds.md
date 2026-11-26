@@ -14,7 +14,7 @@ How does improvement change what the player can attempt, understand or express?
 
 ## Ownership boundary
 
-Owns advancement and build choices. Immediate power delivery belongs to MAGIC/GEAR and timing/balance to PACING. This is research, not an approved OpenLegend specification.
+Owns advancement and build choices. Immediate power delivery belongs to MAGIC/GEAR and timing/balance to PACING. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -28,7 +28,7 @@ Owns advancement and build choices. Immediate power delivery belongs to MAGIC/GE
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-growth) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
 
@@ -36,13 +36,13 @@ Use the [source and goal map](source-and-goal-map.md#topic-growth) to locate rel
 
 <!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 
 <!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Becoming capable without a mandatory combat ladder
 

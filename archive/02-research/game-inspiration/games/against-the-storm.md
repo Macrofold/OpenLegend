@@ -4,9 +4,9 @@
 
 **My interpretation.** Many building games become less interesting once the machine works. A bounded scenario restores the part where scarce options, uncertain geography and competing needs require judgment. The variation comes partly from what the player does not have, rather than from adding unlimited tools.
 
-**The tradeoff.** Repeated settlement starts can delight someone who enjoys solving the early problem and frustrate someone who wants one home to last indefinitely. That tension is directly relevant to OpenLegend’s long-lived-world promise. A design that removes stagnation by wiping progress solves one problem by abandoning a value another audience cares about.
+**The tradeoff.** Repeated settlement starts can delight someone who enjoys solving the early problem and frustrate someone who wants one home to last indefinitely. That tension is directly relevant to Open Legend’s long-lived-world promise. A design that removes stagnation by wiping progress solves one problem by abandoning a value another audience cares about.
 
-**For OpenLegend.** Use bounded projects or expeditions inside a persistent world: a temporary outpost, a difficult repair, a community shortage or an experiment with limited resources. Keep relationships, knowledge and important consequences while allowing local problems to reach an ending. Optional scenario worlds can supply full resets when players knowingly choose that mode.
+**For Open Legend.** Use bounded projects or expeditions inside a persistent world: a temporary outpost, a difficult repair, a community shortage or an experiment with limited resources. Keep relationships, knowledge and important consequences while allowing local problems to reach an ending. Optional scenario worlds can supply full resets when players knowingly choose that mode.
 
 **Growth lesson.** A clear hybrid—city-building plus repeated constraint-driven runs—helps explain why familiar operations feel different. Product positioning should identify the new decision pattern, not merely enumerate two genres. The creator/community approach also suggests value in showing a playable problem early enough that feedback can change its structure.
 

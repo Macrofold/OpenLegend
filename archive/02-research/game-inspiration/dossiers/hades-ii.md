@@ -2,7 +2,7 @@
 
 **G01 · Full research pass completed September 25, 2026.** Covers the major gameplay systems and all R01–R14 research categories, with the coverage map and preservation review below. This is not an exhaustive item-stat database, a source-code audit, or a claim to have personally played the game. Historical and current-version sources are distinguished.
 
-Read alongside the [preserved Hades/Hades II chapter](../games/hades-and-hades-ii.md). The [existing Hades mechanics study](../mechanics/hades-builds-character-callbacks-and-return-rhythm.md) concerns **Hades I**, not interchangeable sequel rules. This dossier is gameplay inspiration, not an OpenLegend specification. [Assignment](../research-requirements.md) · [Resume ledger](../research-progress.md).
+Read alongside the [preserved Hades/Hades II chapter](../games/hades-and-hades-ii.md). The [existing Hades mechanics study](../mechanics/hades-builds-character-callbacks-and-return-rhythm.md) concerns **Hades I**, not interchangeable sequel rules. This dossier is gameplay inspiration, not an Open Legend specification. [Assignment](../research-requirements.md) · [Resume ledger](../research-progress.md).
 
 **Spoilers:** weapon identities, companions, both journey directions and late-game progression are discussed. Section 9 discusses the ending's reception and revision without reproducing the ending sequence. Source pages, achievement guides and soundtrack titles can reveal more.
 
@@ -208,13 +208,13 @@ These examples are constructed from the cited rules unless explicitly attributed
 
 **A familiar event receives new causal credit.** A later callback can acknowledge that Toula, not Melinoë's direct attack, finished a Guardian. [H225](#h225) The event's identity changes through a small factual distinction. More verbose generic congratulations would not reproduce that specificity.
 
-## 14. Inspiration for OpenLegend, with limits
+## 14. Inspiration for Open Legend, with limits
 
 **Keep preparation legible.** Separate owning an option, being able to activate it, paying to use it and accepting its consequences. These distinctions let reusable mechanics remain comprehensible without presenting every possible combination at once.
 
 **Give tools handling identities.** A tool can change range, timing, positional relationships, recovery or an opportunity to cooperate. A generated name and a larger strength value are not substitutes for a new practical choice.
 
-**Let failure continue selected commitments.** Preserve some progress in a person, home, learned method or material project, without pretending the attempt succeeded. The player should be able to identify what was lost and what remains.
+**Let failure continue selected commitments.** Preserve some progress in a person, home, learned activity or material project, without pretending the attempt succeeded. The player should be able to identify what was lost and what remains.
 
 **Use specific recognition.** Causal credit, remembered acquaintance and noticed environmental change are different callback opportunities. A quiet response at the right moment can be more persuasive than an unlimited stream of generic comments.
 
@@ -265,7 +265,7 @@ A fresh audit against the assignment's explicit mechanics inventory found the do
 | R13 — Inspiration and limits | §14 and labeled interpretations throughout |
 | R14 — Sources/navigation/preservation | §15–17; annotated source use, links and this review |
 
-**Per-game preservation:** the supplied master’s Hades/Hades II section and the complete existing repository pair chapter were compared in this pass. Its earlier sequel history, praise, movement/ending criticism, interpretation, Steam-history capture and proposed OpenLegend tests remain unchanged in `games/hades-and-hades-ii.md`. The Hades I field-guide insertion and existing original-game mechanics study remain separate. This new dossier adds missing sequel detail rather than replacing those passages. Original review/source registers and economic captures were not overwritten.
+**Per-game preservation:** the supplied master’s Hades/Hades II section and the complete existing repository pair chapter were compared in this pass. Its earlier sequel history, praise, movement/ending criticism, interpretation, Steam-history capture and proposed Open Legend tests remain unchanged in `games/hades-and-hades-ii.md`. The Hades I field-guide insertion and existing original-game mechanics study remain separate. This new dossier adds missing sequel detail rather than replacing those passages. Original review/source registers and economic captures were not overwritten.
 
 **Limits retained:** no personal gameplay, full-video inspection, proprietary code audit, representative review survey or independently audited game profit. Community references include indexed-only retrieval and some historical guide material; exact balance numbers are deliberately not merged into a purported current universal ruleset. This per-game review does not complete the separate seven-file packet-wide reconciliation in the resume ledger.
 

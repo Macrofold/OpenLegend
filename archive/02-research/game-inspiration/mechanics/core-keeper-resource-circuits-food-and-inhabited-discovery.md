@@ -28,7 +28,7 @@ The mining reference warns that a full smelter output can stop processing and re
 
 **Worked diagnosis:** a player sees ore waiting and assumes more drills are required. The actual limitation is finished material that has nowhere to go. Clearing the output or adding a supported removal stage addresses a different problem from increasing extraction.
 
-**Interpretation:** a good invention system makes “not working” divisible into understandable causes. Supply, transformation, transfer and destination are separate possibilities. This is a gameplay lesson, not an instruction to implement Core Keeper's machinery or persistence model in OpenLegend.
+**Interpretation:** a good invention system makes “not working” divisible into understandable causes. Supply, transformation, transfer and destination are separate possibilities. This is a gameplay lesson, not an instruction to implement Core Keeper's machinery or persistence model in Open Legend.
 
 Finite deposits also create a natural ending to an installation. The player can recover value from a solved local problem without that particular machine needing to run forever. Whether moving the setup elsewhere feels like a new project or repeated setup labor depends on the tools and the surrounding purpose.
 
@@ -50,7 +50,7 @@ The 2024 critic reports seeing Cavelings mine, sleep and tend crops, prompting a
 
 **Interpretation:** a small, understandable routine can change the meaning of an encounter. A creature encountered working is different from a creature encountered only waiting to attack. The player supplies some interpretation, so the research must not infer elaborate hidden motivations solely from an animation.
 
-For OpenLegend inspiration, the valuable question is what the inhabitant actually does differently when interrupted or helped. Fluent conversation is not necessary for the first impression of a life beyond combat, but neither does one work animation establish reliable memory or agency.
+For Open Legend inspiration, the valuable question is what the inhabitant actually does differently when interrupted or helped. Fluent conversation is not necessary for the first impression of a life beyond combat, but neither does one work animation establish reliable memory or agency.
 
 ## 6. Authored scenes give procedural space a recognizable shape
 
@@ -106,7 +106,7 @@ The earlier chapter retains the dated commercial milestones. This study adds no 
 
 <a id="c7"></a>**C7 — [Heart Berry](https://corekeeper.atma.gg/en/Heart_Berry).** Community item reference; qualitative cooked properties and other uses, not a universal optimal recipe.
 
-<a id="c8"></a>**C8 — [Glow Tulip](https://corekeeper.atma.gg/en/Glow_Tulip).** Community item reference. Named examples identify the source game's objects, not proposed OpenLegend assets.
+<a id="c8"></a>**C8 — [Glow Tulip](https://corekeeper.atma.gg/en/Glow_Tulip).** Community item reference. Named examples identify the source game's objects, not proposed Open Legend assets.
 
 <a id="c9"></a>**C9 — [Core Keeper review, PC Gamer](https://www.pcgamer.com/games/survival-crafting/core-keeper-review/), September 17, 2024.** Christopher Livingston's original play account. Historical reception and attributed observations, not measured prevalence or current-version verification.
 

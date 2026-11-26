@@ -1,6 +1,6 @@
 # PEAK: shared burdens, rescue, and spatial tools
 
-**Gameplay reference, not an OpenLegend specification.** This expands the [original PEAK chapter](../games/peak.md), which had stronger growth evidence than granular gameplay and reception coverage. Compare [Lethal Company](lethal-company-tools-partial-information-and-cooperation.md) for another simple shared predicament and [Vampire Survivors](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) for different cooperative resource rules.
+**Gameplay reference, not an Open Legend specification.** This expands the [original PEAK chapter](../games/peak.md), which had stronger growth evidence than granular gameplay and reception coverage. Compare [Lethal Company](lethal-company-tools-partial-information-and-cooperation.md) for another simple shared predicament and [Vampire Survivors](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) for different cooperative resource rules.
 
 **Scope:** the base climbing premise, selected documented items, June 2025 criticism and interviews, and separately labeled later product documentation. Not all current biomes existed at launch. Community mechanics references are not a source-code audit; constructed examples are not play sessions conducted for this research. Accessed September 25, 2026. Discussion reveals basic item functions but not the ending.
 
@@ -102,7 +102,7 @@ A retellable rescue or mistake can make the game easy to show to someone else. T
 
 Can a useful item burden its carrier while helping the group? Can one placed tool introduce a new intermediate state? Does a property inversion create a new route? Does a temporary advantage have a legible aftermath? Is information incomplete in a way cooperation can address? Can the ordinary activity remain worthwhile without an endless content schedule?
 
-These are reading lenses, not maintainer tasks. They describe why a small set of mechanics deserves close study without declaring OpenLegend should become a climbing game.
+These are reading lenses, not maintainer tasks. They describe why a small set of mechanics deserves close study without declaring Open Legend should become a climbing game.
 
 ## Annotated sources
 
@@ -118,7 +118,7 @@ These are reading lenses, not maintainer tasks. They describe why a small set of
 
 <a id="p6"></a>**P6 — [Rope Spool, PEAK Wiki](https://peak.wiki.gg/wiki/Rope_Spool).** Indexed deployment and physics-scope notes. Exact distances are omitted because related pages contain version differences.
 
-<a id="p7"></a>**P7 — [Anti-Rope Spool, PEAK Wiki](https://peak.wiki.gg/wiki/Anti-Rope_Spool).** Indexed upward-deployment, floating and carrying behavior. Names identify reference mechanics rather than proposed OpenLegend assets.
+<a id="p7"></a>**P7 — [Anti-Rope Spool, PEAK Wiki](https://peak.wiki.gg/wiki/Anti-Rope_Spool).** Indexed upward-deployment, floating and carrying behavior. Names identify reference mechanics rather than proposed Open Legend assets.
 
 <a id="p8"></a>**P8 — [Big Lollipop, PEAK Wiki](https://peak.wiki.gg/wiki/Big_Lollipop).** Indexed effect and patch history. Cooked-behavior changes are explicitly later than launch.
 

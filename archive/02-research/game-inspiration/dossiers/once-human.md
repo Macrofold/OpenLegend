@@ -1,6 +1,6 @@
 # G147 — Once Human
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Once Human is most useful as a study of **a live survival world whose rules are packaged into scenarios rather than one permanent universal ruleset**. The same account can carry durable identity, blueprints, cosmetics and selected resources across scenario boundaries while each scenario can radically change survival pressure, PvP, weather, Deviation rules, map behavior and social incentives. Its other distinctive idea is that anomalies are not only enemies: they become companions, automation workers, territory infrastructure, capture targets and now even a class/progression substrate.
 
@@ -679,7 +679,7 @@ These are qualitative samples, not prevalence measures. A 2024 complaint that "t
 
 **Persistent servers versus population density.** Removing shutdown/reset does not automatically preserve a healthy social world.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Separate durable identity from world-local state
 
@@ -696,7 +696,7 @@ while a new scenario owns:
 - map state;
 - territory placement.
 
-OpenLegend should explicitly model **actor-owned, world-owned and portable knowledge/design state** instead of treating save persistence as all-or-nothing.
+Open Legend should explicitly model **actor-owned, world-owned and portable knowledge/design state** instead of treating save persistence as all-or-nothing.
 
 ### 2. A scenario can be a coherent package of world laws
 
@@ -708,11 +708,11 @@ Way of Winter, Deviation and Prismverse do more than swap quest text; they alter
 - progression;
 - group infrastructure.
 
-For OpenLegend, world packages should be able to change laws coherently without contaminating the universal engine.
+For Open Legend, world packages should be able to change laws coherently without contaminating the universal engine.
 
 ### 3. Persistence is not enough; communities need density
 
-Permanent PvP servers failed socially despite technically preserving worlds. OpenLegend worlds should measure:
+Permanent PvP servers failed socially despite technically preserving worlds. Open Legend worlds should measure:
 - active participants;
 - interaction density;
 - group continuity;
@@ -725,7 +725,7 @@ Merging, migration or federation may be healthier than immortal empty shards.
 
 Removing Calibration is a valuable precedent. Live games accumulate mechanics faster than players can learn them.
 
-OpenLegend should treat **system deletion/consolidation** as normal evolution, with migrations and transparent compensation where necessary.
+Open Legend should treat **system deletion/consolidation** as normal evolution, with migrations and transparent compensation where necessary.
 
 ### 5. Make weird entities useful in more than one subsystem
 
@@ -736,13 +736,13 @@ Deviations work because they can be:
 - build pieces;
 - class/scenario participants.
 
-An OpenLegend entity should ideally remain one coherent entity with many relationships, not become separate "combat pet," "worker unit" and "quest token" objects.
+An Open Legend entity should ideally remain one coherent entity with many relationships, not become separate "combat pet," "worker unit" and "quest token" objects.
 
 ### 6. Classes can specialize relationships rather than combat rotation
 
 Chef/Gardener/Beastmaster change how the player relates to food, plants and animals. This is much more world-sim relevant than fighter/mage/rogue.
 
-OpenLegend can make professions unlock **new affordances over existing reality**, while still permitting flexible action outside the profession.
+Open Legend can make professions unlock **new affordances over existing reality**, while still permitting flexible action outside the profession.
 
 ### 7. Creator-hosted rules can become a product surface
 
@@ -764,7 +764,7 @@ New systems should pay an explicit **navigation/mental-model budget**:
 
 Isles of Abyss is currently in a confidential final test. Even if promotional interviews describe it, its test behavior is not the released product.
 
-OpenLegend research/design should distinguish:
+Open Legend research/design should distinguish:
 - idea;
 - private/public test;
 - shipped version;

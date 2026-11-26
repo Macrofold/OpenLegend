@@ -4,7 +4,7 @@
 
 **Interpretation.** A surprising result feels satisfying when the player can understand and reuse its cause. That is different from random punishment or arbitrary AI judgment. The same interaction can produce a disaster once and a clever tactic later.
 
-**Transfer.** OpenLegend’s reusable mechanics need consistent composition and clear consequence evidence. A spell combination should not work merely because its description sounds compelling. However, do not inherit harsh loss indiscriminately: whether a failed experiment is funny, educational, or infuriating depends on what was lost and whether the player can try again with new understanding.
+**Transfer.** Open Legend’s reusable mechanics need consistent composition and clear consequence evidence. A spell combination should not work merely because its description sounds compelling. However, do not inherit harsh loss indiscriminately: whether a failed experiment is funny, educational, or infuriating depends on what was lost and whether the player can try again with new understanding.
 
 **What matters less initially.** Simulating every pixel. The transferable value is interaction consistency, not the particular fidelity or representation chosen by Noita.
 
@@ -36,7 +36,7 @@
 
 3. **The wall is an ingredient in the route.** *Documented system interaction.* Destructible and reactive terrain lets digging or destruction alter the path through a level. An apparently fixed obstacle can become a tactical or exploration problem. This does not mean every desired passage is safe: making a route can also expose hazards or remove shelter. [FG-NO-O](../references/sources-03.md#source-fg-no-o)
 
-**What to borrow for OpenLegend.** Use Noita as a test for OpenLegend’s reusable effect contracts: a combination needs real targeting, timing, resource, and consequence semantics. Do not copy its severe punishment by default. Let the creator inspect why a composition worked, and let the player’s next attempt use that knowledge.
+**What to borrow for Open Legend.** Use Noita as a test for Open Legend’s reusable effect contracts: a combination needs real targeting, timing, resource, and consequence semantics. Do not copy its severe punishment by default. Let the creator inspect why a composition worked, and let the player’s next attempt use that knowledge.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

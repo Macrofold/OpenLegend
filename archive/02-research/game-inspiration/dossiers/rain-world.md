@@ -1,6 +1,6 @@
 # G123 — Rain World
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Rain World is most useful as a study of a world that is *not centered on the player*. The player-character is expressive and capable, but most memorable texture comes from systemic creatures, environmental pressure, partial information, and progression in which learned behavior matters at least as much as formal upgrades.
 

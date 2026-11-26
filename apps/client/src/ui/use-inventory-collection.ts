@@ -3,10 +3,12 @@ import {
   DEFAULT_INVENTORY_FILTER,
   DEFAULT_INVENTORY_SORT,
   type ContainerPage,
+  type ContainerPageRefusal,
+  type CommandInput,
   type InventoryFilter,
   type InventorySort,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { postContactRead } from '../api';
 
 /** One visible collection owns one bounded native page. The other side never shares its
  * query, location or continuation. Reopening requires a fresh permitted read. */
@@ -14,20 +16,29 @@ export function useInventoryCollection({
   initialId,
   scope,
   displayOwner,
+  disclosureRevision,
   revisionKey,
   visible,
   connected,
   expectedRootId,
+  carriedRevision,
   blockedReason,
+  nativeInspection = false,
+  inspect,
 }: {
   initialId: string;
   scope: string;
   displayOwner: string;
+  disclosureRevision: string;
   revisionKey: string;
   visible: boolean;
   connected: boolean;
   expectedRootId: string;
+  /** Only a carried bag needs a fresh custody proof when the root stock changes. */
+  carriedRevision?: number;
   blockedReason?: string;
+  nativeInspection?: boolean;
+  inspect?(input: CommandInput): void;
 }) {
   const [location, setLocation] = useState<{ id: string; cursor?: string; context?: string }>({
     id: initialId,
@@ -41,15 +52,18 @@ export function useInventoryCollection({
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
   const queryIdentity = JSON.stringify([query, sort, filter]);
+  const custodyRevision = location.id === expectedRootId ? undefined : carriedRevision;
   const paginationContext = JSON.stringify([
     scope,
     revisionKey,
+    disclosureRevision,
     availability.revision,
     queryIdentity,
   ]);
   const cursor = location.context === paginationContext ? location.cursor : undefined;
   const key = JSON.stringify([
     displayOwner,
+    disclosureRevision,
     scope,
     location.id,
     cursor,
@@ -58,13 +72,16 @@ export function useInventoryCollection({
     refreshNumber,
     availability.revision,
     expectedRootId,
+    custodyRevision,
   ]);
   const [result, setResult] = useState<{
     key: string;
     locationId: string;
     queryIdentity: string;
     displayOwner: string;
+    disclosureRevision: string;
     rootId: string;
+    custodyRevision?: number;
     page?: ContainerPage;
     error?: string;
   }>();
@@ -76,9 +93,10 @@ export function useInventoryCollection({
     const controller = new AbortController();
     const timer = window.setTimeout(
       () => {
-        void post<ContainerPage>(
+        void postContactRead<ContainerPage | ContainerPageRefusal>(
           '/api/inventory',
           { containerId: location.id, cursor, query, sort, filter },
+          [location.id, expectedRootId],
           controller.signal,
         )
           .then((page) => {
@@ -90,7 +108,9 @@ export function useInventoryCollection({
                 key,
                 locationId: location.id,
                 displayOwner,
+                disclosureRevision,
                 rootId: expectedRootId,
+                custodyRevision,
                 queryIdentity,
                 error: 'This container moved. Open it again from its current location.',
               });
@@ -100,7 +120,9 @@ export function useInventoryCollection({
               key,
               locationId: location.id,
               displayOwner,
+              disclosureRevision,
               rootId: expectedRootId,
+              custodyRevision,
               queryIdentity,
               ...(page.ok
                 ? { page }
@@ -113,10 +135,14 @@ export function useInventoryCollection({
                 key,
                 locationId: location.id,
                 displayOwner,
+                disclosureRevision,
                 rootId: expectedRootId,
+                custodyRevision,
                 queryIdentity,
                 ...(previous?.displayOwner === displayOwner &&
+                previous.disclosureRevision === disclosureRevision &&
                 previous.rootId === expectedRootId &&
+                previous.custodyRevision === custodyRevision &&
                 previous.locationId === location.id &&
                 previous.queryIdentity === queryIdentity
                   ? { page: previous.page }
@@ -136,11 +162,14 @@ export function useInventoryCollection({
   // Quiet pause and same-owner refresh suspend actions, not the player's reading place.
   // Control renewal rotates executable read scope but keeps this private display owner.
   // The Inventory owner remounts on account/character/timeline changes. A refused read,
-  // changed container or revoked root removes these rows immediately.
+  // changed container, inspection/privacy withdrawal or revoked root removes
+  // these rows immediately without remounting the player's editable workspace.
   const displayed =
     !blockedReason &&
     result?.displayOwner === displayOwner &&
+    result.disclosureRevision === disclosureRevision &&
     result.rootId === expectedRootId &&
+    result.custodyRevision === custodyRevision &&
     result.locationId === location.id &&
     result.queryIdentity === queryIdentity
       ? result
@@ -163,6 +192,11 @@ export function useInventoryCollection({
       setLocation({ id, cursor: undefined });
       setQueryValue('');
     },
+    openLocation(id: string) {
+      setLocation({ id, cursor: undefined });
+      setQueryValue('');
+      if (nativeInspection && id) inspect?.({ type: 'inspect-inventory', containerId: id });
+    },
     search(value: string) {
       setQueryValue(value);
       setLocation((old) => ({ id: old.id, cursor: undefined }));
@@ -180,7 +214,9 @@ export function useInventoryCollection({
       setRefreshNumber((value) => value + 1);
     },
     next() {
-      if (current?.page?.next && !current.error)
+      if (current?.page?.inspection?.next && !current.error)
+        inspect?.(current.page.inspection.next);
+      else if (current?.page?.next && !current.error)
         setLocation((old) => ({
           id: old.id,
           cursor: current.page?.next,
@@ -188,7 +224,15 @@ export function useInventoryCollection({
         }));
     },
     first() {
+      if (nativeInspection) inspect?.({ type: 'inspect-inventory', containerId: location.id });
       setLocation((old) => ({ id: old.id, cursor: undefined }));
+    },
+    refreshContents() {
+      if (nativeInspection) inspect?.({ type: 'inspect-inventory', containerId: location.id });
+      else {
+        setLocation((old) => ({ id: old.id }));
+        setRefreshNumber((value) => value + 1);
+      }
     },
   };
 }

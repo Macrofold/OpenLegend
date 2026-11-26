@@ -1,0 +1,411 @@
+//! The selected movement family's canonical route fields. Replanning does not
+//! replace the actor, its action identity, or unrelated private continuation.
+use super::*;
+impl PhysicalMutation<'_> {
+    /// Private sampling is saved route continuation, not a new outward change.
+    /// docs/simulation-time.md#native-interval-contract
+    pub(crate) fn set_motion_sample_remaining(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        remaining: f64,
+    ) -> Result<(), ExecutionError> {
+        if !remaining.is_finite() || remaining <= 0.0 {
+            return Err(ExecutionError::Invariant);
+        }
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id && action.keeps_motion_sample())
+            .ok_or(ExecutionError::Invariant)?;
+        let before = action.motion_sample_remaining_metres;
+        if before == Some(remaining) {
+            return Ok(());
+        }
+        self.journal
+            .reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionSample(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::ActionSample {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?
+            .motion_sample_remaining_metres = Some(remaining);
+        Ok(())
+    }
+    /// Retain the selected action's actual observed movement without replacing
+    /// the action or changing the target's physical authority.
+    pub(crate) fn set_observed_aim_motion(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        motion: Option<crate::projectile::ObservedMotion>,
+    ) -> Result<(), ExecutionError> {
+        if motion.is_some_and(|motion| !motion.valid() || motion.at != self.state.header.sim_time) {
+            return Err(ExecutionError::Invariant);
+        }
+        let before = self.state.entities.resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id && action.stage == "working")
+            .and_then(|action| action.ranged.as_ref())
+            .ok_or(ExecutionError::Invariant)?
+            .observed_motion;
+        if before == motion {
+            return Ok(());
+        }
+        self.journal.reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionAimMotion(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(key, Undo::ActionAimMotion {
+                entity: handle, action_id: action_id.into(), before,
+            })?;
+        }
+        self.state.entities.resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .and_then(|action| action.ranged.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .observed_motion = motion;
+        Ok(())
+    }
+
+    pub(crate) fn clear_action_navigation(
+        &mut self,
+        id: &str,
+        action_id: &str,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        if action.navigation.is_none() {
+            return Ok(());
+        }
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                size_of::<PhysicalChange>(),
+                action_id.len(),
+                id.len(),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let key = UndoKey::ActionNavigation(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.journal.change(PhysicalChange::Navigation {
+            entity_id: id.into(),
+        })?;
+        let storage = self.journal.reservation.split_off(0)?;
+        if first {
+            self.state
+                .entities
+                .retain_action_navigation(handle, &self.journal.budget)?;
+        }
+        let before = action_storage::swap_navigation(
+            self.state,
+            handle,
+            action_id,
+            crate::state::FundedActionNavigation::from_storage(
+                None,
+                storage,
+                &self.journal.budget,
+            )?,
+        )?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::ActionNavigation {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    pub(crate) fn clear_movement_path(
+        &mut self,
+        id: &str,
+        action_id: &str,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let _action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id && action.owns_ground_route())
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal.reserve(
+            heap_sum([2 * size_of::<Undo>(), action_id.len()]).ok_or(ExecutionError::Capacity)?,
+        )?;
+        let key = UndoKey::ActionPath(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        let storage = self.journal.reservation.split_off(0)?;
+        if first {
+            self.state
+                .entities
+                .retain_action_path(handle, &self.journal.budget)?;
+        }
+        let before = action_storage::swap_path(
+            self.state,
+            handle,
+            action_id,
+            crate::state::FundedActionPath::from_storage(
+                Vec::new(),
+                storage,
+                &self.journal.budget,
+            )?,
+        )?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::ActionPath {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    pub(crate) fn advance_timed_work(
+        &mut self,
+        id: &str,
+        action_id: &str,
+        seconds: f64,
+        epsilon: f64,
+    ) -> Result<bool, ExecutionError> {
+        if !seconds.is_finite() || seconds < 0.0 {
+            return Err(ExecutionError::Invariant);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| {
+                action.id == action_id
+                    && (action.is_evading()
+                        || action.stage == "working"
+                            && (action.has_ground_motion() || action.is_natural_contact() || action.is_manufacturing()))
+            })
+            .ok_or(ExecutionError::Invariant)?;
+        let before = action.remaining_seconds;
+        let ready = action.ranged.as_ref().filter(|aim| aim.manual).map(|aim| aim.ready);
+        let after = if let Some(evasion) = &action.evasion {
+            (evasion.ends_at - self.state.header.sim_time).max(0.0)
+        } else if let Some(motion) = &action.strike_motion {
+            // A stored release time owns this boundary even when another
+            // event lands within the ordinary duration epsilon before it.
+            (motion.release_at - self.state.header.sim_time).max(0.0)
+        } else {
+            let remaining = before - seconds;
+            if remaining <= epsilon { 0.0 } else { remaining }
+        };
+        if after == before && (after > 0.0 || ready != Some(false)) {
+            return Ok(after == 0.0);
+        }
+        self.journal
+            .reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionRemaining(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::ActionRemaining {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                    ready,
+                },
+            )?;
+        }
+        let action = self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        action.remaining_seconds = after;
+        if let Some(aim) = action.ranged.as_mut().filter(|aim| aim.manual) {
+            aim.ready = after == 0.0;
+        }
+        Ok(after == 0.0)
+    }
+
+    pub(crate) fn increment_action_replans(
+        &mut self,
+        id: &str,
+        action_id: &str,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        let before = action.replans;
+        let next = before
+            .unwrap_or(0)
+            .checked_add(1)
+            .filter(|value| *value <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal
+            .reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionReplans(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::ActionReplans {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?
+            .replans = Some(next);
+        Ok(())
+    }
+    pub(crate) fn replace_action_route(
+        &mut self,
+        id: &str,
+        action_id: &str,
+        after: crate::state::FundedActionRoute,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?;
+        if !action.owns_ground_route() {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        if !after.storage.is_funded_by(&self.journal.budget) {
+            return Err(ExecutionError::Invariant);
+        }
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                size_of::<PhysicalChange>(),
+                action_id.len(),
+                id.len(),
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let key = UndoKey::ActionRoute(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.journal.change(PhysicalChange::Navigation {
+            entity_id: id.to_owned(),
+        })?;
+        if first {
+            self.state
+                .entities
+                .retain_action_route(handle, &self.journal.budget)?;
+        }
+        let before = action_storage::swap_route(self.state, handle, action_id, after)?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::ActionRoute {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    /// Replace the follower’s observation and timing without copying its
+    /// path. The candidate keeps only the exact prior funded field for undo.
+    pub(crate) fn replace_action_follow(
+        &mut self,
+        id: &str,
+        action_id: &str,
+        after: crate::state::FundedActionFollow,
+    ) -> Result<(), ExecutionError> {
+        let handle = self.state.entities.handle(id).ok_or(ExecutionError::MissingEntity)?;
+        let current = self.state.entities.resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id)
+            .and_then(|action| action.follow.as_ref())
+            .ok_or(ExecutionError::Invariant)?;
+        if *current == after.value {
+            return Ok(());
+        }
+        self.journal.reserve(
+            heap_sum([2 * size_of::<Undo>(), action_id.len()])
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let key = UndoKey::ActionFollow(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        if first {
+            self.state.entities.retain_action_follow(handle, &self.journal.budget)?;
+        }
+        let before = self.state.entities.swap_action_follow(handle, action_id, after)?;
+        if first {
+            self.journal.retain(key, Undo::ActionFollow { entity: handle, action_id: action_id.into(), before })?;
+        }
+        Ok(())
+    }
+}

@@ -18,22 +18,25 @@ const GESTURES: [RegExp, string][] = [
 export function reactionNotice(
   view: GameView,
   event: PublicEvent,
-): { text: string; actor?: string } | null {
-  if (event.type !== 'expression' || !event.actorId) return null;
-  const actor =
-    event.actorId === view.player.id
-      ? view.player
-      : view.entities.find((entity) => entity.id === event.actorId);
+): { actorId: string; text: string; actor?: string } | null {
+  if (event.type !== 'expression') return null;
+  // An event can name a past participant without exposing their current body.
+  // Only an explicit contact that is still in this view can anchor its caption.
+  const actorId =
+    event.actorId ??
+    event.references?.find((reference) => reference.role === 'actor')?.contactReference;
+  if (!actorId) return null;
+  const self = actorId === view.player.id;
+  const actor = self ? view.player : view.entities.find((entity) => entity.id === actorId);
+  if (!actor) return null;
   // The server has already captured this viewer's permitted wording at occurrence time.
-  if (actor && event.descriptive)
+  if (event.descriptive)
     return {
-      text:
-        event.actorId === view.player.id
-          ? event.text.replace(/^(?:I|You) /, () => `${actor.name} `)
-          : event.text,
+      actorId,
+      text: self ? event.text.replace(/^(?:I|You) /, () => `${actor.name} `) : event.text,
     };
   const gesture = GESTURES.find(([pattern]) => pattern.test(event.text))?.[1];
-  if (!actor || !gesture) return null;
+  if (!gesture) return null;
   const target = !event.targetId
     ? null
     : event.targetId === view.player.id
@@ -44,5 +47,5 @@ export function reactionNotice(
     : gesture === 'Slaps'
       ? `Slaps ${target}`
       : `${gesture} toward ${target}`;
-  return { text, actor: actor.name };
+  return { actorId, text, actor: actor.name };
 }

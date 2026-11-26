@@ -36,7 +36,7 @@ Owns the vocabulary and composition of situated attempts and their player-facing
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Read [action behavior](../../../../docs/action-capabilities.md), [action experience](../../../../docs/action-experience.md) and [invention journeys](../../../../docs/invention-scenarios.md). Resolve delivered scope versus targets through [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions). These links are reuse routes, not a new audit of runtime support.
 
@@ -44,7 +44,7 @@ Read [action behavior](../../../../docs/action-capabilities.md), [action experie
 
 <!-- Follow a concrete intention through perception, choice, approach, commitment, resistance, outcome and another actor's response. Compare an ordinary route, an improvised route and a valid refusal without promising universal success. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 

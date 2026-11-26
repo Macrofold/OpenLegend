@@ -1,5 +1,5 @@
 // Root owns leases and cleanup; admitted code runs without its credentials.
-// docs/technical/verification-workers.md#network-and-execution-boundary
+// docs/projects/verification-workers-tech-design.md#network-and-execution-boundary
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   mkdir,
@@ -26,6 +26,8 @@ import { executionRequest } from './execution.mjs';
 import { verifySnapshot, verifyFiles } from './source.mjs';
 import { exec, directoryBytes } from './process.mjs';
 import { cachedArchive } from './blobs.mjs';
+import { verifyMachine } from './machine-observation.mjs';
+import { observePostgresOwnership } from './postgres-observation.mjs';
 const root = '/var/lib/openlegend-verification';
 const config = JSON.parse(await readFile('/etc/openlegend-verification.json', 'utf8'));
 const db = DynamoDBDocumentClient.from(new DynamoDBClient(clientOptions()));
@@ -195,9 +197,23 @@ async function command(job, item, phaseName, argv, cwd, results, env) {
     OPENLEGEND_PROFILE_SOURCE_SHA: item.source,
     OPENLEGEND_JOB_INPUTS: join(cwd, '..', 'inputs'),
     OPENLEGEND_JOB_DATABASES: join(cwd, '..', 'databases.json'),
+    ...(job.plan.environment?.nodeHeapMiB
+      ? { NODE_OPTIONS: `--max-old-space-size=${job.plan.environment.nodeHeapMiB}` }
+      : {}),
     ...env,
   };
   try {
+    if (phaseName.startsWith('step-')) {
+      const proof = await observePostgresOwnership(job, item, async () => {
+        await assertExclusive();
+        fence(await lease(), { runId: job.runId, generation: job.generation, caseId: item.id });
+      });
+      const proofPath = join(cwd, '..', `postgres-ownership-${phaseName}.json`);
+      await json(proofPath, proof);
+      await chmod(proofPath, 0o444);
+      environment.OPENLEGEND_JOB_POSTGRES_OWNERSHIP = proofPath;
+      (job.postgresOwnership ??= []).push({ phase: phaseName, ...proof });
+    }
     const result = await unprivileged(
       argv.map((value) =>
         value
@@ -210,6 +226,7 @@ async function command(job, item, phaseName, argv, cwd, results, env) {
         cwd,
         seconds,
         environment,
+        memoryMax: `${Math.floor((job.machine?.memoryMiB ?? 16384) * 0.75)}M`,
         maxBuffer: Math.min(job.plan.outputLimitBytes, 8 * 1024 ** 2),
       },
     );
@@ -221,7 +238,10 @@ async function command(job, item, phaseName, argv, cwd, results, env) {
     await log.close();
   }
 }
-async function unprivileged(argv, { name, cwd, seconds, environment, maxBuffer = 8 * 1024 ** 2 }) {
+async function unprivileged(
+  argv,
+  { name, cwd, seconds, environment, memoryMax = '12G', maxBuffer = 8 * 1024 ** 2 },
+) {
   return exec(
     'systemd-run',
     [
@@ -235,7 +255,7 @@ async function unprivileged(argv, { name, cwd, seconds, environment, maxBuffer =
       '--property=KillMode=control-group',
       '--property=TimeoutStopSec=10',
       `--property=RuntimeMaxSec=${seconds}`,
-      '--property=MemoryMax=12G',
+      `--property=MemoryMax=${memoryMax}`,
       '--slice=ol-verification-untrusted.slice',
       ...Object.entries(environment).map(([key, value]) => `--setenv=${key}=${value}`),
       '--',
@@ -372,6 +392,10 @@ async function execute(job) {
   try {
     await assertCleanDatabases();
     await assertExclusive();
+    job.postgresCleanCatalogAt = Date.now();
+    await phase(job, events, 'hardware-verification', async () => {
+      job.actualHardware = await verifyMachine(job);
+    });
     const previous = (await lease()).lastRunId;
     if (previous && previous !== job.runId) {
       const path = join(root, 'runs', id(previous));
@@ -414,7 +438,18 @@ async function execute(job) {
           job.plan.diskLimitBytes
       )
         throw new Error('Source exceeds the admitted disk allowance.');
-      await json(join(path, 'source.json'), descriptor);
+      // Bind observations to this fenced execution in the existing root-owned,
+      // read-only source manifest, rather than trusting a case-supplied PID/path.
+      await json(join(path, 'source.json'), {
+        ...descriptor,
+        execution: {
+          runId: job.runId,
+          generation: job.generation,
+          caseId: item.id,
+          machine: job.machine,
+          hardware: job.actualHardware,
+        },
+      });
       await phase(job, events, `${item.id}:source`, async () => {
         const localArchive = join(path, 'source.tar.gz');
         const blob = await cachedArchive({
@@ -502,6 +537,7 @@ async function execute(job) {
         const path = join(root, 'runs', job.runId, 'cases', item.id, 'execution-private.json');
         await json(path, {
           ...grant,
+          limitMicroUsd: job.plan.paid.limitMicroUsd,
           caseId: item.id,
           sourceHash: item.sourceHash,
           deadlineMs: Math.min(grant.deadlineMs, job.deadline),
@@ -570,6 +606,7 @@ async function execute(job) {
       await phase(job, events, `${item.id}:case-cleanup`, async () => {
         await cleanupDatabase(job.runId);
         await assertCleanDatabases();
+        job.postgresCleanCatalogAt = Date.now();
         captured.push(item.id);
         await report(job, { kind: 'case', caseId: item.id, success: true });
         await rm(source, { recursive: true, force: true });
@@ -684,6 +721,8 @@ async function finalize(job, events, outcome, failure, captured = []) {
     disk: await exec('df', ['-B1', root]).then((r) => r.stdout),
     memory: await readFile('/proc/meminfo', 'utf8'),
     cpu,
+    hardware: job.actualHardware,
+    postgresOwnership: job.postgresOwnership ?? [],
     platform: process.platform,
     planHash: job.planHash,
     commands: job.plan.cases,

@@ -1057,11 +1057,18 @@ async function captureBrowser({
       interfaceMeasurement.loads.push(finishLoad());
     }
     const resume = page.getByRole('button', { name: 'Resume world', exact: true });
+    const gameState = async () => {
+      const tab = await page.evaluate(() => sessionStorage.getItem('open-legend:tab-id'));
+      if (!tab) throw new Error('The browser has no current game tab.');
+      return context.request.get(new URL('/api/state', target).href, {
+        headers: { 'X-OL-Client': tab },
+      });
+    };
     if (!interfaceOnly) {
       await page.locator('#gameMenuButton').click();
       // Fixture time must stay paused while cold reads and collector preparation run.
       await resume.waitFor();
-      const state = await (await context.request.get(new URL('/api/state', target).href)).json();
+      const state = await (await gameState()).json();
       if (state.clock.speed !== ready.nativeSpeed)
         throw new Error('The fixture is not running its admitted speed.');
     }
@@ -1091,7 +1098,7 @@ async function captureBrowser({
           .locator('#gamePanel')
           .getByRole('button', { name: 'Back to the world', exact: true })
           .click();
-      const stateResponse = await context.request.get(new URL('/api/state', target).href);
+      const stateResponse = await gameState();
       if (!stateResponse.ok()) throw new Error('Could not read the permitted inventory context.');
       const state = await stateResponse.json();
       if (interfaceOnly && !state.clock.paused)

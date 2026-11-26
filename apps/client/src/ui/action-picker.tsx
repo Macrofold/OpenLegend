@@ -1,5 +1,6 @@
 import { JadeGlass } from '../design-system/jade-glass';
 import { SearchInput } from '../design-system/search-input';
+import { AttentionFocus } from './attention-focus';
 import { LoadingIndicator, LoadingScope } from '../design-system/loading';
 import { WorldIntentIcon, type WorldIntent } from './world-composer';
 import { formatDisplayNumber, namePhrase } from '@open-legend/language';
@@ -70,7 +71,7 @@ export function ActionPicker({
   connected: boolean;
   close(): void;
   run(action: CatalogueAction): void;
-  invent(text: string): void;
+  invent?(text: string): void;
   inspect(entity: EntityView): void;
   onTrade?(entity: EntityView): void;
   openContainer(entity: EntityView): void;
@@ -380,9 +381,9 @@ export function ActionPicker({
       />
     );
   }
+  const offersInvention = browsing && !!invent && !context.recipeId;
   const canInvent =
-    browsing &&
-    !context.recipeId &&
+    offersInvention &&
     !view.inventionPolicy.playerLocked &&
     connected &&
     !error &&
@@ -556,7 +557,7 @@ export function ActionPicker({
             return;
           const first = visibleMatches.find((a) => a.enabled);
           if (first) run(first);
-          else if (canInvent) invent(query.trim());
+          else if (canInvent) invent?.(query.trim());
         }
       }}
     >
@@ -600,7 +601,7 @@ export function ActionPicker({
           ref={input}
           id={embedded ? undefined : 'actionSearch'}
           aria-label="Find an action"
-          placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
+          placeholder={offersInvention ? 'Search actions or invent something…' : 'Search actions…'}
           value={query}
           onChange={(e) => changeQuery(e.target.value)}
           maxLength={1000}
@@ -609,7 +610,7 @@ export function ActionPicker({
             <AriaButton
               className="ol-search-invent"
               aria-label={`Invent ${query}`}
-              onPress={() => invent(query.trim())}
+              onPress={() => invent?.(query.trim())}
             >
               <Icon name="action.invent" size={16} />
               Invent
@@ -642,6 +643,22 @@ export function ActionPicker({
               <span>Speak</span>
             </AriaButton>
           )}
+          {!full &&
+            subject &&
+            !lostTarget &&
+            (!query || 'focus attention listen'.includes(query.toLowerCase())) && (
+              <AttentionFocus
+                key={JSON.stringify([
+                  view.worldId,
+                  view.saveTimeline,
+                  view.access?.scope,
+                  subject.id,
+                ])}
+                subject={subject}
+                view={view}
+                connected={available}
+              />
+            )}
           {showAct && (
             <AriaButton data-picker-row className="ol-item" onPress={() => compose('act')}>
               <WorldIntentIcon mode="act" />
@@ -883,7 +900,7 @@ export function ActionPicker({
                     ? 'No matching known actions.'
                     : 'No known actions here.'
                   : query
-                    ? view.inventionPolicy.playerLocked
+                    ? offersInvention && view.inventionPolicy.playerLocked
                       ? 'No matching actions. Player invention is locked.'
                       : canInvent
                         ? 'No matching actions. Enter opens an editable invention idea; only Send submits it.'

@@ -1,6 +1,6 @@
 # The Sims — households, authored lives, and negotiated autonomy
 
-**G24 · Completed research pass · September 26, 2026.** A comparative franchise dossier centered on the original The Sims, The Sims 3 and The Sims 4, with explicitly identified expansion examples. Research inspiration, not an accepted OpenLegend specification. No gameplay, current source-code audit, benchmark or full video viewing was performed.
+**G24 · Completed research pass · September 26, 2026.** A comparative franchise dossier centered on the original The Sims, The Sims 3 and The Sims 4, with explicitly identified expansion examples. Research inspiration, not an accepted Open Legend specification. No gameplay, current source-code audit, benchmark or full video viewing was performed.
 
 [Original chapter](../games/the-sims.md) · [Preserved granular study](../mechanics/the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
@@ -102,7 +102,7 @@ The preserved Myshunosun account uses ordinary autonomy while controlling aging 
 
 **Authored versus emergent story:** named worlds, objects and starting households supply a frame; simulation changes circumstances; the player supplies selection and interpretation. The earlier Alice and Kev homelessness narrative uses The Sims 3 to investigate a premise chosen by its author. It is neither an official campaign nor proof that the game's economic abstraction predicts real homelessness. [S33]
 
-**Interpretation:** OpenLegend should not confuse an event happening offscreen with the player receiving value from it. A town can change without becoming more interesting, and a familiar family can disappear in a way that violates an implicit promise. Useful continuity requires explicit policies and a proportionate way to discover consequences.
+**Interpretation:** Open Legend should not confuse an event happening offscreen with the player receiving value from it. A town can change without becoming more interesting, and a familiar family can disappear in a way that violates an implicit promise. Useful continuity requires explicit policies and a proportionate way to discover consequences.
 
 ## 6. Worked situations and counterexamples
 
@@ -200,7 +200,7 @@ The negative-only fallback rendered **Most Helpful (Week), English**, not verifi
 
 Helpfulness rankings, visible playtimes and these small samples cannot establish prevalence. The meaningful disagreement is between several independent burdens: repetitive chores, unconvincing autonomy, weak opportunities after success, technical friction and the cost of assembling a preferred setup. They should not be collapsed into “players want more content.”
 
-## 10. Questions and patterns for OpenLegend
+## 10. Questions and patterns for Open Legend
 
 **Separate bodily maintenance from meaningful care.** Keeping someone fed can create a reason to cooperate or become an interruption that destroys the scene. Test whether the routine changes a choice or merely demands acknowledgment. Competent assistance should remove low-value supervision without making personalities interchangeable.
 

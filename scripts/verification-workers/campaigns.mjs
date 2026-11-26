@@ -5,6 +5,13 @@ import { clientOptions } from './aws.mjs';
 import { mapBounded } from './parallel.mjs';
 import { executionRequest, executionUrl } from './execution.mjs';
 import {
+  campaignHardware,
+  selectedHardware,
+  canonicalEnvironment,
+  selectWorkers,
+  isRetainedWorker,
+} from './hardware.mjs';
+import {
   campaign,
   executionPlan,
   digest,
@@ -14,21 +21,30 @@ import {
   defaults,
   estimate,
   integer,
+  workerAffinity,
+  retainedWorkersRequired,
 } from './contracts.mjs';
 export const jobRunId = (campaignId, ordinal) => digest([campaignId, ordinal]).slice(0, 32);
 export function storageGrants(plan, config, workers, at = Date.now()) {
+  const hardware = selectedHardware(plan.machineEnvironment ?? undefined, config);
   return Object.fromEntries(
     workers.map((worker) => {
-      const retention =
-        Number(worker.workerId.slice(5)) <= (config.warmSlots ?? 2)
-          ? defaults.retentionMs
-          : 86400000;
+      const retention = isRetainedWorker(worker, config.warmSlots ?? 2)
+        ? defaults.retentionMs
+        : 86400000;
       const until = at + plan.deadlineSeconds * 1000 + retention;
-      const extension = Math.max(0, until - Math.max(at, worker.storageUntil ?? 0));
+      // A replaced type/image receives a new volume. Its predecessor's funded
+      // storage cannot be borrowed and then refunded when that volume terminates.
+      const reusable =
+        worker.instanceId &&
+        worker.instanceType === hardware.instanceType &&
+        worker.imageId === hardware.imageId;
+      const fundedUntil = reusable ? (worker.storageUntil ?? 0) : 0;
+      const extension = Math.max(0, until - Math.max(at, fundedUntil));
       return [
         worker.workerId,
         {
-          until: Math.max(until, worker.storageUntil ?? 0),
+          until: Math.max(until, fundedUntil),
           microUsd: Math.ceil((extension / defaults.retentionMs) * config.storageMicroUsd),
         },
       ];
@@ -37,6 +53,7 @@ export function storageGrants(plan, config, workers, at = Date.now()) {
 }
 // Only bounded aggregate facts cross admission before the immutable manifest is uploaded.
 export function campaignSummary(plan, preparationBytes = 0) {
+  campaignHardware(plan, { hourlyMicroUsd: 1 });
   return {
     taskId: plan.taskId,
     cloudAllocationId: plan.cloudAllocationId,
@@ -48,6 +65,9 @@ export function campaignSummary(plan, preparationBytes = 0) {
     outputBytes: plan.jobs.reduce((sum, job) => sum + executionPlan(plan, job).outputLimitBytes, 0),
     preparationBytes,
     paidMicroUsd: plan.jobs.reduce((sum, job) => sum + (job.paid?.limitMicroUsd ?? 0), 0),
+    machineEnvironment: canonicalEnvironment(plan.jobs[0].environment),
+    workerAffinity: workerAffinity(plan.workerAffinity) ?? null,
+    requireRetainedWorkers: retainedWorkersRequired(plan.requireRetainedWorkers),
   };
 }
 export function validateSummary(value) {
@@ -61,6 +81,11 @@ export function validateSummary(value) {
   integer(value.paidMicroUsd, 'paid grants', 0, 100_000_000);
   integer(value.preparationBytes, 'captured bytes', 0, Number.MAX_SAFE_INTEGER);
   if (!['attached', 'durable'].includes(value.lifetime)) throw new Error('Invalid lifetime.');
+  selectedHardware(value.machineEnvironment ?? undefined, { hourlyMicroUsd: 1 });
+  const affinity = workerAffinity(value.workerAffinity ?? undefined);
+  const retained = retainedWorkersRequired(value.requireRetainedWorkers);
+  if (affinity && value.concurrency !== 1)
+    throw new Error('Exact worker affinity requires a serial, concurrency-one campaign.');
   // DynamoDB does not preserve object insertion order; fingerprints use this fixed field order.
   return Object.fromEntries(
     [
@@ -74,13 +99,26 @@ export function validateSummary(value) {
       'outputBytes',
       'preparationBytes',
       'paidMicroUsd',
-    ].map((name) => [name, value[name]]),
+      'machineEnvironment',
+      'workerAffinity',
+      'requireRetainedWorkers',
+    ].map((name) => [
+      name,
+      name === 'machineEnvironment'
+        ? canonicalEnvironment(value[name] ?? undefined)
+        : name === 'workerAffinity'
+          ? (affinity ?? null)
+          : name === 'requireRetainedWorkers'
+            ? retained
+            : value[name],
+    ]),
   );
 }
 export function campaignEstimate(summary, config, workers, at) {
+  const hardware = selectedHardware(summary.machineEnvironment ?? undefined, config);
   const compute = Math.ceil(
     (Math.min(summary.concurrency * (summary.deadlineSeconds + 480), summary.jobSeconds) / 3600) *
-      config.hourlyMicroUsd,
+      hardware.hourlyMicroUsd,
   );
   const operations =
     summary.concurrency * 100000 +
@@ -236,9 +274,15 @@ export function campaigns(api) {
             ),
           )
         : (grant?.microUsd ?? 0);
-      compute += Math.ceil(
-        (Math.max(60000, endedAt - uses[index].startedAt) / 3600000) * config.hourlyMicroUsd,
-      );
+      const computeDurationMs = life.quarantineCloseoutSha256
+        ? integer(
+            life.computeDurationMs,
+            'quarantined running time',
+            60000,
+            Number.MAX_SAFE_INTEGER,
+          )
+        : Math.max(60000, endedAt - uses[index].startedAt);
+      compute += Math.ceil((computeDurationMs / 3600000) * runs[index].machine.hourlyMicroUsd);
     }
     if (!paid) {
       // Hardware must be confirmed quiescent before financial monitoring can become passive.
@@ -307,6 +351,7 @@ export function campaigns(api) {
     if (row.deadline <= Date.now() || (row.lifetime === 'attached' && row.leaseUntil <= Date.now()))
       row.cancelledAt ??= Date.now();
     const active = [];
+    const stagingAssignments = new Set();
     const workers = await mapBounded(row.workerIds, 8, (workerId) => read(`worker:${workerId}`));
     const freeWorker = (run) => {
       const target =
@@ -320,6 +365,10 @@ export function campaigns(api) {
       );
     };
     async function claimRun(run) {
+      // A retiring host can still be reserved for this exact assignment
+      // even before it accepts a run. Keep that reservation at queue tail.
+      stagingAssignments.add(run.assignedWorkerId);
+      if (row.cancelledAt) return;
       const worker = freeWorker(run);
       if (!worker) return;
       worker.runId = run.runId;
@@ -348,6 +397,26 @@ export function campaigns(api) {
     const activeRuns = await mapBounded(row.active ?? [], 8, (runId) => read(`run:${runId}`));
     for (const run of activeRuns) {
       const runId = run.runId;
+      if (
+        run.phase === 'staging' &&
+        !row.cancelledAt &&
+        run.deadline <= Date.now() + defaults.cleanupMs
+      ) {
+        // Nothing started. A late retry must neither block the queue nor
+        // overwrite a claim that committed while this copy was in flight.
+        run.phase = 'finished';
+        run.outcome = 'not-started';
+        run.failure = 'claim_deadline';
+        if (!row.capacityReady) run.capacityFailure = true;
+        await transact([
+          put(
+            run,
+            '#phase = :staging AND attribute_not_exists(workerId)',
+            { ':staging': 'staging' },
+            { '#phase': 'phase' },
+          ),
+        ]);
+      }
       if (run.phase === 'finished') {
         remember(run);
         if (run.capacityFailure || run.completion?.failureKind === 'integrity')
@@ -356,7 +425,7 @@ export function campaigns(api) {
         if (run.outcome !== 'completed') row.failed = (row.failed ?? 0) + 1;
       } else {
         active.push(runId);
-        if (run.phase === 'staging' && !row.cancelledAt) await claimRun(run);
+        if (run.phase === 'staging') await claimRun(run);
       }
     }
     row.active = active;
@@ -444,20 +513,21 @@ export function campaigns(api) {
     });
     if (row.nextJob === row.jobCount) {
       const pool = (await read('pool')) ?? { owners: {} };
-      const released = await mapBounded(row.workerIds, 8, (workerId) =>
-        lock(`worker:${workerId}`, async () => {
+      const released = await mapBounded(row.workerIds, 8, (workerId) => {
+        if (stagingAssignments.has(workerId)) return null;
+        return lock(`worker:${workerId}`, async () => {
           if (pool.owners[workerId] !== row.campaignId) return workerId;
           const worker = await read(`worker:${workerId}`);
           if (worker.runId) return null;
           delete worker.campaignId;
-          if (Number(workerId.slice(5)) > (config.warmSlots ?? 2) && worker.instanceId) {
+          if (!isRetainedWorker(worker, config.warmSlots ?? 2) && worker.instanceId) {
             worker.storageUntil = 0;
             worker.state = 'retiring';
           }
           await write(worker);
           return workerId;
-        }),
-      );
+        });
+      });
       const result = await lock('pool', async () => {
         const pool = (await read('pool')) ?? { pk: 'pool', owners: {} };
         for (const workerId of released.filter((value) => typeof value === 'string'))
@@ -531,20 +601,29 @@ export function campaigns(api) {
           if (pool.admissionClosed)
             throw new Error('Pool deployment/maintenance has closed new admission.');
           pool.admittedCampaigns = (pool.admittedCampaigns ?? 0) + 1;
-          const selected = (await slots()).filter(
+          const hardware = selectedHardware(plan.machineEnvironment ?? undefined, config, true);
+          const available = (await slots()).filter(
             (w) =>
               !w.runId &&
               !w.campaignId &&
               !pool.owners[w.workerId] &&
               ['available', 'empty'].includes(w.state),
           );
-          selected.sort((a, b) => Number(Boolean(b.instanceId)) - Number(Boolean(a.instanceId)));
-          if (selected.length < plan.concurrency)
+          const workers = selectWorkers(
+            available,
+            hardware,
+            plan.concurrency,
+            plan.workerAffinity,
+            {
+              required: plan.requireRetainedWorkers,
+              warmSlots: config.warmSlots ?? 2,
+            },
+          );
+          if (workers.length < plan.concurrency)
             throw new Error(
               'The complete requested capacity is unavailable; no campaign admitted.',
             );
-          const workers = selected.slice(0, plan.concurrency),
-            at = Date.now();
+          const at = Date.now();
           const cost = campaignEstimate(plan, config, workers, at);
           const reservation = cost.totalMicroUsd;
           const allocation = await read(`allocation:${plan.cloudAllocationId}`);

@@ -3,6 +3,7 @@ import { appearanceFamily, appearanceBodyProfile, setAppearance } from './appear
 import { resolveAppearanceRecipe, sameAppearanceFamily } from './appearance.js';
 import { equipLot } from './objects.js';
 import { currentAttributeState } from './native-values.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { entityGet, entitySet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import {
@@ -19,7 +20,7 @@ import { itemsForOwner, setItemQuantity } from './objects.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { readState, stateAddress, writeState } from './state-owners.js';
-import { personTraits, spawnedEntity, spawnSpatial } from './worlds/base/spawn.js';
+import { personTraits, spawnedEntity, spawnSpatial, PERSON_STARTING_STOCK, PERSON_CREATION_CLEARANCE, PERSON_APPEARANCE } from './worlds/base/spawn.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { canStand } from '@open-legend/spatial';
 import { spatialMap } from './spatial-state.js';
@@ -50,7 +51,7 @@ import {
   mutateExperience,
   type ExperienceMutation,
 } from './experience.js';
-import { personalText } from './narration.js';
+import { personalText, nativeText } from './narration.js';
 import { distance, isWalkable } from './spatial.js';
 import type {
   Entity,
@@ -120,7 +121,7 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
     return reject(original, 'blocked', 'Choose an unobstructed walkable surface.');
   if (
     worldRootEntities(original).some(
-      (entity) => distance(worldPosition(entity), draft.position) < 0.5,
+      (entity) => distance(worldPosition(entity), draft.position) < PERSON_CREATION_CLEARANCE,
     )
   )
     return reject(original, 'occupied', 'Choose blank space away from another object.');
@@ -181,8 +182,8 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
   if (hasMemory(entity)) {
     world.memories[entity.id] = [];
     world.knowledge[entity.id] = [];
-    addItem(world, entity.id, 'stone_tool', 1);
-    addItem(world, entity.id, 'berries', 3);
+    for (const [definition, quantity] of Object.entries(PERSON_STARTING_STOCK))
+      addItem(world, entity.id, definition, quantity);
     // Actor admission owns initialization; ordinary saves do not rerun migrations.
     migrateCognition(world);
   }
@@ -190,8 +191,8 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
   emit(
     world,
     events,
-    'god-spawned',
-    subjectNarration(entity, `appeared in the clearing.`),
+    PERSON_APPEARANCE.event,
+    subjectNarration(entity, PERSON_APPEARANCE.text),
     entity,
     undefined,
     {
@@ -257,6 +258,7 @@ export function reviveActor(
   const actor = entity.actor!;
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
+  retirePerceptionLife(world, actorId);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   const appearance = world.appearanceRecipes?.[entity.id];
   if (appearance) appearance.physicalLife = actor.physicalLife;
@@ -663,14 +665,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       (world.minds ??= {})[draft.actorId] = mind;
     }
     const inner = world.innerWorlds?.[draft.actorId];
-    const identityFile = inner?.files.find((file) => file.path === 'identity.md');
-    if (inner && identityFile && identity) {
-      identityFile.text = `${identity.title}\n${identity.text}`;
-      inner.text = inner.files
-        .slice()
-        .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-        .map((file) => `# ${file.path}\n${file.text}`)
-        .join('\n\n');
+    if (inner && identity) {
+      identity.text = `${identity.title}\n${identity.text}`;
       inner.revision++;
       inner.reconsiderationRequired = true;
     }
@@ -749,16 +745,18 @@ export function editWorldEvents(
     const previous = eventsById.get(eventId)!;
     const content = previous.data?.['text'];
     if (typeof content !== 'string') continue;
-    const prefix = previous.text.endsWith(content)
-      ? previous.text.slice(0, previous.text.length - content.length)
+    const previousText = nativeText(previous.text);
+    const replacementText = nativeText(change.replacement.text);
+    const prefix = previousText.endsWith(content)
+      ? previousText.slice(0, previousText.length - content.length)
       : '';
-    if (!change.replacement.text.startsWith(prefix))
+    if (!replacementText.startsWith(prefix))
       return reject(
         original,
         'invalid-events',
         'Keep the original speaker prefix when editing attributed event text.',
       );
-    rawContent.set(eventId, change.replacement.text.slice(prefix.length));
+    rawContent.set(eventId, replacementText.slice(prefix.length));
   }
   world.events = world.events.filter((event) => {
     const change = changed.get(event.id);

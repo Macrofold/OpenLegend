@@ -136,6 +136,7 @@ export class NativeStatusPreparation {
     entity: Entity,
     definitions: StatusEffectDefinition[],
   ): unknown[] | undefined {
+    countDomainWork('nativeStatusSignatureBuilds');
     const current = readOnlyDraftView(entity),
       actor = current.actor && readOnlyDraftView(current.actor),
       states = current.statusEffects && readOnlyDraftView(current.statusEffects);
@@ -223,7 +224,7 @@ export class NativeStatusPreparation {
     const reusable = nativeChangesComplete(world);
     let checks = reusable ? this.checks.get(world) : undefined;
     if (reusable) {
-      const changed = takeNativeChanges(world, this);
+      const changed = takeNativeChanges(world, this, 'status');
       if (!changed) this.checks.set(world, (checks = new Map()));
       else for (const id of changed) checks?.delete(id);
     }

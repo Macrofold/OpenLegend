@@ -21,7 +21,7 @@
 
 ### Compare the job the view performs
 
-| Game/family | Relevant viewpoint | What the view makes useful | What OpenLegend should test |
+| Game/family | Relevant viewpoint | What the view makes useful | What Open Legend should test |
 |---|---|---|---|
 | Hades / Hades II | Fixed isometric action presentation | Reading threats and effects while preserving fast movement | Can consequences and target affordances be understood during a busy scene? |
 | Project Zomboid | Isometric survival | Rooms, routes, object relationships and danger under limited knowledge | Does an overhead view preserve actor-specific uncertainty rather than granting omniscience? |
@@ -35,7 +35,7 @@
 
 These are design interpretations of the documented products, not measured comparisons of camera effectiveness. Relevant source anchors are their case studies; the quantitative ledger keeps the popularity evidence separate.
 
-### Practical direction for OpenLegend
+### Practical direction for Open Legend
 
 My recommendation is to retain a readable overhead/isometric primary view while proving the default social/invention experience. It fits observation of several actors, work sites, effects and causal interactions. Do not infer from this that the engine should hard-code a two-dimensional ontology forever, or that a future different camera is free to add.
 
@@ -55,9 +55,9 @@ The exact Newzoo claim and title-specific quarterly Roblox visit totals were not
 
 **Market existence:** successful non-FPS games demonstrate that demand exists.
 
-**Audience fit:** whether OpenLegend’s intended players prefer this experience requires target-player evidence.
+**Audience fit:** whether Open Legend’s intended players prefer this experience requires target-player evidence.
 
-**Product execution:** whether OpenLegend’s particular camera, controls and art communicate that experience requires tests of the actual implementation.
+**Product execution:** whether Open Legend’s particular camera, controls and art communicate that experience requires tests of the actual implementation.
 
 Do not skip the last two steps because the first is well established. Conversely, do not spend months rebuilding the camera because of an unsupported claim that all young players want shooters.
 

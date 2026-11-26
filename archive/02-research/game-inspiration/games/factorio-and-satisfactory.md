@@ -6,7 +6,7 @@
 
 **Key versus optional.** Feedback, coherent interfaces, compositional reuse, and progressively richer problems matter more than a universal simulation of manufacturing. The first-person versus overhead contrast also suggests that presentation changes the feeling of ownership without changing the core logic of building a useful system.
 
-**Pitfall.** If the optimal answer becomes tedious repetition, convenience tools can improve play. But automatically designing the complete factory removes a different thing: the opportunity to solve it. OpenLegend’s world agent should distinguish translating a chosen design from choosing all its interesting parts.
+**Pitfall.** If the optimal answer becomes tedious repetition, convenience tools can improve play. But automatically designing the complete factory removes a different thing: the opportunity to solve it. Open Legend’s world agent should distinguish translating a chosen design from choosing all its interesting parts.
 
 **Transfer.** Make inventions inspectable through inputs, outputs, costs, limitations, and actual outcomes. Let a player improve a mechanism because they understand why it failed. Reusable player constructs should preserve that comprehensibility rather than become opaque generated code. Borrow Wube’s production lesson as well: stable shared interfaces should reduce the number of places a new mechanic must be wired in.
 
@@ -34,9 +34,9 @@
 
 2. **An unwanted oil product stops the wanted one.** *Documented mechanic.* Advanced refining produces several fluids; a full output can stop the whole refinery. Storage, consumption, or cracking the surplus changes that constraint. An apparently local shortage is therefore caused by a downstream surplus. This is a concrete example of side products making a system more than a one-input/one-output recipe. [FG-FA-OIL](../references/sources-03.md#source-fg-fa-oil)
 
-3. **A blueprint carries a solution, not free matter.** *Documented mechanic.* A working subfactory can become a blueprint, be shared, and be placed as a ghost layout. Actual construction still needs resources and execution. Parameterized blueprints can specialize a reusable layout. This is very close to OpenLegend’s distinction between a reusable construct, its binding, and a live instance. [FG-FA-BP](../references/sources-03.md#source-fg-fa-bp)
+3. **A blueprint carries a solution, not free matter.** *Documented mechanic.* A working subfactory can become a blueprint, be shared, and be placed as a ghost layout. Actual construction still needs resources and execution. Parameterized blueprints can specialize a reusable layout. This is very close to Open Legend’s distinction between a reusable construct, its binding, and a live instance. [FG-FA-BP](../references/sources-03.md#source-fg-fa-bp)
 
-**What to borrow for OpenLegend.** Borrow visible inputs, constraints, outputs, and reusable interfaces. Let the World Agent help express and inspect a chosen design while preserving decisions about purpose, layout, resources, and tradeoffs. The first reusable mechanic need not simulate an entire industrial economy.
+**What to borrow for Open Legend.** Borrow visible inputs, constraints, outputs, and reusable interfaces. Let the World Agent help express and inspect a chosen design while preserving decisions about purpose, layout, resources, and tradeoffs. The first reusable mechanic need not simulate an entire industrial economy.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 
@@ -64,7 +64,7 @@
 
 3. **You improve a place as well as a number.** *Documented player activity.* A functioning factory can be reorganized and dressed into a structure the player enjoys walking through. Its new floors and routing may make it easier to understand, but visual satisfaction can also be the purpose. That is meaningful authorship even when output per minute barely changes. [FG-SA-C](../references/sources-03.md#source-fg-sa-c)
 
-**What to borrow for OpenLegend.** For OpenLegend, make constructed things visible, usable places and not only records of completed recipes. Offer repeat-placement or bounded delegated construction once intent is clear. Evaluate design satisfaction separately from time spent manipulating tools.
+**What to borrow for Open Legend.** For Open Legend, make constructed things visible, usable places and not only records of completed recipes. Offer repeat-placement or bounded delegated construction once intent is clear. Evaluate design satisfaction separately from time spent manipulating tools.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

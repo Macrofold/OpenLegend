@@ -116,7 +116,11 @@ export function useActionExecution({
   blocked: boolean;
   ownReview: boolean;
   command: CommandDispatcher;
-  onReview(action: ActionOption, review: NonNullable<ApiResult['lethalReview']>): void;
+  onReview(
+    action: ActionOption,
+    review: NonNullable<ApiResult['lethalReview']>,
+    invitation?: true,
+  ): void;
   notify(message: string): void;
 }) {
   const [mode, setMode] = useState(false);
@@ -629,6 +633,42 @@ export function useActionExecution({
       setMode(true);
     }
   }, [scopeKey, connected, view?.player.inputScope?.inputEpoch, view?.player.attackModeNotice]);
+  const seenReview = useRef<string>(undefined);
+  const invitation = view?.player.attackReview;
+  useEffect(() => {
+    if (
+      !invitation ||
+      !connected ||
+      (blocked && !ownReview) ||
+      !view?.access?.controlling ||
+      view.clock.paused ||
+      view.player.action?.id !== invitation.actionId ||
+      seenReview.current === invitation.review.id
+    )
+      return;
+    seenReview.current = invitation.review.id;
+    reviewAttempt.current = attempt.current;
+    disarm(false);
+    current.current.onReview(
+      {
+        id: `release:${invitation.actionId}`,
+        label: invitation.review.attack.name,
+        enabled: true,
+        command: invitation.command,
+      },
+      invitation.review,
+      true,
+    );
+  }, [
+    invitation,
+    connected,
+    blocked,
+    ownReview,
+    view?.access?.controlling,
+    view?.clock.paused,
+    view?.player.action?.id,
+  ]);
+
   const functions = useRef({ cancel, disarm, begin, release, input, stopMovement });
   functions.current = { cancel, disarm, begin, release, input, stopMovement };
   useEffect(() => {
@@ -706,7 +746,8 @@ export function useActionExecution({
       if (!key || !keys.current.delete(key)) return;
       if (!keys.current.size) functions.current.stopMovement();
       else {
-        movement.current = undefined;
+        // A pending request can defer the new direction. Keep the last intent
+        // available so releasing the final key can still stop it.
         movementYaw.current = current.current.scene.current?.cameraState().yaw ?? 0;
         steer();
       }
@@ -899,7 +940,7 @@ export function useActionExecution({
         if (p) release(p.aim, p.screen);
       }
     },
-    cancelReview(reviewId: string) {
+    cancelReview(reviewId: string, expectedActionId?: string) {
       const original = reviewAttempt.current;
       if (original) original.cancelled = true;
       reviewAttempt.current = undefined;
@@ -911,7 +952,9 @@ export function useActionExecution({
         command: {
           type: 'cancel',
           lethalReviewId: reviewId,
-          ...(original?.actionId ? { expectedActionId: original.actionId } : {}),
+          ...(original?.actionId || expectedActionId
+            ? { expectedActionId: original?.actionId ?? expectedActionId }
+            : {}),
         },
       });
     },
@@ -941,7 +984,7 @@ export function useActionExecution({
       });
       if (priorScope.current !== scopeKey) return result;
       acceptScope(result.inputScope);
-      if (result.lethalReview && original && !original.cancelled)
+      if (result.lethalReview && !original?.cancelled)
         current.current.onReview(action, result.lethalReview);
       if (
         result.ok &&

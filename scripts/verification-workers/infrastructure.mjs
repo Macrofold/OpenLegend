@@ -1,7 +1,9 @@
 // One template owns the control plane. Instances are the controller's bounded registered slots.
-export function template(capacity = 2) {
+export function template(capacity = 2, warmSlots = Math.min(2, capacity)) {
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > 128)
     throw new Error('Worker capacity must be 1–128.');
+  if (!Number.isSafeInteger(warmSlots) || warmSlots < 0 || warmSlots > capacity)
+    throw new Error('Warm-cache slots must fit within configured capacity.');
   const numbers = Array.from({ length: capacity }, (_, index) => index + 1);
   const ref = (name) => ({ Ref: name }),
     sub = (value) => ({ 'Fn::Sub': value });
@@ -280,6 +282,14 @@ export function template(capacity = 2) {
     },
     Controller: {
       Type: 'AWS::Lambda::Function',
+      Metadata: {
+        'com.aws.cloudformation.Context': {
+          why: 'Fenced campaign and worker lifecycle owner; explicit warm-cache count can preserve matched benchmark hosts between stages.',
+          must: [
+            'Retained volume lifetimes require admitted storage funding; default warm-cache count remains two.',
+          ],
+        },
+      },
       Properties: {
         FunctionName: sub('${AWS::StackName}-controller'),
         Role: get('ControllerRole', 'Arn'),
@@ -300,7 +310,7 @@ export function template(capacity = 2) {
                 bucket: '${Artifacts}',
                 functionName: '${AWS::StackName}-controller',
                 capacity,
-                warmSlots: Math.min(2, capacity),
+                warmSlots,
                 subnetId: '${SubnetId}',
                 securityGroupId: '${Network}',
                 imageId: '${ImageId}',
@@ -424,7 +434,7 @@ export function template(capacity = 2) {
     Metadata: {
       AWSToolsMetrics: { AWSAgentToolkit: 'aws-cloudformation@3' },
       'com.aws.cloudformation.Context': {
-        ref: 'docs/technical/verification-workers.md',
+        ref: 'docs/projects/verification-workers-tech-design.md',
         must: [
           'Only controller mutates claims.',
           'Retain required evidence and financial receipts.',

@@ -208,6 +208,10 @@ Combine [useful charms](magic.md#the-grammar-of-useful-charms), [deliberate limi
 
 Selection: Magic automation follows worthwhile spell use and an actual recurring burden.
 
+After another shared outing, the scout may remember being helped while losing incidental route detail. That [useful recollection](../projects/attention-and-scenes-feature-spec.md#9-meaning-exact-language-and-memory) can affect how they explain a refusal without erasing political allegiance or requiring friendship.
+
+The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout.
+
 ## A good job becomes smaller
 
 **MO · Play · 5 Specialist · Moderate/Extend.** Gap: learned routines, changing service demand and career goals.

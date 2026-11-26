@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full-category research pass: September 26, 2026.** This completes the G80 checkpoint while preserving its review disagreements, production testimony and player evidence. The subject is the **1990 Japanese Final Fantasy III**, not Final Fantasy VI's original North American SNES title. Story, world-map and late-job spoilers follow. No firsthand gameplay, full-video viewing or proprietary implementation inspection is claimed. Constructed examples and transferable hypotheses are not accepted OpenLegend designs.
+**Full-category research pass: September 26, 2026.** This completes the G80 checkpoint while preserving its review disagreements, production testimony and player evidence. The subject is the **1990 Japanese Final Fantasy III**, not Final Fantasy VI's original North American SNES title. Story, world-map and late-job spoilers follow. No firsthand gameplay, full-video viewing or proprietary implementation inspection is claimed. Constructed examples and transferable hypotheses are not accepted Open Legend designs.
 
 ## 1. Identity, promise and version boundaries — R01
 

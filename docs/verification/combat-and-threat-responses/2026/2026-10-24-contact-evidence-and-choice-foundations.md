@@ -145,7 +145,7 @@ forced in this native fixture, so it is not independent Ada behavior.
 
 Offered bindings now retain exact affected work and selected handling across the
 decision wait. Both existing decision consumers use the response admission owner.
-Review also fixed learned-method replacement: refusal to start cannot commit only
+Review also fixed learned activity replacement: refusal to start cannot commit only
 its preceding cancellation. The evolving scenario supplies an unavailable method
 and confirms the original action and reservation remain, with no cancellation
 event. Three focused existing mind checks and two ordinary catalogue checks pass.

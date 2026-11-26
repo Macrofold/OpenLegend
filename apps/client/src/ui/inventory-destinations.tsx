@@ -6,7 +6,7 @@ import type {
   InventoryDestinationPage,
   InventoryTransferSource,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { postContactRead, currentContactAvailable } from '../api';
 import { Button } from '../design-system/components';
 import './inventory.css';
 
@@ -71,6 +71,12 @@ function DestinationWorkspace({
   const key = JSON.stringify([base, cursor]);
   const current = result?.base === base ? result : undefined;
   const loading = current?.key !== key;
+  const destinations =
+    current?.page?.destinations.filter((entry) => currentContactAvailable(entry.id)) ?? [];
+  const container =
+    current?.page?.container && currentContactAvailable(current.page.container.id)
+      ? current.page.container
+      : undefined;
   const selectable = visible && connected && !loading && current?.page?.status !== 'unavailable';
   useEffect(() => {
     if (!available) return;
@@ -81,9 +87,10 @@ function DestinationWorkspace({
     const controller = new AbortController();
     const timer = setTimeout(
       () => {
-        void post<InventoryDestinationPage>(
+        void postContactRead<InventoryDestinationPage>(
           '/api/inventory/destinations',
           { source, activity, parentId, query, cursor },
+          [parentId, source?.containerId, source?.itemId],
           controller.signal,
         )
           .then((page) => {
@@ -184,11 +191,13 @@ function DestinationWorkspace({
         <Button size="sm" variant="quiet" onPress={() => open()}>
           Nearby and carried storage
         </Button>
-        {current?.page?.breadcrumbs.map((entry) => (
-          <Button key={entry.id} size="sm" variant="quiet" onPress={() => open(entry.id)}>
-            {entry.name}
-          </Button>
-        ))}
+        {current?.page?.breadcrumbs
+          .filter((entry) => currentContactAvailable(entry.id))
+          .map((entry) => (
+            <Button key={entry.id} size="sm" variant="quiet" onPress={() => open(entry.id)}>
+              {entry.name}
+            </Button>
+          ))}
       </nav>
       <div className="ol-inventory-search">
         <label htmlFor={searchId}>Search these destinations</label>
@@ -231,21 +240,17 @@ function DestinationWorkspace({
         {current?.page?.message && current.page.status !== 'unavailable' && (
           <p role="status">{current.page.message}</p>
         )}
-        {current?.page?.container && <ul>{destination(current.page.container, true)}</ul>}
-        {!!current?.page?.destinations.length && (
-          <ul>{current.page.destinations.map((entry) => destination(entry))}</ul>
+        {container && <ul>{destination(container, true)}</ul>}
+        {!!destinations.length && <ul>{destinations.map((entry) => destination(entry))}</ul>}
+        {current?.page && current.page.status !== 'unavailable' && !destinations.length && (
+          <p role="status">
+            {current.page.next
+              ? 'No match in this part of the search. More destinations remain to check.'
+              : query
+                ? 'No matching permitted destination. Clear the search to try again.'
+                : 'No other permitted destination in this scope.'}
+          </p>
         )}
-        {current?.page &&
-          current.page.status !== 'unavailable' &&
-          !current.page.destinations.length && (
-            <p role="status">
-              {current.page.next
-                ? 'No match in this part of the search. More destinations remain to check.'
-                : query
-                  ? 'No matching permitted destination. Clear the search to try again.'
-                  : 'No other permitted destination in this scope.'}
-            </p>
-          )}
         {current?.page?.next && (
           <Button
             size="sm"

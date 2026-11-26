@@ -1,6 +1,10 @@
 # Macrofold workspaces as NPC minds
 
-Status: **repository research and recommendation**, September 18, 2026 planning session (America/New_York). No integration, paid inference, benchmark, or changes to Macrofold. The sibling directory is named `AgentCloud`; its README identifies the product as Macrofold. Findings describe the inspected working tree, not a pinned released service or a hosted price quotation. Related request: [U03](../00-source/design-followups.md#u03--macrofold-and-richer-agent-memory).
+Status: **repository research and recommendation**, September 18, 2026 planning session (America/New_York). No integration, paid inference, benchmark, or changes to Macrofold. Related request: [U03](../00-source/design-followups.md#u03--macrofold-and-richer-agent-memory).
+
+## Source provenance
+
+The September 18–19 research inspected a local Macrofold working tree in a folder named `AgentCloud`. The exact working-tree contents were not recorded and could not be reconstructed. The [Macrofold repository](https://github.com/Macrofold/Macrofold) has nearby committed documentation for [workspace behavior](https://github.com/Macrofold/Macrofold/blob/15df1206fa2d7360240abe416908ecaec3a0d321/docs/features/workspaces/implementation.md), [billing and limits](https://github.com/Macrofold/Macrofold/blob/15df1206fa2d7360240abe416908ecaec3a0d321/docs/features/billing/README.md) and [native harness execution](https://github.com/Macrofold/Macrofold/blob/e4d2076d7ce1248f5447aa30eb76c98fc7d74b74/docs/features/execution/unified-harness-interface.md). These documents help explain the historical findings. The billing figures in this report describe the inspected defaults at the time of the research.
 
 ## Research recommendation and current application boundary
 
@@ -14,16 +18,16 @@ One persistent Macrofold workspace per NPC is reasonable for a small research ca
 
 ## What Macrofold currently supplies
 
-| Inspected capability | Consequence for Open Legend | Evidence |
-|---|---|---|
-| A workspace is a persistent filesystem and Git clone; a session retains native harness state; a run is bounded execution | NPC identity, stored mind, conversation and active computation are separate concepts. A workspace need not stay running | [Workspace implementation](../../../AgentCloud/docs/features/workspaces/implementation.md) |
-| File-memory starter uses a profile, topic notes and a task file | Useful inspectable scaffolding; not a semantic memory engine or automatic task scheduler | [Memory guide](../../../AgentCloud/docs/features/customer-agents/memory.md) |
-| The memory guide recommends application-owned memory for large collections or stronger recall/deletion guarantees | Structured game memory complements Macrofold's intended integration boundary | [Memory guide](../../../AgentCloud/docs/features/customer-agents/memory.md) |
-| One writer per workspace; competing sessions receive `409 workspace_busy` | A long reflection and a new conversation cannot independently edit that NPC's files at the same time. The game must manage scheduling or keep live memory outside the workspace | [Shared agents](../../../AgentCloud/docs/features/workspaces/shared-agents.md) |
-| File reads show the last published persisted revision | The file browser is not a live, atomic view of all ongoing NPC thoughts | [Read files](../../../AgentCloud/docs/features/workspaces/read-files.md) |
-| Runs provision/restore a runtime, execute, capture and verify persistence, then clean up | Measure end-to-end latency and occupied capacity, not just model response time. Routine decisions may not need this machinery | [Runtime](../../../AgentCloud/docs/features/execution/runtime.md) |
-| Native conversations and historical checkpoints persist separately from current notes | Deleting a current memory file alone does not enforce forgetting; continuation can contain old details | [Memory guide](../../../AgentCloud/docs/features/customer-agents/memory.md) |
-| Organization-wide concurrency and run budgets are built in | Useful budget controls, but one workspace per NPC does not mean unlimited parallelism or a separate subscription per NPC | [Billing](../../../AgentCloud/docs/features/billing/README.md), [scheduling](../../../AgentCloud/docs/features/execution/scheduling.md) |
+| Inspected capability | Consequence for Open Legend |
+|---|--- |
+| A workspace is a persistent filesystem and Git clone; a session retains native harness state; a run is bounded execution | NPC identity, stored mind, conversation and active computation are separate concepts. A workspace need not stay running |
+| File-memory starter uses a profile, topic notes and a task file | Useful inspectable scaffolding; not a semantic memory engine or automatic task scheduler |
+| The memory guide recommends application-owned memory for large collections or stronger recall/deletion guarantees | Structured game memory complements Macrofold's intended integration boundary |
+| One writer per workspace; competing sessions receive `409 workspace_busy` | A long reflection and a new conversation cannot independently edit that NPC's files at the same time. The game must manage scheduling or keep live memory outside the workspace |
+| File reads show the last published persisted revision | The file browser is not a live, atomic view of all ongoing NPC thoughts |
+| Runs provision/restore a runtime, execute, capture and verify persistence, then clean up | Measure end-to-end latency and occupied capacity, not just model response time. Routine decisions may not need this machinery |
+| Native conversations and historical checkpoints persist separately from current notes | Deleting a current memory file alone does not enforce forgetting; continuation can contain old details |
+| Organization-wide concurrency and run budgets are built in | Useful budget controls, but one workspace per NPC does not mean unlimited parallelism or a separate subscription per NPC |
 
 The current proposal already uses shared PostgreSQL and asynchronous workers. It already separates episodes, beliefs, relationships, skills and commitments. Before this follow-up it did **not** specify a concrete table layout, indexing strategy or recall evaluation. At that inspection there was no implemented method to replace. The prototype now has bounded structured cognition; the [canonical memory architecture](../../docs/memory-architecture.md) owns its replacement target and [implementation status](../05-project/implementation-status.md) owns current evidence.
 
@@ -40,7 +44,7 @@ Free-form files offer flexibility, but a folder tree does not resolve contradict
 
 ## Where cost grows
 
-Separate storage, active runtime, model usage, and the shared game/control-plane infrastructure. Macrofold's checked-in compute default is `8000` micro-USD per minute: **$0.008/minute or $0.48/hour**. It is configurable; local Docker defaults to zero platform compute charge, which does not mean zero hardware cost. Settlement uses elapsed seconds within the configured execution window when a machine exists. Sources: [rate calculation](../../../AgentCloud/packages/core/src/catalog.ts), [settlement](../../../AgentCloud/packages/core/src/cloud-engine.ts), [billing implementation](../../../AgentCloud/docs/features/billing/implementation.md).
+Separate storage, active runtime, model usage, and the shared game/control-plane infrastructure. Macrofold's checked-in compute default is `8000` micro-USD per minute: **$0.008/minute or $0.48/hour**. It is configurable; local Docker defaults to zero platform compute charge, which does not mean zero hardware cost. Settlement uses elapsed seconds within the configured execution window when a machine exists.
 
 Explicit clarification from [U04](../00-source/design-followups.md#u04--vercel-sandbox-startup-and-token-costs): the $576/$34,560 monthly examples below are **Macrofold retail runtime compute only, excluding LLM tokens**. The later $6/hour example is separately hypothetical model-token cost, not an all-in total. Neither is an estimate of the owner's actual Vercel invoice. Compare costs at the same workload and cadence before combining them.
 
@@ -53,9 +57,9 @@ Illustrations at that default, with 30 days and continuous operation throughout 
 | Thirty billable seconds every five real minutes per NPC | $3,456 | $34,560 |
 | Continuously occupied runtimes | $34,560 | $345,600 |
 
-These exclude subscriptions, storage, inference, tools and shared infrastructure. Durations mean total billable elapsed time, not just useful thinking. They are arithmetic scenarios, not capacity promises: repository plans default to 2/10/50 concurrent runs and bounded maximum run lengths. A population of 100 simultaneously active runtimes would exceed those ordinary concurrency defaults. Repeated runs, admission limits and reserved budgets also affect throughput. Hosted configuration is authoritative. [Plan and budget defaults](../../../AgentCloud/docs/features/billing/README.md).
+These exclude subscriptions, storage, inference, tools and shared infrastructure. Durations mean total billable elapsed time, not just useful thinking. They are arithmetic scenarios, not capacity promises: repository plans default to 2/10/50 concurrent runs and bounded maximum run lengths. A population of 100 simultaneously active runtimes would exceed those ordinary concurrency defaults. Repeated runs, admission limits and reserved budgets also affect throughput. Hosted configuration is authoritative.
 
-For storage scale, assume **1 MiB of raw current memory per NPC**, solely as a sizing example: 100 NPCs use about 100 MiB; 1,000 use about 0.98 GiB. The repository's storage-overage default is $0.10/GiB per 30 days, beyond plan allowances and only when enabled. This illustrates why small text memories are unlikely to dominate charges. It is not a database hosting estimate or total checkpoint footprint: indexes, vectors, files, native histories, Git, retained revisions and backups add storage. [Storage policy](../../../AgentCloud/docs/features/billing/README.md).
+For storage scale, assume **1 MiB of raw current memory per NPC**, solely as a sizing example: 100 NPCs use about 100 MiB; 1,000 use about 0.98 GiB. The repository's storage-overage default is $0.10/GiB per 30 days, beyond plan allowances and only when enabled. This illustrates why small text memories are unlikely to dominate charges. It is not a database hosting estimate or total checkpoint footprint: indexes, vectors, files, native histories, Git, retained revisions and backups add storage.
 
 If we operate Macrofold ourselves, its retail compute rate is an internal pricing policy, not our incremental vendor invoice. Current Vercel Sandbox pricing for `iad1` lists active CPU at $0.128/vCPU-hour and provisioned memory at $0.0212/GB-hour, with a one-minute minimum for memory. Model waiting can avoid active CPU consumption while memory remains provisioned. Measure the actual adapter configuration and full operating cost; do not add a platform retail charge to its underlying vendor costs as though both were necessarily external invoices. [Vercel pricing](https://vercel.com/docs/sandbox/pricing).
 
@@ -84,11 +88,11 @@ For the current accepted NPC design, use a persistent scoped workspace for backg
 
 ## Vercel and slow startup
 
-The inspected cloud execution path uses Vercel Sandbox, with Vercel Workflow coordinating phases; local execution has a Docker adapter. Each new run uses a new `run-<runId>` sandbox identity. Retries look up the same identity to avoid duplicate execution. Creation uses an immutable custom image with the native harnesses already installed. Normal cross-run continuation restores the platform's persisted workspace and native session into the new runtime. Provider persistence/snapshots support recovery; they do not mean the next normal run reuses an already-running workspace VM. [Runtime design](../../../AgentCloud/docs/features/execution/runtime.md), [provider adapter](../../../AgentCloud/packages/providers/src/vercel.ts), [execution engine](../../../AgentCloud/packages/core/src/cloud-engine.ts).
+The inspected cloud execution path uses Vercel Sandbox, with Vercel Workflow coordinating phases; local execution has a Docker adapter. Each new run uses a new `run-<runId>` sandbox identity. Retries look up the same identity to avoid duplicate execution. Creation uses an immutable custom image with the native harnesses already installed. Normal cross-run continuation restores the platform's persisted workspace and native session into the new runtime. Provider persistence/snapshots support recovery; they do not mean the next normal run reuses an already-running workspace VM.
 
 The user's observed wait is real feedback, but this inspection did not time their run or identify its dominant bottleneck. Time to first visible response can include admission/queueing, input preparation, VM creation, configuration, content transfer, integrity-checked restore, harness initialization, the first model response and output delivery. Time until the workspace is durable adds checkpointing and publication afterward. Do not count post-response persistence as initial startup, or assume all visible delay is Vercel boot time.
 
-**Historical finding, superseded by the later September 19 inspection:** the earlier snapshot imposed one-second phase delays and staged small hydration batches sequentially. The current working tree advances ready phases without artificial sleeps, uses bounded verified hydration batches and records internal phase timings. Preserve those improvements; do not submit them as missing work again. Hosted latency and the dominant source of the user's observed wait remain unmeasured. [Engine](../../../AgentCloud/packages/core/src/cloud-engine.ts), [Workflow](../../../AgentCloud/apps/web/workflows/run.ts), [provider](../../../AgentCloud/packages/providers/src/vercel.ts), [current implementation brief](../07-technical-architecture/macrofold-implementation-brief.md).
+**Historical finding, superseded by the later September 19 inspection:** the earlier snapshot imposed one-second phase delays and staged small hydration batches sequentially. The September 19 inspection found that ready phases advanced without artificial sleeps, hydration ran in bounded verified batches, and the runtime recorded phase timings. Preserve those improvements; do not submit them as missing work again. Hosted latency and the dominant source of the user's observed wait remain unmeasured. [September 19 implementation brief](../07-technical-architecture/macrofold-implementation-brief.md).
 
 Prioritize improvements according to measured stage durations:
 

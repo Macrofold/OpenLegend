@@ -2,6 +2,8 @@
 
 The original SC01–SC11 delivery and October 31 request-audit refinements are implemented and qualified within their [filed scope](completed/2026/cognition-context.md) and [combined evidence](../verification/cognition-context/2026/2026-10-31-integrated-context.md). The [feature](../features/situation-aware-cognition-context.md) and [technical contract](../technical/situation-aware-cognition-context.md) remain current owners. Paused assertion maintenance and wider evidence limits remain below. SC12's local schema factoring is implemented on the observed routes; revision/work-mode projection remains deferred and unselected.
 
+[RU05–RU07](runtime-unification.md) supplies source-audited conversion steps for selecting before hydration, batched Known-place reads and one accepted-mind/live-verification path. Reuse this tracker's context compiler and coverage contracts; RU adds no parallel compiler or model-call policy.
+
 ## Maintained records
 
 - [Core project evidence and completion](../projects/completed/2026/situation-aware-cognition-context-evidence-and-decisions.md).

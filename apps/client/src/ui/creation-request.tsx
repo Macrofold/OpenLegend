@@ -177,7 +177,7 @@ const same = (a: Request, b?: Request) =>
 /** One retained creator request across the three real creation entries. Reading never dispatches.
  * docs/projects/game-interaction-redesign-tech-design.md#recover-item-person-and-environment-creation
  */
-export function useCreationRequest(view: GameView | null, connected: boolean) {
+export function useCreationRequest(view: GameView | null, connected: boolean, personCreation?: { enabled: boolean; traits?: ReadonlyArray<{id: string}> }) {
   const namespace = view?.access?.privateDraftScope;
   const key =
     namespace && view?.saveTimeline
@@ -210,7 +210,7 @@ export function useCreationRequest(view: GameView | null, connected: boolean) {
     setStored(latest.current);
   }
   function available() {
-    return live() && connected && view?.godMode && view.access?.controlling;
+    return live() && connected && (personCreation?.enabled ?? view?.godMode) && view?.access?.controlling;
   }
   function refresh() {
     if (latest.current.busy) return;
@@ -295,6 +295,7 @@ export function useCreationRequest(view: GameView | null, connected: boolean) {
         request.body.type !== 'person' &&
         !!tools?.spawnOptions.some((entry) => entry.id === request.body.type)
       );
+    if (personCreation) return !!personCreation.traits && (request.body.traitIds as string[]).every(id => personCreation.traits!.some(trait => trait.id === id));
     return (
       !!tools?.spawnOptions.some((entry) => entry.id === 'person') &&
       (request.body.traitIds as string[]).every((trait) =>

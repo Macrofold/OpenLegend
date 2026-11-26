@@ -232,7 +232,7 @@ The documented implementation uses event-driven changes, blackboard observers an
 
 Voyager combines an automatic curriculum, a growing skill library and feedback-driven iteration in Minecraft, using executable code as its skill representation.
 
-**Application:** a useful learned method should be reusable, and actual execution feedback should inform later attempts. Repeatedly regenerating an equivalent recipe is wasteful.
+**Application:** a useful learned activity should be reusable, and actual execution feedback should inform later attempts. Repeatedly regenerating an equivalent recipe is wasteful.
 
 **Limit:** importing generated executable code would conflict with Open Legend's authority model. Reuse the lesson through admitted recipes and trusted action compositions, not generated JavaScript. The system also does not by itself distinguish a fictional actor's proposed design from privileged engine authoring.
 

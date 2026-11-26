@@ -1,3 +1,4 @@
+import { inCognitionLab } from './lab-location';
 /** Reviewed browser request semantics. A POST may be a read; recovery remains
  * with the caller retaining the original request, never with the transport.
  * docs/projects/completed/bounded-network-requests-tech-design.md#821-browser-request-classification-and-uncertain-outcome-recovery
@@ -24,10 +25,72 @@ function routes(
 routes(
   'GET',
   [
+    '/api/cognition-lab/decisions',
+    '/api/cognition-lab/decisions/settings',
+    '/api/cognition-lab/runs',
+  ],
+  'read',
+  15_000,
+  'observation',
+);
+routes(
+  'POST',
+  ['/api/cognition-lab/replay', '/api/cognition-lab/decisions/stimuli'],
+  'mutation',
+  15_000,
+  'receipt',
+);
+routes(
+  'POST',
+  [
+    '/api/cognition-lab/scenarios/start',
+    '/api/cognition-lab/scenarios/import',
+    '/api/cognition-lab/scenarios/export',
+  ],
+  'mutation',
+  60_000,
+  'same-id',
+);
+routes('POST', ['/api/cognition-lab/decisions/reruns'], 'mutation', 45_000, 'same-id');
+routes(
+  'POST',
+  [
+    '/api/cognition-lab/comparisons',
+    '/api/cognition-lab/decisions/reruns/history',
+    '/api/cognition-lab/decisions/participants',
+    '/api/cognition-lab/fields',
+    '/api/cognition-lab/fields/detail',
+  ],
+  'read',
+  15_000,
+  'observation',
+);
+routes(
+  'POST',
+  [
+    '/api/cognition-lab/prepare',
+    '/api/cognition-lab/fields/edit',
+    '/api/cognition-lab/holds',
+    '/api/cognition-lab/scene/participation',
+    '/api/cognition-lab/decisions/control',
+    '/api/cognition-lab/decisions/settings',
+    '/api/cognition-lab/decisions/participants/edit',
+    '/api/cognition-lab/runs',
+    '/api/god/editor/person/author',
+  ],
+  'mutation',
+  15_000,
+  'current-state',
+);
+routes(
+  'GET',
+  [
     '/api/state',
     '/api/operations',
     '/api/session',
     '/api/history',
+    '/api/profile',
+    '/api/ai/usage',
     '/api/world-events',
     '/api/construction',
     '/api/construction/hearths',
@@ -55,6 +118,7 @@ routes(
     '/api/inventory',
     '/api/inventory/bindings',
     '/api/trade/disclosures',
+    '/api/trade',
     '/api/inventory/access',
     '/api/inventory/destinations',
     '/api/inventory/history',
@@ -64,6 +128,7 @@ routes(
     '/api/god/family/people',
     '/api/god/invention-policy',
     '/api/god/editor/person',
+    '/api/god/editor/person/inventory',
     '/api/god/editor/person/memory',
     '/api/god/editor/story',
     '/api/god/editor/world-events',
@@ -78,6 +143,7 @@ routes(
     '/api/god/triggers',
     '/api/god/trigger',
     '/api/god/intelligence-details',
+    '/api/god/intelligence-stage',
     '/api/god/intelligence-calls',
     '/api/saves/list',
     '/api/world-agent/session/list',
@@ -179,6 +245,7 @@ routes(
     '/api/god/ownership',
     '/api/god/family/edit',
     '/api/god/appraisal',
+    '/api/attention',
     '/api/knowledge',
     '/api/nickname',
     '/api/map/marker',
@@ -206,38 +273,15 @@ routes(
 routes('POST', ['/api/presence'], 'presence', 5_000, 'latest');
 // Fixed transient input never retries a stale direction or creates a durable action receipt.
 routes('POST', ['/api/input'], 'presence', 1_000, 'latest');
-routes(
-  'GET',
-  [
-    '/api/cognition-lab/workspace',
-    '/api/cognition-lab/actors',
-    '/api/cognition-lab/actions',
-    '/api/cognition-lab/recipes',
-    '/api/cognition-lab/events',
-    '/api/cognition-lab/runs',
-    '/api/cognition-lab/scenarios',
-    '/api/cognition-lab/current/:actorId',
-    '/api/cognition-lab/current/:actorId/choices/:fieldId',
-    '/api/cognition-lab/runs/:id',
-    '/api/cognition-lab/runs/:id/records',
-    '/api/cognition-lab/runs/:id/stages/:stageId',
-    '/api/cognition-lab/artifacts/:id',
-    '/api/cognition-lab/sources/:id',
-  ],
-  'read',
-  15_000,
-  'observation',
-);
-routes('GET', ['/api/cognition-lab/changes'], 'read', 30_000, 'observation');
-routes(
-  'POST',
-  ['/api/cognition-lab/runs/:id/stages/:stageId/receipt'],
-  'read',
-  30_000,
-  'observation',
-);
-routes('POST', ['/api/cognition-lab/operations'], 'mutation', 60_000, 'same-id');
-routes('POST', ['/api/cognition-lab/imports'], 'mutation', 120_000, 'same-id');
+export const STEERING_STOP = 'stop-steering';
+entries.push({
+  method: 'POST',
+  pathname: '/api/input',
+  discriminator: STEERING_STOP,
+  semantic: 'presence',
+  timeoutMs: 1_000,
+  recovery: 'latest',
+});
 entries.push(
   {
     method: 'POST',
@@ -278,6 +322,19 @@ export const browserRequestPolicies: readonly Readonly<BrowserRequestPolicy>[] =
   entries.map((entry) => Object.freeze(entry)),
 );
 
+function stopsSteering(input: object): boolean {
+  if (!('kind' in input) || input.kind !== 'steer' || !('direction' in input)) return false;
+  const direction = input.direction;
+  return (
+    direction !== null &&
+    typeof direction === 'object' &&
+    'x' in direction &&
+    direction.x === 0 &&
+    'z' in direction &&
+    direction.z === 0
+  );
+}
+
 export function browserRequestPolicy(
   method: BrowserRequestPolicy['method'],
   path: string,
@@ -286,31 +343,12 @@ export function browserRequestPolicy(
   // API requests are same-origin paths. Queries contain identities, not policy.
   if (!path.startsWith('/api/') || path.startsWith('//') || path.includes('#'))
     throw new Error('The requested server operation is unavailable.');
-  let pathname = path.split('?')[0];
-  // Closed resource shapes share one policy; arbitrary lab paths remain unavailable.
-  const labPatterns: Array<[RegExp, string]> = [
-    [
-      /^\/api\/cognition-lab\/runs\/[^/]+\/stages\/[^/]+\/receipt$/,
-      '/api/cognition-lab/runs/:id/stages/:stageId/receipt',
-    ],
-    [
-      /^\/api\/cognition-lab\/current\/[^/]+\/choices\/[^/]+$/,
-      '/api/cognition-lab/current/:actorId/choices/:fieldId',
-    ],
-    [/^\/api\/cognition-lab\/current\/[^/]+$/, '/api/cognition-lab/current/:actorId'],
-    [
-      /^\/api\/cognition-lab\/runs\/[^/]+\/stages\/[^/]+$/,
-      '/api/cognition-lab/runs/:id/stages/:stageId',
-    ],
-    [/^\/api\/cognition-lab\/runs\/[^/]+\/records$/, '/api/cognition-lab/runs/:id/records'],
-    [/^\/api\/cognition-lab\/runs\/[^/]+$/, '/api/cognition-lab/runs/:id'],
-    [/^\/api\/cognition-lab\/(artifacts|sources)\/[^/]+$/, '/api/cognition-lab/$1/:id'],
-  ];
-  for (const [pattern, replacement] of labPatterns)
-    if (pathname && pattern.test(pathname)) {
-      pathname = pathname.replace(pattern, replacement);
-      break;
-    }
+  const rawPath = path.split('?')[0] ?? '';
+  const pathname = /^\/api\/cognition-lab\/runs\/[a-f0-9-]{36}\/replay\/[a-f0-9-]{36}$/.test(
+    rawPath,
+  )
+    ? '/api/cognition-lab/replay'
+    : rawPath;
   const object = body && typeof body === 'object' ? body : {};
   const discriminator =
     pathname === '/api/world-agent/messages'
@@ -321,7 +359,9 @@ export function browserRequestPolicy(
         ? Object.keys(object).length
           ? 'write'
           : 'read'
-        : undefined;
+        : pathname === '/api/input' && stopsSteering(object)
+          ? STEERING_STOP
+          : undefined;
   const policy = browserRequestPolicies.find(
     (entry) =>
       entry.method === method &&
@@ -330,4 +370,11 @@ export function browserRequestPolicy(
   );
   if (!policy) throw new Error('The requested server operation is unavailable.');
   return policy;
+}
+
+/** Classify ordinary requests before routing them into the independently authorized Lab. */
+export function runtimeApiPath(path: string): string {
+  return inCognitionLab && path.startsWith('/api/') && !path.startsWith('/api/cognition-lab/')
+    ? '/api/cognition-lab' + path
+    : path;
 }

@@ -1,4 +1,34 @@
+import { person, type Narration } from '../../narration.js';
 import type { EventPresentation, EventPresentationPolicy } from '../../event-presentation.js';
+import { BASE_OBSERVATION_RULES } from './observation-rules.js';
+
+/** Native sight wording stays world-authored; names bind to the received moment. */
+export function sightingNarration(
+  observerId: string,
+  subjectId: string,
+  detail?: string,
+  departed = false,
+): Narration {
+  return {
+    parts: [
+      person(observerId),
+      ' ',
+      departed
+        ? BASE_OBSERVATION_RULES.sighting.wording.departed
+        : detail
+          ? BASE_OBSERVATION_RULES.sighting.wording.detail
+          : BASE_OBSERVATION_RULES.sighting.wording.routine,
+      {
+        entityId: subjectId,
+        role: 'name',
+        article: departed || detail ? 'definite' : 'indefinite',
+      },
+      !departed && detail
+        ? `${BASE_OBSERVATION_RULES.sighting.wording.detailPrefix}${detail}${BASE_OBSERVATION_RULES.sighting.wording.ending}`
+        : BASE_OBSERVATION_RULES.sighting.wording.ending,
+    ],
+  };
+}
 
 const types: Record<string, EventPresentation> = {};
 function register(
@@ -101,13 +131,21 @@ register(
   ],
   true,
 );
-// Finite alarm changes are meaningful outcomes; routine travel remains below.
-register('observations', 'ui.inview', ['animal-response'], true);
-register('observations', 'ui.inview', ['encounter', 'weather-cue', 'activity-observed']);
+register('observations', 'ui.inview', [
+  BASE_OBSERVATION_RULES.sighting.eventType,
+  'weather-cue',
+  'activity-observed',
+]);
 // Retain routine evidence, but never turn a new event family into player-facing noise by default.
 register('observations', 'ui.inview', ['takeoff', 'landed', 'departed', 'returned', 'respawn']);
 
 export const BASE_EVENT_PRESENTATION: EventPresentationPolicy = {
   types,
   fallback: { category: 'observations', icon: 'ui.inview', displayToPlayer: false },
+  coordinateText: {
+    eventType: 'moved',
+    actionEventType: 'action-started',
+    actionTypes: ['move', 'assemble'],
+    prefixes: ['started moving to ', 'moved to '],
+  },
 };

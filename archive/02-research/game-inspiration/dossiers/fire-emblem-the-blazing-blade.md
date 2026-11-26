@@ -2,7 +2,7 @@
 
 **Independent R01–R14 research pass completed September 26, 2026.** [Roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Requirements](../research-requirements.md) · [Library](../README.md).
 
-Reference research, not an OpenLegend implementation plan. This dossier studies the original Game Boy Advance game and explicitly identified regional/reissue differences. Later Fire Emblem mechanics are not silently imported. Story and recruitment spoilers appear in §§5–7. Constructed situations are labeled; no playthrough, benchmark or watched footage is claimed.
+Reference research, not an Open Legend implementation plan. This dossier studies the original Game Boy Advance game and explicitly identified regional/reissue differences. Later Fire Emblem mechanics are not silently imported. Story and recruitment spoilers appear in §§5–7. Constructed situations are labeled; no playthrough, benchmark or watched footage is claimed.
 
 ## 1. Identity, scope and player promise
 
@@ -14,7 +14,7 @@ Original releases were April 25, 2003 in Japan, November 3, 2003 in North Americ
 
 ### Scope and preservation
 
-The G60 target and same-named legacy `games/` chapter were absent at the original resume point. The September 26 checkpoint is incorporated here, including its review-specific qualifications, regional-date distinction and access gaps. Existing `games/`, `mechanics/`, packet sources, other dossiers and the [fork baseline](../references/games-40-60-fork-baseline.md) remain intact. This dossier does not discharge the separate roster entries for other Fire Emblem games or authorize using their art, names or characters as OpenLegend assets.
+The G60 target and same-named legacy `games/` chapter were absent at the original resume point. The September 26 checkpoint is incorporated here, including its review-specific qualifications, regional-date distinction and access gaps. Existing `games/`, `mechanics/`, packet sources, other dossiers and the [fork baseline](../references/games-40-60-fork-baseline.md) remain intact. This dossier does not discharge the separate roster entries for other Fire Emblem games or authorize using their art, names or characters as Open Legend assets.
 
 ### Versions are not interchangeable
 
@@ -312,7 +312,7 @@ The Nintendo Life page exposes dated player comments. On June 23, 2023, **Earthb
 
 ## 13. Transferable inspiration and counter-lessons
 
-These are hypotheses for OpenLegend research, not approved mechanics or implementation instructions.
+These are hypotheses for Open Legend research, not approved mechanics or implementation instructions.
 
 | Pattern | Why it is worth studying | Dependency and failure mode | Alternative to direct imitation |
 | --- | --- | --- | --- |

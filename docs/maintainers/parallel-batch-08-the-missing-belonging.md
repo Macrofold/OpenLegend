@@ -28,7 +28,7 @@
 - [x] Reuse exact whole-bag gift consent and participant/witness outcomes; distinguish kept, offered, refused and accepted, including moved/changed contents and replay.
 - [x] Complete bounded actual model qualification for partial account, new contrary evidence, refusal/alternative conduct and later grounded conversation; retain unsuccessful runs, full cost and uncertainty.
 
-**Exit:** real resident choices use their own evidence and a later interaction can reflect actual conduct without guaranteed gratitude, confession, belief change or transfer. Native injected output alone cannot close this item. [Definition](../projects/completed/parallel-batch-08-the-missing-belonging-tech-design.md#my03--partial-knowledge-voluntary-disclosure-and-later-consequence). Parents: AG06/AG07/AG12, CR12/CR13, CE03–CE05, NC09–NC12, BW20; broader quality/psychological rules remain open.
+**Exit:** real NPC choices use their own evidence and a later interaction can reflect actual conduct without guaranteed gratitude, confession, belief change or transfer. Native injected output alone cannot close this item. [Definition](../projects/completed/parallel-batch-08-the-missing-belonging-tech-design.md#my03--partial-knowledge-voluntary-disclosure-and-later-consequence). Parents: AG06/AG07/AG12, CR12/CR13, CE03–CE05, NC09–NC12, BW20; broader quality/psychological rules remain open.
 
 ## MY04 — An ordinary player can compare what they learned
 

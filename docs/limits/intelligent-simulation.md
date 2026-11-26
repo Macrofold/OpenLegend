@@ -4,7 +4,7 @@ This inventory owns only the new research-refinement scope and cross-owner const
 
 ## IS-L01 — Existing choices before broader delegation
 
-**Proposed design; restrictiveness: Safe.** Reuse finite native invocation/control and learned-method capabilities. A selected purpose does not admit every means, material, cost, risk or partner; unsupported changed terms require another actual choice. Bounded iteration, unknown predicates and current action admission retain their existing limits. No new universal activity duration, number of goals or personality vocabulary is selected. This may interrupt a task an unconstrained planner could complete, but preserves the meaning of the actor's choice. Expand only for a demonstrated method whose complete authorization and stopping semantics fit the installed world. [Continuing-life design](../projects/continuing-lives-tech-design.md).
+**Proposed design; restrictiveness: Safe.** Reuse finite native invocation/control and learned activity capabilities. A selected purpose does not admit every means, material, cost, risk or partner; unsupported changed terms require another actual choice. Bounded iteration, unknown predicates and current action admission retain their existing limits. No new universal activity duration, number of goals or personality vocabulary is selected. This may interrupt a task an unconstrained planner could complete, but preserves the meaning of the actor's choice. Expand only for a demonstrated method whose complete authorization and stopping semantics fit the installed world. [Continuing-life design](../projects/continuing-lives-tech-design.md).
 
 ## IS-L02 — Attention and decision cadence
 

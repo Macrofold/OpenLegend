@@ -1,0 +1,1176 @@
+//! The application orders decisions for each resident. Rust simulation still
+//! owns all speech, evidence, action and response effects.
+
+mod apply;
+mod authored;
+mod comparison;
+mod decide;
+pub(crate) mod discovery;
+mod maintenance;
+pub(crate) mod preview;
+mod retry;
+pub(crate) use retry::ChatRetryRequest;
+pub(crate) mod schedule;
+pub(crate) mod semantic_index;
+mod player_expression;
+pub(crate) use player_expression::ExpressionRequest;
+mod settings;
+pub(crate) use settings::creation_model_settings;
+mod slots;
+mod speech;
+pub(crate) use speech::{ChatRequest, human_request, valid_request_id};
+
+use crate::{
+    authority::{AccessError, Authority, AuthorizedScope, Capability, RequestScope},
+    boot::CurrentServer,
+    decision_dispatch::{CallFailure, DecisionDispatch},
+    live_save::{AcceptedSaveInput, LiveSaves},
+    player_events::SpeechReplyStatus,
+    player_references::ReferenceIssuer,
+    store::{AdmittedJob, StoreError, TerminalOutcome},
+    world::WorldError,
+};
+use openlegend_simulation::{commands::Outcome, host::ByteReservation};
+use serde::Serialize;
+use slots::{Admission, SlotPriority, Slots};
+use speech::{Speech, SpeechRefusal, Spoken};
+use std::{
+    future::Future,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+use tokio::{
+    sync::{oneshot, watch},
+    time::Instant,
+};
+
+const ADMISSION_WAIT: Duration = Duration::from_secs(5);
+const USEFUL_LIFETIME: Duration = Duration::from_secs(30);
+
+// The direct generation reservation includes this many output tokens.
+pub(crate) const LAB_GENERATION_TOKENS: usize = 8192;
+
+pub(crate) struct Director {
+    game: Arc<CurrentServer>,
+    saves: Arc<LiveSaves>,
+    authority: Arc<Authority>,
+    models: Option<settings::ConfiguredModels>,
+    embedding: Option<Arc<semantic_index::EmbeddingModel>>,
+    summary_model: Option<settings::SummaryModel>,
+    expression_model: Option<settings::SummaryModel>,
+    reflection_model: Option<settings::ReflectionModel>,
+    dispatch: Arc<DecisionDispatch>,
+    slots: Arc<Slots>,
+    tasks: Mutex<Option<tokio::task::JoinSet<()>>>,
+}
+
+pub(crate) enum SubmitResult {
+    Job(Arc<AdmittedJob>),
+    Command(Outcome, Arc<AcceptedSaveInput>),
+    Refusal {
+        code: &'static str,
+        message: &'static str,
+    },
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct InteractionAvailability {
+    pub(crate) available: bool,
+    pub(crate) code: &'static str,
+    pub(crate) reason: Option<&'static str>,
+    pub(crate) reply: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    recipient_name: Option<openlegend_simulation::text::JsText>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    public_appeals: Vec<openlegend_simulation::speech::PublicAppealChoice>,
+    #[serde(skip)]
+    _custody: Option<ByteReservation>,
+}
+
+impl InteractionAvailability {
+    fn refused(code: &'static str, why: &'static str) -> Self {
+        Self {
+            available: false,
+            code,
+            reason: Some(why),
+            reply: false,
+            recipient_name: None,
+            public_appeals: Vec::new(),
+            _custody: None,
+        }
+    }
+}
+
+struct EligibleInteraction {
+    payer: String,
+    reply: bool,
+    name: Option<openlegend_simulation::text::JsText>,
+    public_appeals: Vec<openlegend_simulation::speech::PublicAppealChoice>,
+    _custody: ByteReservation,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JobReport<'a> {
+    ok: bool,
+    code: &'static str,
+    message: &'a openlegend_simulation::text::JsText,
+    job_id: &'a str,
+    job_status: SpeechReplyStatus,
+}
+
+pub(crate) fn job_report(job: &AdmittedJob, initial: bool) -> JobReport<'_> {
+    let job = &job.job;
+    let code = match job.status {
+        SpeechReplyStatus::Queued => "queued",
+        SpeechReplyStatus::Judging => "judging",
+        SpeechReplyStatus::Generating => "generating",
+        SpeechReplyStatus::Completed if initial && job.outcome.is_none() => "spoken",
+        SpeechReplyStatus::Completed => "completed",
+        SpeechReplyStatus::Failed => "failed",
+        SpeechReplyStatus::Cancelled => "cancelled",
+        SpeechReplyStatus::Stale => "stale",
+    };
+    JobReport {
+        ok: !matches!(
+            job.status,
+            SpeechReplyStatus::Failed | SpeechReplyStatus::Cancelled | SpeechReplyStatus::Stale
+        ),
+        code,
+        message: &job.message,
+        job_id: &job.id,
+        job_status: job.status,
+    }
+}
+
+impl SubmitResult {
+    fn refused(code: &'static str, message: &'static str) -> Self {
+        Self::Refusal { code, message }
+    }
+
+    fn speech_refusal(refusal: SpeechRefusal) -> Self {
+        let (code, message) = refusal.report();
+        Self::refused(code, message)
+    }
+}
+
+impl Director {
+    pub(crate) fn new(
+        game: Arc<CurrentServer>,
+        saves: Arc<LiveSaves>,
+        authority: Arc<Authority>,
+        limit_usd: f64,
+        capture_direct_stages: bool,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        Self::build(
+            game,
+            saves,
+            authority,
+            limit_usd,
+            capture_direct_stages,
+            None,
+        )
+    }
+
+    pub(crate) fn new_for_lab(
+        game: Arc<CurrentServer>,
+        saves: Arc<LiveSaves>,
+        authority: Arc<Authority>,
+        limit_usd: f64,
+        game_director: &Director,
+        namespace: &str,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        Self::build(
+            game,
+            saves,
+            authority,
+            limit_usd,
+            true,
+            Some((game_director, namespace)),
+        )
+    }
+
+    fn build(
+        game: Arc<CurrentServer>,
+        saves: Arc<LiveSaves>,
+        authority: Arc<Authority>,
+        limit_usd: f64,
+        capture_direct_stages: bool,
+        game_director: Option<(&Director, &str)>,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let worker = match (game_director, std::env::var_os("OPENLEGEND_JOB_EXECUTION")) {
+            (Some((_, namespace)), Some(path)) => Some(crate::provider_transport::worker::Grant::read(
+                std::path::Path::new(&path),
+                namespace,
+            )?),
+            _ => None,
+        };
+        let (maximum, mut models) = match &worker {
+            Some(grant) => settings::worker_models(grant, limit_usd)?,
+            None => settings::from_env(limit_usd, game_director.is_some() && limit_usd == 0.)?,
+        };
+        let (embedding, summary_model, expression_model) = if worker.is_some() {
+            (None, None, None)
+        } else {
+            (
+                settings::embedding_model(models.as_ref(), limit_usd)?.map(Arc::new),
+                settings::summary_model(
+                    models.as_ref(),
+                    limit_usd,
+                    game.store.schema.recall.maintenance.output_tokens,
+                )?,
+                settings::expression_model(
+                    models.as_ref(),
+                    limit_usd,
+                    player_expression::policy().max_output_tokens,
+                )?,
+            )
+        };
+        if let Some(models) = &mut models {
+            models.routes.embedding = embedding.clone();
+        }
+        // Reflection writes a remote worktree outside the inference dispatcher. Never
+        // reuse the game's mutable provider workspace from an isolated Lab scene.
+        let reflection_model = match game_director {
+            None => settings::reflection_model(
+                models.as_ref(),
+                &game.cognition.reflection.default_model,
+            )?,
+            Some(_) => None,
+        };
+        let budget = game.host.budget().clone();
+        let dispatch = Arc::new(DecisionDispatch::new(
+            game.clone(),
+            maximum,
+            capture_direct_stages && models.is_some(),
+            game_director.map(|(director, namespace)| (director.dispatch.network(), namespace)),
+        )?);
+        Ok(Self {
+            game,
+            saves,
+            authority,
+            models,
+            embedding,
+            summary_model,
+            expression_model,
+            reflection_model,
+            dispatch,
+            slots: Arc::new(Slots::new(budget, maximum)),
+            tasks: Mutex::new(Some(tokio::task::JoinSet::new())),
+        })
+    }
+
+    /// A zero-budget Lab can prepare an addressed judgment for inspection.
+    /// All real sends still require the ordinary durable reservation.
+    async fn interactive_funding(&self, actor: &str) -> Result<Option<bool>, StoreError> {
+        let Some(models) = &self.models else {
+            return Ok(None);
+        };
+        if self.dispatch.lab.is_some() && models.routes.ceiling_micro_usd == 0 {
+            return Ok(Some(true));
+        }
+        let Some((amount, ceiling)) = models.interactive_allowance() else {
+            return Ok(None);
+        };
+        Ok(Some(
+            self.game
+                .store
+                .model_allowance(actor, amount, ceiling)
+                .await?,
+        ))
+    }
+
+    pub(crate) fn lab_model_choices(&self) -> crate::lab::decisions::settings::Choices<'_> {
+        let routes = self.models.as_ref().map(|models| &models.routes);
+        crate::lab::decisions::settings::Choices {
+            judgment_model: routes.map(|m| m.judgment.requested.as_str()),
+            fast_models: routes
+                .into_iter()
+                .flat_map(|m| m.responses(2))
+                .map(|m| m.requested.as_str())
+                .collect(),
+            complex_models: routes
+                .into_iter()
+                .flat_map(|m| m.responses(3))
+                .map(|m| m.requested.as_str())
+                .collect(),
+            budget_micro_usd: routes.map_or(0, |m| m.ceiling_micro_usd),
+        }
+    }
+
+    pub(crate) async fn load_lab_settings(&self)->Result<(),StoreError>{
+        if let Some(control)=self.lab_controls(){
+            control.install_settings(crate::lab::decisions::settings::load(&self.game.store).await?);
+            control.install_participants(crate::lab::decisions::participants::load(&self.game.store).await?);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn lab_controls_shared(&self)->Option<Arc<crate::lab::decisions::DecisionControl>>{self.dispatch.lab.clone()}
+
+    pub(crate) fn lab_controls(&self) -> Option<&crate::lab::decisions::DecisionControl> {
+        self.dispatch.lab.as_deref()
+    }
+
+    /// The listener joins the actual task, including the short tail after
+    /// its resident's slot is released. An accepted provider request keeps
+    /// its durable settlement owner even when the HTTP caller disconnects.
+    pub(crate) fn start_job(&self, task: impl Future<Output = ()> + Send + 'static) -> Result<(), StoreError> {
+        let mut all = self
+            .tasks
+            .lock()
+            .map_err(|_| StoreError::WriterUnavailable)?;
+        let all = all.as_mut().ok_or(StoreError::WriterUnavailable)?;
+        while let Some(result) = all.try_join_next() {
+            if result.is_err() {
+                return Err(StoreError::WriterUnavailable);
+            }
+        }
+        all.spawn(task);
+        Ok(())
+    }
+
+    pub(crate) async fn receipt(
+        &self,
+        scope: &AuthorizedScope,
+        id: &str,
+    ) -> Result<Option<Arc<AdmittedJob>>, WorldError> {
+        let job = self.lookup(id).await?;
+        self.authority
+            .current(scope, Capability::Play, false, |fields, _| {
+                if job
+                    .as_ref()
+                    .is_some_and(|owner| !belongs_to(&owner.job.authority, fields))
+                {
+                    return Err(AccessError::Forbidden.into());
+                }
+                Ok(job)
+            })?
+    }
+
+    pub(crate) fn previews(&self) -> &Arc<crate::decision_dispatch::ReplyPreviews> {
+        self.dispatch.previews()
+    }
+
+    pub(crate) fn provider_dispatch(&self) -> Arc<DecisionDispatch> {
+        self.dispatch.clone()
+    }
+
+    pub(crate) fn narrator_model(
+        &self,
+        budget_usd: f64,
+    ) -> Result<Option<crate::narrator::NarratorModel>, Box<dyn std::error::Error + Send + Sync>>
+    {
+        settings::narrator_model(self.models.as_ref(), budget_usd)
+    }
+
+    pub(crate) fn embedding_model(&self) -> Option<Arc<semantic_index::EmbeddingModel>> {
+        self.embedding.clone()
+    }
+
+    /// The selected context catalogue opens a draft only. It uses the actual
+    /// body/contact and display role, with no model or mutation admission.
+    pub(crate) async fn contact_menu(
+        &self,
+        scope: Arc<AuthorizedScope>,
+        refs: Arc<ReferenceIssuer>,
+        selected: String,
+        _request: ByteReservation,
+    ) -> Result<Option<axum::body::Bytes>, WorldError> {
+        let authority = self.authority.clone();
+        let game = self.game.clone();
+        Ok(self
+            .game
+            .world
+            .capture(move |session| {
+                let budget = game.host.budget();
+                Ok(
+                    authority.current(&scope, Capability::Play, false, |fields, controls| {
+                        with_contact_choices(session, fields, &refs, &selected, &game, controls, true,
+                            |choices, references| choices.encode(references, budget))
+                    }),
+                )
+            })
+            .await???)
+    }
+
+    /// Spending availability is a separate await. Re-read the installed
+    /// actor/recipient and live control before reporting what Send can do.
+    /// Only the composer asks for detached public appeal choices.
+    pub(crate) async fn availability(
+        &self,
+        scope: Arc<AuthorizedScope>,
+        references: Arc<ReferenceIssuer>,
+        mode: openlegend_simulation::runtime::InteractionMode,
+        target: Option<String>,
+        include_appeals: bool,
+    ) -> Result<InteractionAvailability, WorldError> {
+        let target = target.map(Arc::new);
+        let before = match self
+            .interaction(
+                scope.clone(),
+                references.clone(),
+                mode,
+                target.clone(),
+                false,
+            )
+            .await?
+        {
+            Ok(before) => before,
+            Err(refused) => return Ok(refused),
+        };
+        let Some(funded) = self.interactive_funding(&before.payer).await? else {
+            return Ok(InteractionAvailability::refused(
+                "ai-unavailable",
+                "Speak and Act need configured character AI and an allowance.",
+            ));
+        };
+        let after = match self
+            .interaction(scope, references, mode, target, funded && include_appeals)
+            .await?
+        {
+            Ok(after) => after,
+            Err(refused) => return Ok(refused),
+        };
+        if before.payer != after.payer {
+            return Ok(InteractionAvailability::refused(
+                "stale",
+                "The selected interaction changed. Refresh it.",
+            ));
+        }
+        if !funded {
+            return Ok(InteractionAvailability::refused(
+                "ai-unavailable",
+                "Speak and Act need an available character AI allowance.",
+            ));
+        }
+        let can_send = if after.reply {
+            self.slots.accepting_sends()?
+        } else {
+            self.slots.available(&after.payer)?
+        };
+        if !can_send {
+            return Ok(InteractionAvailability::refused(
+                "busy",
+                "Character AI is busy. Your draft is saved; check again shortly.",
+            ));
+        }
+        Ok(InteractionAvailability {
+            available: true,
+            code: "available",
+            reason: None,
+            reply: after.reply,
+            recipient_name: after.name,
+            public_appeals: after.public_appeals,
+            _custody: Some(after._custody),
+        })
+    }
+
+    async fn interaction(
+        &self,
+        scope: Arc<AuthorizedScope>,
+        references: Arc<ReferenceIssuer>,
+        mode: openlegend_simulation::runtime::InteractionMode,
+        target: Option<Arc<String>>,
+        include_appeals: bool,
+    ) -> Result<Result<EligibleInteraction, InteractionAvailability>, WorldError> {
+        use openlegend_simulation::runtime::{InteractionMode, RuntimeError};
+        let authority = self.authority.clone();
+        let budget = self.game.host.budget().clone();
+        let result = self
+            .game
+            .world
+            .capture(move |session| {
+                Ok(
+                    authority.current(&scope, Capability::Play, false, |fields, controlling| {
+                        let refuse = |code, why| -> Result<_, RuntimeError> {
+                            Ok(Err(InteractionAvailability::refused(code, why)))
+                        };
+                        if !controlling {
+                            return refuse("control", "Resume control of your character to send.");
+                        }
+                        let clock=session.clock()?;
+                        let lab_draft=scope.lab_host_scope().is_some() && clock.manually_paused;
+                        if clock.paused && !lab_draft {
+                            return refuse("paused", "Resume the world to send.");
+                        }
+                        if let Some(target) = target
+                            .as_deref()
+                            .filter(|_| matches!(mode, InteractionMode::Speak))
+                        {
+                            return match speech::draft_target_in_world(
+                                session, fields, &references, target, &budget,
+                            )? {
+                                Ok(target) => {
+                                    let _custody = budget.reserve(
+                                        256 + target.actor.len().max(fields.actor_id.len()) + target.name.storage_bytes(),
+                                    )?;
+                                    Ok(Ok(EligibleInteraction {
+                                        payer: if target.reply { target.actor } else { fields.actor_id.to_owned() },
+                                        reply: target.reply,
+                                        name: Some(target.name),
+                                        public_appeals: Vec::new(),
+                                        _custody,
+                                    }))
+                                }
+                                Err(refusal) => {
+                                    let (code, why) = refusal.report();
+                                    refuse(code, why)
+                                }
+                            };
+                        }
+                        session.with_player_interaction(
+                            &fields.account_id,
+                            &fields.actor_id,
+                            mode,
+                            None,
+                            None,
+                            |facts| {
+                                if !facts.actor_available {
+                                    return refuse(
+                                        "actor-unavailable",
+                                        if matches!(mode, InteractionMode::Speak) {
+                                            "Your character cannot speak now."
+                                        } else {
+                                            "Your character cannot act now."
+                                        },
+                                    );
+                                }
+                                let mut _custody = budget
+                                    .reserve(256 + facts.funding_actor_id.len())
+                                    .map_err(RuntimeError::from)?;
+                                let public_appeals = if include_appeals {
+                                    let (choices, custody) =
+                                        facts.prepare_public_appeals(&budget)?;
+                                    _custody.merge(custody)?;
+                                    choices
+                                } else {
+                                    Vec::new()
+                                };
+                                Ok(Ok(EligibleInteraction {
+                                    payer: facts.funding_actor_id.to_owned(),
+                                    reply: facts.reply,
+                                    name: None,
+                                    public_appeals,
+                                    _custody,
+                                }))
+                            },
+                        )?
+                    }),
+                )
+            })
+            .await???;
+        Ok(result)
+    }
+
+    async fn lookup(&self, id: &str) -> Result<Option<Arc<AdmittedJob>>, WorldError> {
+        let pending = self.saves.pending_job(id)?;
+        let durable = self.game.store.conversation_job(id).await?;
+        // A terminal operational result can follow the saved initial job
+        // while its accepted queue pointer is still separately held.
+        if durable
+            .as_ref()
+            .is_some_and(|owner| owner.job.status.terminal())
+        {
+            return Ok(durable);
+        }
+        Ok(self.saves.pending_job(id)?.or(pending).or(durable))
+    }
+
+    pub(crate) async fn submit(
+        self: &Arc<Self>,
+        request: ChatRequest,
+        scope: Arc<AuthorizedScope>,
+        custody: ByteReservation,
+        refs: Arc<ReferenceIssuer>,
+    ) -> Result<SubmitResult, WorldError> {
+        let speech = Arc::new(Speech::new(request, scope, custody, &self.game)?);
+        if speech.request.candidate.is_some() {
+            return Ok(SubmitResult::refused(
+                "invalid-declaration",
+                "Send a proposal separately from a conversation.",
+            ));
+        }
+        let send = self.clone();
+        let (cancel, cancelled) = watch::channel(false);
+        struct Intake(watch::Sender<bool>);
+        impl Drop for Intake {
+            fn drop(&mut self) {
+                self.0.send_replace(true);
+            }
+        }
+        let _request = Intake(cancel);
+        let (accepted, outcome) = oneshot::channel();
+        self.start_job(async move {
+            send.receive_speech(speech, refs, cancelled, accepted).await;
+        })?;
+        outcome
+            .await
+            .map_err(|_| WorldError::from(openlegend_world_host::pool::HostError::WorkerFailed))?
+    }
+
+    async fn receive_speech(
+        self: Arc<Self>,
+        speech: Arc<Speech>,
+        refs: Arc<ReferenceIssuer>,
+        cancelled: watch::Receiver<bool>,
+        response: oneshot::Sender<Result<SubmitResult, WorldError>>,
+    ) {
+        match self.admit_speech(speech.clone(), refs, cancelled).await {
+            Ok(JobStart::Existing(result)) => {
+                let _ = response.send(Ok(result));
+            }
+            Err(error) => {
+                let _ = response.send(Err(error));
+            }
+            Ok(JobStart::Reply {
+                slot,
+                job,
+                cut,
+                source,
+            }) => {
+                let _ = response.send(Ok(SubmitResult::Job(job.clone())));
+                let speech::SpeechSource {
+                    reference,
+                    _custody,
+                } = source;
+                let permit = Some((self.authority.clone(), speech.scope.clone()));
+                drop(speech);
+                self.run(slot, job, vec![reference], cut, permit, None)
+                    .await;
+            }
+        }
+    }
+
+    async fn admit_speech(
+        &self,
+        speech: Arc<Speech>,
+        refs: Arc<ReferenceIssuer>,
+        mut cancelled: watch::Receiver<bool>,
+    ) -> Result<JobStart, WorldError> {
+        let started = Instant::now();
+        let capacity_until = started + ADMISSION_WAIT;
+        let resident_until = started + USEFUL_LIFETIME;
+        let mut wait_until = capacity_until;
+        let mut waiting = self.slots.waiting_send();
+        let refused = |code, message| Ok(JobStart::Existing(SubmitResult::refused(code, message)));
+        loop {
+            self.authority
+                .current(&speech.scope, Capability::Play, true, |_, _| ())?;
+            if *cancelled.borrow() {
+                return Ok(JobStart::Existing(SubmitResult::speech_refusal(
+                    SpeechRefusal::Cancelled,
+                )));
+            }
+            if let Some(prior) = self.lookup(&speech.job_id).await? {
+                self.authority
+                    .current(&speech.scope, Capability::Play, true, |_, _| ())?;
+                return if prior.job.fingerprint == speech.fingerprint
+                    && belongs_to(&prior.job.authority, &speech.scope.scope)
+                {
+                    Ok(JobStart::Existing(SubmitResult::Job(prior)))
+                } else {
+                    refused(
+                        "idempotency-conflict",
+                        "That request ID was already used for different input.",
+                    )
+                };
+            }
+            let target = match speech::target(
+                &self.game,
+                speech.clone(),
+                self.authority.clone(),
+                refs.clone(),
+            )
+            .await?
+            {
+                Ok(target) => Arc::new(target),
+                Err(refusal) => {
+                    return Ok(JobStart::Existing(SubmitResult::speech_refusal(refusal)));
+                }
+            };
+            match self.interactive_funding(&target.actor).await? {
+                Some(true) => {}
+                Some(false) => {
+                    return refused(
+                        "ai-unavailable",
+                        "Speak and Act need an available character AI allowance.",
+                    );
+                }
+                None => {
+                    return refused(
+                        "ai-unavailable",
+                        "Speak and Act need configured character AI and an allowance.",
+                    );
+                }
+            }
+            if *cancelled.borrow() {
+                return Ok(JobStart::Existing(SubmitResult::speech_refusal(
+                    SpeechRefusal::Cancelled,
+                )));
+            }
+            if waiting.is_waiting() && Instant::now() >= wait_until {
+                break;
+            }
+            let scope = &speech.scope.scope;
+            let slot = match self.slots.select(
+                &target.actor,
+                &speech.job_id,
+                Some(&scope.account_id),
+                &scope.timeline_id,
+                SlotPriority::Send(&mut waiting),
+            )? {
+                Admission::Accepted(slot) => slot,
+                Admission::Closed => {
+                    return Ok(JobStart::Existing(SubmitResult::speech_refusal(
+                        SpeechRefusal::Cancelled,
+                    )));
+                }
+                Admission::Held(mut ended) => {
+                    // A resident may finish after the shared capacity window.
+                    // Both deadlines still start at the original Send.
+                    wait_until = resident_until;
+                    let wait = async {
+                        let _ = ended.changed().await;
+                    };
+                    if !wait_admission(wait_until, &mut cancelled, wait).await {
+                        break;
+                    }
+                    continue;
+                }
+                Admission::Capacity(mut freed) => {
+                    wait_until = capacity_until;
+                    let wait = async {
+                        let _ = freed.changed().await;
+                    };
+                    if !wait_admission(wait_until, &mut cancelled, wait).await {
+                        break;
+                    }
+                    continue;
+                }
+            };
+            // The previous owner can have finished between the first read
+            // and this admission. Keep the slot while checking the receipt.
+            if let Some(prior) = self.lookup(&speech.job_id).await? {
+                self.authority
+                    .current(&speech.scope, Capability::Play, true, |_, _| ())?;
+                return if prior.job.fingerprint == speech.fingerprint
+                    && belongs_to(&prior.job.authority, &speech.scope.scope)
+                {
+                    Ok(JobStart::Existing(SubmitResult::Job(prior)))
+                } else {
+                    refused(
+                        "idempotency-conflict",
+                        "That request ID was already used for different input.",
+                    )
+                };
+            }
+            match speech::speak(
+                &self.game,
+                &self.saves,
+                self.authority.clone(),
+                refs,
+                speech,
+                target,
+                cancelled,
+            )
+            .await?
+            {
+                Spoken::Refused(refusal) => {
+                    return Ok(JobStart::Existing(SubmitResult::speech_refusal(refusal)));
+                }
+                Spoken::Outcome(outcome, funding) => {
+                    return Ok(JobStart::Existing(SubmitResult::Command(outcome, funding)));
+                }
+                Spoken::Accepted {
+                    job, source: None, ..
+                } => return Ok(JobStart::Existing(SubmitResult::Job(job))),
+                Spoken::Accepted {
+                    job,
+                    source: Some(source),
+                    cut,
+                    ..
+                } => {
+                    return Ok(JobStart::Reply {
+                        slot,
+                        job,
+                        cut,
+                        source,
+                    });
+                }
+            }
+        }
+        self.authority
+            .current(&speech.scope, Capability::Play, true, |_, _| ())?;
+        if *cancelled.borrow() {
+            return Ok(JobStart::Existing(SubmitResult::speech_refusal(
+                SpeechRefusal::Cancelled,
+            )));
+        }
+        refused(
+            "busy",
+            "Character AI is busy. Your draft is saved; check again shortly.",
+        )
+    }
+
+    async fn run(
+        &self,
+        slot: slots::DecisionSlot,
+        job: Arc<AdmittedJob>,
+        source: Vec<openlegend_simulation::experience::PersonalSourceRef>,
+        cut: u64,
+        permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+        automatic: Option<decide::AutomaticTrigger>,
+    ) {
+        let Some(models) = self.models.as_ref() else {
+            return;
+        };
+        let cancellation = slot.resident.stop.subscribe();
+        let deadline = Instant::now() + USEFUL_LIFETIME;
+        let actor = job.job.request.npc_id.clone();
+        if let Some(lab)=self.lab_controls(){lab.follow_focal_job(&actor,&job.job.id);}
+        let mut reflection = None;
+        let result = decide::run(
+            &self.game,
+            &self.saves,
+            &self.dispatch,
+            &models.routes,
+            decide::Work {
+                lab_fields: None,
+                job: job.clone(),
+                actor,
+                source,
+                accepted_cut: cut,
+                permit,
+                cancellation,
+                deadline,
+                automatic,
+                hold_time: self.dispatch.lab.as_ref().map(|_| Default::default()),
+                settings: self.dispatch.lab.as_ref().map(|lab| lab.settings()),
+            },
+            &mut reflection,
+        )
+        .await;
+        self.dispatch.previews().end_job(&job.job.id);
+        if let Err(error) = result {
+            if let Err(error) = self.finish_failed(&job, cut, error).await {
+                eprintln!(
+                    "Conversation outcome storage stopped ({}) {error}",
+                    job.job.id
+                );
+            }
+        } else if let Some(reflection) = reflection
+            && !*slot.resident.stop.borrow()
+            && let Err(error) = self
+                .recommend_reflection(&job.job.request.npc_id, reflection)
+                .await
+        {
+            eprintln!("Failed to queue reflection recommendation: {error}");
+        }
+        if let Some(lab)=self.lab_controls(){lab.terminal_job(&job.job.id);}
+    }
+
+    async fn recommend_reflection(
+        &self,
+        actor: &str,
+        cue: decide::prepare::reflection::Recommendation,
+    ) -> Result<(), WorldError> {
+        let Some(schedule) = self.saves.npc_schedule() else {
+            return Ok(());
+        };
+        let _custody = self
+            .game
+            .host
+            .budget()
+            .reserve(actor.len())
+            .map_err(openlegend_simulation::runtime::RuntimeError::from)?;
+        let selected = actor.to_owned();
+        let (actor, Some(window)) = self
+            .game
+            .world
+            .capture(move |world| {
+                world
+                    .reflection_opportunity(&selected)
+                    .map(|window| (selected, window))
+            })
+            .await?
+        else {
+            return Ok(());
+        };
+        if window.world_id != cue.world || window.generation != cue.generation {
+            return Ok(());
+        }
+        let wake = self
+            .reflection_model
+            .as_ref()
+            .map(|_| schedule.reflection_wake(&actor))
+            .transpose()?;
+        if self
+            .game
+            .store
+            .queue_judged_reflection(cue.world, cue.generation, actor, cue.source)
+            .await
+            .map_err(WorldError::Commit)?
+            && let Some(wake) = wake
+        {
+            schedule.notify_maintenance(wake);
+        }
+        Ok(())
+    }
+
+    async fn finish_failed(
+        &self,
+        job: &Arc<AdmittedJob>,
+        cut: u64,
+        error: CallFailure,
+    ) -> Result<(), WorldError> {
+        let (stage, cause) = error.cause();
+        let (status, message, condition) = match cause {
+            CallFailure::Cancelled => (
+                SpeechReplyStatus::Cancelled,
+                "The reply was cancelled.",
+                "cancelled",
+            ),
+            CallFailure::Stale("game-paused") => (
+                SpeechReplyStatus::Cancelled,
+                "The reply was cancelled when the game paused.",
+                "game-paused",
+            ),
+            CallFailure::Stale(reason) => (
+                SpeechReplyStatus::Stale,
+                "The conversation changed before the reply could be used.",
+                *reason,
+            ),
+            CallFailure::Authority(_) => (
+                SpeechReplyStatus::Stale,
+                "The conversation is no longer available.",
+                "authority",
+            ),
+            CallFailure::Admission => (
+                SpeechReplyStatus::Failed,
+                "The conversation has no remaining AI allowance.",
+                "allowance",
+            ),
+            CallFailure::Existing => (
+                SpeechReplyStatus::Failed,
+                "The original provider request already has a record.",
+                "existing",
+            ),
+            CallFailure::Deployment(reason) => (
+                SpeechReplyStatus::Failed,
+                "The reply service is unavailable for this request.",
+                *reason,
+            ),
+            CallFailure::Refused(_) => (
+                SpeechReplyStatus::Failed,
+                "The reply service declined the request.",
+                "provider-refused",
+            ),
+            CallFailure::Transport(_) => (
+                SpeechReplyStatus::Failed,
+                "The reply service did not finish the request.",
+                "transport",
+            ),
+            CallFailure::CompletionUnconfirmed => (
+                SpeechReplyStatus::Failed,
+                "The reply service couldn't confirm that the request finished.",
+                "completion-unconfirmed",
+            ),
+            CallFailure::Invalid => (
+                SpeechReplyStatus::Failed,
+                "The reply could not be used.",
+                "invalid-output",
+            ),
+            CallFailure::ContextLimit => (
+                SpeechReplyStatus::Failed,
+                "The necessary information was too large for this AI request.",
+                "context-exceeded",
+            ),
+            CallFailure::ProviderInputLimit => (
+                SpeechReplyStatus::Failed,
+                "The necessary information was too large for this AI request.",
+                "input_too_large",
+            ),
+            CallFailure::DecodeBusy => (
+                SpeechReplyStatus::Failed,
+                "The reply could not be processed in time.",
+                "decode-admission-busy",
+            ),
+            CallFailure::World(error) if error.is_admission_refusal() => (
+                SpeechReplyStatus::Failed,
+                "The world was too busy to process the reply.",
+                "world-admission",
+            ),
+            CallFailure::World(_) | CallFailure::Commit(_) => (
+                SpeechReplyStatus::Failed,
+                "The reply could not be saved.",
+                "application",
+            ),
+            CallFailure::At { .. } => unreachable!("decision failure has one stage"),
+        };
+        self.game
+            .world
+            .when_durable(cut, Instant::now() + ADMISSION_WAIT)
+            .await?;
+        let (dispatched, received) = self.game.store.conversation_transfers(&job.job.id).await?;
+        let message = if job.job.kind == "action" {
+            match status {
+                SpeechReplyStatus::Cancelled => "The action was cancelled.",
+                SpeechReplyStatus::Stale => {
+                    "The action or its selected target changed before it could be shown."
+                }
+                _ => "The action description could not be used. Your action was not shown.",
+            }
+        } else {
+            message
+        };
+        let terminal = job.advance(
+            status,
+            message.into(),
+            Some(TerminalOutcome {
+                stage: stage.into(),
+                condition: condition.into(),
+                dispatched,
+                received,
+                applied: false,
+            }),
+            self.game.host.budget(),
+        )?;
+        self.game
+            .store
+            .put_conversation_job(terminal)
+            .await
+            .map_err(WorldError::Commit)?;
+        self.saves.signal_view();
+        Ok(())
+    }
+
+    pub(crate) async fn cancel(
+        &self,
+        scope: &AuthorizedScope,
+        id: &str,
+    ) -> Result<bool, WorldError> {
+        let active = self.slots.selected(id)?;
+        self.authority
+            .current(scope, Capability::Play, false, |fields, _| {
+                if let Some(resident) = active {
+                    if resident.account.as_deref() != Some(&fields.account_id)
+                        || resident.timeline != fields.timeline_id
+                    {
+                        return Err(AccessError::Forbidden.into());
+                    }
+                    resident.stop.send_replace(true);
+                    return Ok(true);
+                }
+                Ok(false)
+            })?
+    }
+
+    pub(crate) async fn stop(&self) -> Result<(), StoreError> {
+        let mut tasks = self
+            .tasks
+            .lock()
+            .map_err(|_| StoreError::WriterUnavailable)?
+            .take()
+            .ok_or(StoreError::WriterUnavailable)?;
+        self.slots.stop().await?;
+        let mut failed = false;
+        while let Some(result) = tasks.join_next().await {
+            failed |= result.is_err();
+        }
+        self.dispatch.stop_stage_captures().await;
+        if failed {
+            Err(StoreError::WriterUnavailable)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+enum JobStart {
+    Existing(SubmitResult),
+    Reply {
+        slot: slots::DecisionSlot,
+        job: Arc<AdmittedJob>,
+        cut: u64,
+        source: speech::SpeechSource,
+    },
+}
+
+fn belongs_to(owner: &Option<RequestScope>, actual: &RequestScope) -> bool {
+    owner.as_ref().is_some_and(|owner| {
+        owner.account_id == actual.account_id
+            && owner.actor_id == actual.actor_id
+            && owner.world_id == actual.world_id
+            && owner.timeline_id == actual.timeline_id
+    })
+}
+
+async fn wait_admission(
+    until: Instant,
+    cancelled: &mut watch::Receiver<bool>,
+    wait: impl std::future::Future<Output = ()>,
+) -> bool {
+    if *cancelled.borrow() {
+        return false;
+    }
+    tokio::select! {
+        biased;
+        _ = cancelled.changed() => false,
+        outcome = tokio::time::timeout_at(until, wait) => outcome.is_ok(),
+    }
+}
+
+
+// Both the HTTP menu and preferred-command guard use the same current
+// conversation and combat choices. Only the caller's independently funded
+// result can leave the accepted promotion lane.
+pub(crate) fn with_contact_choices<T>(
+    session: &openlegend_simulation::runtime::NativeWorldSession,
+    scope: &crate::authority::RequestScope,
+    refs: &ReferenceIssuer,
+    selected: &str,
+    game: &CurrentServer,
+    controls: bool,
+    include_teaching: bool,
+    consume: impl FnOnce(crate::player_http::actions::ContactMenu<'_>, &crate::player_references::PlayerReferences<'_>)
+        -> Result<T, openlegend_simulation::runtime::RuntimeError>,
+) -> Result<Option<T>, openlegend_simulation::runtime::RuntimeError> {
+    use openlegend_simulation::runtime::RuntimeError;
+    let budget = game.host.budget();
+    let clock = session.clock()?;
+    let talk = if !clock.paused || clock.manually_paused {
+        speech::draft_target_in_world(session, scope, refs, selected, budget)?.ok()
+    } else {
+        None
+    };
+    let references = refs.scoped(scope).map_err(RuntimeError::application_refused)?;
+    let mut consume = Some(consume);
+    let mut alias_error = None;
+    let spatial=game.spatial.current(session.structure_scene()?.as_ref(),budget).map_err(RuntimeError::application_refused)?;
+    let choices = session.with_player_contact_menu(
+        &scope.account_id, &scope.actor_id, include_teaching,
+        |body| match references.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id) {
+            Ok(alias) => alias == selected,
+            Err(problem) => { alias_error = Some(problem); false }
+        },
+        |menu| {
+            let choices = crate::player_http::actions::contact_choices(
+                menu.sequence(), selected, talk.as_ref().map(|target| &target.name), Some(menu),
+                &game.spatial, controls, clock.manually_paused, &references, budget,
+            )?;
+            consume.take().expect("one chosen context")(choices, &references)
+        },
+    )?;
+    if let Some(error) = alias_error {
+        return Err(RuntimeError::application_refused(error));
+    }
+    if choices.is_some() { return Ok(choices); }
+    let Some(talk) = talk else { return Ok(None); };
+    let choices = crate::player_http::actions::contact_choices(
+        session.accepted_progress()?.sequence, selected, Some(&talk.name), None,
+        &game.spatial, controls, clock.manually_paused, &references, budget,
+    )?;
+    consume.take().expect("one chosen context")(choices, &references).map(Some)
+}

@@ -213,7 +213,7 @@ The original game's Metacritic user-review page supplied accessible indexed test
 
 **Treat a companion as more than an ability slot.** Personal missions, recurring conversation and constrained responsibilities can reinforce one another. They depend on reliable presentation and enough individual attention; expanding the roster without supporting distinct relationships risks diluting the very attachment the structure seeks to create.
 
-These are research interpretations, not accepted OpenLegend requirements or authorization to change code. BioWare's characters, terminology and authored events remain reference examples, not proposed assets.
+These are research interpretations, not accepted Open Legend requirements or authorization to change code. BioWare's characters, terminology and authored events remain reference examples, not proposed assets.
 
 ## 14. Reading routes, requirement map and preservation
 

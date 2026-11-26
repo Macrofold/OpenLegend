@@ -1,10 +1,10 @@
 # AI Dungeon — full research dossier
 
-**G40 · Complete research pass, September 26, 2026; targeted audit corrections applied September 26.** This dossier covers AI Dungeon from the 2019 GPT-2 prototypes through the current 2026 product, with model/provider/version boundaries kept explicit. Historical GPT-2/GPT-3 reviews are not treated as measurements of current model quality; the retired 2022–2024 Steam/Traveler edition is separated from today's web/mobile service. The prior chapter and source notebook remain preserved owners for the earlier field-guide material. The audit correction rechecked the official model/context and scripting documentation; it is not a new model benchmark or a fresh reading of every inherited source. Proposed OpenLegend adaptations remain research interpretations, not accepted implementation requirements.
+**G40 · Complete research pass, September 26, 2026; targeted audit corrections applied September 26.** This dossier covers AI Dungeon from the 2019 GPT-2 prototypes through the current 2026 product, with model/provider/version boundaries kept explicit. Historical GPT-2/GPT-3 reviews are not treated as measurements of current model quality; the retired 2022–2024 Steam/Traveler edition is separated from today's web/mobile service. The prior chapter and source notebook remain preserved owners for the earlier field-guide material. The audit correction rechecked the official model/context and scripting documentation; it is not a new model benchmark or a fresh reading of every inherited source. Proposed Open Legend adaptations remain research interpretations, not accepted implementation requirements.
 
 [Preserved overview](../games/ai-dungeon.md) · [Detailed language/context study](../mechanics/scribblenauts-ai-dungeon-language-intent-and-consequence.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
-AI Dungeon is most useful to OpenLegend precisely because it is **not** an authoritative world simulation. It is an unusually mature product for turning natural-language intent into collaborative fiction, repairing generated fiction when it drifts, and engineering limited model context so a long-running story feels more continuous. Its strongest lesson is the value of language as an interface. Its strongest warning is that plausible narration, remembered prose, and actual world truth are three different things.
+AI Dungeon is most useful to Open Legend precisely because it is **not** an authoritative world simulation. It is an unusually mature product for turning natural-language intent into collaborative fiction, repairing generated fiction when it drifts, and engineering limited model context so a long-running story feels more continuous. Its strongest lesson is the value of language as an interface. Its strongest warning is that plausible narration, remembered prose, and actual world truth are three different things.
 
 ## 1. Identity, current scope and player promise
 
@@ -67,7 +67,7 @@ This distinction is important:
 - Do/Say suggest **embodied intent**;
 - Story exposes **fiction-authoring authority**.
 
-AI Dungeon can blur those roles intentionally because the product is collaborative fiction. OpenLegend should preserve the distinction more rigorously whenever a persistent shared world's resources, permissions or other actors are affected.
+AI Dungeon can blur those roles intentionally because the product is collaborative fiction. Open Legend should preserve the distinction more rigorously whenever a persistent shared world's resources, permissions or other actors are affected.
 
 ### Continue
 
@@ -109,9 +109,9 @@ In AI Dungeon:
 
 There is no contradiction in that design because **the player is partly the author of canon**.
 
-### OpenLegend boundary
+### Open Legend boundary
 
-OpenLegend can offer correction tools for:
+Open Legend can offer correction tools for:
 - misunderstood intent;
 - generated prose;
 - presentation errors;
@@ -127,7 +127,7 @@ A useful contract is:
 4. **narration** — how that outcome is described;
 5. **correction** — which layers may be edited afterward and by whom.
 
-AI Dungeon collapses several of these layers on purpose. OpenLegend should learn from the UX without inheriting the authority ambiguity.
+AI Dungeon collapses several of these layers on purpose. Open Legend should learn from the UX without inheriting the authority ambiguity.
 
 ## 4. There is no universal native RPG ruleset underneath the prose
 
@@ -190,7 +190,7 @@ A creator can define:
 
 Different Adventures can then diverge without sharing one canonical state.
 
-OpenLegend will often need the opposite too:
+Open Legend will often need the opposite too:
 - reusable world package;
 - **shared persistent instance**;
 - durable consequences that survive player sessions.
@@ -282,7 +282,7 @@ It is not:
 - proof the model will obey every fact;
 - the current mutable state of the represented entity.
 
-OpenLegend can reuse the **retrieval idea** while keeping actual entity/state authority elsewhere.
+Open Legend can reuse the **retrieval idea** while keeping actual entity/state authority elsewhere.
 
 ## 8. The Memory System: compression plus retrieval
 
@@ -317,7 +317,7 @@ That is often desirable for story generation, but dangerous if the summary becom
 - legal promises;
 - timestamps.
 
-### OpenLegend pattern
+### Open Legend pattern
 
 Use several memory layers with distinct jobs:
 - **authoritative state/event log** — exact facts and transitions;
@@ -396,9 +396,9 @@ and receive materially different:
 
 The **model is therefore partially a rules/authoring component**, even though it does not become a deterministic rules engine.
 
-### OpenLegend lesson
+### Open Legend lesson
 
-If OpenLegend ever permits world authors or players to choose cognition/narration models:
+If Open Legend ever permits world authors or players to choose cognition/narration models:
 - the chosen model/version must be observable configuration;
 - changing it can alter behavior;
 - persistent mechanical state should not depend on hidden model personality;
@@ -419,7 +419,7 @@ These are not character statistics. They change **generation distribution and ou
 
 A player can therefore “tune the dungeon master” rather than only tune an avatar.
 
-This is interesting for OpenLegend creator/debug surfaces, but it should be separated from ordinary in-world mechanics. A character should not become braver because an administrator raised a language model temperature.
+This is interesting for Open Legend creator/debug surfaces, but it should be separated from ordinary in-world mechanics. A character should not become braver because an administrator raised a language model temperature.
 
 ## 12. Scripting adds a deterministic creator layer
 
@@ -453,9 +453,9 @@ Latitude's model documentation explicitly warns that **Optimized Context disable
 
 The scripting guide separately documents input, context and output hooks, per-Adventure state and a creator test/inspection interface. **Constructed compatibility situation:** a creator wants a script to place a changing ritual condition into model context, then chooses a cache-optimized model. They must check that configuration's supported script behavior and inspect what reaches generation before assuming a longer context preserves the ritual rule. The next choice is a compatible setting or revised script, not simply buying more tokens. This is a documentation-derived compatibility concern, not a claimed live test or proof that all scripting stops working. [AID06](#aid06)
 
-### OpenLegend comparison
+### Open Legend comparison
 
-OpenLegend's native domain layer can play the role that AI Dungeon scripts only optionally approximate:
+Open Legend's native domain layer can play the role that AI Dungeon scripts only optionally approximate:
 - authoritative rules;
 - deterministic mutation;
 - explicit permissions;
@@ -515,7 +515,7 @@ This creates two content loops:
 
 Creators can also receive **Scales** as tips from other users. [AID20](#aid20)
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 A world-creation ecosystem may similarly need several distinct shareable artifacts:
 - complete persistent worlds;
@@ -579,7 +579,7 @@ AI-generation cost is visible enough to influence product design:
 
 all have economic implications.
 
-OpenLegend should similarly avoid pretending model calls are free. But **compute admission** should stay separate from an in-fiction gold economy unless a world intentionally links them.
+Open Legend should similarly avoid pretending model calls are free. But **compute admission** should stay separate from an in-fiction gold economy unless a world intentionally links them.
 
 ## 16. Safety, privacy and the boundary between private play and public content
 
@@ -622,7 +622,7 @@ But AI Dungeon does not thereby establish that every NPC has:
 - an authoritative inventory/body;
 - permissions over world objects.
 
-OpenLegend should preserve the distinction between **a character being convincingly written now** and **a character existing continuously as a simulated actor**.
+Open Legend should preserve the distinction between **a character being convincingly written now** and **a character existing continuously as a simulated actor**.
 
 ## 18. Presentation, interface, accessibility and feel
 
@@ -689,7 +689,7 @@ These examples are **rules-based illustrations unless a source is explicitly nam
 
 **Next decision:** continue negotiating, act, edit, or retry.
 
-**OpenLegend implication:** natural-language speech can be delightfully unconstrained while persuasion consequences still belong to world state/rules.
+**Open Legend implication:** natural-language speech can be delightfully unconstrained while persuasion consequences still belong to world state/rules.
 
 ### Situation C — the player repairs canon
 
@@ -699,7 +699,7 @@ These examples are **rules-based illustrations unless a source is explicitly nam
 
 **Result:** the transcript—the story's effective canon—changes.
 
-This is not merely a debugging affordance; it is part of the co-authoring contract. In OpenLegend, an equivalent edit should clearly distinguish **prose repair** from **rewinding committed simulation**.
+This is not merely a debugging affordance; it is part of the co-authoring contract. In Open Legend, an equivalent edit should clearly distinguish **prose repair** from **rewinding committed simulation**.
 
 ### Situation D — long-running lore competes for context
 
@@ -723,7 +723,7 @@ This is not merely a debugging affordance; it is part of the co-authoring contra
 
 **Compatibility limit:** the script must use features supported by the chosen model/context configuration; §12 explains why Optimized Context cannot be assumed independent of scripting. [AID15](#aid15)
 
-**OpenLegend implication:** free-form interpretation gets much stronger when exact rules have a separate owner.
+**Open Legend implication:** free-form interpretation gets much stronger when exact rules have a separate owner.
 
 ### Situation F — multiplayer embraces conflicting authors
 
@@ -811,7 +811,7 @@ Kotaku's launch-period piece is effectively built from exactly that loop: a biza
 
 Latitude now describes the 2019 launch as viral and says the first-week load crashed infrastructure. Treat that as the company's account of its launch history, not measured attribution proving which channel caused adoption. [AID29](#aid29)
 
-### OpenLegend implication
+### Open Legend implication
 
 The best shareable unit for an AI-native world may not be a marketing card. It may be:
 - “look what this character did”;
@@ -819,7 +819,7 @@ The best shareable unit for an AI-native world may not be a marketing card. It m
 - “look what happened to our town”;
 - a compact replay/receipt of a genuinely surprising world event.
 
-But OpenLegend should ensure the event was actually produced by world rules, not a screenshot-only hallucination.
+But Open Legend should ensure the event was actually produced by world rules, not a screenshot-only hallucination.
 
 ## 22. Commercial and participation context
 
@@ -957,7 +957,7 @@ The recurring product challenge is not simply “make prose prettier.” It is:
 - retrieve the right old facts;
 - distinguish optional creativity from contradiction.
 
-Those are exactly the categories where OpenLegend can gain from a native state/event substrate.
+Those are exactly the categories where Open Legend can gain from a native state/event substrate.
 
 ## 26. What AI Dungeon gets especially right
 
@@ -979,7 +979,7 @@ It tells the system—and the player—whether an input is:
 - speech;
 - direct narrative authorship.
 
-OpenLegend should go further with similarly explicit authority modes rather than one chat box that sometimes acts as player, creator and admin.
+Open Legend should go further with similarly explicit authority modes rather than one chat box that sometimes acts as player, creator and admin.
 
 ### C. Repair controls preserve flow
 
@@ -1003,7 +1003,7 @@ A repeatable premise plus lore/instructions/script can become content other play
 
 AI Dungeon's scripting layer is evidence that even a narrative-first product benefits from exact programmable state around an LLM.
 
-## 27. What OpenLegend should not copy automatically
+## 27. What Open Legend should not copy automatically
 
 ### A. Do not let narration be mechanical authority
 
@@ -1043,7 +1043,7 @@ The world can contain millions of facts even if a model sees only a few thousand
 
 ### F. Do not confuse a responsive NPC with an autonomous actor
 
-OpenLegend characters should have native:
+Open Legend characters should have native:
 - body/location;
 - possessions;
 - permissions;
@@ -1058,13 +1058,13 @@ even when an LLM helps decide or express higher-level behavior.
 
 The 2021 crisis demonstrates that moderation/privacy are not peripheral policy pages when private generative play is the product. Data access, evaluation opt-in, public/private boundaries and provider constraints should be designed alongside the system.
 
-## 28. The strongest OpenLegend synthesis
+## 28. The strongest Open Legend synthesis
 
 The useful hybrid is:
 
 > **AI Dungeon's expressive input + correction + context tooling, layered over an authoritative world model it does not itself provide.**
 
-A robust OpenLegend action can flow like this:
+A robust Open Legend action can flow like this:
 
 1. **Human expression** — arbitrary natural-language desire.
 2. **Intent interpretation** — typed candidate action(s), uncertainty retained.
@@ -1436,7 +1436,7 @@ The earlier shared study's **Gummiprince, LamentfulLancer, Sky2400 and KairoCort
 
 ## 10. Transferable inspiration and counterpoints
 
-These are **research interpretations, not accepted OpenLegend requirements**.
+These are **research interpretations, not accepted Open Legend requirements**.
 
 1. **Make the participant's role clear.** Acting, authoring and correcting are different powers. Co-authoring can be the whole point; a persistent simulation should not silently treat an outcome assertion as a completed world change. The counterpoint is that overrestricting authoring would remove an important creative pleasure.
 2. **Make continuity inspectable.** Show the relevant facts and whether they participated in a generation. Saved notes, selected context and applied behavior are separate states. Context inspection should help diagnose a problem without demanding that every player become a prompt engineer.

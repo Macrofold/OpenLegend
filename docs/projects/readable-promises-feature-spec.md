@@ -1,10 +1,10 @@
 # Readable promises — feature specification
 
-| Status      | Current progress                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-16   |
+| Status      | Current progress                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The owner-only list works through both servers. Reading a past promise that has left Rust's resident history still needs verification. | 2026-11-22   |
 
-**Status:** the approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) was delivered under the [player clarity plan](completed/player-clarity-ui.md), but its required boundary/preparation corrections and cross-account qualification remain unfinished. [Technical design](readable-promises-tech-design.md) defines the read contract and those remaining corrections. Current promise rules are in [base-world social behavior](../worlds/base/social.md#spoken-promises). Amending, cancelling and negotiated agreements stay out of scope until [D64](../../archive/05-project/open-decisions.md#social-exposure-decisions) is decided.
+The [player clarity plan](completed/player-clarity-ui.md) delivered the read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management). The [technical design](readable-promises-tech-design.md) owns the read contract. The [current rules](../worlds/base/social.md#spoken-promises) belong to the bundled world. Amendment controls, cancellation controls and negotiated agreements await [D64](../../archive/05-project/open-decisions.md#social-exposure-decisions).
 
 ## 1. Purpose
 

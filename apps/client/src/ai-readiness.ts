@@ -9,12 +9,10 @@ export function aiSetupReason(ai: GameView['ai']): string | null {
     ...(!ai.llmConfigured ? ['the language model'] : []),
   ];
   if (missing.length) {
-    const allowance = ai.budget.limitUsd <= 0 ? ' and a world allowance' : '';
+    const allowance = ai.allowanceLimitUsd <= 0 ? ' and a world allowance' : '';
     return `Talk and invention need ${missing.join(' and ')}${allowance}. Set up AI to continue.`;
   }
-  if (ai.budget.limitUsd <= 0)
+  if (ai.allowanceLimitUsd <= 0)
     return 'AI is configured, but this world has no spending allowance. Set an allowance to use Talk and invention.';
-  if (!ai.budget.perAgent && ai.budget.spentUsd >= ai.budget.limitUsd)
-    return 'This world’s AI allowance is used up. Review the allowance to continue.';
   return null;
 }

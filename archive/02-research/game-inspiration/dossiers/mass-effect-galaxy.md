@@ -138,7 +138,7 @@ GameSpot's adjacent preview of **doctor_kaz's** January 8, 2012 review is more a
 
 **Synthesis — interpretation:** expectations and price affect whether a limited diversion is acceptable, but do not erase repeated control problems. The more constructive comparison asks what a short companion story needs to accomplish on its own. Familiar names are an invitation; they are not a substitute for satisfying moment-to-moment participation.
 
-## 10. Conditional OpenLegend research lessons
+## 10. Conditional Open Legend research lessons
 
 **Preserve meaningful decisions when simplifying input.** Automatic routine actions may improve accessibility or reduce busywork, but the player should retain understandable choices about goals, positioning, timing or tools. A small experiment could compare manual repetitive firing with assisted firing while keeping the same meaningful tactical decisions. The risk is mistaking inactivity for convenience.
 
@@ -150,7 +150,7 @@ GameSpot's adjacent preview of **doctor_kaz's** January 8, 2012 review is more a
 
 **Keep cross-project references optional and durable.** Acknowledging another adventure can reward attention while leaving the main experience understandable. A preservation plan should distinguish bonus recognition from indispensable state. The failure mode is an unavailable external service becoming the only way to access important history.
 
-These are conditional research hypotheses, not accepted OpenLegend requirements or implementation tasks. BioWare's names, characters and authored situations are reference material, not proposed assets.
+These are conditional research hypotheses, not accepted Open Legend requirements or implementation tasks. BioWare's names, characters and authored situations are reference material, not proposed assets.
 
 ## 11. Reading route, requirement map and preservation
 

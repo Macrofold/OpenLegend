@@ -2,7 +2,7 @@
 
 **G64 · Complete research pass, September 26, 2026.** This dossier covers the 2019 Nintendo Switch release, all four main-game routes, New Game+, and the Expansion Pass with **Cindered Shadows** treated as a separate side story whose unlocks feed back into the main game. The current Nintendo store lists the game and Expansion Pass as supported on Switch 2 with behavior consistent with Switch. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Three Houses is unusually relevant to OpenLegend because it connects **institution, mentorship, calendar time, relationships, learning, class identity, and war** into one persistent character model. A student is not merely a tactical unit: they have aptitudes, goals, motivation, friendships, political origins, training history and a future shaped partly by the player.
+Three Houses is unusually relevant to Open Legend because it connects **institution, mentorship, calendar time, relationships, learning, class identity, and war** into one persistent character model. A student is not merely a tactical unit: they have aptitudes, goals, motivation, friendships, political origins, training history and a future shaped partly by the player.
 
 Its most useful warning is equally important: a social place can begin as the emotional center of a game and become repetitive maintenance when every route asks the player to traverse the same hub and repeat the same early calendar.
 
@@ -56,7 +56,7 @@ Choosing a battle means not spending that Sunday:
 - eating with students;
 - completing monastery activities.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 A persistent world needs opportunity cost between:
 - practice;
@@ -150,7 +150,7 @@ This creates a subtle authority question:
 - is the player helping a person become who they want to be,
 - or optimizing them into the build the player wants?
 
-OpenLegend should model agency in teaching explicitly rather than assuming trainees are equipment.
+Open Legend should model agency in teaching explicitly rather than assuming trainees are equipment.
 
 ## 5. Recruitment: relationships can relax formal requirements
 
@@ -172,7 +172,7 @@ This is stronger than a pure charisma check. Someone may join because:
 
 Once Part II begins, many recruitment opportunities disappear or transform.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Group membership should depend on:
 - trust;
@@ -214,7 +214,7 @@ Using a class earns class experience. Mastery can unlock:
 
 A character may therefore study one role for a persistent technique and later work in another.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 A person's profession can contribute persistent learned capabilities without becoming their permanent ontological identity.
 
@@ -263,7 +263,7 @@ This means two people in the same class can still differ because:
 - another learns strong healing;
 - another has different utility.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 A profession should not erase personal knowledge.
 
@@ -300,7 +300,7 @@ This is one of Three Houses' strongest conceptual additions:
 - the named hero is still visible;
 - but battles imply dozens of soldiers acting under their command.
 
-OpenLegend can use hierarchical agency:
+Open Legend can use hierarchical agency:
 - individual commander;
 - squad/battalion abstraction;
 - explicit orders and morale/resource state
@@ -322,7 +322,7 @@ Breaking barrier tiles:
 
 This is a useful contrast with ordinary one-tile people.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Body topology can be a mechanic:
 - a dragon is not merely a human with 5× HP;
@@ -340,7 +340,7 @@ This changes Classic Mode dramatically:
 
 Game Informer specifically praised the ability to turn back time as an accessibility/usability improvement. [TH06](#th06)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Failure consequence and rollback granularity are separate design axes.
 
@@ -363,7 +363,7 @@ Relics:
 - connect directly to lore and lineage;
 - can impose risks or fail to realize full power when used by incompatible people.
 
-This is exactly the kind of object OpenLegend should aspire to:
+This is exactly the kind of object Open Legend should aspire to:
 > an item whose rules, social value, history and narrative meaning are the same thing.
 
 Do not build “legendary item lore” as detached text flavor if the artifact behaves like an ordinary stat stick.
@@ -409,7 +409,7 @@ Across modern player discussion, repeated criticisms include:
 
 A 2025 discussion explicitly splits players between those who loved the place/social texture and those who felt it consumed too much time relative to battles. [TH09](#th09)
 
-### OpenLegend warning
+### Open Legend warning
 
 A persistent place should become **more automatic as familiarity rises**.
 
@@ -440,7 +440,7 @@ At the end:
 
 This gives relationships delayed narrative consequences without converting every friendship into a child-production system.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Not all relationship consequences need immediate buffs.
 
@@ -497,7 +497,7 @@ Silver Snow:
 For an authored reality:
 > different people should know different slices of truth.
 
-OpenLegend's world should avoid an omniscient quest log that flattens disagreement into one canonical explanatory paragraph.
+Open Legend's world should avoid an omniscient quest log that flattens disagreement into one canonical explanatory paragraph.
 
 ## 17. Story structure and the five-year timeskip
 
@@ -512,7 +512,7 @@ The time skip changes:
 
 It is a powerful payoff because the player personally trained these people before seeing who they become.
 
-### OpenLegend inspiration
+### Open Legend inspiration
 
 Long-lived worlds need **time-separated identity continuity**:
 - a child becomes an adult;
@@ -569,7 +569,7 @@ Its online layer historically/currently includes lightweight features such as:
 
 Nintendo's current product page still labels online features, but there is no shared campaign or PvP tactical mode. [TH01](#th01)
 
-OpenLegend should similarly distinguish:
+Open Legend should similarly distinguish:
 - asynchronous world traces;
 - artifact exchange;
 - synchronous multiplayer;
@@ -605,7 +605,7 @@ Progress in it unlocks main-game content:
 
 This is not “route five.” Its independent save/progression contract matters.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 An expansion can be a **bounded authored scenario** that unlocks reusable world vocabulary without pretending it is the same continuity/run.
 
@@ -828,7 +828,7 @@ The failure mode is **mandatory repeated manual interaction after mastery**.
 
 **Result:** budding talent eventually becomes a strength and unlocks an ability.
 
-**OpenLegend lesson:** hidden potential can be revealed by sustained teaching, not only predetermined level-ups.
+**Open Legend lesson:** hidden potential can be revealed by sustained teaching, not only predetermined level-ups.
 
 ### F. One political choice changes former students into enemies
 
@@ -840,7 +840,7 @@ The failure mode is **mandatory repeated manual interaction after mastery**.
 
 **Limit:** route outcomes are authored; the full cast does not dynamically choose sides from simulated beliefs.
 
-## 27. Transferable inspiration for OpenLegend
+## 27. Transferable inspiration for Open Legend
 
 ### A. Teaching is a relationship system, not a menu
 
@@ -851,7 +851,7 @@ Three Houses connects:
 - instruction;
 - career.
 
-OpenLegend can model mentorship as actual repeated interaction.
+Open Legend can model mentorship as actual repeated interaction.
 
 ### B. Institutions can organize otherwise-open character growth
 
@@ -871,7 +871,7 @@ Battalions bridge:
 - individual hero;
 - organized force.
 
-OpenLegend should support “I command twenty guards” without either:
+Open Legend should support “I command twenty guards” without either:
 - pretending the guards do not exist,
 - or running twenty full LLM minds every second.
 

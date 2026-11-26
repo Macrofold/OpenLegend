@@ -1,4 +1,13 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
+
+/** Personal context and its query cache share one collision-free actor/world scope. */
+export function personalVectorScope(
+  worldId: string,
+  actorId: string,
+  kind: 'context' | 'memory-query' = 'context',
+): string {
+  return JSON.stringify(['personal-vectors', kind, worldId, actorId]);
+}
 
 export interface VectorSource {
   id: string;
@@ -19,8 +28,8 @@ function sourcePins(sources: VectorSource[]): string {
 /** Derived embeddings stay in PostgreSQL. Only source IDs and top-match scores leave it. */
 export class VectorStore {
   constructor(private db: SqlDatabase) {}
-  async initialize() {
-    await this.db.exec(`
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
       CREATE TABLE IF NOT EXISTS recall_vectors (
         scope TEXT NOT NULL, model TEXT NOT NULL, dimensions INTEGER NOT NULL,
@@ -29,21 +38,6 @@ export class VectorStore {
         CHECK (public.vector_dims(embedding) = dimensions)
       );
     `);
-    // Convert the previous JSON caches inside the database, without reading vectors
-    // into Node or paying to embed them again. Preserve the small query caches.
-    await this.db.transaction(async () => {
-      await this.db.exec(`
-        INSERT INTO recall_vectors (scope, model, dimensions, source_id, revision, embedding)
-        SELECT substring(m.key FROM 13), m.value::jsonb->>'model',
-          (m.value::jsonb->>'dimensions')::integer, e.key, e.value->>'revision',
-          (e.value->'vector')::text::public.vector
-        FROM meta m CROSS JOIN LATERAL jsonb_each(m.value::jsonb->'entries') e
-        WHERE m.key LIKE 'integration:vectors:%'
-        ON CONFLICT DO NOTHING;
-        UPDATE meta SET value = (value::jsonb - 'entries')::text
-        WHERE key LIKE 'integration:vectors:%' AND value::jsonb->'entries' IS NOT NULL;
-      `);
-    });
   }
 
   /** Return current rows within this decision's allowed source set. Candidate windows

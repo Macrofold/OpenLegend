@@ -14,7 +14,7 @@ A game can contain an AI character without every interaction becoming a regulate
 
 California Business and Professions Code § 22601 defines covered companion chatbots by their capabilities and relationship-oriented interactions. Its video-game exclusion is narrow: qualifying game bots must be limited to game-related replies and unable to engage in mental-health, self-harm, sexually explicit or unrelated discussion. Not meeting the exclusion still requires checking the affirmative definition; it does not automatically establish liability. [CA1]
 
-Section 22602 requires an AI disclosure when a reasonable person would otherwise be misled into thinking the interaction is with a human. It also requires a suicide/self-harm prevention protocol, crisis referrals in the specified circumstances and publication of protocol details. The 2026 provision for known minors additionally includes AI disclosure, three-hour break/reminder notices and specified sexual-content protections. Its sexual-content language is not a simple ban on every written adult topic; OpenLegend's no-sexualized-minors policy is deliberately broader and clearer. These are operator duties, not merely suggestions to the character model. [CA2]
+Section 22602 requires an AI disclosure when a reasonable person would otherwise be misled into thinking the interaction is with a human. It also requires a suicide/self-harm prevention protocol, crisis referrals in the specified circumstances and publication of protocol details. The 2026 provision for known minors additionally includes AI disclosure, three-hour break/reminder notices and specified sexual-content protections. Its sexual-content language is not a simple ban on every written adult topic; Open Legend's no-sexualized-minors policy is deliberately broader and clearer. These are operator duties, not merely suggestions to the character model. [CA2]
 
 ### SB 1119: enacted, with staged future obligations
 
@@ -22,7 +22,7 @@ SB 1119 was approved and chaptered on **September 10, 2026**. Do not label it a 
 
 The chaptered text distinguishes operators allowing children from adult-only operators. Age determination, or the statutory alternative of applying child protections to everyone, remains relevant to covered adult-only services; an adult-only statement is not the whole compliance mechanism. The later provisions include public age-assurance information for adult-only operators, child-risk measures and additional restrictions where children are allowed. Audit deadlines are separately staged, with a revenue-based temporary exemption; do not claim every startup needs an independent audit in July 2027. Section 22602's earlier known-minor provisions are also amended, so transition planning must use the operative version rather than layering every historical rule together. [CA3]
 
-**Interpretation:** retain an explicit legal-review gate for the January/July 2027 transitions. OpenLegend has not selected an age-assurance vendor, opened access to children or completed the statutory applicability analysis. Preserve the existing adult-only audience while implementing a lawful process for discovering underage use; do not use that audience choice to ignore the analysis.
+**Interpretation:** retain an explicit legal-review gate for the January/July 2027 transitions. Open Legend has not selected an age-assurance vendor, opened access to children or completed the statutory applicability analysis. Preserve the existing adult-only audience while implementing a lawful process for discovering underage use; do not use that audience choice to ignore the analysis.
 
 ## New York: a different definition and concrete service notices
 
@@ -34,7 +34,7 @@ Section 1701 addresses protocols involving reasonable efforts to detect and resp
 
 ## Is player-to-player chat the bigger risk?
 
-There is no single ranking that answers both operational burden and legal responsibility. The following is a product-risk interpretation, not a measured claim about OpenLegend's traffic or moderation costs.
+There is no single ranking that answers both operational burden and legal responsibility. The following is a product-risk interpretation, not a measured claim about Open Legend's traffic or moderation costs.
 
 | Surface | Main concern | Useful distinction |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ The FTC began enforcing the TAKE IT DOWN Act's covered-platform requirements on 
 
 COPPA and state privacy laws are separate from content ratings and companion notices. The first research brief explains COPPA's child-directed/actual-knowledge distinction. Collecting more identity information for safety also creates privacy and security responsibilities; more retained data is not automatically safer.
 
-## Recommendations accepted for OpenLegend
+## Recommendations accepted for Open Legend
 
 The canonical policy owns the full requirements. The reasoning behind them is:
 

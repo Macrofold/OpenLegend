@@ -8,7 +8,7 @@ The physiology and psychological models here describe default world systems, not
 
 ## One character model, two controllers
 
-Human and NPC characters share identity, anatomy, needs, equipment, location, perception, relationships, knowledge, and lifecycle records. A controller supplies intents: a player uses input; an NPC uses utility rules and bounded reasoning. Creator controls use a separate administrative permission model.
+Player characters and NPCs share identity, anatomy, needs, equipment, location, perception, relationships, knowledge, and lifecycle records. A controller supplies intents: a player uses input; an NPC uses utility rules and bounded reasoning. Creator controls use a separate administrative permission model.
 
 The broader term **actor** includes every living being, not only human characters. Species and body plan are capabilities/data on an actor rather than a boundary around which beings may receive actions or effects. Animals can use lightweight native behavior by default while a particular animal later gains memory, a richer inner world, intelligence or speech. An intelligent talking deer remains a deer and does not need a parallel character system.
 

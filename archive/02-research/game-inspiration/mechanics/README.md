@@ -1,6 +1,6 @@
 # Granular mechanics studies
 
-**Gameplay reference and inspiration only.** These studies explain what players can do, what rules connect their actions, and why the resulting choices can be rewarding or frustrating. They are not OpenLegend implementation requirements, engineering plans, or maintainer task lists.
+**Gameplay reference and inspiration only.** These studies explain what players can do, what rules connect their actions, and why the resulting choices can be rewarding or frustrating. They are not Open Legend implementation requirements, engineering plans, or maintainer task lists.
 
 The [library index](../README.md) retains the complete comparative research. The game chapters retain earlier conclusions, reception, economic context, and video recommendations; this directory adds detailed system studies without replacing that material.
 
@@ -72,7 +72,7 @@ The earlier chapters and field guides remain the broader entry points, including
 
 ## How to interpret a system study
 
-Separate **documented rules**, **a source's account of a specific session**, and **our design interpretation**. A worked interaction illustrating supported rules is not a claim that a researcher played that session. A named item is a reference example, not a proposed OpenLegend asset or name.
+Separate **documented rules**, **a source's account of a specific session**, and **our design interpretation**. A worked interaction illustrating supported rules is not a claim that a researcher played that session. A named item is a reference example, not a proposed Open Legend asset or name.
 
 Look for the entire chain: player intention; available verbs; item/state prerequisites; the actual interaction; information revealed; opportunity cost; persistent consequences; and the next choice. Art, sound, interface, and story can make that chain comprehensible or emotionally meaningful. They are not merely decoration around numerical mechanics.
 

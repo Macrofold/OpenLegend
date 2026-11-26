@@ -170,7 +170,11 @@ function followPath(
   } finally {
     if (!preview && consumedPoints) path.splice(0, consumedPoints);
     if (!preview && steps)
-      setSpatialPosition(world, actor, position!, position!.surfaceId, { steps, heading });
+      setSpatialPosition(world, actor, position!, position!.surfaceId, {
+        steps,
+        heading,
+        continuity: 'physical',
+      });
     if (!preview && territory && travelled)
       territory.travelledMetres = (territory.travelledMetres ?? 0) + travelled;
     if (!preview && work && steps) {

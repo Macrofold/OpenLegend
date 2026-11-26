@@ -9,9 +9,14 @@ import {
   type TokenUsage,
 } from '@open-legend/ai';
 import { MIND_LIMITS, RESPONSE_LIMITS } from '@open-legend/domain';
-import { LEVEL_LIMITS } from './cognition-contracts.js';
+import { CONTEXT_BYTE_LIMIT, LEVEL_LIMITS } from './cognition-contracts.js';
 import type { AppConfig } from './config.js';
-import { CONTEXT_BYTE_LIMIT } from './context.js';
+import {
+  assertAttemptReceiptContinuity,
+  retainKnownAttemptCost,
+  uncertainAttemptMicroUsd,
+} from './attempt-budget.js';
+
 import { DECISION_LIMITS } from './decision-state.js';
 import {
   configuredDeploymentModel,
@@ -22,11 +27,6 @@ import {
   resolveHigherDecisionGenerationConfig,
   hasDeploymentTargets,
 } from './generation-config.js';
-import {
-  assertAttemptReceiptContinuity,
-  retainKnownAttemptCost,
-  uncertainAttemptMicroUsd,
-} from './attempt-budget.js';
 
 /** Reserve from the same model catalogue used to settle supported usage. Missing prices
  * retain the caller's conservative unknown-cost floor, never an invented zero rate. */
@@ -216,9 +216,9 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
       executor: 'harness',
       inputSize: CONTEXT_BYTE_LIMIT,
       schemaBytes: 65_536,
-      outputTokens: 16_384,
+      outputTokens: LEVEL_LIMITS[5].outputTokens,
       visibleOutputBytes: MIND_LIMITS.proposalBytes,
-      reasoning: { effort: 'xhigh', allowanceTokens: 16_384 },
+      reasoning: { effort: LEVEL_LIMITS[5].effort, allowanceTokens: 16_384 },
       // Enforced by the reflection harness adapter, which rejects runs above eight tool rounds.
       toolRounds: 8,
       ...requestAllowance(1, config.macrofoldKey ? config.macrofoldRunUsd : llm),

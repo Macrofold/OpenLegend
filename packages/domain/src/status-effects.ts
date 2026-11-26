@@ -1,4 +1,6 @@
 import { nativeForagingActive, nativeForagingState } from './native-foraging.js';
+import { selectedOrdinaryActionRules } from './world-composition.js';
+import { endCurrentEvidence } from './perception-evidence.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
 import { narrationTemplate } from './narration.js';
@@ -343,7 +345,10 @@ export function inDailyWindow(hour: number, start: number, end: number): boolean
 /** Local hour in [0, 24). The daily-window matcher and its forecast share this expression so
  * a floating-point residue cannot put the forecast on an edge the matcher has not reached. */
 export function localHour(world: WorldState): number {
-  const hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
+  return localHourAt(world.simTime, world.statusEffectPolicy.clockOffsetHours);
+}
+export function localHourAt(seconds: number, offsetHours: number): number {
+  const hour = (seconds / 3600 + offsetHours) % 24;
   return hour < 0 ? hour + 24 : hour;
 }
 export function matchesStatusCondition(
@@ -555,13 +560,15 @@ export function canActivateStatusEffect(
   );
 }
 export function statusEffectChoiceOutcome(
+  world: WorldState,
   definition: StatusEffectDefinition,
   operation: 'activate' | 'deactivate',
 ) {
+  const wording = selectedOrdinaryActionRules(world);
   return outcome(
     true,
-    'status-effect',
-    `${definition.label}: ${operation === 'activate' ? 'activated' : 'deactivated'}.`,
+    wording.statusOutcomeCode,
+    `${definition.label}: ${operation === 'activate' ? wording.activated : wording.deactivated}.`,
   );
 }
 export function statusTransitionEvent(
@@ -604,7 +611,11 @@ export function activateStatusEffect(
         world,
         entity.id,
         actor.action.id,
-        outcome(false, 'interrupted', `${definition.label} interrupted the activity.`),
+        outcome(
+          false,
+          'interrupted',
+          `${definition.label}${selectedOrdinaryActionRules(world).statusInterruptionSuffix}`,
+        ),
       );
   }
   const episode = nextId(world, 'effect');
@@ -636,6 +647,14 @@ export function activateStatusEffect(
       : {}),
   };
   if (definition.contribution) invalidateContributionIndex(entity, world);
+  if (
+    definition.whileActive.some(
+      (operation) =>
+        'restrictCapabilities' in operation &&
+        operation.restrictCapabilities.capabilities.includes('perception'),
+    )
+  )
+    endCurrentEvidence(world, entity.id);
   if (definition.occupiesAction && actor) {
     actor.action = {
       id: episode,
@@ -690,12 +709,41 @@ export function deactivateStatusEffect(
     reason,
   );
 }
+/** Exact read-only no-op proof for the interruption owner. Use raw active flags:
+ * expired contributions may still need their work released and state cleared. */
+export function statusInterruptionRequired(
+  world: WorldState,
+  entity: Entity | undefined,
+  reason: string,
+): boolean {
+  const stored = entity && readOnlyDraftView(entity).statusEffects;
+  if (!entity || !stored) return false;
+  const states = readOnlyDraftView(stored),
+    definitions = statusDefinitions(world);
+  for (const value of Object.values(states)) {
+    const state = readOnlyDraftView(value),
+      contribution = state.contribution && readOnlyDraftView(state.contribution);
+    if (!state.active || !contribution) continue;
+    const definition = definitions.find((candidate) => candidate.id === contribution.definitionId);
+    if (reason === 'body-unavailable' || definition?.interruptOn.includes(reason)) return true;
+  }
+  for (const definition of definitions) {
+    if (reason !== 'body-unavailable' && !definition.interruptOn.includes(reason)) continue;
+    const key = definition.contribution
+      ? activeContributionId(entity, definition.id, entity.id)
+      : definition.id;
+    const state = key && states[key];
+    if (state && readOnlyDraftView(state).active) return true;
+  }
+  return false;
+}
 export function interruptStatusEffects(
   world: WorldState,
   entity: Entity,
   events: WorldEvent[],
   reason: string,
 ): void {
+  if (!statusInterruptionRequired(world, entity, reason)) return;
   for (const state of Object.values(entity.statusEffects ?? {})) {
     if (!state.active || !state.contribution) continue;
     const definition = statusDefinitions(world).find(
@@ -1714,7 +1762,6 @@ export { validateStatusEffectPolicy };
 
 export {
   capabilityBlocked,
-  statusEffectsReadToken,
   activeStatusEffects,
   projectStatusEffects,
   activeContributionId,

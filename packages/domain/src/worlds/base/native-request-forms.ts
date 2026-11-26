@@ -1,3 +1,4 @@
+import type { ActivityRequestDefinitionScope } from '../../activity-hosts.js';
 import type { ActivityHostDescriptor } from '../../activity-hosts.js';
 import type { Command, WorldState } from '../../types.js';
 import { entityGet } from '../../entity-collection.js';
@@ -289,7 +290,7 @@ const guardTarget = simple(
 const naturalStrike: Form = {
   id: 'base:body-strike',
   type: 'strike',
-  descriptor(world, actorId) {
+  descriptor(world, subject) {
     return {
       id: 'base:body-strike',
       label: 'Strike with your body',
@@ -302,7 +303,7 @@ const naturalStrike: Form = {
           Object.values(world.nativeStrikes ?? {})
             .filter(
               (definition) =>
-                !actorId || supportsStrike(entityGet(world.entities, actorId), definition),
+                !subject || supportsStrike(entityGet(subject.world.entities, subject.id), definition, world),
             )
             .map((definition) => ({ value: definition.id, label: definition.label })),
         ),
@@ -415,8 +416,8 @@ const release: Form = {
   id: 'base:release-current-shot',
   type: 'release-shot',
   roles: {},
-  descriptor(world, actorId) {
-    const action = actorId ? entityGet(world.entities, actorId)?.actor?.action : undefined;
+  descriptor(world, subject) {
+    const action = subject && entityGet(subject.world.entities, subject.id)?.actor?.action;
     return {
       id: this.id,
       label: 'Release your prepared shot',
@@ -595,7 +596,7 @@ const fireForms = (['light', 'fuel', 'extinguish'] as const).map((operation) =>
   ),
 );
 
-function preparationForms(world: WorldState, selectedId?: string): Form[] {
+function preparationForms(world: ActivityRequestDefinitionScope, selectedId?: string): Form[] {
   const selected = selectedId ? world.foodPreparations[selectedId] : undefined;
   return (selectedId ? (selected ? [selected] : []) : Object.values(world.foodPreparations)).map(
     (preparation) =>
@@ -681,7 +682,7 @@ const evade: Form = {
   },
 };
 function statusForms(
-  world: WorldState,
+  world: ActivityRequestDefinitionScope,
   selectedId?: string,
   selectedOperation?: 'activate' | 'deactivate',
 ): Form[] {
@@ -841,8 +842,8 @@ const coaching: Form = {
   id: 'base:request-coaching',
   type: 'coaching',
   roles: { targetId: people },
-  descriptor(world, actorId) {
-    const actor = actorId ? entityGet(world.entities, actorId) : undefined;
+  descriptor(world, subject) {
+    const actor = subject && entityGet(subject.world.entities, subject.id);
     return {
       id: this.id,
       label: 'Ask for coaching',
@@ -852,7 +853,7 @@ const coaching: Form = {
         attributeId: choiceField(
           'Practiced skill',
           actor
-            ? practiceStatus(world, actor).map((skill) => ({ value: skill.id, label: skill.name }))
+            ? practiceStatus(subject!.world, actor).map((skill) => ({ value: skill.id, label: skill.name }))
             : [],
         ),
         targetId: entityField('Person'),
@@ -874,9 +875,9 @@ const treatment: Form = {
   id: 'base:treat-own-scar',
   type: 'treat-scar',
   roles: { targetId: perceived(replacementRest) },
-  descriptor(world, actorId) {
-    const policy = reincarnationPolicy(world),
-      scars = actorId && entityGet(world.entities, actorId)?.actor?.scars;
+  descriptor(world, subject) {
+    const policy = world.moduleManifest.bodyPolicy?.reincarnation,
+      scars = subject && entityGet(subject.world.entities, subject.id)?.actor?.scars;
     return {
       id: this.id,
       label: policy?.treatmentLabel ?? 'Treat a scar',
@@ -1018,9 +1019,9 @@ const placeFire: Form = {
   id: 'base:place-fire',
   type: 'place-hearth',
   roles: {},
-  descriptor(world, actorId) {
-    const actor = actorId ? entityGet(world.entities, actorId) : undefined,
-      site = constructionProfile(world)?.profile.suggested;
+  descriptor(world, subject) {
+    const actor = subject && entityGet(subject.world.entities, subject.id),
+      site = subject && constructionProfile(subject.world)?.profile.suggested;
     return {
       id: this.id,
       label: 'Place a fire at the selected construction site',
@@ -1036,7 +1037,7 @@ const placeFire: Form = {
         ),
         site: choiceField(
           'Personally visible site',
-          actor && site && pointVisionQuery(world, actor)(site)
+          subject && actor && site && pointVisionQuery(subject.world, actor)(site)
             ? [{ value: canonicalJson(site), label: 'Selected construction site' }]
             : [],
         ),
@@ -1104,7 +1105,7 @@ export function baseNativeRequestSupport(
 > {
   const staticForms = forms.filter((form) => types.includes(form.type)),
     byId = new Map(staticForms.map((form) => [form.id, form]));
-  const selected = (world: WorldState) => [
+  const selected = (world: ActivityRequestDefinitionScope) => [
     ...staticForms,
     ...(types.includes('cook') ? preparationForms(world) : []),
     ...(types.includes('status-effect') ? statusForms(world) : []),

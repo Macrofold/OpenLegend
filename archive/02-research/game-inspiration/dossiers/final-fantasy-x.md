@@ -95,7 +95,7 @@ A player can inspect:
 
 Nintendo Life's modern review describes this directly: hovering/choosing actions changes the future turn schedule, letting the player plan several actions ahead. [FFX10](#ffx10)
 
-### Why it matters for OpenLegend
+### Why it matters for Open Legend
 
 A simulation can be complex without being opaque.
 
@@ -130,7 +130,7 @@ Enemy composition itself teaches this role grammar.
 
 The system also helps keep the entire cast involved because characters earn AP by participating in battle. Switching someone in for a meaningful action keeps them progressing.
 
-**OpenLegend pattern:** when multiple agents are nearby, assigning the next task to the best-suited person can itself be a core strategic decision.
+**Open Legend pattern:** when multiple agents are nearby, assigning the next task to the best-suited person can itself be a core strategic decision.
 
 ## 5. Sphere Grid: progression as movement through capability space
 
@@ -234,7 +234,7 @@ This creates two layers of characterization:
 - what the person's ultimate move does;
 - what kinds of behavior make that person reach a heightened state.
 
-For OpenLegend, the latter is especially interesting: emotional/adrenaline/resource states can fill under **different triggers for different people**.
+For Open Legend, the latter is especially interesting: emotional/adrenaline/resource states can fill under **different triggers for different people**.
 
 ## 9. Rikku's Mix turns the item inventory into a combinatorial system
 
@@ -340,7 +340,7 @@ Both explanations matter:
 - fiction makes the route coherent;
 - production shaped what kind of world could be built.
 
-**OpenLegend limit:** this is not a template for an open authored reality. OpenLegend should borrow **route meaning**, not the assumption that one route must exist.
+**Open Legend limit:** this is not a template for an open authored reality. Open Legend should borrow **route meaning**, not the assumption that one route must exist.
 
 ### Cloisters are object-state puzzles, not only ceremonial stops
 
@@ -439,7 +439,7 @@ An on-ball encounter resolves numerically based on:
 
 Blitzball feeds the main RPG because rewards include Wakka's Overdrive progression and important weapon-upgrade items.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A sport becomes world-building when:
 - NPCs have careers/positions;
@@ -448,7 +448,7 @@ A sport becomes world-building when:
 - competition grants status/resources;
 - the activity matters to culture and character identity.
 
-OpenLegend can take this far beyond a self-contained minigame by allowing teams/leagues to exist autonomously.
+Open Legend can take this far beyond a self-contained minigame by allowing teams/leagues to exist autonomously.
 
 ## 17. Monster Arena turns ecology into a collection/endgame loop
 
@@ -510,7 +510,7 @@ Other Celestial Weapon upgrades are tied to:
 
 This is divisive: the diversity is memorable, but some activities require execution/repetition disconnected from the character's ordinary combat expertise.
 
-**OpenLegend lesson:** personalized advancement tasks can create identity, but arbitrary minigame gates can feel like external tests rather than causal world challenges.
+**Open Legend lesson:** personalized advancement tasks can create identity, but arbitrary minigame gates can feel like external tests rather than causal world challenges.
 
 ## 20. Story, relationships and sacrifice
 
@@ -563,7 +563,7 @@ But named social roles matter mechanically:
 - merchant;
 - Al Bhed engineer.
 
-That is a useful halfway point toward OpenLegend: roles are meaningful, but they are scripted rather than simulated.
+That is a useful halfway point toward Open Legend: roles are meaningful, but they are scripted rather than simulated.
 
 ## 22. Five substantive independent written reviews
 
@@ -639,7 +639,7 @@ X-2:
 
 GameSpot's original X-2 review notes that this freedom makes most content optional but can fragment narrative momentum if the player does not revisit locations repeatedly. [FFX28](#ffx28)
 
-### OpenLegend contrast
+### Open Legend contrast
 
 FFX and X-2 form a valuable pair:
 - **FFX:** structure the world around a strong social obligation;
@@ -756,7 +756,7 @@ A recent player explicitly says their only major complaint is the PC green-scree
 | Endgame | Monster Arena, Celestial Weapons, Omega Ruins; International/HD Dark Aeons/Penance |
 | Direct-sequel contrast | X-2 replaces CTB/Sphere Grid with ATB + Dressphere/Garment Grid state transitions |
 
-## 27. OpenLegend transferable lessons and limits
+## 27. Open Legend transferable lessons and limits
 
 ### A. Make future consequences visible when tactical planning matters
 
@@ -804,7 +804,7 @@ Blitzball has teams, athletes, recruits, leagues and rewards.
 
 The pilgrimage explains sequence.
 
-**Limit:** OpenLegend should not author one mandatory route when the world should support alternate causal plans.
+**Limit:** Open Legend should not author one mandatory route when the world should support alternate causal plans.
 
 ### I. Reopen old content through changed goals
 
@@ -862,7 +862,7 @@ At the same time, the game shows where structure helps:
 - the pilgrimage gives linearity narrative purpose;
 - late-game airship/sidequests release the player back into broader exploration.
 
-For OpenLegend, the highest-value principle is:
+For Open Legend, the highest-value principle is:
 
 > **A complex world becomes more empowering when it exposes who can act, when they can act, why they are qualified, and what future possibilities each choice opens.**
 

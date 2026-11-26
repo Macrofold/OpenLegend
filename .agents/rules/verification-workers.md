@@ -2,81 +2,63 @@
 
 Read before requesting, starting, claiming or using any remote verification machine, including an existing one. [Verification](verification.md#choose-the-execution-location) selects location/checks; [AWS access](aws.md) and [spending](verification.md#spending) apply. Workers are disposable test environments, never production game servers.
 
-## Availability and scope
+## Standard speed-test worker
 
-`pnpm verify:worker` implements campaigns with explicit caller-selected concurrency and automatic host assignment. The [execution-location policy](verification.md#choose-the-execution-location) owns the parallel default and user overrides. Default pool capacity remains two; an explicit deployment can configure 1–128 exclusive slots. These are tool configuration bounds, not a universal worker-count recommendation. Configured capacity is not applied AWS quota or demonstrated running capacity: inspect [VW05–VW10](../../docs/maintainers/verification-workers.md) before claiming fleet-scale evidence. [VW01–VW04](../../docs/maintainers/completed/2026/verification-workers.md) retain the foundation qualification. Native jobs force zero paid AI. Explicit paid jobs use the shared executor below; VW09 owns the cognition-Lab adapter and its separate qualification.
+The standard machine for speed tests is **m7i.xlarge: 4 vCPU, 16 GiB RAM, x86_64, in `us-east-2`, project `027677879749`**. Use the managed pool when available, through its matching maintained runner and current claim. Verify the actual machine and environment. Select an available matching worker through the pool. Record the hardware and stop/start session because matching instance type alone does not establish a matched comparison.
 
-Private configuration/state lives under `~/.codex/verification/OpenLegend/workers/`; `OPENLEGEND_VERIFICATION_HOME` overrides this directory, not the physical browser-device claim. Read status before use; tags, stopped instances and expired timestamps never grant ownership.
+For player-visible browser checks, Mike approves his **Apple M1 Pro Mac during normal use**, including while other applications are active. Keep the measured game server on the standard AWS worker. The attached-browser workflow opens the visible local browser through a private tunnel to the worker and its disposable Rust game. Record the Mac, browser and version, graphics backend, display settings (including viewport and scale), competing load and network path. For comparisons, repeat the relevant conditions and disclose changes that limit the result. Report client rendering and input-to-visible time separately from isolated server timing. Client-to-server communication includes the network and tunnel delay. Identify any part of that delay you could not measure separately.
 
-## Procedure
+Where a browser is available on a CPU-only AWS machine, use it for functional outcomes such as whether a command updates the screen. An accelerated graphics claim needs actual rendered play on a representative graphics device. The maintained runner supports three CPU machine profiles. Verify the deployed runner's capabilities before planning another setup. For another client device, reuse Mike's recorded approval within its scope or obtain his choice. A different server instance type or a local server speed test still requires Mike's explicit instruction. Static and correctness checks follow Verification's location rules.
 
-1. **Plan.** Select an existing trusted entrypoint, exact source, explicit job count/concurrency, fixtures/database aliases, timeout, required artifacts, pass/measurement and cost. Leave campaign time beyond each job timeout for staging and assignment; an equal-length job cannot fit. Prepare inputs before claiming. Performance work follows the [profiling procedure](../../docs/maintainers/performance-profiling.md); relevant browser/playtest instructions remain controlling. A worker grants no extra tests or paid calls.
-2. **Admit.** Use `plan PLAN.json` for read-only validation/estimation, then reserve a cloud allocation inside the existing shared task allowance. `run` reserves one complete campaign hold before upload and verifies the selected project/Region, deployed configuration, applied EC2/EBS quotas, image, subnet and complete available slot set. Insufficient capacity/funding refuses admission; never silently lower concurrency or bypass with private machines.
-3. **Prepare/execute.** The scheduler assigns jobs automatically, acquires the complete initial capacity, then dispatches through the fenced supervisor. Each job owns its whole host, PostgreSQL and processes until clean export. Each ordered case has fresh source/home/results and declared databases; only its ordered steps share those databases. Reuse tools/content caches, never another job's game state. No unfenced SSH/SSM launches; diagnostics retain the same claim.
-4. **Observe/cancel.** Keep an attached campaign's CLI alive for heartbeats; durable campaigns continue under their admitted cloud deadline if the laptop disconnects. Tool polling need not stay attached. `resume` observes original jobs and resumes staging/collection, never experiments. Use `cancel CAMPAIGN`, not a killed CLI, to close assignment and initiate cleanup. Expired/uncertain ownership means recover or quarantine, never steal.
-5. **Collect/release.** Verify required artifacts outside Git before expiry. Automatic cleanup stops owned processes, drops owned databases and removes workspaces; failure quarantines. Clean hosts serve queued jobs. At the tail, surplus burst hosts retire; warm hosts stop after the idle interval. Collection/stop metadata remains resumable. EBS/S3/image retention is funded storage, not free idle capacity.
+## Current availability
 
-## Current commands and plan
+Use `pnpm verify:worker` from this Rust game checkout after `pnpm install --frozen-lockfile`. The managed bootstrap uses Node 24.13.0, and the local runner also works on Node 22.23.2. The runner was imported from local `codex/nrf-worker-disk-guard` at `b4c8f5d14235b89ae5629867b3fcedc4023144ba`. The active deployment may advance independently. Verify its controller and bootstrap against the [deployment record](../../docs/maintainers/verification-workers.md) before using it. An instance can be stopped while another task still owns it.
 
-Use the named `openlegend` profile. `allocate TASK --usd AMOUNT --authorization-ref REF` reserves part of that task's existing ceiling; sibling work cannot spend it too. For an explicitly authorized increase, add `--previous-usd CURRENT`; this compares the old amount and preserves charges/reservations. `run PLAN.json` prints the campaign ID and private result directory. One job still uses `jobs[]` and explicit `concurrency: 1`:
+### Current commands
 
-```json
-{
-  "taskId": "assigned-task",
-  "cloudAllocationId": "assigned-task",
-  "concurrency": 1,
-  "deadlineSeconds": 1500,
-  "jobs": [
-    {
-      "id": "standard-profile",
-      "mode": "batch",
-      "timeoutSeconds": 1200,
-      "acceptance": "measurement",
-      "cases": [
-        {
-          "id": "standard",
-          "source": "EXACT_40_CHARACTER_COMMIT",
-          "steps": [
-            {
-              "id": "measure",
-              "argv": [
-                "node",
-                "--import",
-                "tsx",
-                "scripts/performance/profile-server.mjs",
-                "scripts/performance/scenarios/mixed.json",
-                "{results}/profile.json",
-                "300",
-                "1",
-                "1000",
-                "--app-profiling=off"
-              ]
-            }
-          ],
-          "env": {
-            "OPENLEGEND_PROFILE_WORKLOAD": "standard",
-            "OPENLEGEND_PROFILE_PLAYERS": "1",
-            "OPENLEGEND_PROFILE_SERVER_WARMUP_SECONDS": "5"
-          },
-          "requiredArtifacts": ["profile.json"]
-        }
-      ]
-    }
-  ]
-}
-```
+Use the [Open Legend AWS profile](aws.md) and the existing private pool configuration. For current gameplay, [freeze a Rust campaign](../../docs/maintainers/performance-profiling.md#stand-alone-rust-campaigns), then use `pnpm verify:worker` with the following commands.
 
-Sources are exact 40-character commits. `snapshot DESTINATION PATH...` freezes explicit dirty/new files without switching Git or its real index; use its returned commit and preserve its archive. Packaging uploads each unique source/input once, without a push. Job/case settings remain immutable.
+| Command                                              | Purpose                                                                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `plan PLAN.json`                                     | Validate and estimate a frozen campaign before admission. One job still uses `jobs[]` and explicit `concurrency: 1`.      |
+| `allocate TASK --usd AMOUNT --authorization-ref REF` | Register the authorized share of the task budget under its exact task ID.                                                 |
+| `run PLAN.json`                                      | Verify capacity, reserve funding, stage sources and run the original jobs. Keep the command alive for attached campaigns. |
+| `status CAMPAIGN`                                    | Read the original campaign's progress, outcomes and outstanding holds.                                                    |
+| `resume CAMPAIGN`                                    | Resume observation or collection of the original campaign.                                                                |
+| `collect CAMPAIGN DESTINATION`                       | Verify and retain original results outside Git.                                                                           |
+| `cancel CAMPAIGN`                                    | Close assignment and initiate owned cleanup.                                                                              |
 
-For fixtures, declare campaign `inputs: [{id,root,paths}]`, case `inputs: [{id,bundle}]` and `databases: ["game"]`. A step's optional `database: "game"` binds protected `PG*`/`DATABASE_URL`; `OPENLEGEND_JOB_DATABASES` names the complete owned-alias JSON file. `{inputs}/MOUNT/path` and `OPENLEGEND_JOB_INPUTS` refer to read-only inputs. Use normal authored initializer/import owners for game/Lab seeds; SQL is suitable for data-only fixtures. Export needed results before cleanup. Dependent work stages those exact results in a later campaign; no dependency-graph language exists. Public env contains supported tool settings, never credentials or protected ownership/budget variables.
+Sources are exact 40-character Git commits. Leave time for staging and assignment beyond each job timeout. An authorized allocation increase uses `--previous-usd CURRENT` and preserves prior commitments. `snapshot DESTINATION PATH...` freezes explicitly selected dirty/new files, with its own source identity. The runner packages each unique source/input once without a push. Each case has fresh source, home and results directories and its own declared databases. Use `databases: ["game"]` for an owned database and select it in a step with `database: "game"`. Protected connection variables come from the runner. Read-only inputs are selected by campaign bundle and mounted under `{inputs}`. Reuse collected, verified output in a later campaign when another step depends on it.
 
-`status CAMPAIGN` reports a paged roster; `collect CAMPAIGN DESTINATION` verifies/resumes results and emits complete JSON/CSV with original outcomes and failure reasons. Execution can finish before budget settlement: `status` retains the hold until stop/reuse and paid obligations are reconciled; estimated usage is never an AWS invoice. After confirmed hardware closure and the original deadline plus cleanup allowance, unresolved financial monitoring becomes passive; `resume` explicitly reconciles the same record and preserves unknown holds. `cancel CAMPAIGN` requests cleanup; `recover SLOT` handles interrupted claims without replay; `retire SLOT` removes an idle registered host only. Never clear coordination/financial rows manually. Lost required output or uncertain cleanup remains a failure.
+Batch campaigns support 1–128 exclusive workers with a default configured capacity of two. Check live quotas, available slots and the shared budget before admission. An attached `browser-session` runs one signed Rust game and reserves one physical browser. Use the [Rust browser capture procedure](../../docs/projects/verification-workers-tech-design.md#remote-browser-integration) for its prepared inputs, retained results and qualification. `device status` inspects the shared physical browser claim. A dead owner can release it with `device release OWNER [--confirmed-closed]` after its browser has closed.
 
-For rendered work, use one attached job with `mode: "browser-session"`, first step `["pnpm", "build"]`, then `["node", "--import", "tsx", "scripts/profile-server.ts", "{results}/server.json", "30", "--app-profiling=on"]`. It uses the existing visible local browser and a private SSM tunnel to the fixture's same loopback port. Local Session Manager plugin and Playwright Chromium must be installed; that port must be free. Preserve fixture defaults unless explicitly selecting a public override such as `OPENLEGEND_PROFILE_SPEED`. All maintained captures claim the same physical device across worktrees; `device status` inspects it. Recover a dead owner with `device release OWNER [--confirmed-closed]` only after verifying its original browser is closed. A CPU fleet is not a graphics-device fleet.
+`recover SLOT` and `retire SLOT` operate on owned workers. A stopped quarantined worker needs the exact claim, independently verified evidence and approved retirement receipt in the [retirement procedure](../../docs/projects/verification-workers-tech-design.md#closeout-of-the-two-stopped-november-failures). Ordinary jobs use the deployed pool. Keep private runner state and capabilities under `~/.codex/verification/OpenLegend/workers/` or the explicit `OPENLEGEND_VERIFICATION_HOME`; the physical browser claim remains shared across checkouts.
 
-Deploy only for infrastructure/configuration/image changes: `deploy CONFIG.json` needs the selected VPC/subnet, Ubuntu 24.04 x86 image, authorization reference and current 24-hour official AWS `priceQuote`. Optional `capacity` defaults to two and does not launch instances. Deployment requires quiescence, preserves financial/required evidence, pauses admission and replaces bundles through the existing owner; do not cancel another agent's work. No deployment per ordinary test and no production game deployment.
+If the managed pool is busy, use its bounded wait or do independent work. If the matching runner is unavailable, an already authorized, task-owned AWS instance may be used under its existing ownership, deadline and cleanup rules. For timing it must match the standard machine and environment. Otherwise record the missing evidence. Do not create a substitute pool, take another task's worker or assume a temporary worker will stop instead of terminate. Suitable local non-timing checks can still establish correctness.
 
-`image prepare TASK CLOUD_ALLOCATION EXACT_SOURCE_COMMIT` reserves $2 from that same allocation and builds a clean tools/package-content image on a fresh empty slot. Use `image status BUILD`, `image resume BUILD` and `image retire BUILD`; no experiment is retried. Known capture rejection blocks for explicit resume/cancel. Already submitted capture can return pending after the preparation deadline; observe its original build until completed. Images expire after seven days unless separately funded. Explicit deployment selects the returned image; never snapshot a used experiment host or silently adopt a new image.
+## Procedure with a matching maintained runner
+
+### Parallel comparisons and reuse
+
+One task owner coordinates admissions across agents. Run independent ready experiments on separate standard workers when live capacity and the shared budget permit. Report the specific dependency, capacity or budget limit when experiments must run in sequence.
+
+Keep each comparison's interleaved repetitions on one assigned worker. Keep comparisons that reuse a control on the same worker under the [experiment planning rules](../../docs/performance/measurement.md#planning-comparisons). Use the runner's concurrency and worker-affinity settings, exclusive processes and PostgreSQL, and fresh case databases. Freeze the plans before dispatch.
+
+After verified cleanup, admit a ready successor through the controller. There is no need to wait out an idle timer. A stop or start already underway still blocks a claim. Retain outstanding cost reservations until reconciliation.
+
+Reuse qualified tools and build artifacts under the [build identity contract](../../docs/projects/verification-workers-tech-design.md#verified-build-reuse). Cache implementation and qualification are tracked in [VW02](../../docs/maintainers/verification-workers.md#delivery-order); a slow preparation step does not authorize an ad-hoc runner or a relaxed source check.
+
+### Run lifecycle
+
+1. **Plan.** Select the existing check, workload, immutable source, required outcome, timeout, output allowance and cost. Prepare inputs before claiming. For performance comparisons follow [experiment planning](../../docs/performance/measurement.md#planning-comparisons). When using the game's existing profilers, consult their [tool-specific instructions](../../docs/maintainers/performance-profiling.md). Apply browser or live-playtest procedures when the selected check calls for them. A worker grants no extra tests or paid AI.
+2. **Admit and claim.** Review project/Region, source, machine and deadline. Reserve a cloud allocation within the shared task budget; other work cannot spend that allocation too. The controller admits against it and atomically claims the whole worker, including PostgreSQL, for the experiment only. Busy callers wait boundedly or do independent work; no private replacement bypasses the pool cap.
+3. **Prepare.** Resume the claimed worker; only the allocator provisions missing capacity within budget. Verify environment/source hashes, checkout-local workspace dependencies, a fresh database, free disk and no foreign workload. Run Git-inventory checks against the exact versioned checkout before packaging; managed source archives contain no `.git`. Reuse tools/cache, never another game's state. Report checkout changes under the root rule.
+4. **Execute.** Use the supervised runner under the current worker ID, claim generation and run ID. It owns the processes, deadlines and logs. Follow the selected campaign mode's heartbeat rules. For example, an attached campaign needs its CLI alive. A durable campaign continues under its admitted cloud deadline. Diagnostic access must also respect the claim. Do not launch work directly through SSH or SSM.
+5. **Collect and release.** Confirm that the runner exported the results and cleaned up the processes, databases and workspaces owned by this run. Failed cleanup quarantines the worker. Verify the required artifacts and their checksums outside Git before permitting expiry. Apply the [verification record and scratch rules](verification.md#run-and-report-the-selected-checks) to the submitting machine after collection. Retrieve the later stop, retirement or reuse status and reconcile costs. Report the runner's estimated usage and outstanding holds separately from any invoiced charges. Release returns after cleanup, while retained storage can still accrue charges.
+
+If the submitting client disconnects, inspect the original campaign and use the matching runner's resume or collection command. Preserve its frozen inputs, completed and failed cases, reservations and remaining work. Starting a new campaign cannot recover the old one. If a lease expires, use the runner's recovery or quarantine procedure. A former owner cannot operate under a later claim. Lost output and uncertain cleanup remain failures. Verify that the intended gameplay occurred even when every command exited successfully.
+
+When a [proven common blocker](../../docs/performance/measurement.md#planning-comparisons) prevents the required work, withhold the affected repeats that have yet to be submitted. For queued work, use the matching runner’s supported cancellation. Cancellation acts on an entire campaign and can interrupt active jobs. Keep its manifest intact. Collect and reconcile completed, interrupted and never-started cases. Keep independent campaigns running. If a cancelled campaign included useful independent work, schedule its outstanding comparisons with their matched conditions and budget after reconciliation.
 
 ## Explicit paid jobs
 
@@ -86,8 +68,10 @@ Configure the worker CLI with `execution configure /absolute/private/endpoint.js
 
 Job/campaign cancellation closes its grants without replay. Observing an original attempt may reconcile its original receipt, but never submits another paid request. Unknown completion/pricing retains its hold. A clean EC2 host can be released independently of provider uncertainty; uncertain local commands/processes still quarantine it. Native world-tool harness execution is not admitted by this model-only interface; it retains its existing game/permission owner.
 
-## Reports and framework changes
+Freeze Rust Lab episodes through the [Cognition Lab campaign runner](../../scripts/cognition-lab/README.md). Native jobs default to zero funded AI calls.
 
-Use the [report contract](../../docs/technical/verification-workers.md#measurement-and-artifacts): separate packaging, upload, capacity/boot/install/cache, actual work, transfer and cleanup. Preserve failures/full roster and actual completed work; unavailable is not zero. Reuse existing profiler outputs. Graphics claims need named representative device, rendered interaction and network conditions; a remote backend still consumes local graphics resources and adds latency.
+## Reports and implementation changes
 
-Before changing pool/runner/bootstrap/claims/cache/watchdog/report behavior, read the [worker feature](../../docs/features/verification-workers.md), [technical contract](../../docs/technical/verification-workers.md) and affected [VW tasks](../../docs/maintainers/verification-workers.md). Fan-out, image and portable input changes also read the [campaign feature](../../docs/projects/verification-campaigns-feature-spec.md) and [technical design](../../docs/projects/verification-campaigns-tech-design.md). VW08’s typed paid boundary and VW09’s [Lab planner/executor](../../scripts/cognition-lab/README.md) are implemented; their trackers distinguish generic-worker evidence from Lab-specific qualification. Keep operational tuning here/with its owners, outside game/world policy.
+Use the [common report contract](../../docs/projects/verification-workers-tech-design.md#measurement-and-artifacts): separate setup, measured work and cleanup, preserve the full phase timeline and actual completed work, and distinguish skipped/unavailable data from zero. Reuse profiler outputs rather than create another measurement system.
+
+When designing a worker change, read the affected sections of the [feature specification](../../docs/projects/verification-workers-feature-spec.md) and [technical design](../../docs/projects/verification-workers-tech-design.md), and the [worker task](../../docs/maintainers/verification-workers.md) that owns it. This includes a proposed new bootstrap file. Before implementing changes to the pool, runner, bootstrap, claims, cache, watchdog or report format, read both specifications in full and the affected tasks. Keep operational defaults in the worker contract. Changes to fan-out, input bundles, clean images or paid campaigns also follow the [campaign feature](../../docs/projects/verification-campaigns-feature-spec.md) and [campaign design](../../docs/projects/verification-campaigns-tech-design.md).

@@ -1,4 +1,4 @@
-# OpenLegend limits and decisions
+# Open Legend limits and decisions
 
 **Skilled combat execution (ND38):** [ASE-L01–ASE-L10](limits/action-execution-and-skill-expression.md) records timing, physical contact and input-lifetime bounds plus the withdrawn fitting/assistance and ownership-neutralization restrictions. [ASE01–ASE12](maintainers/action-execution-and-skill-expression.md) owns the combat-only correction, focused requalification and independent combat acceptance.
 
@@ -47,6 +47,8 @@ Selected [preparedness and surprise](projects/preparedness-and-surprise-feature-
 Selected [Cognition Lab](projects/cognition-lab-feature-spec.md), October 24: [CLL01–CLL09](limits/cognition-lab.md) records one isolated active lab runtime, shared execution ceilings, explicit operator holds, bounded queries/capture/storage, dense desktop navigation and visible run guards. [CL00–CL11](maintainers/cognition-lab.md) owns implementation and qualification. All lab-specific defaults are proposed; existing gameplay/provider limits and data are unchanged.
 
 ## Feature inventories
+
+The [native simulation core](projects/native-simulation-core-feature-spec.md) has proposed [NSC-L01–NSC-L09](limits/native-simulation-core.md) for proof/adoption scope, compute/capture capacity, cell overlap, border hysteresis and conditional distributed placement. These are unimplemented experimental constraints; current sensing, memory, saving and multiplayer limits retain their owners. [NSC](maintainers/native-simulation-core.md) tracks qualification.
 
 Designed, runtime pending: [Custom model deployments](projects/custom-models-feature-spec.md) have [MX-L01–MX-L08](limits/custom-models.md) for production purpose selection, optional revision pins, capability-aware output and existing cost/authority bounds. [MX01–MX08](maintainers/custom-models.md) separates production delivery from optional studies; boot identity and experiment completion do not gate normal use.
 

@@ -22,7 +22,7 @@ Which feedback, observations and focused comparisons reveal whether an activity 
 
 <!-- Define the useful delivered experience, intended audience and author/operator constraints. Compare a small complete activity with a broad system, and reuse with new capability, without assuming either is always preferable. -->
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-production), [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md), [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions) and [verification guidance](../../../../.agents/rules/verification.md). Existing unrun acceptance is not automatically missing design.
 

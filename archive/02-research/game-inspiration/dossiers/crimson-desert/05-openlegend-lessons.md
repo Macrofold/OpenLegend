@@ -58,7 +58,7 @@ The [camp chapter](01-mechanics-world.md#8-camp-inhabitants-and-the-limits-of-a-
 
 The [progression analysis](01-mechanics-world.md#4-progression-distinguish-learning-equipment-and-access) separates learning, equipment and access. The transferable question is what an improvement lets a player do while they still care about doing it. A long list of unlocks cannot establish that the effort has repaid itself.
 
-**Existing owners:** [gameplay priorities][priorities] already asks for attainable improvements, worthwhile rewards and continued reasons to play. [ND04][nd04] distinguishes practical competence from generic method learning and the separate outlook proposal. Those boundaries prevent a research lesson from becoming a universal experience-point or personality system.
+**Existing owners:** [gameplay priorities][priorities] already asks for attainable improvements, worthwhile rewards and continued reasons to play. [ND04][nd04] distinguishes character skill from learning an activity and the separate outlook proposal. Those boundaries prevent a research lesson from becoming a universal experience-point or personality system.
 
 **Failure mode and alternative:** repeated acquisition can consume the benefit of every efficiency gain, while effortless access can erase a satisfying learning process. Examine the complete activity: finding inputs, carrying, processing, making, using and recovering. Earlier possessions may retain situational or personal value without being required to remain optimal forever.
 

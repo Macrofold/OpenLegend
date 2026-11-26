@@ -26,7 +26,7 @@ The creator explicitly says the game was built without AI. The workflow in the s
 
 The public record supports a meaningful but bounded reputation assessment. Advance Nine has a shipped prior game, Night Stones, with favorable Steam reviews. Project Tomorrow was still upcoming on the research date. The creator's six-figure claim is not independently audited revenue for the new title. The [case-study dossier](02-developer-case-studies.md) records the exact release and review evidence.
 
-**What OpenLegend should learn.** A procedural surface family can preserve art direction while allowing wear, hue or environmental response to change. A compatible character rig can support many actions with targeted adjustment. Temporary visual effects can be reused when that solves measured allocation pressure. These are proposed applications, not proof that OpenLegend needs the same architecture.
+**What Open Legend should learn.** A procedural surface family can preserve art direction while allowing wear, hue or environmental response to change. A compatible character rig can support many actions with targeted adjustment. Temporary visual effects can be reused when that solves measured allocation pressure. These are proposed applications, not proof that Open Legend needs the same architecture.
 
 **What requires adaptation.** Normal maps change lighting, not the object's external silhouette. A camera that can orbit demands useful appearance from more than one view. Reusing the visual representation of an enemy must not recycle a persistent person's identity or memories. The video's simplified claim about other games' use of CPU cores should not become our performance model. Current engine documentation and profiling are better evidence for a particular workload.
 
@@ -46,7 +46,7 @@ The transcript says that loadout controls were not functioning, that settings wo
 
 These admissions make the account more useful. It shows that visually persuasive menus and a navigable level can appear before the underlying game is complete. It also identifies the next productive unit of work: a small interaction with a clearly observable result.
 
-### OpenLegend interpretation
+### Open Legend interpretation
 
 Adopt the concept-selection step, concrete visual/gameplay brief, inspection in the actual application, and focus on a useful completed interaction. For us, that interaction should connect to the first survival-adventure loop rather than demonstrate an unrelated genre merely because it is easy to showcase.
 
@@ -70,7 +70,7 @@ The following are transcript claims, not an audited bill or reproduced benchmark
 
 | Reported quantity                                                                   | Correct interpretation                                                          | What should not be inferred                                           |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Approximately 36 elapsed hours, around 30 active hours                              | Duration of this demonstrated run, with setup and recovery discussed separately | Equivalent time for a completed commercial game or OpenLegend's scope |
+| Approximately 36 elapsed hours, around 30 active hours                              | Duration of this demonstrated run, with setup and recovery discussed separately | Equivalent time for a completed commercial game or Open Legend's scope |
 | Around 7.85 billion counted tokens, roughly 99% cache reads                         | A usage total dominated by reuse of already processed context                   | Billions of newly generated output tokens or fresh reasoning tokens   |
 | Approximately $2,175–$2,200                                                         | The creator's API-equivalent valuation of reported usage                        | That this amount was necessarily paid in cash for the experiment      |
 | Subscription allocation and sponsored Higgsfield credits                            | Access conditions influenced the experiment's economics                         | Free or identical economics for another developer                     |
@@ -83,13 +83,13 @@ The transcript also contains ambiguous subscription-price wording. This research
 
 The creator acknowledges hand/grip and animation problems, bridge or collider mistakes, confusing item behavior, and further quest work. A local demonstration does not establish a persistent, secure, scalable multiplayer service. “WoW clone” is a visual and genre description here, not evidence that the commercial game's backend, content depth or longevity was recreated.
 
-Nor does the experiment isolate Claude's design ability. The model, brief, tool access, image generator, 3D generator, operator experience, budget and review process all differ from Mike's OpenLegend experience. It would be equally unjustified to conclude that the language model made no difference. That is why the [UI dossier](08-ui-quality-and-production.md) proposes separate agent and asset comparisons.
+Nor does the experiment isolate Claude's design ability. The model, brief, tool access, image generator, 3D generator, operator experience, budget and review process all differ from Mike's Open Legend experience. It would be equally unjustified to conclude that the language model made no difference. That is why the [UI dossier](08-ui-quality-and-production.md) proposes separate agent and asset comparisons.
 
 ### What is worth adopting as a method
 
 Our recommendation is to prepare a small but precise production package: the desired player moment, coherent references, real item/character identities, known output formats and a way to inspect the complete result. Parallelize independent assets only after those constraints are shared. Give one owner responsibility for integration and family consistency.
 
-Keep the experiment's willingness to iterate, while measuring a complete useful slice rather than accumulated generated files. For OpenLegend, a resident, readable action, useful object, inventory entry and remembered consequence that all agree is a more valuable unit than another impressive but disconnected scene.
+Keep the experiment's willingness to iterate, while measuring a complete useful slice rather than accumulated generated files. For Open Legend, a resident, readable action, useful object, inventory entry and remembered consequence that all agree is a more valuable unit than another impressive but disconnected scene.
 
 ## 4. Higgsfield, Top3D and Learn3D: useful leads with commercial context
 
@@ -105,7 +105,7 @@ The [model and asset dossier](07-image-3d-and-audio-models.md) records the actua
 
 In the [supplied thread](https://www.reddit.com/r/aigamedev/comments/1x5uyke/how_are_people_making_genuinely_goodlooking_games/), commenter bestof-games labels a detailed response as written by their game-development agent. It describes reference comparison at fixed cameras, a shared shader/palette, Meshy output processed through Blender, contact-sheet review, and testing at device size. It also reports difficulties with non-biped rigging and explicitly labels some horror suggestions untested. A claimed prior App Store release was not independently established here.
 
-**Our inference:** the useful candidate is a reproducible scene-comparison and asset-normalization loop. The model-written comment is a lead to test, not independently verified first-person production evidence. Its numerical credit/performance claims should not become OpenLegend forecasts. The distinction between tested methods and speculative suggestions is worth preserving in our own documentation.
+**Our inference:** the useful candidate is a reproducible scene-comparison and asset-normalization loop. The model-written comment is a lead to test, not independently verified first-person production evidence. Its numerical credit/performance claims should not become Open Legend forecasts. The distinction between tested methods and speculative suggestions is worth preserving in our own documentation.
 
 ### The supplied “full indie game” Claude thread
 
@@ -123,7 +123,7 @@ ImportantAd4397 describes Tripo generation followed by Blender cleanup, promptin
 
 SuperbActuator6555 describes parameterized vegetation and water, baked clouds, camera-size review of creature detail, and a second bird exposing gaps in the first bird's written workflow. The author reports visual failures and manual repair, and explicitly says the sky test is not integrated into the actual map. Performance savings are self-reported for the author's test setup. [Development account](https://www.reddit.com/r/aigamedev/comments/1wx403s/day_13_of_building_an_rpg_with_claude_i_stopped/).
 
-**Our inference:** qualify a workflow on a second family member. A beautifully repaired first asset may hide undocumented judgment that an agent cannot repeat. This is particularly relevant to OpenLegend's move from one mercenary pilot toward reusable equipment, motion and generated appearance families.
+**Our inference:** qualify a workflow on a second family member. A beautifully repaired first asset may hide undocumented judgment that an agent cannot repeat. This is particularly relevant to Open Legend's move from one mercenary pilot toward reusable equipment, motion and generated appearance families.
 
 ### “A game in an hour, reviewed like a release”
 
@@ -137,4 +137,4 @@ The supplied material consistently points toward reference preparation, speciali
 
 It does not turn every community claim into fact. The dossier preserves missing build access, sponsorship, unverified economics, prototype status and untested adaptations. It also avoids the opposite mistake: discarding a useful method merely because the creator is early in development.
 
-For OpenLegend, the adoption question is concrete: can this method improve a representative player experience with less total work while preserving the game's visual identity, native rules and independent characters? The [principles](09-openlegend-principles.md), [working procedures](10-openlegend-workflows.md), and [evaluation plan](11-evaluation-and-adoption.md) turn that question into reviewable next steps.
+For Open Legend, the adoption question is concrete: can this method improve a representative player experience with less total work while preserving the game's visual identity, native rules and independent characters? The [principles](09-openlegend-principles.md), [working procedures](10-openlegend-workflows.md), and [evaluation plan](11-evaluation-and-adoption.md) turn that question into reviewable next steps.

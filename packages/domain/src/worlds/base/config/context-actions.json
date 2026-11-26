@@ -1,0 +1,30 @@
+{
+  "priority": {
+    "gather": 90,
+    "pickup": 90,
+    "harvest": 90,
+    "fish": 90,
+    "practice-shot": 90,
+    "release-shot": 100,
+    "replenish": 80,
+    "cook": 70,
+    "craft": 70,
+    "hunt": 60,
+    "shoot-once": 50,
+    "strike": 40,
+    "aim": 30
+  },
+  "equippedUseOrder": ["ranged", "melee", "gather"],
+  "equippedActionOrder": ["strike", "aim", "shoot-once", "gather", "hunt", "practice-shot"],
+  "speak": 100,
+  "unavailableLabel": "Attack unavailable",
+  "unavailableDescription": "Choose a usable attack in the full menu when one becomes available.",
+  "recoveryText": "Wait until you finish recovering before attacking.",
+  "combat": {
+    "base": 1000,
+    "release": 30000,
+    "exact": 20000,
+    "equippedContact": 200,
+    "unarmedContact": 100
+  }
+}

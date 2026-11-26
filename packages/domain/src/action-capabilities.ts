@@ -1,10 +1,15 @@
 import { entityGet, entityHas } from './entity-collection.js';
-import { surfaceContains, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
-import { FOLLOW_RULES, headingFrame } from './follow.js';
+import {
+  surfaceContains,
+  surfaceHeight,
+  relativeSurfacePoint,
+  type SurfacePoint,
+} from '@open-legend/spatial';
+import { FOLLOW_RULES } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
 import { rememberedPlace, suspensionProblem } from './agency.js';
 import { canReachEntity, findApproachPath, sameSurfacePoint } from './spatial.js';
-import { supportedPosition, worldPosition, worldSupport } from './spatial-state.js';
+import { supportedPosition, spatialMap, worldPosition, worldSupport } from './spatial-state.js';
 import { portableItems } from './item-handling.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -40,6 +45,8 @@ export function actionReadiness(
       };
 }
 
+export const WORK_TRANSITION_AVAILABLE_MESSAGE =
+  'This handling of current work is supported; committed effects remain.';
 /** One read-only proposal, not permission or another work queue. Recompute its
  * prerequisites at admission. docs/action-capabilities.md#prepared-choices-and-prospective-work-transitions */
 export interface ProspectiveWork {
@@ -181,11 +188,7 @@ export function prospectiveWork(
     },
     outcome:
       (mode === 'interrupt' ? suspensionProblem(world, actorId) : null) ??
-      outcome(
-        true,
-        'available',
-        'This handling of current work is supported; committed effects remain.',
-      ),
+      outcome(true, 'available', WORK_TRANSITION_AVAILABLE_MESSAGE),
   };
 }
 
@@ -208,10 +211,10 @@ export interface IntentSlots {
 export const INTENT_LIMITS = { quantity: 999, method: 200 } as const;
 /** The clock names this world lets a request use as a stopping time; the saved world's own
  * clock policy is the only source. docs/worlds/base/time.md#named-clock-times */
-export function namedClockTimes(world: WorldState): string[] {
+export function namedClockTimes(world: Pick<WorldState, 'statusEffectPolicy'>): string[] {
   return Object.keys(world.statusEffectPolicy.namedTimes);
 }
-const namedTime = (world: WorldState, name: unknown) =>
+const namedTime = (world: Pick<WorldState, 'statusEffectPolicy'>, name: unknown) =>
   typeof name === 'string' && Object.hasOwn(world.statusEffectPolicy.namedTimes, name);
 const SLOT_KEYS = [
   'itemId',
@@ -365,7 +368,10 @@ export function validActionResolution(raw: unknown): raw is ActionResolution {
 }
 
 /** Next simulation time at a world-named clock hour; the current instant means tomorrow. */
-export function clockDeadline(world: WorldState, name: string): number | undefined {
+export function clockDeadline(
+  world: Pick<WorldState, 'simTime' | 'statusEffectPolicy'>,
+  name: string,
+): number | undefined {
   if (!namedTime(world, name)) return;
   const day = 86400;
   const now =
@@ -708,14 +714,9 @@ export function bindActionInvocation(
     );
   if (raw.frame === 'actor') {
     // The actor's own facing is the frame, never a camera; only its current ground qualifies.
-    const here = worldPosition(actor);
-    const { forward, right } = headingFrame(actor.spatial.heading);
-    const destination = sameSurfacePoint(
-      world,
-      actor,
-      here.x + right.x * raw.x! + forward.x * raw.z!,
-      here.z + right.z * raw.x! + forward.z * raw.z!,
-    );
+    const from = supportedPosition(actor);
+    const destination =
+      from && relativeSurfacePoint(spatialMap(world), from, actor.spatial.heading, raw.x!, raw.z!);
     return destination
       ? { id, actorId, type: 'move', destination }
       : outcome(

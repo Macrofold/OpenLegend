@@ -213,7 +213,8 @@ export class CharacterStatuses {
       }
       const reaction = reactionNotice(view, event);
       if (reaction) {
-        this.upsert(event.actorId!, `event:${event.id}`, { ...reaction, kind: 'reaction' });
+        const { actorId, ...status } = reaction;
+        this.upsert(actorId, `event:${event.id}`, { ...status, kind: 'reaction' });
         continue;
       }
       if (!event.actorId || !statusTypes.has(event.type)) continue;

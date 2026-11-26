@@ -1,6 +1,17 @@
+import {
+  accountResultEvidence,
+  validResultEvidence,
+  type ResultEvidence,
+} from './result-evidence.js';
+import { openingSemanticInterval, finishSemanticWork } from './semantic-opportunities.js';
 import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
 import { recordSemanticChange } from './dependencies.js';
+import {
+  selectedOrdinaryActionRules,
+  selectedOutwardBodyActivity,
+  selectedSpeechAction,
+} from './world-composition.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import { validGateUseIntent } from './gate-operations.js';
 import { validBoundaryImpactIntent } from './boundary-impacts.js';
@@ -79,7 +90,30 @@ export function producedItemDefinition(world: WorldState, command: Command): str
     return itemFor(world, command.itemId)?.definitionId;
   return activityHostForCommand(world, command.type)?.outputDefinition?.(world, command);
 }
+type PlanWords = ReturnType<typeof selectedOrdinaryActionRules>['plan'];
+type PlanOutcomeKey = {
+  [K in keyof PlanWords]: PlanWords[K] extends { code: string; message: string } ? K : never;
+}[keyof PlanWords];
+type PlanTextKey = {
+  [K in keyof PlanWords]: PlanWords[K] extends string ? K : never;
+}[keyof PlanWords];
+function planOutcome(world: WorldState, key: PlanOutcomeKey, ok = false): Outcome {
+  const message = selectedOrdinaryActionRules(world).plan[key];
+  return outcome(ok, message.code, message.message);
+}
+function planText(
+  world: WorldState,
+  key: PlanTextKey,
+  values: Readonly<Record<string, string | number>>,
+): string {
+  return selectedOrdinaryActionRules(world).plan[key].replace(
+    /\{([a-z]+)\}/gu,
+    (marker, name: string) => (values[name] === undefined ? marker : String(values[name])),
+  );
+}
 export const AGENCY_LIMITS = {
+  attempts: 4,
+  attemptCharacters: 500,
   goals: 8,
   goalHistory: 16,
   steps: 8,
@@ -143,10 +177,10 @@ export interface PlanStep {
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
   actionId?: string;
   outcome?: Outcome;
-  resultMemoryId?: string;
+  resultEvidence?: ResultEvidence;
 }
 export interface ActorPlan {
-  resultMemoryId?: string;
+  resultEvidence?: ResultEvidence;
   activity?: ActivityExecution;
   id: string;
   revision: number;
@@ -155,7 +189,8 @@ export interface ActorPlan {
   steps: PlanStep[];
 }
 export interface ActorAgency {
-  lastResultMemoryId?: string;
+  semantic?: import('./semantic-opportunities.js').SemanticContinuation;
+  lastResultEvidence?: ResultEvidence;
   attempts: {
     id: string;
     description: string;
@@ -186,25 +221,37 @@ export interface ActorAgency {
 }
 /** Existing plan/history bounds limit these actor-local references. Retrieval applies
  * correction, forgetting and retention; execution receipts cannot recreate lost evidence. */
-export function requiredOutcomeMemoryIds(world: WorldState, actorId: string): string[] {
-  const agency = entityGet(world.entities, actorId)?.actor?.agency;
+export function requiredOutcomeEvidence(world: WorldState, actorId: string): ResultEvidence[] {
+  return requiredAgencyOutcomeEvidence(entityGet(world.entities, actorId)?.actor?.agency);
+}
+export interface OutcomeEvidenceRead {
+  readonly lastResultEvidence?: ResultEvidence;
+  readonly plan: {
+    readonly resultEvidence?: ResultEvidence;
+    readonly steps: readonly { readonly resultEvidence?: ResultEvidence }[];
+  } | null;
+  readonly suspended?: OutcomeEvidenceRead['plan'];
+  readonly history: readonly { readonly resultEvidence?: ResultEvidence }[];
+}
+/** The scoped self product supplies only existing personal-evidence addresses.
+ * Selecting them neither hydrates execution records nor renews a receipt. */
+export function requiredAgencyOutcomeEvidence(
+  agency: OutcomeEvidenceRead | undefined,
+): ResultEvidence[] {
   if (!agency) return [];
-  const plans = [agency.plan, agency.suspended];
-  return [
-    ...new Set(
-      [
-        agency.lastResultMemoryId,
-        ...plans.flatMap((plan) =>
-          plan ? [plan.resultMemoryId, ...plan.steps.map((step) => step.resultMemoryId)] : [],
-        ),
-        ...agency.history.map((step) => step.resultMemoryId),
-      ].filter((id): id is string => !!id),
+  const evidence = [
+    agency.lastResultEvidence,
+    ...[agency.plan, agency.suspended].flatMap((plan) =>
+      plan ? [plan.resultEvidence, ...plan.steps.map((step) => step.resultEvidence)] : [],
     ),
-  ];
+    ...agency.history.map((step) => step.resultEvidence),
+  ].filter((value): value is ResultEvidence => !!value);
+  return [...new Map(evidence.map((value) => [JSON.stringify(value), value])).values()];
 }
 
 export function seedAgency(objectives: string[] = []): ActorAgency {
   return {
+    semantic: openingSemanticInterval(),
     revision: 0,
     goals: objectives.map((objective, index) => ({
       id: `seed-goal:${index}`,
@@ -257,9 +304,14 @@ export function rememberedPlace(
   return actor.agency.places?.find((place) => place.subjectId === subjectId);
 }
 export function goalTexts(actor: ActorComponent): string[] {
-  return actor.agency.goals
-    .filter((goal) => goal.status === 'active')
-    .map((goal) => goal.objective);
+  return activeGoalTexts(actor.agency.goals);
+}
+/** The same first-person selection accepts an owned native read without
+ * constructing an actor or granting any goal mutation. */
+export function activeGoalTexts(
+  goals: readonly Pick<ActorGoal, 'status' | 'objective'>[],
+): string[] {
+  return goals.filter((goal) => goal.status === 'active').map((goal) => goal.objective);
 }
 export function currentGoal(actor: ActorComponent): string {
   return goalTexts(actor).join('; ');
@@ -324,6 +376,11 @@ export function changeGoal(
     return reject(
       'Eight active/paused goals are already retained. Explicitly complete or abandon one first.',
     );
+  if (
+    !Number.isSafeInteger(agency.revision + 1) ||
+    (!create && !Number.isSafeInteger(goal!.revision + 1))
+  )
+    return reject('Goal revisions are exhausted; the previous intentions were retained.');
   if (create) {
     if (agency.goals.some((entry) => entry.id === id))
       return reject('Goal identity already exists.');
@@ -433,54 +490,35 @@ export function arrangePlan(
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     new Set(commands.map((command) => command.id)).size !== commands.length
   )
-    return outcome(false, 'invalid-plan', 'Plan and child identities must be valid and unique.');
-  if ((current?.revision ?? 0) !== expectedRevision)
-    return outcome(false, 'stale-plan', 'Refresh the changed plan before editing it.');
+    return planOutcome(world, 'invalidIdentity');
+  if ((current?.revision ?? 0) !== expectedRevision) return planOutcome(world, 'stalePlan');
   if (goalId && !agency.goals.some((goal) => goal.id === goalId && goal.status === 'active'))
-    return outcome(
-      false,
-      'invalid-goal',
-      'A plan requires an active goal belonging to this actor.',
-    );
+    return planOutcome(world, 'invalidGoal');
   if (!commands.length || commands.length > AGENCY_LIMITS.steps)
-    return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
+    return planOutcome(world, 'stepLimit');
   if (commands.some((command) => !nativeCommandSupported(world, command.type)))
-    return outcome(
-      false,
-      'unsupported-capability',
-      'This world does not install a requested action.',
-    );
-  if (commands.some((command) => !isPlannedCommand(command)))
-    return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
+    return planOutcome(world, 'unsupportedCapability');
+  if (commands.some((command) => !isPlannedCommand(command, activityCommandSyntax(world))))
+    return planOutcome(world, 'invalidCommand');
   if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
-    return outcome(
-      false,
-      'chosen-activity-active',
-      'Finish this chosen activity or explicitly replace or interrupt it before adding other work.',
-    );
+    return planOutcome(world, 'chosenActivityActive');
   const prior =
     mode === 'enqueue' && current?.status === 'active'
       ? current.steps.map((step) => step.command)
       : [];
-  if (!validOutputReferences([...prior, ...commands]))
-    return outcome(
-      false,
-      'invalid-plan',
-      'Item references require an earlier single-output native step.',
-    );
+  if (!validOutputReferences([...prior, ...commands])) return planOutcome(world, 'invalidOutputs');
   if (
     mode === 'enqueue' &&
     current &&
     current.status !== 'completed' &&
     current.status !== 'cancelled'
   ) {
-    if (current.status === 'blocked')
-      return outcome(false, 'plan-blocked', 'Explicitly replace or cancel the blocked frontier.');
+    if (current.status === 'blocked') return planOutcome(world, 'planBlocked');
     if (
       current.steps.length + commands.length > AGENCY_LIMITS.steps ||
       (goalId !== null && current.goalId !== goalId)
     )
-      return outcome(false, 'plan-limit', 'Frontier is full or belongs to a different goal.');
+      return planOutcome(world, 'frontierFull');
     current.steps.push(
       ...commands.map((command) => ({
         id: command.id,
@@ -515,7 +553,7 @@ export function arrangePlan(
   // docs/architecture.md#action-fulfillment-and-revision-approval
   actor.planGeneration++;
   return {
-    ...outcome(true, 'queued', 'Native work queued; it has not completed.'),
+    ...planOutcome(world, 'queued', true),
     planId: agency.plan!.id,
   };
 }
@@ -556,7 +594,8 @@ export function stopOwnedOffense(
   targetLife: number,
   owned: { invocationId: string; planId?: string },
 ): void {
-  const actor = entityGet(world.entities, actorId)!.actor!,
+  const entity = entityGet(world.entities, actorId)!,
+    actor = entity.actor!,
     agency = actor.agency;
   const matches = (command: PlannedCommand | Command) =>
     ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
@@ -569,10 +608,20 @@ export function stopOwnedOffense(
   );
   const stopAction = () => {
     if (!actor.action || actor.action.strikePhase === 'recovery') return;
+    const outward = selectedOutwardBodyActivity(world, entity);
     const memoryId = endActivity(world, actorId, actor.action.id, stopped);
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
     actor.planGeneration++;
+    // Actual attack preparation ended even when its private controller emits no
+    // narrative event. Every cancellation caller shares this mutation owner.
+    // docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation
+    recordSemanticChange(world, {
+      kind: 'state',
+      entityId: actorId,
+      field: 'behavior',
+      outwardChange: outward !== selectedOutwardBodyActivity(world, entity),
+    });
     return memoryId;
   };
   for (const plan of [agency.plan, agency.suspended]) {
@@ -592,9 +641,9 @@ export function stopOwnedOffense(
         actor.action.id === step.actionId &&
         attackSubject(actor.action)?.life === targetLife
       )
-        step.resultMemoryId = stopAction();
+        step.resultEvidence = stopAction();
       else if (step.actionId)
-        step.resultMemoryId = endActivity(world, actorId, step.actionId, stopped);
+        step.resultEvidence = endActivity(world, actorId, step.actionId, stopped);
       step.status = 'cancelled';
       step.outcome = { ...stopped };
     }
@@ -640,7 +689,8 @@ export function ownedOffenseContinues(
       plan.steps.some(
         (step) => ['queued', 'running', 'blocked'].includes(step.status) && matches(step.command),
       ) ||
-      (plan.activity && hasPendingActivityCommand(plan.activity, actorId, matches))
+      (plan.activity &&
+        hasPendingActivityCommand(plan.activity, actorId, matches, activityCommandSyntax(world)))
     )
       return true;
   }
@@ -650,49 +700,34 @@ export function ownedOffenseContinues(
  * already spent inputs or committed a strike finish or are replaced instead; nothing is
  * refunded and no progress is invented. docs/action-capabilities.md#15-resource-claims-interruption-and-timing
  */
-export function pauseRefusal(action: ActorComponent['action']): string | null {
+export function pauseRefusal(world: WorldState, action: ActorComponent['action']): string | null {
   if (!action) return null;
-  if (action.type === 'status-effect') return 'This state cannot be paused.';
+  if (action.type === 'status-effect') return selectedOrdinaryActionRules(world).plan.pauseState;
   if (
     action.strikePhase ||
     (nativeActionMeaning(action.type)?.unpausableWhileWorking && action.stage === 'working')
   )
-    return 'An attack already under way cannot be paused; let it finish or replace it.';
+    return selectedOrdinaryActionRules(world).plan.pauseAttack;
   if (action.stage === 'working' && action.consumed.length)
-    return 'Materials are already in use for this step; let it finish or replace it.';
+    return selectedOrdinaryActionRules(world).plan.pauseMaterials;
   return null;
 }
 
 /** Read the same pause boundary used at commit, before offering an interruption. */
 export function suspensionProblem(world: WorldState, actorId: string): Outcome | null {
   const actor = entityGet(world.entities, actorId)?.actor;
-  if (!actor) return outcome(false, 'actor-unavailable', 'This actor is unavailable.');
+  if (!actor) return planOutcome(world, 'actorUnavailable');
   const plan = actor.agency.plan;
   if (!plan || plan.status !== 'active')
-    return actor.action
-      ? outcome(
-          false,
-          'cannot-pause',
-          'This work is not a chosen plan that can be paused; replace it or let it finish.',
-        )
-      : null;
-  if (actor.agency.suspended)
-    return outcome(
-      false,
-      'already-paused',
-      'Other paused work is already waiting to resume; let it resume, or replace it.',
-    );
+    return actor.action ? planOutcome(world, 'notChosenPlan') : null;
+  if (actor.agency.suspended) return planOutcome(world, 'alreadyPaused');
   const running = plan.steps.find((step) => step.status === 'running');
   if (actor.action && running?.actionId !== actor.action.id)
-    return outcome(
-      false,
-      'cannot-pause',
-      'This work is not a chosen plan that can be paused; replace it or let it finish.',
-    );
-  const refusal = pauseRefusal(actor.action);
+    return planOutcome(world, 'notChosenPlan');
+  const refusal = pauseRefusal(world, actor.action);
   if (refusal) return outcome(false, 'cannot-pause', refusal);
   if (running && !isSafeRecordId(`${running.id}:r${plan.revision}`))
-    return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
+    return planOutcome(world, 'pauseTooOften');
   return null;
 }
 
@@ -711,11 +746,11 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
   const restartId = step && `${step.id}:r${plan.revision}`;
   if (actor.action) {
     if (step)
-      step.resultMemoryId = endActivity(
+      step.resultEvidence = endActivity(
         world,
         actorId,
         actor.action.id,
-        outcome(false, 'paused', 'Paused for other work; this step restarts later.'),
+        planOutcome(world, 'pausedStep'),
       );
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
@@ -724,13 +759,13 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
     actor.agency.history.push({
       ...cloneValue(step),
       status: 'cancelled',
-      outcome: outcome(false, 'paused', 'Paused for other work; restarted later as a new step.'),
+      outcome: planOutcome(world, 'pausedRestart'),
     });
     actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
     const {
       actionId: _action,
       outcome: _outcome,
-      resultMemoryId: _memory,
+      resultEvidence: _memory,
       ...rest
     } = cloneValue(step);
     plan.steps[running] = {
@@ -777,13 +812,13 @@ function suspendedWorkReason(world: WorldState, actorId: string, paused: ActorPl
       !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
   );
   return paused.goalId && (!goal || (goal.status !== 'active' && goal.status !== 'paused'))
-    ? 'its goal is no longer active.'
+    ? selectedOrdinaryActionRules(world).plan.inactiveGoalReason
     : changed
-      ? 'a target is no longer the one I saw.'
+      ? selectedOrdinaryActionRules(world).plan.changedTargetReason
       : objects.some(
             (id) => !entityHas(world.entities, id) || entityGet(world.entities, id)!.retirement,
           )
-        ? 'something the activity uses no longer exists.'
+        ? selectedOrdinaryActionRules(world).plan.missingObjectReason
         : null;
 }
 export function suspendedWorkProblem(
@@ -794,25 +829,22 @@ export function suspendedWorkProblem(
 ): Outcome | null {
   const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
   if (!paused || paused.id !== planId || paused.revision !== revision)
-    return outcome(false, 'stale-plan', 'That paused work has ended or changed.');
+    return planOutcome(world, 'stalePaused');
   const reason = suspendedWorkReason(world, actorId, paused);
-  return reason ? outcome(false, 'resume-refused', `Could not resume: ${reason}`) : null;
+  return reason
+    ? outcome(
+        false,
+        'resume-refused',
+        `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`,
+      )
+    : null;
 }
 /** Called only after complete remaining-step preflight by the native command owner.
  * End the intervention without discarding the saved frontier or committed effects. */
 export function resumeWorkByChoice(world: WorldState, actorId: string): void {
   const actor = entityGet(world.entities, actorId)!.actor!;
   if (actor.action) {
-    endActivity(
-      world,
-      actorId,
-      actor.action.id,
-      outcome(
-        false,
-        'cancelled',
-        'Ended by choice to return to paused work; committed effects remain.',
-      ),
-    );
+    endActivity(world, actorId, actor.action.id, planOutcome(world, 'returnedFromIntervention'));
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
   }
@@ -833,7 +865,7 @@ function resumeSuspended(world: WorldState, actorId: string): void {
     paused.activity?.request?.name ??
     world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
     paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
-    'my paused work';
+    selectedOrdinaryActionRules(world).plan.pausedWorkName;
   const reason = suspendedWorkReason(world, actorId, paused);
   const changed = paused.steps.find(
     (step) =>
@@ -842,16 +874,22 @@ function resumeSuspended(world: WorldState, actorId: string): void {
       !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
   );
   paused.status = reason ? 'blocked' : 'active';
-  if (reason && paused.activity) paused.activity.reason = `Could not resume: ${reason}`;
+  if (reason && paused.activity)
+    paused.activity.reason = `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`;
   else if (reason) {
     // A plain plan records the reason on the step whose target changed, or otherwise on
     // the step that would have run next.
     const next =
-      (reason === 'a target is no longer the one I saw.' ? changed : undefined) ??
-      paused.steps.find((step) => step.status === 'queued');
+      (reason === selectedOrdinaryActionRules(world).plan.changedTargetReason
+        ? changed
+        : undefined) ?? paused.steps.find((step) => step.status === 'queued');
     if (next) {
       next.status = 'blocked';
-      next.outcome = outcome(false, 'resume-refused', `Could not resume: ${reason}`);
+      next.outcome = outcome(
+        false,
+        'resume-refused',
+        `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`,
+      );
     }
   }
   paused.revision = latest + 1;
@@ -862,8 +900,8 @@ function resumeSuspended(world: WorldState, actorId: string): void {
     parts: [
       person(actorId, 'possessive'),
       reason
-        ? ` paused work (${name}) could not resume: ${reason} Nothing more of it was done.`
-        : ` paused work (${name}) resumed. The stopped step restarts from its beginning.`,
+        ? planText(world, 'resumeBlocked', { name, reason })
+        : planText(world, 'resumed', { name }),
     ],
   });
 }
@@ -879,13 +917,15 @@ export function recordPlanResult(
     world,
     actorId,
     plan,
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 6,
-      entityIds: [actorId],
-      summary,
-    }),
+    accountResultEvidence(
+      appendMemory(world, actorId, {
+        kind: 'episode',
+        source: 'internal',
+        importance: selectedOrdinaryActionRules(world).plan.controlImportance,
+        entityIds: [actorId],
+        summary,
+      }),
+    ),
   );
 }
 /** Retain existing personal evidence without writing a second account of the occurrence. */
@@ -893,10 +933,10 @@ export function linkPlanResult(
   world: WorldState,
   actorId: string,
   plan: ActorPlan,
-  evidenceId: string | undefined,
+  evidenceId: ResultEvidence | undefined,
 ): void {
-  plan.resultMemoryId = evidenceId;
-  entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = evidenceId;
+  plan.resultEvidence = evidenceId;
+  entityGet(world.entities, actorId)!.actor!.agency.lastResultEvidence = evidenceId;
 }
 
 /** Cancellation and suspended-work discard share one terminal report. The marker
@@ -914,7 +954,10 @@ function summarizeStoppedActivity(
       recordPlanResult(world, ownerId, plan, {
         parts: [
           person(ownerId, 'possessive'),
-          ` chosen work was cancelled at simulation time ${world.simTime}. ${plan.steps.filter((step) => !step.actionId).length} queued steps never started. Previously committed effects and costs remain; no further result is claimed.`,
+          planText(world, 'stoppedSummary', {
+            time: world.simTime,
+            queued: plan.steps.filter((step) => !step.actionId).length,
+          }),
         ],
       });
     return;
@@ -948,7 +991,7 @@ export function discardSuspended(world: WorldState, actor: ActorComponent, actor
         ? {
             ...cloneValue(step),
             status: 'cancelled' as const,
-            outcome: outcome(false, 'cancelled', 'Paused work was cancelled; it will not resume.'),
+            outcome: planOutcome(world, 'discardedPaused'),
           }
         : cloneValue(step),
     ),
@@ -973,14 +1016,14 @@ export function cancelPlan(
         actor.planGeneration++;
       }
       if (step.actionId)
-        step.resultMemoryId = endActivity(
+        step.resultEvidence = endActivity(
           world,
           step.command.actorId,
           step.actionId,
-          outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.'),
+          planOutcome(world, 'cancelledStep'),
         );
       step.status = 'cancelled';
-      step.outcome = outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.');
+      step.outcome = planOutcome(world, 'cancelledStep');
     }
   plan.status = 'cancelled';
   if (summarizeControl) summarizeStoppedActivity(world, plan, actorId);
@@ -994,11 +1037,12 @@ export function finishPlanAction(
   actionId: string,
   result: Outcome,
 ): void {
+  finishSemanticWork(world, actorId, actionId);
   // Native movement can finish silently, including just inside its arrival
   // tolerance before a forecast deadline. Refresh its action/rate inputs even
   // without a plan or outward event; unrelated participants keep their forecasts.
   recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
-  const resultMemoryId = endActivity(world, actorId, actionId, result);
+  const resultEvidence = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = entityGet(world.entities, actorId)!.actor!;
   const plan = actor.agency.plan;
@@ -1025,16 +1069,27 @@ export function finishPlanAction(
       throw new Error('Counted activity completion violated its trusted spending contract.');
     if (result.ok) plan!.activity.spent = (plan!.activity.spent ?? 0) + result.spent!;
   }
-  step.resultMemoryId =
-    resultMemoryId ??
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 5,
-      entityIds: [actorId],
-      summary: `The requested action (${step.command.purpose ?? step.command.type}) ${result.ok ? 'reported completion' : 'was refused'}: ${result.message} Result code: ${result.code}.`,
-    });
-  actor.agency.lastResultMemoryId = step.resultMemoryId;
+  step.resultEvidence =
+    resultEvidence ??
+    (!occurrenceFor(world, actorId, actionId)
+      ? accountResultEvidence(
+          appendMemory(world, actorId, {
+            kind: 'episode',
+            source: 'internal',
+            importance: selectedOrdinaryActionRules(world).plan.resultImportance,
+            entityIds: [actorId],
+            summary: planText(world, 'fallbackResultSummary', {
+              purpose: step.command.purpose ?? step.command.type,
+              status: result.ok
+                ? selectedOrdinaryActionRules(world).plan.completedResult
+                : selectedOrdinaryActionRules(world).plan.refusedResult,
+              message: result.message,
+              code: result.code,
+            }),
+          }),
+        )
+      : undefined);
+  actor.agency.lastResultEvidence = step.resultEvidence;
   step.outcome = result;
   const quantity = plan!.activity?.request?.quantity;
   if (
@@ -1072,6 +1127,24 @@ export function finishPlanAction(
   // Exact action results already belong to personal memories. The plan retains references,
   // not another narrative of the same effects. Goal completion remains actor-declared.
 }
+/** The command has settled its isolated effects/refusal before the frontier
+ * records that attempt. Immediate results share the ordinary action finisher. */
+export function recordPlanDispatch(
+  world: WorldState,
+  actorId: string,
+  stepId: string,
+  result: Outcome,
+): void {
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  const step = actor.agency.plan!.steps.find((entry) => entry.id === stepId)!;
+  step.status = 'running';
+  step.actionId = actor.action?.id ?? stepId;
+  step.outcome = result;
+  actor.agency.plan!.revision++;
+  actor.agency.revision++;
+  if (!result.ok || !actor.action) finishPlanAction(world, actorId, step.actionId, result);
+}
+
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
   const actor = entityGet(world.entities, actorId)!.actor!;
   // Paused work resumes once the interrupting frontier has ended, whatever its outcome.
@@ -1083,12 +1156,7 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
   if (plan.status !== 'active') return;
   const running = plan.steps.find((step) => step.status === 'running');
   if (running && running.actionId !== actor.action?.id)
-    finishPlanAction(
-      world,
-      actorId,
-      running.actionId!,
-      outcome(false, 'interrupted', 'Native work was interrupted; explicitly revise the frontier.'),
-    );
+    finishPlanAction(world, actorId, running.actionId!, planOutcome(world, 'interruptedStep'));
   if (
     plan.status !== 'active' ||
     actor.action ||
@@ -1169,9 +1237,10 @@ export function validateAgency(world: WorldState): void {
       throw new Error('Invalid saved remembered places.');
     if (
       !agency ||
-      (agency.lastResultMemoryId !== undefined && !isSafeRecordId(agency.lastResultMemoryId)) ||
+      (agency.lastResultEvidence !== undefined &&
+        !validResultEvidence(agency.lastResultEvidence, entity.id)) ||
       !Array.isArray(agency.attempts) ||
-      agency.attempts.length > 4 ||
+      agency.attempts.length > AGENCY_LIMITS.attempts ||
       !Number.isSafeInteger(agency.revision) ||
       agency.revision < 0 ||
       !Array.isArray(agency.goals) ||
@@ -1189,7 +1258,7 @@ export function validateAgency(world: WorldState): void {
         !isSafeRecordId(attempt.id) ||
         typeof attempt.description !== 'string' ||
         !attempt.description.trim() ||
-        attempt.description.length > 500 ||
+        attempt.description.length > AGENCY_LIMITS.attemptCharacters ||
         typeof attempt.normalized !== 'string' ||
         attempt.normalized !== normalizeAttempt(attempt.description) ||
         !(attempt.targetEntityId === null || isSafeRecordId(attempt.targetEntityId)) ||
@@ -1217,7 +1286,7 @@ export function validateAgency(world: WorldState): void {
           !['enqueue', 'replace', 'interrupt'].includes(a.mode) ||
           !Number.isSafeInteger(a.expectedPlan) ||
           a.expectedPlan < 0 ||
-          !validAlternativeCommands(a.commands, entity.id)
+          !validAlternativeCommands(a.commands, entity.id, activityCommandSyntax(world))
         )
           throw new Error('Invalid saved action alternative.');
       }
@@ -1264,7 +1333,8 @@ export function validateAgency(world: WorldState): void {
       if (
         plan &&
         (!isSafeRecordId(plan.id) ||
-          (plan.resultMemoryId !== undefined && !isSafeRecordId(plan.resultMemoryId)) ||
+          (plan.resultEvidence !== undefined &&
+            !validResultEvidence(plan.resultEvidence, entity.id)) ||
           !Number.isSafeInteger(plan.revision) ||
           plan.revision < 1 ||
           !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
@@ -1305,10 +1375,11 @@ export function validateAgency(world: WorldState): void {
       ...agency.history,
     ]) {
       if (
-        (step.resultMemoryId !== undefined && !isSafeRecordId(step.resultMemoryId)) ||
+        (step.resultEvidence !== undefined &&
+          !validResultEvidence(step.resultEvidence, entity.id)) ||
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
-        !isPlannedCommand(step.command) ||
+        !isPlannedCommand(step.command, activityCommandSyntax(world)) ||
         (step.command.chosenPurpose !== undefined &&
           !validResponsePurpose(step.command.chosenPurpose)) ||
         step.command.id !== step.id ||
@@ -1338,10 +1409,23 @@ export function normalizeAttempt(description: string): string {
 /** Explicit withdrawal/resolution releases a private intent slot, never a physical action.
  * docs/architecture.md#actor-agency-foundation
  */
+/** Keep every accepted intention change within the current saved integer domain. */
+function attemptRevisionAvailable(actor: ActorComponent): boolean {
+  return Number.isSafeInteger(actor.agency.revision + 1);
+}
+function exhaustedAttemptRevision(): Outcome {
+  return outcome(
+    false,
+    'invalid-attempt',
+    'Existing intentions were kept; another change could not be recorded.',
+  );
+}
+
 export function withdrawAttempt(actor: ActorComponent, id: string): Outcome {
   const index = actor.agency.attempts.findIndex((attempt) => attempt.id === id);
   if (index < 0)
     return outcome(false, 'attempt-unavailable', 'That private intent is no longer pending.');
+  if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
   actor.agency.attempts.splice(index, 1);
   actor.agency.revision++;
   return outcome(true, 'attempt-withdrawn', 'Private intent withdrawn; ongoing work is unchanged.');
@@ -1391,7 +1475,7 @@ export function deferAttempt(
     !isSafeRecordId(id) ||
     typeof description !== 'string' ||
     !description.trim() ||
-    description.length > 500 ||
+    description.length > AGENCY_LIMITS.attemptCharacters ||
     !(targetEntityId === null || isSafeRecordId(targetEntityId)) ||
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     (slots !== null && !validIntentSlots(world, slots)) ||
@@ -1412,6 +1496,7 @@ export function deferAttempt(
       prior.status === 'needs-interpretation' &&
       JSON.stringify(prior.resolution) !== JSON.stringify(resolution)
     ) {
+      if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
       prior.resolution = cloneValue(resolution);
       actor.agency.revision++;
     }
@@ -1421,10 +1506,11 @@ export function deferAttempt(
       'This intent already awaits interpretation; no action or paid work was repeated.',
     );
   }
-  if (actor.agency.attempts.length >= 4)
+  if (actor.agency.attempts.length >= AGENCY_LIMITS.attempts)
     return outcome(false, 'attempt-limit', 'Four unlisted intents already await interpretation.');
   if (actor.agency.attempts.some((attempt) => attempt.id === id))
     return outcome(false, 'attempt-conflict', 'This attempt identity belongs to different intent.');
+  if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
   actor.agency.attempts.push({
     id,
     description: description.trim(),
@@ -1652,7 +1738,20 @@ export function isPhysicalCommand(command: Command): boolean {
 }
 
 /** Speech can be a chosen step without giving the speaker control of a reply. */
-export function isActivityCommand(command: Command): boolean {
+export interface ActivityCommandSyntax {
+  readonly maximumSpeechCharacters: number;
+  readonly speechSourceLevelsDb: Readonly<Record<string, number>>;
+}
+/** Finite installed syntax only: no actor, history or writable world is retained. */
+export function activityCommandSyntax(
+  world: Pick<WorldState, 'profile' | 'moduleManifest'>,
+): ActivityCommandSyntax {
+  return {
+    maximumSpeechCharacters: selectedSpeechAction(world).maximumCharacters,
+    speechSourceLevelsDb: world.moduleManifest.acoustics.sourceLevelDbSplAt1m,
+  };
+}
+export function isActivityCommand(command: Command, syntax: ActivityCommandSyntax): boolean {
   return (
     isPhysicalCommand(command) ||
     (!!command &&
@@ -1661,13 +1760,15 @@ export function isActivityCommand(command: Command): boolean {
       isSafeRecordId(command.actorId) &&
       typeof command.text === 'string' &&
       command.text.trim().length > 0 &&
-      command.text.length <= 1500 &&
+      command.text.length <= syntax.maximumSpeechCharacters &&
       (command.targetId === undefined || isSafeRecordId(command.targetId)) &&
-      (command.volume === undefined || ['whisper', 'normal', 'shout'].includes(command.volume)))
+      (command.volume === undefined ||
+        (typeof command.volume === 'string' &&
+          Object.hasOwn(syntax.speechSourceLevelsDb, command.volume))))
   );
 }
-function isPlannedCommand(command: PlannedCommand): boolean {
-  if (!command || !('itemFromStep' in command)) return isActivityCommand(command);
+function isPlannedCommand(command: PlannedCommand, syntax: ActivityCommandSyntax): boolean {
+  if (!command || !('itemFromStep' in command)) return isActivityCommand(command, syntax);
   return (
     isSafeRecordId(command.id) &&
     isSafeRecordId(command.actorId) &&
@@ -1750,7 +1851,11 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
 }
 
 /** A held revision is either a plan-eligible native sequence or one bounded composition. */
-function validAlternativeCommands(commands: Command[], actorId: string): boolean {
+function validAlternativeCommands(
+  commands: Command[],
+  actorId: string,
+  syntax: ActivityCommandSyntax,
+): boolean {
   if (!Array.isArray(commands) || !commands.length || commands.length > AGENCY_LIMITS.steps)
     return false;
   const [first] = commands;
@@ -1773,7 +1878,7 @@ function validAlternativeCommands(commands: Command[], actorId: string): boolean
   }
   return (
     validOutputReferences(commands) &&
-    commands.every((c) => isPlannedCommand(c) && c.actorId === actorId)
+    commands.every((c) => isPlannedCommand(c, syntax) && c.actorId === actorId)
   );
 }
 
@@ -1797,7 +1902,7 @@ export function proposeActionRevision(
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     !Number.isSafeInteger(expectedPlan) ||
     expectedPlan < 0 ||
-    !validAlternativeCommands(commands, actorId)
+    !validAlternativeCommands(commands, actorId, activityCommandSyntax(world))
   )
     return outcome(
       false,
@@ -1933,7 +2038,7 @@ export function stopCooperativeWork(
     'This agreed purpose ended. Committed physical effects continue; no further cooperative step is promised.',
   );
   const current = actor.action;
-  let resultMemoryId: string | undefined;
+  let resultEvidence: ResultEvidence | undefined;
   if (current && matches(current)) {
     const aimed = attackSubject(current);
     // Refusing to pause an attack does not commit its future blow. Cancel only
@@ -1946,10 +2051,10 @@ export function stopCooperativeWork(
       stopOwnedOffense(world, actorId, aimed.id, aimed.life, {
         invocationId: current.id,
       });
-      resultMemoryId = endActivity(world, actorId, current.id, reason);
-    } else if (pauseRefusal(current)) delete current.cooperation;
+      resultEvidence = endActivity(world, actorId, current.id, reason);
+    } else if (pauseRefusal(world, current)) delete current.cooperation;
     else {
-      resultMemoryId = endActivity(world, actorId, current.id, reason);
+      resultEvidence = endActivity(world, actorId, current.id, reason);
       releaseInvocationResources(world, current.id);
       actor.action = null;
       actor.planGeneration++;
@@ -1967,9 +2072,9 @@ export function stopCooperativeWork(
     for (const step of steps) {
       step.status = 'cancelled';
       step.outcome = { ...reason };
-      if (step.actionId === current?.id && resultMemoryId) step.resultMemoryId = resultMemoryId;
+      if (step.actionId === current?.id && resultEvidence) step.resultEvidence = resultEvidence;
       else if (step.actionId && step.actionId !== actor.action?.id)
-        step.resultMemoryId = endActivity(world, actorId, step.actionId, reason);
+        step.resultEvidence = endActivity(world, actorId, step.actionId, reason);
     }
     if (
       !plan.steps.some((step) => ['queued', 'running', 'blocked'].includes(step.status)) &&

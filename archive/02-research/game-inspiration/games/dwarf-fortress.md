@@ -6,7 +6,7 @@
 
 **Key versus optional.** Historical persistence and consequential relationships are valuable anchors. Exhaustively replicating the full range of Dwarf Fortress systems is not a sensible prerequisite. The graphic/tutorial changes also warn against treating accessibility as irrelevant to a deep simulation.
 
-**Spread and pitfall.** Strange causal stories are shareable; an opaque interface can make those stories accessible mainly through experts who interpret them for others. OpenLegend should help an ordinary player understand an extraordinary outcome without requiring an external explainer.
+**Spread and pitfall.** Strange causal stories are shareable; an opaque interface can make those stories accessible mainly through experts who interpret them for others. Open Legend should help an ordinary player understand an extraordinary outcome without requiring an external explainer.
 
 **Transfer.** Give important objects and people a concise, evidence-backed history. Preserve a few meaningful links across sessions. Do not generate pages of ancient history unless they influence exploration, relationships, conflict, or discovery. A deep record is most useful when there is a reason to ask about it.
 
@@ -30,13 +30,13 @@
 
 **Three concrete in-game situations**
 
-1. **The missing child was not abducted.** *Attributed player report.* Steam reviewer candlehand described believing a child had been taken during a raid. A later ghost and memorial record instead pointed to death beneath a drawbridge. The memorable twist is that recorded world evidence corrected the player’s plausible story. OpenLegend should not let its narrator confidently canonize the first explanation. [FG-DF-P](../references/sources-03.md#source-fg-df-p)
+1. **The missing child was not abducted.** *Attributed player report.* Steam reviewer candlehand described believing a child had been taken during a raid. A later ghost and memorial record instead pointed to death beneath a drawbridge. The memorable twist is that recorded world evidence corrected the player’s plausible story. Open Legend should not let its narrator confidently canonize the first explanation. [FG-DF-P](../references/sources-03.md#source-fg-df-p)
 
 2. **A water project becomes a settlement risk.** *Documented system interaction.* Fortress engineering includes excavation and water-control structures. An attempted water supply is also a route through which flooding can reach rooms and inhabitants. That makes layout and operation consequential: the useful infrastructure and the danger come from the same simulated substance, not separate “quest success” and “disaster” cutscenes. [FG-DF-O](../references/sources-03.md#source-fg-df-o)
 
 3. **The tavern is more than a room label.** *Documented system interaction.* Establishing spaces for social activity changes who gathers, what services are needed, and which inhabitants or visitors become part of fortress life. A settlement’s infrastructure creates social opportunity as well as production capacity. Its interesting stories are contingent; a tavern is not a button that guarantees a particular dramatic scene. [FG-DF-O](../references/sources-03.md#source-fg-df-o)
 
-**What to borrow for OpenLegend.** For OpenLegend, invest in causal inspection that works for ordinary players: a concise “what changed and what evidence supports it” view. Preserve room for player interpretation, but keep the underlying occurrence separate from recollection, speculation, and narration.
+**What to borrow for Open Legend.** For Open Legend, invest in causal inspection that works for ordinary players: a concise “what changed and what evidence supports it” view. Preserve room for player interpretation, but keep the underlying occurrence separate from recollection, speculation, and narration.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

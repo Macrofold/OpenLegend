@@ -1,0 +1,1211 @@
+//! Memory-capable visual reception uses one actual current lifetime across broad
+//! selection, selected detail, received geometry and familiarity. Physical sight
+//! is supplied as the sealed result of the same candidate's finite sensor batch.
+use super::*;
+mod publication;
+use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
+use crate::host::CandidateKey;
+use crate::language::{CollationAnswer, CollationRequest};
+use crate::received::{CurrentRecordingContext, TemporalSupportRecord};
+use crate::worlds::base_recognition::AttentionContactPreparation;
+pub(crate) use publication::*;
+
+/// These are the real scheduler/change-feed facts. Unknown changed subjects
+/// deliberately widen detail; they are never interpreted as an empty change.
+pub(crate) struct VisualOpportunity {
+    pub detail_only: bool,
+    pub immediate: bool,
+    pub due_subjects: IndexSet<String>,
+    pub changed_detail_subjects: Option<IndexSet<String>>,
+    pub changed_people: Option<IndexSet<String>>,
+    pub objects_changed: bool,
+}
+pub(crate) struct RequestedVisualDetails {
+    pub ids: IndexSet<String>,
+    _reservation: ByteReservation,
+}
+/// Select detail from the actual received competition before constructing a
+/// physical query. Broad and detail-only reception share this same predicate.
+pub(crate) fn requested_visual_details(
+    core: &CoreMutation<'_>,
+    observer: &str,
+    opportunity: &VisualOpportunity,
+    budget: &ByteBudget,
+) -> Result<RequestedVisualDetails, ExecutionError> {
+    let state = owner(core, observer)?;
+    let entries = state
+        .attention
+        .as_ref()
+        .map_or(&[][..], |a| a.entries.as_slice());
+    let bytes = entries.iter().try_fold(
+        crate::host::retained_size::map_storage::<String, ()>(entries.len())
+            .ok_or(ExecutionError::Capacity)?,
+        |sum, e| {
+            sum.checked_add(e.source_id.len())
+                .ok_or(ExecutionError::Capacity)
+        },
+    )?;
+    let reservation = budget.reserve(bytes)?;
+    let ids = entries
+        .iter()
+        .filter(|entry| {
+            opportunity.immediate
+                || opportunity.due_subjects.contains(&entry.source_id)
+                || entry.started_at == core.state.physical.header.sim_time
+                || opportunity
+                    .changed_detail_subjects
+                    .as_ref()
+                    .is_none_or(|changed| changed.contains(&entry.source_id))
+                || state
+                    .current
+                    .get(&entry.source_id)
+                    .and_then(|c| c.sight.as_ref())
+                    .and_then(|s| s.detail.as_ref())
+                    .is_none()
+        })
+        .map(|e| e.source_id.clone())
+        .collect();
+    Ok(RequestedVisualDetails {
+        ids,
+        _reservation: reservation,
+    })
+}
+
+pub(crate) struct VisualNotice {
+    pub target_id: String,
+    pub detail: crate::text::JsText,
+    pub person: bool,
+}
+/// This product proves receiving only. The outward notice emitter must preserve
+/// person notices → people publication → objects publication → object notices.
+pub(crate) struct ReceivedPersonalVisual {
+    pub observer: ObserverLife,
+    pub people: Vec<String>,
+    pub objects: Vec<String>,
+    pub notices: Vec<VisualNotice>,
+    pub detail_only: bool,
+    _reservation: ByteReservation,
+    _geometry: Option<CompletedGeometryReception>,
+}
+pub(crate) enum PersonalVisualAnswer {
+    Geometry(GeometryAnswers),
+    Language(CollationAnswer),
+    OccurrenceComplete,
+}
+pub(crate) enum PersonalVisualStep<'a> {
+    Geometry(&'a GeometryQueries),
+    Language(&'a CollationRequest),
+    Occurrence(StagedVisualOccurrence),
+    Received(ReceivedPersonalVisual),
+}
+
+pub(crate) struct StagedVisualOccurrence {
+    event: crate::execution::StagedOccurrence,
+    _reservation: ByteReservation,
+}
+fn stage_place(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    place: &crate::reception::places::InstalledPlace,
+    budget: &ByteBudget,
+) -> Result<StagedVisualOccurrence, ExecutionError> {
+    use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+    let location = core
+        .state
+        .installed
+        .geometry
+        .spatial
+        .surfaces
+        .iter()
+        .find(|surface| surface.id == place.point.surface_id)
+        .map_or("Observed support", |surface| surface.name.as_str());
+    let _reservation = budget.reserve(
+        heap_sum([
+            size_of::<StagedVisualOccurrence>(),
+            size_of::<EventEmissionIntent>(),
+            place
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+                .checked_mul(3)
+                .ok_or(ExecutionError::Capacity)?,
+            observer
+                .len()
+                .checked_mul(4)
+                .ok_or(ExecutionError::Capacity)?,
+            location
+                .len()
+                .checked_mul(2)
+                .ok_or(ExecutionError::Capacity)?,
+            crate::host::retained_size::map_storage::<String, EventScalar>(5)
+                .ok_or(ExecutionError::Capacity)?,
+            256,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut text = crate::text::JsText::from("I reached ");
+    text.push_text(&place.label);
+    text.push_str(". ");
+    text.push_text(&place.description);
+    let mut data = IndexMap::new();
+    data.insert("acquisition".into(), EventScalar::Boolean(true));
+    data.insert("change".into(), EventScalar::Text("onset".into()));
+    data.insert(
+        "importance".into(),
+        EventScalar::Number(place.exposure.importance),
+    );
+    data.insert("urgency".into(), EventScalar::Number(0.0));
+    let event = core.stage_event(EventEmissionIntent {
+        event_type: "encounter".into(),
+        text: EmissionText::Literal(text),
+        audience: AudienceSelection::Explicit(vec![observer.to_owned()]),
+        source_id: Some(observer.to_owned()),
+        target_id: Some(place.landmark_id.clone()),
+        data: Some(data),
+        scope: EventScope::Private,
+        origin: None,
+        exposure: Some(EncounterExposure::Place {
+            reported_by: None,
+            id: place.id.clone(),
+            revision: place.revision,
+            label: place.label.clone(),
+            description: place.description.clone(),
+            point: place.point.clone(),
+            location_label: location.into(),
+            landmark_id: place.landmark_id.clone(),
+            mechanism_fields: place.mechanism_fields.clone(),
+        }),
+    })?;
+    Ok(StagedVisualOccurrence {
+        event,
+        _reservation,
+    })
+}
+
+fn stage_sensitivity_expression(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<Option<StagedVisualOccurrence>, ExecutionError> {
+    use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+    use crate::host::retained_size::map_storage;
+    use crate::narration::{Narration, NarrationPart, PersonRole};
+    use crate::reception::EventScalar;
+    let installed = Arc::clone(&core.state.installed);
+    let Some(verb) = installed
+        .event_appraisal_rules
+        .value()
+        .appearance
+        .as_ref()
+        .and_then(|rule| rule.expression_verb.as_deref())
+    else {
+        return Ok(None);
+    };
+    let expression = &installed
+        .occurrence_rules
+        .value()
+        .response
+        .expression
+        .event_type;
+    let _reservation = budget.reserve(
+        heap_sum([
+            size_of::<StagedVisualOccurrence>(),
+            size_of::<EventEmissionIntent>(),
+            4 * size_of::<NarrationPart>(),
+            observer
+                .len()
+                .checked_mul(3)
+                .ok_or(ExecutionError::Capacity)?,
+            expression.len(),
+            verb.len(),
+            map_storage::<String, EventScalar>(2).ok_or(ExecutionError::Capacity)?,
+            "mechanicaldescriptive".len(),
+            128,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
+    // The outward movement is its own physical occurrence. Its witnesses
+    // learn no fear, cause, private cue or identity of the triggering person.
+    let event = core.stage_event(EventEmissionIntent {
+        event_type: expression.clone(),
+        text: EmissionText::Narration(Narration {
+            parts: vec![
+                NarrationPart::Participant {
+                    entity_id: observer.to_owned(),
+                    role: PersonRole::Subject,
+                    article: None,
+                },
+                NarrationPart::Literal(" ".into()),
+                NarrationPart::Verb {
+                    subject_id: observer.to_owned(),
+                    verb: verb.to_owned(),
+                },
+                NarrationPart::Literal(".".into()),
+            ],
+        }),
+        audience: AudienceSelection::Physical,
+        source_id: Some(observer.to_owned()),
+        target_id: None,
+        data: Some(indexmap::indexmap! {
+            "mechanical".into() => EventScalar::Boolean(false),
+            "descriptive".into() => EventScalar::Boolean(true),
+        }),
+        scope: EventScope::External,
+        origin: None,
+        exposure: None,
+    })?;
+    Ok(Some(StagedVisualOccurrence {
+        event,
+        _reservation,
+    }))
+}
+
+enum Phase {
+    Selection,
+    Places,
+    Physical,
+    Geometry,
+    Contacts,
+    Sensitivities,
+    Finish,
+    Done,
+}
+pub(crate) struct PersonalVisualCursor {
+    phase: Phase,
+    visual: Option<VisualReception>,
+    sight: Option<SightResults>,
+    opportunity: VisualOpportunity,
+    candidate: CandidateKey,
+    people: Vec<String>,
+    objects: Vec<String>,
+    ordered: Vec<String>,
+    eligible: IndexSet<String>,
+    places: Vec<(String, bool)>,
+    place_at: usize,
+    occurrence_waiting: bool,
+    sensitivity_at: usize,
+    geometry: Option<GeometryReceptionCursor>,
+    acquired_geometry: Option<CompletedGeometryReception>,
+    contacts: Vec<String>,
+    contact_at: usize,
+    contact: Option<AttentionContactPreparation>,
+    held: Option<Arc<TemporalSupportRecord>>,
+    reservation: Option<ByteReservation>,
+}
+impl PersonalVisualCursor {
+    pub(crate) fn prepare(
+        core: &mut CoreMutation<'_>,
+        sight: SightResults,
+        opportunity: VisualOpportunity,
+        candidate: CandidateKey,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let observer = core
+            .state
+            .physical
+            .entities
+            .get(&sight.observer().actor_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        if !observer.has_memory()
+            || observer.physical_life() != Some(sight.observer().physical_life)
+            || sight.binding().candidate_id != candidate.id
+            || sight.binding().base_cut != candidate.base_cut
+            || sight.binding().generation != candidate.generation
+        {
+            return Err(invalid());
+        }
+        let bytes = heap_sum([
+            size_of::<Self>(),
+            opportunity
+                .due_subjects
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?,
+            opportunity
+                .changed_detail_subjects
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?,
+            opportunity
+                .changed_people
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?,
+            sight
+                .iter()
+                .try_fold(0usize, |sum, (id, _)| {
+                    heap_sum([sum, id.len().checked_mul(8)?, 8 * size_of::<String>()])
+                })
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let reservation = budget.reserve(bytes)?;
+        Ok(Self {
+            phase: Phase::Selection,
+            visual: None,
+            sight: Some(sight),
+            opportunity,
+            candidate,
+            people: Vec::new(),
+            objects: Vec::new(),
+            ordered: Vec::new(),
+            eligible: IndexSet::new(),
+            places: Vec::new(),
+            place_at: 0,
+            occurrence_waiting: false,
+            sensitivity_at: 0,
+            geometry: None,
+            acquired_geometry: None,
+            contacts: Vec::new(),
+            contact_at: 0,
+            contact: None,
+            held: None,
+            reservation: Some(reservation),
+        })
+    }
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.geometry
+            .as_ref()
+            .and_then(GeometryReceptionCursor::geometry_request)
+    }
+    pub(crate) fn language_request(&self) -> Option<&CollationRequest> {
+        self.contact
+            .as_ref()
+            .map(AttentionContactPreparation::comparisons)
+            .or_else(|| {
+                self.geometry
+                    .as_ref()
+                    .and_then(GeometryReceptionCursor::language_request)
+            })
+    }
+    pub(crate) fn step<'a>(
+        &'a mut self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<PersonalVisualAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<PersonalVisualStep<'a>, ExecutionError> {
+        let mut answer = answer;
+        loop {
+            match self.phase {
+                Phase::Selection => {
+                    if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    self.select_physical(core, budget)?;
+                    self.prepare_places(core)?;
+                    self.phase = Phase::Places;
+                }
+                Phase::Places => {
+                    if self.occurrence_waiting {
+                        if !matches!(
+                            answer.take(),
+                            Some(PersonalVisualAnswer::OccurrenceComplete)
+                        ) {
+                            return Err(invalid());
+                        }
+                        self.occurrence_waiting = false;
+                    } else if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    while self.place_at < self.places.len() {
+                        let (id, acquired) = &self.places[self.place_at];
+                        let installed = Arc::clone(&core.state.installed);
+                        let place = installed.retained.places_read.get(id).ok_or_else(invalid)?;
+                        let observer = self
+                            .sight
+                            .as_ref()
+                            .ok_or_else(invalid)?
+                            .observer()
+                            .actor_id
+                            .as_str();
+                        core.journal.current.set_visible_place(
+                            &mut core.state.reception,
+                            observer,
+                            id,
+                            place.revision,
+                        )?;
+                        self.place_at += 1;
+                        if *acquired {
+                            let staged = stage_place(core, observer, place, budget)?;
+                            self.occurrence_waiting = true;
+                            return Ok(PersonalVisualStep::Occurrence(staged));
+                        }
+                    }
+                    self.phase = Phase::Physical;
+                }
+                Phase::Physical => {
+                    if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    self.receive_physical(core, budget)?;
+                    self.geometry = Some(GeometryReceptionCursor::prepare(
+                        core,
+                        &self.visual.as_ref().ok_or_else(invalid)?.observer.actor_id,
+                        self.candidate,
+                        budget,
+                    )?);
+                    self.phase = Phase::Geometry;
+                }
+                Phase::Geometry => {
+                    let input = match answer.take() {
+                        Some(PersonalVisualAnswer::Geometry(a)) => {
+                            Some(GeometryReceptionAnswer::Geometry(a))
+                        }
+                        Some(PersonalVisualAnswer::Language(a)) => {
+                            Some(GeometryReceptionAnswer::Language(a))
+                        }
+                        Some(PersonalVisualAnswer::OccurrenceComplete) => return Err(invalid()),
+                        None => None,
+                    };
+                    let result = self
+                        .geometry
+                        .as_mut()
+                        .ok_or_else(invalid)?
+                        .step(core, input, budget)?;
+                    let kind = match result {
+                        GeometryReceptionStep::Geometry(_) => 0,
+                        GeometryReceptionStep::Language(_) => 1,
+                        GeometryReceptionStep::Complete(result) => {
+                            self.acquired_geometry = Some(result);
+                            2
+                        }
+                    };
+                    if kind == 0 {
+                        return Ok(PersonalVisualStep::Geometry(
+                            self.geometry_request().ok_or_else(invalid)?,
+                        ));
+                    }
+                    if kind == 1 {
+                        return Ok(PersonalVisualStep::Language(
+                            self.language_request().ok_or_else(invalid)?,
+                        ));
+                    }
+                    self.geometry = None;
+                    let visual = self.visual.as_mut().ok_or_else(invalid)?;
+                    if let Some(before) = visual.current.before.as_ref().map(Arc::clone) {
+                        reconcile_current_cohort(core, before, None, budget)?;
+                    }
+                    visual.current.reconciled = true;
+                    self.prepare_contacts(core, budget)?;
+                    self.phase = Phase::Contacts;
+                }
+                Phase::Contacts => {
+                    if let Some(prepared) = self.contact.take() {
+                        let Some(PersonalVisualAnswer::Language(answer)) = answer.take() else {
+                            self.contact = Some(prepared);
+                            return Ok(PersonalVisualStep::Language(
+                                self.language_request().ok_or_else(invalid)?,
+                            ));
+                        };
+                        let credited = prepared.finish(core, &answer, budget)?;
+                        if !credited {
+                            self.release_contact(core)?
+                        } else {
+                            self.held = None;
+                        }
+                    } else if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    while self.contact_at < self.contacts.len() {
+                        let at = self.contact_at;
+                        self.contact_at += 1;
+                        self.prepare_contact(core, at, budget)?;
+                        if self.contact.is_some() {
+                            return Ok(PersonalVisualStep::Language(
+                                self.language_request().ok_or_else(invalid)?,
+                            ));
+                        }
+                    }
+                    let visual = self.visual.as_mut().ok_or_else(invalid)?;
+                    visual.settle_housekeeping(core, budget)?;
+                    evaluate_attention_relations(core, &visual.observer.actor_id, budget)?;
+                    visual.current.finish(core, budget)?;
+                    crate::plans::receive_watch_sighting(core, &visual.observer.actor_id)?;
+                    self.phase = Phase::Sensitivities;
+                }
+                Phase::Sensitivities => {
+                    if self.occurrence_waiting {
+                        if !matches!(
+                            answer.take(),
+                            Some(PersonalVisualAnswer::OccurrenceComplete)
+                        ) {
+                            return Err(invalid());
+                        }
+                        self.occurrence_waiting = false;
+                    } else if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    let visual = self.visual.as_ref().ok_or_else(invalid)?;
+                    if let Some(changed) = &visual.appearance_changes {
+                        while let Some(subject) = changed.get_index(self.sensitivity_at) {
+                            self.sensitivity_at += 1;
+                            if crate::appraisals::receive_appearance_sensitivity(
+                                core,
+                                &visual.observer.actor_id,
+                                subject,
+                                budget,
+                            )? && let Some(staged) = stage_sensitivity_expression(
+                                core,
+                                &visual.observer.actor_id,
+                                budget,
+                            )? {
+                                self.occurrence_waiting = true;
+                                return Ok(PersonalVisualStep::Occurrence(staged));
+                            }
+                        }
+                    }
+                    self.phase = Phase::Finish;
+                }
+                Phase::Finish => {
+                    let mut visual = self.visual.take().ok_or_else(invalid)?;
+                    visual.reserve(
+                        visual
+                            .notices
+                            .len()
+                            .checked_mul(size_of::<VisualNotice>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    let mut notices = Vec::new();
+                    notices
+                        .try_reserve_exact(visual.notices.len())
+                        .map_err(|_| ExecutionError::Capacity)?;
+                    for (id, detail) in visual.notices {
+                        let person = self.people.contains(&id);
+                        notices.push(VisualNotice {
+                            target_id: id,
+                            detail,
+                            person,
+                        });
+                    }
+                    let mut reservation = self.reservation.take().ok_or_else(invalid)?;
+                    reservation.merge(visual.reservation)?;
+                    self.phase = Phase::Done;
+                    return Ok(PersonalVisualStep::Received(ReceivedPersonalVisual {
+                        observer: visual.observer,
+                        people: std::mem::take(&mut self.people),
+                        objects: std::mem::take(&mut self.objects),
+                        notices,
+                        detail_only: self.opportunity.detail_only,
+                        _reservation: reservation,
+                        _geometry: self.acquired_geometry.take(),
+                    }));
+                }
+                Phase::Done => return Err(invalid()),
+            }
+        }
+    }
+    fn select_physical(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer = sight.observer().actor_id.as_str();
+        begin_perception_phase(core, observer, budget)?;
+        let count = sight.iter().count();
+        // A sensor batch proves rays, not enumeration order. The canonical
+        // entity-order labels reproduce Source's selected-contact index order.
+        let mut ordered: Vec<_> = sight.iter().collect();
+        ordered.sort_by(|(a, _), (b, _)| {
+            core.state
+                .physical
+                .entities
+                .ordering(a)
+                .cmp(&core.state.physical.entities.ordering(b))
+        });
+        self.people
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.objects
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let mut eligible = IndexSet::with_capacity(count);
+        for &(id, seen) in &ordered {
+            if !seen || id == observer {
+                continue;
+            }
+            let entity = core
+                .state
+                .physical
+                .entities
+                .get(id)
+                .ok_or(ExecutionError::MissingEntity)?;
+            if entity.actor.as_ref().is_some_and(|actor| actor.alive) {
+                self.people.push(id.into());
+            } else if (entity.actor.is_none() && entity.animal.is_none())
+                || entity.remains.is_some()
+            {
+                self.objects.push(id.into());
+            } else {
+                continue;
+            }
+            eligible.insert(id.into());
+        }
+        // BodyIndex emits stable entity order. People and objects are separate
+        // Source arrays; their concatenation owns episode insertion chronology.
+        if !self.opportunity.detail_only {
+            if let Some(changed) = &self.opportunity.changed_people {
+                // A scoped broad sample retests changed people, not the entire
+                // prior roster. In particular, a detail-only body refresh does
+                // not itself replace the independently maintained broad list.
+                let previous = core
+                    .state
+                    .reception
+                    .visible_people
+                    .as_ref()
+                    .and_then(|rows| rows.get(observer));
+                let bytes = self
+                    .reservation
+                    .as_ref()
+                    .ok_or_else(invalid)?
+                    .bytes()
+                    .checked_add(
+                        previous
+                            .map_or(Some(0), HeapBytes::heap_bytes)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?;
+                self.reservation
+                    .as_mut()
+                    .ok_or_else(invalid)?
+                    .resize(bytes)?;
+                self.people.retain(|id| changed.contains(id));
+                self.people.extend(
+                    previous
+                        .into_iter()
+                        .flatten()
+                        .filter(|id| !changed.contains(*id))
+                        .cloned(),
+                );
+                self.people.sort_by(|a, b| {
+                    core.state
+                        .physical
+                        .entities
+                        .ordering(a)
+                        .cmp(&core.state.physical.entities.ordering(b))
+                });
+            }
+            if !self.opportunity.objects_changed {
+                if let Some(previous) = core
+                    .state
+                    .reception
+                    .visible_objects
+                    .as_ref()
+                    .and_then(|rows| rows.get(observer))
+                {
+                    let bytes = self
+                        .reservation
+                        .as_ref()
+                        .ok_or_else(invalid)?
+                        .bytes()
+                        .checked_add(previous.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                        .ok_or(ExecutionError::Capacity)?;
+                    self.reservation
+                        .as_mut()
+                        .ok_or_else(invalid)?
+                        .resize(bytes)?;
+                    self.objects.clone_from(previous);
+                }
+            }
+            eligible.clear();
+            eligible.extend(self.people.iter().chain(&self.objects).cloned());
+        }
+        self.ordered = ordered.into_iter().map(|(id, _)| id.to_owned()).collect();
+        self.eligible = eligible;
+        Ok(())
+    }
+    fn prepare_places(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if self.opportunity.detail_only {
+            return Ok(());
+        }
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer_id = sight.observer().actor_id.as_str();
+        let installed = Arc::clone(&core.state.installed);
+        let observer = core
+            .state
+            .physical
+            .entities
+            .get(observer_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        let prior = core
+            .state
+            .reception
+            .visible_places
+            .as_ref()
+            .and_then(|root| root.get(observer_id));
+        let eligible = || {
+            installed.retained.places_read.eligible(
+                &core.state.physical,
+                observer,
+                self.objects.iter().map(String::as_str),
+            )
+        };
+        let mut count = 0usize;
+        let mut bytes = 0usize;
+        let mut changed = false;
+        for place in eligible() {
+            count = count.checked_add(1).ok_or(ExecutionError::Capacity)?;
+            bytes = heap_sum([bytes, size_of::<(String, bool)>(), place.id.len()])
+                .ok_or(ExecutionError::Capacity)?;
+            changed |= prior.and_then(|prior| prior.get(&place.id)) != Some(&place.revision);
+        }
+        if !changed && count == prior.map_or(0, IndexMap::len) {
+            return Ok(());
+        }
+        let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
+        reservation.resize(
+            reservation
+                .bytes()
+                .checked_add(bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.places
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.places.extend(eligible().map(|place| {
+            (
+                place.id.clone(),
+                prior.and_then(|prior| prior.get(&place.id)) != Some(&place.revision),
+            )
+        }));
+        core.journal
+            .current
+            .clear_visible_places(&mut core.state.reception, observer_id)?;
+        Ok(())
+    }
+    fn receive_physical(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer = sight.observer().actor_id.as_str();
+        let eligible = &self.eligible;
+        if !self.opportunity.detail_only {
+            self.reconcile_episodes(core, eligible, budget)?;
+        }
+        let mut visual = begin_visual(core, sight, None, budget)?;
+        visual.collect_notices = !self.opportunity.detail_only;
+        if self.opportunity.detail_only {
+            let requested = requested_visual_details(
+                core,
+                &visual.observer.actor_id,
+                &self.opportunity,
+                budget,
+            )?;
+            let lost: IndexSet<_> = requested
+                .ids
+                .iter()
+                .filter(|id| !eligible.contains(*id))
+                .cloned()
+                .collect();
+            for id in &lost {
+                core.journal
+                    .episodes
+                    .remove_subject(&mut core.state.reception, observer, id)?;
+            }
+            self.people = core
+                .state
+                .reception
+                .visible_people
+                .as_ref()
+                .and_then(|r| r.get(observer))
+                .into_iter()
+                .flatten()
+                .filter(|id| !lost.contains(*id))
+                .cloned()
+                .collect();
+            self.objects = core
+                .state
+                .reception
+                .visible_objects
+                .as_ref()
+                .and_then(|r| r.get(observer))
+                .into_iter()
+                .flatten()
+                .filter(|id| !lost.contains(*id))
+                .cloned()
+                .collect();
+            // Detail-only loss filters the existing outward lists before
+            // receiving, as Source does. Missing observer lists remain missing.
+            for people in [true, false] {
+                let present = (if people {
+                    &core.state.reception.visible_people
+                } else {
+                    &core.state.reception.visible_objects
+                })
+                .as_ref()
+                .is_some_and(|r| r.contains_key(observer));
+                if present {
+                    let ids = if people { &self.people } else { &self.objects };
+                    core.journal
+                        .current
+                        .reserve_growth(ids.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                    core.journal.current.set_visibility(
+                        &mut core.state.reception,
+                        observer,
+                        people,
+                        ids.clone(),
+                    )?;
+                }
+            }
+            visual.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
+            // A detail-only cut consumes the attention selection in its own
+            // order. Broad reception below consumes the physical candidate
+            // order; exchanging those orders changes saved sample chronology.
+            for id in &requested.ids {
+                if eligible.contains(id) {
+                    receive_subject(&mut visual, core, id, true, budget)?;
+                }
+            }
+            visual.finish_checks(core, false, budget)?;
+        } else {
+            visual.receive_losses(core, sight, None, Some(&eligible), budget)?;
+            for id in self.people.iter().chain(&self.objects) {
+                receive_subject(&mut visual, core, id, false, budget)?;
+            }
+            visual.finish_checks(core, true, budget)?;
+            let changed: Vec<_> = visual.attention_changes.iter().cloned().collect();
+            let geometry: Vec<_> = visual.geometry_changes.iter().cloned().collect();
+            core.sync_attention_changes()?;
+            update_attention(
+                &core.state.physical,
+                &mut core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                &mut core.journal.current,
+                observer,
+                AttentionUpdate {
+                    changed_source_ids: Some(&changed),
+                    geometry_source_ids: Some(&geometry),
+                    ..Default::default()
+                },
+            )?;
+            if let Some(before) = visual.current.before.as_ref().map(Arc::clone) {
+                reconcile_current_cohort(core, before, None, budget)?;
+            }
+            visual.current.reconciled = true;
+            visual.settle_housekeeping(core, budget)?;
+            let requested = requested_visual_details(
+                core,
+                &visual.observer.actor_id,
+                &self.opportunity,
+                budget,
+            )?;
+            let current = visual.current;
+            let mut detail = begin_visual(core, sight, Some(current), budget)?;
+            detail.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
+            for id in &self.ordered {
+                if requested.ids.contains(id) && eligible.contains(id) {
+                    receive_subject(&mut detail, core, id, true, budget)?;
+                }
+            }
+            detail.finish_checks(core, false, budget)?;
+            detail.reservation.merge(visual.reservation)?;
+            detail.notices = visual.notices; // only broad changes produce notices
+            // A detail check can reuse an appearance already acquired in the
+            // broad cut. Supply that actual change to the enrolled observer.
+            if let Some(mut changed) = visual.appearance_changes {
+                changed.extend(detail.appearance_changes.take().ok_or_else(invalid)?);
+                detail.appearance_changes = Some(changed);
+            }
+            visual = detail;
+        }
+        self.visual = Some(visual);
+        Ok(())
+    }
+    fn reconcile_episodes(
+        &self,
+        core: &mut CoreMutation<'_>,
+        eligible: &IndexSet<String>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer = &sight.observer().actor_id;
+        let prior = core
+            .state
+            .reception
+            .perception_episodes
+            .as_ref()
+            .and_then(|r| r.get(observer));
+        let _reservation = budget.reserve(
+            prior
+                .map_or(Some(0), |p| {
+                    p.keys()
+                        .try_fold(p.len().checked_mul(size_of::<String>())?, |sum, id| {
+                            sum.checked_add(id.len())
+                        })
+                })
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let removed: Vec<_> = prior
+            .into_iter()
+            .flat_map(|p| p.keys())
+            .filter(|id| !eligible.contains(*id))
+            .cloned()
+            .collect();
+        for id in removed {
+            core.journal
+                .episodes
+                .remove_subject(&mut core.state.reception, observer, &id)?;
+        }
+        let now = core.state.physical.header.sim_time;
+        for id in self.people.iter().chain(&self.objects) {
+            let previous = core
+                .state
+                .reception
+                .perception_evidence
+                .as_ref()
+                .and_then(|p| p.get(observer))
+                .and_then(|p| p.gaps.get(id))
+                .filter(|g| {
+                    g.through >= now
+                        && core
+                            .state
+                            .physical
+                            .entities
+                            .get(id)
+                            .is_some_and(|e| e.physical_life() == g.physical_life)
+                })
+                .map(|g| g.episode_id.clone());
+            core.journal.episodes.ensure(
+                &mut core.state.reception,
+                observer,
+                id,
+                core.state.physical.header.sequence,
+                now,
+                previous.as_deref(),
+            )?;
+        }
+        Ok(())
+    }
+    fn prepare_contacts(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let observer = &self.visual.as_ref().ok_or_else(invalid)?.observer.actor_id;
+        // Source finishes physical reception before its contact-credit phase.
+        // Its entry order is the completed attention selection, not the
+        // pre-sight cohort which also owns outgoing history above.
+        let Some(cohort) = CurrentCohort::capture(
+            &core.state.physical,
+            &core.state.reception,
+            &core.state.installed,
+            &core.state.experience,
+            observer,
+            budget,
+        )?
+        else {
+            self.contacts.clear();
+            return Ok(());
+        };
+        let count = cohort
+            .entry_source_ids()
+            .count()
+            .checked_add(cohort.track_source_ids().count())
+            .ok_or(ExecutionError::Capacity)?;
+        let text = cohort
+            .entry_source_ids()
+            .chain(cohort.track_source_ids())
+            .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        let bytes = crate::host::retained_size::heap_sum([
+            text,
+            count
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+            crate::host::retained_size::map_storage::<String, ()>(count)
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
+        reservation.resize(
+            reservation
+                .bytes()
+                .checked_add(bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut ids = IndexSet::with_capacity(count);
+        for id in cohort.entry_source_ids().chain(cohort.track_source_ids()) {
+            if !ids.contains(id) {
+                ids.insert(id.to_owned());
+            }
+        }
+        self.contacts = ids.into_iter().collect();
+        Ok(())
+    }
+    fn prepare_contact(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        index: usize,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let observer = &self.visual.as_ref().ok_or_else(invalid)?.observer.actor_id;
+        let id = &self.contacts[index];
+        let current = owner(core, observer)?;
+        let _reservation = budget.reserve(
+            current
+                .current
+                .get(id)
+                .map(super::super::current_journal::contact_copy_heap)
+                .transpose()?
+                .unwrap_or(0),
+        )?;
+        let subject = crate::worlds::InstalledPersonalNameReader::prepare(
+            &core.state.physical,
+            &core.state.reception,
+            &core.state.installed,
+            &core.state.experience,
+            observer,
+        )?
+        .current_body_subject(id)?;
+        let Some(subject) = subject else {
+            return Ok(());
+        };
+        let now = core.state.physical.header.sim_time;
+        if !core.state.installed.account_law().attention_contact_due(
+            &core.state.reception,
+            observer,
+            &subject,
+            now,
+        ) {
+            return Ok(());
+        }
+        if !crate::received::ensure_temporal_actor(core, observer, budget)? {
+            return Ok(());
+        }
+        let current = core
+            .state
+            .reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|r| r.get(observer))
+            .ok_or_else(invalid)?;
+        let Some(body) = current_native_facet_at(
+            Some(current),
+            id,
+            "body",
+            CurrentFacetSelector {
+                modality: Some(Modality::Sight),
+                ..Default::default()
+            },
+        )?
+        else {
+            return Ok(());
+        };
+        if body.metadata.availability.is_some()
+            || effective_current_check(current, body.grant, body.metadata, false)?.map_or(
+                body.metadata.times.expanded().confirmed_through,
+                |stamp| {
+                    stamp
+                        .through
+                        .max(body.metadata.times.expanded().confirmed_through)
+                },
+            ) != now
+        {
+            return Ok(());
+        }
+        let installed = Arc::clone(&core.state.installed);
+        let policy = &installed.attention.value().retention;
+        // Attended contact can be the first lasting record for this observer.
+        // Establish its accounts only when there is current support to retain.
+        crate::received::bootstrap_personal_accounts(
+            &mut core.state.physical,
+            &core.state.reception,
+            &core.state.experience,
+            &core.state.learned_capabilities,
+            &mut core.state.temporal,
+            &installed,
+            observer,
+            budget,
+        )?;
+        let held = core.state.temporal.retain_current_support(
+            &mut CurrentRecordingContext {
+                current: &mut core.journal.current,
+                actor_id: observer,
+                owner: current,
+                values: core
+                    .state
+                    .reception
+                    .received_values
+                    .as_mut()
+                    .ok_or(ExecutionError::UnfinishedOccurrence)?,
+                identity: &mut core.state.physical.identity,
+                scopes: &mut core.journal.acquisitions,
+                recent_policy: &policy.recent,
+                maintenance_headroom: policy.maintenance_headroom,
+                meaning: &crate::worlds::InstalledEvidenceMeaning,
+                meters: &mut core.journal.meters,
+                now,
+                sequence: core.state.physical.header.sequence,
+                budget,
+            },
+            body,
+            false,
+            &policy.optional,
+            policy,
+        )?;
+        let Some(held) = held else { return Ok(()) };
+        let receipt = &held.capsule().receipt;
+        let Some(member) = receipt.facets.first().map(|f| f.member_index) else {
+            self.held = Some(held);
+            self.release_contact(core)?;
+            return Ok(());
+        };
+        let source_bound=receipt.locator.id_len().and_then(|n|n.checked_add(receipt.locator.actor_id.len())).and_then(|n|n.checked_mul(6)).and_then(|n|n.checked_add(r#"{"family":"native-exposure","id":"","revision":1,"observer":{"actorId":"","physicalLife":9007199254740991}}"#.len())).ok_or(ExecutionError::Capacity)?;
+        let support_bound = source_bound
+            .checked_add(r#"{"source":,"memberIndex":9007199254740991}"#.len())
+            .ok_or(ExecutionError::Capacity)?;
+        let _encoding = budget.reserve(
+            source_bound
+                .checked_add(support_bound)
+                .and_then(|n| n.checked_add(size_of::<String>()))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let source = crate::worlds::base_recognition::source_json(&receipt.locator)?;
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Support<'a> {
+            source: &'a serde_json::value::RawValue,
+            member_index: u64,
+        }
+        let raw: &serde_json::value::RawValue =
+            serde_json::from_str(&source).map_err(|_| invalid())?;
+        let support = crate::encoding::json_record(&Support {
+            source: raw,
+            member_index: member,
+        })
+        .map_err(|_| invalid())?;
+        let binding = GeometryBinding::new(
+            self.candidate,
+            core.state.geometry_revision(),
+            core.journal.next_provider_serial()?,
+        );
+        self.contact = AttentionContactPreparation::prepare(
+            core,
+            observer,
+            &subject,
+            &source,
+            now,
+            receipt.order,
+            &[support],
+            binding,
+            budget,
+        )?;
+        self.held = Some(held);
+        if self.contact.is_none() {
+            self.release_contact(core)?;
+        }
+        Ok(())
+    }
+    fn release_contact(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if let Some(held) = self.held.take() {
+            let observer = &self.visual.as_ref().ok_or_else(invalid)?.observer.actor_id;
+            core.state.temporal.release_support(
+                observer,
+                &held.capsule().receipt.id,
+                core.state.physical.header.sim_time,
+                &core.state.installed.attention.value().retention,
+                None,
+            )?;
+        }
+        Ok(())
+    }
+}

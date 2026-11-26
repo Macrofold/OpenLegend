@@ -318,6 +318,8 @@ including exact spending, Stop, SQL reopen and receipt replay; see
 
 ## SH12 — Integrated natural camp, effort and lifecycle qualification
 
+**Rust port experiment.** The native host currently prepares navigation from the reviewed opening. Qualify structural geometry separately before accepting moving gates on that host. Use the same saved closed gate and body on each side of the change. Compare blocked and open passage, sight through the aperture, a hanger-only obstruction, a stale route, and reopen after saving. On the standard worker, compare ordinary scene-query cost with no structures, then the cost of operating the same gate once at the selected camp size. Record actual passage and saved material positions alongside CPU and resident memory.
+
 Shelter transparency comes from the selected world's presentation rules. The
 actual earned walls and canopy retain their existing opaque and translucent
 appearance settings in server views without changing saved construction

@@ -4,7 +4,7 @@
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | Complete for the documented mechanisms below | Current Unreal Engine 5.8 and Unity 6.6 scheduling, clocks, sensing, and the boundary between an engine query and character knowledge | 2026-10-23 |
 
-This chapter examines when work happens, what information it reads, and what its result means. These questions matter to simulations containing many independently acting characters, changing geometry, and knowledge that belongs to particular observers. The chapter describes existing engine mechanisms; it does not propose OpenLegend architecture or change its rules. The release and package baseline is recorded in the research index. Unreal documentation below identifies itself as 5.8; Unity manual and API URLs are explicitly scoped to 6000.6. Documentation access is evidence of the published contract, not an engine benchmark or a source-code audit.
+This chapter examines when work happens, what information it reads, and what its result means. These questions matter to simulations containing many independently acting characters, changing geometry, and knowledge that belongs to particular observers. The chapter describes existing engine mechanisms; it does not propose Open Legend architecture or change its rules. The release and package baseline is recorded in the research index. Unreal documentation below identifies itself as 5.8; Unity manual and API URLs are explicitly scoped to 6000.6. Documentation access is evidence of the published contract, not an engine benchmark or a source-code audit.
 
 ## 1. Time advancement and execution are different contracts
 
@@ -108,7 +108,7 @@ The inspected contracts establish scheduling phases, retained sensing data, quer
 
 The Unreal 5.8 page titled _Physics Sub-Stepping_ still contains APEX Destruction and broad mobile-support wording inherited from earlier engine generations. Its current header cannot authenticate every statement in its body. The page was inspected as a provenance warning; those backend and platform claims are not used as current facts. Modern physics mechanisms are discussed using more specific current APIs in the physics chapter. [Physics Sub-Stepping][S02-16]
 
-Other specific unresolved points are the worst-case delay and fairness of sight processing under load, application-defined behavior after a timer's participant disappears, and the exact dependency coverage required to reuse a future perception prediction. Exposed interfaces do not provide sufficient evidence to resolve these by assertion. They remain research limits rather than OpenLegend proposals or unmeasured defects.
+Other specific unresolved points are the worst-case delay and fairness of sight processing under load, application-defined behavior after a timer's participant disappears, and the exact dependency coverage required to reuse a future perception prediction. Exposed interfaces do not provide sufficient evidence to resolve these by assertion. They remain research limits rather than Open Legend proposals or unmeasured defects.
 
 ## Source and provenance register
 

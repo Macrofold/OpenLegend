@@ -71,6 +71,8 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 **Exit:** mask, foliage, wall and partial-cover cases yield the specified physical evidence without a global hidden flag, seeing through collision geometry, or transferring visibility to concealed parts.
 
+**Supported PS04-A terrain producer implemented; VG qualification remains open.** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) now supplies bounded received planar patches and physical-boundary snippets through A's existing evidence owner under [its geometry contract](../projects/attention-and-scenes-tech-design.md#51-received-scene-and-geometry). It certifies represented interiors, distinguishes physical edges from visibility limits, preserves near/far-side uncertainty and retires current support without rewriting history. This is actual received geometry, not a grant from public map data or Known-place anchors. VG03/VG05's full physical sampling, optics and coverage acceptance remain unchanged and open.
+
 ### VG04 — Authoritative light and consistent appearance
 
 **Status: Not started.** Coordinate [base-world vision](../worlds/base/vision-and-gaze.md), [FPW03](first-playable-world.md#fpw03--ordinary-actions-readable-work-and-readiness), and G's projection.
@@ -95,6 +97,8 @@ Implement through the existing spatial, action, observation, clock and view owne
 - [ ] Yield required unfinished due-cohort preparation at one coherent native prefix; invalid/unsupported installed inputs fail explicitly. Do not introduce a certified optical root solver or terminal near-tangency stall. F cuts remain capture-only, and dynamic learning waits for canonical physical samples.
 
 **Exit:** canonical samples, held support and existing supported narrow-window measurements produce the same actual A evidence across speed/host/save partitions. Current projection keeps measured times, typed motion uses two actually received samples, and F captures no extra contact-time observation.
+
+**Future VG sample integration remains open; A's supported-channel temporal owner is implemented:** feed actual canonical B visual samples and availability/correspondence breaks into [A's shared source/receipt boundary](../projects/perspective-perception-tech-design.md#shared-temporal-source-and-receipt-target). Common source fragments may be shared, but received precision, clipped geometry, observer frame and actual acquired membership remain exact per observer. Attention begins from the actual current receipt, not another observer's older source history. This adds no physical sample cadence or separate background-history sampler; VG05/VG07/VG08 and full SAI-A/B acceptance remain open.
 
 ### VG06 — Complete candidates, caches and operational bounds
 

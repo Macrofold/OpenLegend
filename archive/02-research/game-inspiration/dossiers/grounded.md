@@ -1,6 +1,6 @@
 # G142 — Grounded
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Grounded is most useful as a study of **making scale itself a game system**. A suburban yard becomes a legible wilderness because the player already understands grass, soda cans, sprinklers, picnic tables, sandboxes and garden tools at human scale. Obsidian then layers survival, creature ecology, combat mastery, authored mystery and construction over that familiar topology. The result is a survival game whose world is dense because ordinary objects become mountains, roads, caves, landmarks, resources and hazards at once.
 
@@ -450,13 +450,13 @@ These are individual accounts, not estimates of frequency. Network complaints ca
 
 **Co-op amplification versus dependency.** Sharing a base/world produces strong social play; if networking fails, the feature with the highest upside can become the dominant frustration.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Use scale to make the familiar newly systemic
 
 Grounded does not need procedural planet generation to create wonder. It changes the **relationship between the player and known objects**. A soda can is a landmark, shelter and resource context because size changed.
 
-OpenLegend can learn from this more broadly: alter one law of relationship—scale, gravity, perception, social status, time—and ordinary objects can acquire new affordances without inventing an entirely unfamiliar ontology.
+Open Legend can learn from this more broadly: alter one law of relationship—scale, gravity, perception, social status, time—and ordinary objects can acquire new affordances without inventing an entirely unfamiliar ontology.
 
 ### 2. Let ecology teach the world
 
@@ -477,13 +477,13 @@ A side cave might contain a Molar (stats), a new resource (recipes), a chip (tec
 
 ### 4. Knowledge can be a first-class combat stat
 
-PEEP.R weaknesses and attack-pattern learning mean player observation changes outcomes. OpenLegend can reward **knowing what something is and how it behaves** instead of only acquiring a larger damage number.
+PEEP.R weaknesses and attack-pattern learning mean player observation changes outcomes. Open Legend can reward **knowing what something is and how it behaves** instead of only acquiring a larger damage number.
 
 ### 5. Player-built traversal can make construction part of exploration
 
 Stairs, bridges and ziplines permanently rewrite how the authored yard is navigated. This is more meaningful than a base that only stores inventory.
 
-For OpenLegend, construction/invention is strongest when it changes future behavior: who can reach whom, how long journeys take, what hazards remain and what trade/relationship routes become practical.
+For Open Legend, construction/invention is strongest when it changes future behavior: who can reach whom, how long journeys take, what hazards remain and what trade/relationship routes become practical.
 
 ### 6. Shared Worlds are a useful middle ground between host saves and servers
 
@@ -493,7 +493,7 @@ Grounded's cloud handoff lets a trusted group continue a world without running a
 
 ### 7. Selective migration is better than pretending changed semantics are compatible
 
-At 1.0, Obsidian reset story/quest state while preserving bases, inventory and unlocks because the story flow had changed. That is a strong precedent for OpenLegend's development-world policy: **preserve identity/investment where meaning survives; migrate/reset only what cannot truthfully retain meaning**, and tell the player.
+At 1.0, Obsidian reset story/quest state while preserving bases, inventory and unlocks because the story flow had changed. That is a strong precedent for Open Legend's development-world policy: **preserve identity/investment where meaning survives; migrate/reset only what cannot truthfully retain meaning**, and tell the player.
 
 ### 8. Community feedback works when the product exposes a clear learning loop
 

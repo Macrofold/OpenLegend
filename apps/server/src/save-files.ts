@@ -5,6 +5,28 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from './checkpoint-format.js';
 
+export interface CheckpointAllowanceDetails {
+  allowance: 'recordBytes' | 'totalBytes' | 'records';
+  observed: number;
+  limit: number;
+  acceptedBytes: number;
+  acceptedLines: number;
+}
+/** Safe operational diagnosis contains counters only, never a saved payload. */
+export class CheckpointAllowanceError extends Error {
+  constructor(readonly details: CheckpointAllowanceDetails) {
+    const label = {
+      recordBytes: 'single-record byte',
+      totalBytes: 'total byte',
+      records: 'record-count',
+    }[details.allowance];
+    super(
+      `Checkpoint exceeds its ${label} allowance (${details.observed} > ${details.limit}); previous saves retained.`,
+    );
+    this.name = 'CheckpointAllowanceError';
+  }
+}
+
 const metadataSchema = z.object({
   id: z.string().uuid(),
   worldId: z.string().min(1),
@@ -171,14 +193,34 @@ export class SaveFiles {
       try {
         for await (const chunk of lines) {
           const size = Buffer.byteLength(chunk);
-          if (
-            size > CHECKPOINT_LIMITS.rowBytes ||
-            (bytes += size) > CHECKPOINT_LIMITS.bytes ||
-            ++rows > CHECKPOINT_LIMITS.rows
-          )
-            throw new Error(
-              'Checkpoint exceeds its record, row-count or total-byte allowance; previous saves retained.',
-            );
+          const allowance =
+            size > CHECKPOINT_LIMITS.rowBytes
+              ? {
+                  allowance: 'recordBytes' as const,
+                  observed: size,
+                  limit: CHECKPOINT_LIMITS.rowBytes,
+                }
+              : bytes + size > CHECKPOINT_LIMITS.bytes
+                ? {
+                    allowance: 'totalBytes' as const,
+                    observed: bytes + size,
+                    limit: CHECKPOINT_LIMITS.bytes,
+                  }
+                : rows + 1 > CHECKPOINT_LIMITS.rows
+                  ? {
+                      allowance: 'records' as const,
+                      observed: rows + 1,
+                      limit: CHECKPOINT_LIMITS.rows,
+                    }
+                  : undefined;
+          if (allowance)
+            throw new CheckpointAllowanceError({
+              ...allowance,
+              acceptedBytes: bytes,
+              acceptedLines: rows,
+            });
+          bytes += size;
+          rows++;
           hash.update(chunk);
           pending += chunk;
           pendingBytes += size;

@@ -2,7 +2,7 @@
 
 **G03 · Full research pass completed September 25, 2026.** This covers the major systems and all R01–R14 research categories, with a coverage and preservation review below. It is not an exhaustive catalog of every furnishing, a source-code audit, or a claim of personally playing the game.
 
-Read the [preserved earlier chapter](../games/animal-crossing-new-horizons.md), [assignment](../research-requirements.md) and [resume ledger](../research-progress.md). This is gameplay inspiration, not an OpenLegend specification or a request to reproduce Nintendo's assets. Version boundaries distinguish the 2020 release, subsequent free updates, Happy Home Paradise and the paid Switch 2 Edition. Progression rewards and later activities are discussed; this is not a spoiler-free purchasing guide.
+Read the [preserved earlier chapter](../games/animal-crossing-new-horizons.md), [assignment](../research-requirements.md) and [resume ledger](../research-progress.md). This is gameplay inspiration, not an Open Legend specification or a request to reproduce Nintendo's assets. Version boundaries distinguish the 2020 release, subsequent free updates, Happy Home Paradise and the paid Switch 2 Edition. Progression rewards and later activities are discussed; this is not a spoiler-free purchasing guide.
 
 ## 1. A place worth developing, not a combat ladder
 
@@ -235,7 +235,7 @@ A source's factual claims also need checking. The inspected user listing include
 
 **Remove manipulation, not authorship.** Batch crafting, storage-fed materials and cleanup can reduce repeated expression of an already chosen plan. The player still decides what to build, retain, display or give. An assistant that chooses all those purposes would remove a different kind of activity.
 
-**Do not copy the whole contract.** Real-time calendars, constrained household ownership, fixed landmarks and probabilistic relationship rewards have costs as well as value. OpenLegend's inhabitants need not inherit them. The transferable standard is that a small action changes a place, relationship or future opportunity in a way a player can understand and care about.
+**Do not copy the whole contract.** Real-time calendars, constrained household ownership, fixed landmarks and probabilistic relationship rewards have costs as well as value. Open Legend's inhabitants need not inherit them. The transferable standard is that a small action changes a place, relationship or future opportunity in a way a player can understand and care about.
 
 ## 16. Reading routes, coverage and preservation
 

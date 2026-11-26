@@ -8,7 +8,7 @@ Read [AGENTS.md](AGENTS.md), then only the path/topic guidance relevant to your 
 
 Follow the root [planning](AGENTS.md#plan-before-implementation) and [task authorization](AGENTS.md#task-scope-and-authorization) policies. At initial authorized implementation startup use [Rebase](.agents/skills/openlegend-rebase/SKILL.md) for the correct target and safe reconciliation; design-only contributions do not activate implementation startup. Use [Review](.agents/skills/openlegend-review/SKILL.md) before completion.
 
-Use Node.js 22.13 or newer (Node 22 is the tested baseline) and pnpm 10.33.0, then `pnpm install --frozen-lockfile` and `pnpm dev`. See [local setup](README.md#run-locally). Without keys the native world remains playable; live features explicitly report unavailable. Do not add fabricated creative fallbacks.
+Follow [local setup](README.md#run-locally) to install the build tools, prepare a reviewed release and run `pnpm dev "$reviewed_release"`. Node prepares releases and builds the browser. The Rust server runs the world. With an AI allowance of zero, native play remains available and paid features report their status.
 
 The root `packageManager` pins pnpm for local development and verification. `pnpm-workspace.yaml` lists packages and `pnpm-lock.yaml` is the only dependency lockfile. Internal dependencies use `workspace:*`; shared development tools stay at the root and runtime dependencies in the importing package. Add exact external versions, for example `pnpm --filter @open-legend/server add --save-exact package-name@version`, and commit manifest/lockfile together. The workspace explicitly allows required esbuild/fsevents install scripts. Reuse current tools before adding dependencies.
 
@@ -18,7 +18,11 @@ The root `packageManager` pins pnpm for local development and verification. `pnp
 
 Format changed files with pinned Prettier and select applicable static checks separately. `pnpm check`, `pnpm test` and `pnpm test:browser` invoke automated tests and are subject to the linked pause. When test authoring is explicitly requested, prioritize meaningful resource/permission, idempotency, stale-result and restoration scenarios rather than implementation-mirroring assertions. Live-provider verification is optional for ordinary contributions and requires the account owner's bounded authorization.
 
-Use the [root completion/handoff policy](AGENTS.md#completion-and-handoff--every-task) and [PR template](.github/pull_request_template.md) for the problem, resulting behavior, decisions and actual verification/limitations. Screenshots help explain visual changes. Maintain trackers under [Documentation](.agents/rules/documentation.md#keep-maintainer-work-synchronized). Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Validation failures follow the linked verification policy; a narrower build pass is not a green full check. Guidance changes use `pnpm guidance:check` and the [guidance-maintenance skill](.agents/skills/openlegend-guidance/SKILL.md).
+Use the [root completion/handoff policy](AGENTS.md#completion-and-handoff--every-task) and [PR template](.github/pull_request_template.md) for the problem, resulting behavior, decisions and actual verification/limitations.
+
+For a visual change, attach a screenshot to the pull request when it helps the reviewer and is safe to share. Otherwise say what you inspected, the result and why the image is absent. If no visual inspection ran, say so. Keep private player data, credentials, private saves and unlicensed assets out of attachments.
+
+Maintain trackers under [Documentation](.agents/rules/documentation.md#keep-maintainer-work-synchronized). Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Validation failures follow the linked verification policy; a narrower build pass is not a green full check. Guidance changes use `pnpm guidance:check` and the [guidance-maintenance skill](.agents/skills/openlegend-guidance/SKILL.md).
 
 ## Trust and licensing
 

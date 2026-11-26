@@ -1,11 +1,14 @@
+import { recordMapChangesBetween } from './draft.js';
 import { isImmutableData } from './records.js';
 import { entityGet, entityValues, entityDraftAudit } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { isDraft, original } from 'immer';
-import { changedDraftEntityIds, readOnlyDraftView } from './draft.js';
+import { changedDraftEntityIds, readOnlyDraftView, entityChangesBetween } from './draft.js';
 import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
 import { chargeWork } from './work-budget.js';
+import { activelyParticipates } from './participation-state.js';
+import { mayAdvanceStatusEffects } from './status-effects.js';
 import type { ActionType, Entity, WorldState } from './types.js';
 
 // Root membership is rebuildable. Values are read from the current phase, so moving
@@ -81,6 +84,119 @@ export function navigationMembershipChanged(
   if (wait === 'world') blocking.add(id);
 }
 const roots = new WeakMap<WorldState['entities'], readonly string[]>();
+const rootViews = new WeakMap<WorldState['entities'], Entity[]>();
+export interface NativeEntityGroups {
+  actors: string[];
+  ambient: string[];
+  ambientMovers: string[];
+  animals: string[];
+  heatSources: string[];
+  remains: string[];
+  plannedActors: string[];
+  territorial: string[];
+  statuses: string[];
+  projectileBodies: string[];
+  permissionActions: string[];
+  players: string[];
+}
+const nativeGroupNames = [
+  'actors',
+  'ambient',
+  'ambientMovers',
+  'animals',
+  'heatSources',
+  'remains',
+  'plannedActors',
+  'territorial',
+  'statuses',
+  'projectileBodies',
+  'permissionActions',
+  'players',
+] as const;
+interface NativeMembership {
+  manifest: WorldState['moduleManifest'];
+  policy: WorldState['statusEffectPolicy'];
+  masks: ReadonlyMap<string, number>;
+  groups: NativeEntityGroups;
+}
+const nativeMembership = new WeakMap<WorldState['entities'], NativeMembership>();
+function nativeMask(world: WorldState, entity: Entity | undefined): number {
+  if (!physicalRoot(entity)) return 0;
+  const root = readOnlyDraftView(entity!);
+  const active = activelyParticipates(root) && !!(root.actor || root.animal || root.heat);
+  const action = root.actor?.action;
+  return (
+    (active && root.actor ? 1 : 0) |
+    (active ? 2 : 0) |
+    (active && (root.animal || root.spatial.flight || root.spatial.fallVelocity !== undefined)
+      ? 4
+      : 0) |
+    (active && root.animal ? 8 : 0) |
+    (active && root.heat ? 16 : 0) |
+    (root.remains && root.remains.phase !== 'removed' ? 32 : 0) |
+    (active && root.actor?.agency.plan ? 64 : 0) |
+    (active && root.threat ? 128 : 0) |
+    (mayAdvanceStatusEffects(world, root) ? 256 : 0) |
+    (activelyParticipates(root) && (root.actor || root.practiceTarget) ? 512 : 0) |
+    (action &&
+    (action.constructionGrant ||
+      action.gateWork ||
+      action.boundaryImpact ||
+      action.materialPermission)
+      ? 1024
+      : 0) |
+    (root.actor?.controller === 'player' ? 2048 : 0)
+  );
+}
+function membershipCurrent(world: WorldState, value: NativeMembership): boolean {
+  return (
+    value.manifest === readOnlyDraftView(world.moduleManifest) &&
+    value.policy === readOnlyDraftView(world.statusEffectPolicy)
+  );
+}
+/** Native phases iterate the required installed components, not all physical scenery.
+ * Publication reuses membership after examining only actual changed entities. */
+export function nativeEntityGroups(world: WorldState): NativeEntityGroups {
+  const base = isDraft(world) ? original(world)! : world;
+  const cached = isImmutableData(base.entities) ? nativeMembership.get(base.entities) : undefined;
+  if (cached && membershipCurrent(world, cached)) {
+    if (!isDraft(world)) return cached.groups;
+    const changed = changedDraftEntityIds(world);
+    if (
+      changed &&
+      !rootOrderChanged(world, base) &&
+      [...changed].every(
+        (id) =>
+          nativeMask(world, entityGet(readOnlyDraftView(world.entities), id)) ===
+          (cached.masks.get(id) ?? 0),
+      )
+    )
+      return cached.groups;
+  }
+  const groups = Object.fromEntries(
+    nativeGroupNames.map((name) => [name, []]),
+  ) as unknown as NativeEntityGroups;
+  const masks = new Map<string, number>();
+  const entities = readOnlyDraftView(world.entities);
+  for (const id of worldRootEntityIds(world)) {
+    const mask = nativeMask(world, entityGet(entities, id));
+    masks.set(id, mask);
+    nativeGroupNames.forEach((name, index) => {
+      if (mask & (1 << index)) groups[name].push(id);
+    });
+  }
+  for (const name of nativeGroupNames)
+    if (name !== 'remains' && name !== 'statuses' && name !== 'projectileBodies')
+      groups[name].sort((a, b) => a.localeCompare(b));
+  if (!isDraft(world) && isImmutableData(world.entities))
+    nativeMembership.set(world.entities, {
+      manifest: readOnlyDraftView(world.moduleManifest),
+      policy: readOnlyDraftView(world.statusEffectPolicy),
+      masks,
+      groups,
+    });
+  return groups;
+}
 // A draft exclusively owns writes while its base stays unchanged. Mutable builders
 // reuse membership only in that draft; exact child snapshots may carry IDs from
 // an immutable entry through private nested commands.
@@ -237,18 +353,14 @@ export function inheritRootIndex(child: WorldState, parent: WorldState): void {
 }
 /** `readOnly` returns a phase view that must never be written through: unchanged roots are
  * their immutable records and roots already drafted in this transition are live drafts. */
-export function worldRootEntities(world: WorldState, readOnly = false, rebuild = false): Entity[] {
-  countDomainWork('rootScans');
-  // Unknown editor/replacement writes cannot certify the draft membership hooks.
-  // Recovery enumerates the actual table, rather than trusting a derived selector.
-  if (rebuild) return enumerateRoots(world, readOnly);
-  if (!isDraft(world)) {
-    const ids = snapshotRoots(world.entities);
-    countDomainWork('rootsVisited', ids.length);
-    return ids.map((id) => entityGet(world.entities, id)!);
-  }
+export function worldRootEntityIds(world: WorldState, rebuild = false): readonly string[] {
+  if (rebuild) return enumerateRoots(world, true).map((entity) => entity.id);
+  const entities = readOnlyDraftView(readOnlyDraftView(world).entities);
+  if (!isDraft(world) || isImmutableData(entities)) return snapshotRoots(entities);
   const base = original(world)!;
-  if (rootOrderChanged(world, base)) return enumerateRoots(world, readOnly);
+  if (!isDraft(world.entities) && entities !== base.entities)
+    return enumerateRoots(world, true).map((entity) => entity.id);
+  if (rootOrderChanged(world, base)) return enumerateRoots(world, true).map((entity) => entity.id);
   let working = workingBaseRoots.get(world);
   if (!working)
     workingBaseRoots.set(
@@ -258,24 +370,40 @@ export function worldRootEntities(world: WorldState, readOnly = false, rebuild =
         fromFrozenBase: isImmutableData(base.entities),
       }),
     );
-  const ids = working.ids;
-  const changed = draftMembership.get(world);
-  // Only physical roots, not contained inventory or retired records. A read-only view
-  // creates no draft per unread root; publication would otherwise finalize each again.
+  const audit = entityDraftAudit(world.entities);
+  const changed = new Set([...(draftMembership.get(world) ?? []), ...(audit?.assigned ?? [])]);
+  if (!changed?.size) return working.ids;
+  return (
+    changedRootIds(base.entities, readOnlyDraftView(world.entities), working.ids, changed) ??
+    enumerateRoots(world, true).map((entity) => entity.id)
+  );
+}
+/** Count membership without materializing every entity merely to count it. */
+export function worldRootCount(world: WorldState): number {
+  return worldRootEntityIds(world).length;
+}
+export function worldRootEntities(
+  world: WorldState,
+  readOnly: true,
+  rebuild?: boolean,
+): readonly Entity[];
+export function worldRootEntities(world: WorldState, readOnly?: false, rebuild?: boolean): Entity[];
+export function worldRootEntities(world: WorldState, readOnly = false, rebuild = false): Entity[] {
+  const reusable = readOnly && !rebuild && !isDraft(world) && isImmutableData(world.entities);
+  const held = reusable ? rootViews.get(world.entities) : undefined;
+  if (held) return held;
+  countDomainWork('rootScans');
   const entities = readOnly ? readOnlyDraftView(world.entities) : world.entities;
-  const result: Entity[] = [];
-  // Membership hooks cover every native root insertion/removal. Unchanged roots do
-  // not need repeated placement proxy walks for every emitted event in this phase;
-  // values still come from the current draft, including replaced entity records.
-  for (const id of ids) {
-    const entity = entityGet(entities, id);
-    if (entity && (!changed?.has(id) || physicalRoot(entity))) result.push(entity);
-  }
-  if (changed)
-    for (const id of changed)
-      if (!physicalRoot(entityGet(base.entities, id)) && physicalRoot(entityGet(entities, id)))
-        result.push(entityGet(entities, id)!);
+  const ids = worldRootEntityIds(world, rebuild);
+  const result = ids.map((id) => entityGet(entities, id)!);
   countDomainWork('rootsVisited', result.length);
+  // The read-only contract includes its container. Reuse only the exact immutable
+  // entity collection; working/foreign builders and writable callers stay fresh.
+  // docs/projects/attention-and-scenes-runtime-design.md#43-lists-cohorts-and-downstream-reuse
+  if (reusable) {
+    Object.freeze(result);
+    rootViews.set(world.entities, result);
+  }
   return result;
 }
 /** The draft's exact entity write set routes membership maintenance. No serialized
@@ -284,6 +412,7 @@ export function captureRootIndex(
   draft: WorldState,
 ): (world: WorldState, ids: ReadonlySet<string>) => void {
   const base = original(draft)!;
+  const priorNative = nativeMembership.get(base.entities);
   const priorNavigation = workingNavigation.get(draft) ?? pendingNavigation.get(base.entities);
   const priorBlocking =
     workingBlockingNavigation.get(draft) ?? blockingNavigation.get(base.entities);
@@ -301,6 +430,16 @@ export function captureRootIndex(
       : undefined;
   const priorTargets = isImmutableData(base.entities) ? targetUsers.get(base.entities) : undefined;
   return (world, changed) => {
+    if (
+      priorNative &&
+      !reordered &&
+      membershipCurrent(world, priorNative) &&
+      [...changed].every(
+        (id) =>
+          nativeMask(world, entityGet(world.entities, id)) === (priorNative.masks.get(id) ?? 0),
+      )
+    )
+      nativeMembership.set(world.entities, priorNative);
     if (priorBlocking) {
       const next = new Set(priorBlocking);
       for (const id of changed) {
@@ -332,4 +471,50 @@ export function captureRootIndex(
     const ids = changedRootIds(base.entities, world.entities, prior, changed);
     if (ids) roots.set(world.entities, ids);
   };
+}
+
+interface MemoryActors {
+  entities: WeakRef<WorldState['entities']>;
+  ids: readonly string[];
+  members: ReadonlySet<string>;
+}
+const memoryActors = new WeakMap<object, MemoryActors>();
+let latestMemoryActors: WeakRef<object> | undefined;
+/** Memory-capable NPC membership; changed personal prose does not rebuild the roster. */
+export function npcMemoryActorIds(world: WorldState): readonly string[] {
+  const minds = world.minds;
+  if (!minds) return [];
+  let cached = Object.isFrozen(minds) ? memoryActors.get(minds) : undefined;
+  const priorRoot = latestMemoryActors?.deref();
+  const mindChanges = cached
+    ? new Set<string>()
+    : priorRoot
+      ? recordMapChangesBetween(priorRoot, minds)
+      : undefined;
+  cached ??= mindChanges && priorRoot ? memoryActors.get(priorRoot) : undefined;
+  const previous = cached?.entities.deref();
+  if (previous === world.entities && mindChanges?.size === 0) return cached!.ids;
+  const changed = previous ? entityChangesBetween(previous, world.entities) : undefined;
+  const eligible = (id: string) =>
+    Object.hasOwn(minds, id) && entityGet(world.entities, id)?.actor?.controller === 'npc';
+  let ids: readonly string[];
+  if (cached && changed && mindChanges) {
+    let selected: Set<string> | undefined;
+    for (const id of new Set([...changed, ...mindChanges]))
+      if (eligible(id) !== cached.members.has(id)) {
+        selected ??= new Set(cached.ids);
+        if (eligible(id)) selected.add(id);
+        else selected.delete(id);
+      }
+    ids = selected ? [...selected].sort() : cached.ids;
+  } else ids = Object.keys(minds).filter(eligible).sort();
+  if (Object.isFrozen(minds) && isImmutableData(world.entities)) {
+    memoryActors.set(minds, {
+      entities: new WeakRef(world.entities),
+      ids,
+      members: ids === cached?.ids ? cached.members : new Set(ids),
+    });
+    latestMemoryActors = new WeakRef(minds);
+  }
+  return ids;
 }

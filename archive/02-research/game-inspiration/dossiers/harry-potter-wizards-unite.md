@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -359,14 +359,14 @@ The launch reviews give especially useful contrasts within similar mechanics: hi
 
 The **2019** descriptions must not be carried forward as the final rules. The [official spring 2020 update](https://www.harrypotter.com/news/portkey-games-updates-this-spring-2020-wizards-unite-hogwarts-mystery-and-more) describes a Knight Bus map button taking level-7+ players to Hogwarts Fortress from home. That changes the relevance of launch accounts about missing local teammates. The mechanics section supplies other dated changes and resource rules; the commercial section supplies purchases and shutdown evidence. Complaints about scarce resources identify perceived interruption or pressure, but cannot establish mandatory spending for every player. Likewise, attachment at closure does not prove that the service could cover its operating costs.
 
-### OpenLegend research questions
+### Open Legend research questions
 
 - **Fantasy and persistent consequence:** after repeating an encounter, can a player explain what changed in their character, relationships or world, and why that matters to their chosen fantasy?
 - **Mastery and interpretability:** does improvement in a gesture or tactical choice produce feedback the player can understand, including when an attempt fails?
 - **Access to a meaningful role:** how does enjoyment change when a support-oriented player can reliably find a group? Compare actual participation with merely owning unlocked abilities.
 - **Voluntary return and stopping points:** distinguish anticipation of a story or teammate from completion pressure, storage maintenance and expiring tasks. Ask what players willingly resume after a break.
 
-These questions could guide comparison or observation in OpenLegend research. They are not instructions to copy Wizards Unite's systems or predictions of commercial success.
+These questions could guide comparison or observation in Open Legend research. They are not instructions to copy Wizards Unite's systems or predictions of commercial success.
 
 ### Evidence register and reading routes
 

@@ -1,71 +1,61 @@
-# Cognition Lab campaigns
+# Repeatable Cognition Lab episodes
 
-The maintained adapter turns declared episodes into `pnpm verify:worker` jobs. It does not start a campaign by default or create another scheduler. [Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects execution location and authorization; the [managed-worker procedure](../../.agents/rules/verification-workers.md) owns capacity, funding, supervision, collection and cleanup.
+A campaign freezes its complete list of experiments. Each selected episode restores one native Lab checkpoint, submits its declared stimuli through the signed player or creator controls, and retains the Rust job receipts. Use a dedicated Lab. Each restore replaces that Lab’s active timeline. The game runs separately.
 
-## Prepare a plan
+## Declare and freeze
 
-```sh
-pnpm exec tsx scripts/cognition-lab/campaign.ts --input /private/study/declaration.json --output /private/study/plan
-pnpm verify:worker plan /private/study/plan/campaign.json
+Create a manual or starting-scenario checkpoint in the Lab. Use its UUID and the exact authored profile names of NPCs visible to the signed creator. Keep study files and results in a private directory outside Git.
+
+An episode file such as `greeting.json` contains:
+
+```json
+{
+  "id": "greeting",
+  "checkpoint": "00000000-0000-4000-8000-000000000001",
+  "setupSeconds": 30,
+  "limits": { "simulatedSeconds": 180, "wallSeconds": 90, "maxCalls": 6 },
+  "stimuli": [{ "kind": "say", "target": "Ada", "text": "Are you free to talk?" }]
+}
 ```
 
-The declaration names an exact source revision containing this adapter, explicit concurrency, expected primary/busy position counts, the matrix CSV, current-format origin exports and their actor bindings, execution protocols/settings and output limits. `study.episodes` supplies exact per-row historical execution declarations and SHA-256 values; only their typed execution fields are promoted. Actual admitted limits and postludes take precedence over an older base-condition template. Model/effort/output selection, source/origin identity, saved randomness and scheduling seed/replicate remain explicit. The bundled world's native protocol bindings come from `BASE_COGNITION_LAB_ACTION_TYPES`; another world supplies its own supported bindings.
+Replace the example UUID and name with your checkpoint and character. The optional setup advances the native clock by the declared simulated seconds while holding every provider call. Allow enough time for normal perception to identify nearby people. A missing or ambiguous profile stops the episode. Omit `actor` for the signed player’s directed speech. An NPC speaker uses `actor` and may select a different `focal` NPC. For a descriptive NPC action use `kind: "act"`, `actor`, `focal` and `text`. Optional `settings` accepts the same `fastModel`, `complexModel` and `outputTokens` as the Lab. The native server checks each choice.
 
-The planner verifies source entrypoints, matrix coverage/uniqueness and original declarations before emitting a frozen `campaign.json`, `matrix-index.json` and portable input bundles. `--select primary:B15:R04,primary:B15:R08` selects execution rows while retaining the full matrix denominator. `--package false` omits archive creation, not validation. Reusing a frozen output with changed content refuses; use a new output for an intentionally changed experiment.
-
-An episode may declare `directoryOnlyActivities: [{actorId, familyIds}]` as an explicit Lab experiment. Its native settings are captured/exported with the scenario; unknown family IDs refuse, while installed families remain configurable even when currently unavailable to an actor. The setting defers only initial optional response forms when the existing detail continuation is admitted; discovery, native routing, known actions and required choices remain. Explicitly requested detail supplies the final form normally. An absent/empty list preserves ordinary preparation. Check the actual captured input for the directory/prepare alternative and absence of an equivalent complete form or known action before calling a row a missing-detail test. A native route that performs the activity is a legitimate outcome, not proof that generation requested details. This setting neither changes world capability nor forces routing or behavior.
-
-Only selected current-format origins, actor mappings and execution-only episode specifications are mounted. Grading references, acceptable-answer/failure descriptions and private historical campaign directories are not execution inputs. A model's old result or a generic worker pass does not establish that this source/model combination works.
-
-## Plan new isolated comparisons
-
-For new experiments, use `campaign.ts episodes --input declaration.json --output plan`. The declaration contains `taskId`, `cloudAllocationId`, explicit `concurrency`, `mode` (`prepare` or `execute`) and an `episodes` array of paths to current `EpisodeSpec` JSON files. Paid mode also supplies the same `paid.limitMicroUsd`, `paid.lanesByModel` and `paid.modelPrices` fields as historical planning. This compiles through the same worker job, input packaging and aggregation owners; it does not invent historical episode metadata. Every episode has a distinct ID and frozen source, origin checksum, native protocol, model/seed/settings and bounds. Grade outside the input files. Use separate current declarations for control and candidate sources, changing only the selected experimental factor.
-
-`protocol.nativeSetup` optionally declares ordered native intentions/time advances before the measured interval. Preparation disables autonomous actors for these steps, journals actual commands/receipts and restores the declared execution policy afterward. It introduces no model-only context. A `command` step carries an explicit native intention through the same validated command owner, including point-based controls absent from list menus; it grants no effect or authority. Setup behavior is not autonomous model success; missing/refused bindings block the episode rather than being replaced.
-
-An episode freezes `runtimeTarget: "lab" | "game"` (default `lab`). The game target releases the prepared Lab writer and opens its current-format native state through `createWorldRuntime` without Lab control. The declared visitor must own normal player control; normal presence, native time, independent cognition and funding apply. Model work cannot hold that clock. Native steps, private field projection, source-bound phase matching, shared grants and receipt recovery retain their existing owners. Finite menu bindings are prepared from the held origin before measured time, then their exact native intentions are previewed and admitted against live state. This avoids rescanning a changing catalogue or holding the game clock. A binding that first appears later needs an explicit native `command`; an old descriptor never grants permission. Declare an isolated origin with the intended actual autonomous population: the game's participant/cognition population is not reduced to the Lab's focal whitelist. Different populations invalidate a clock-only comparison. For matched comparisons, explicitly declare `autonomousActorIds` for the origin’s complete ordinary NPC mind population; Lab policies use that list and the game executor verifies it without suppressing anyone. Historical omitted lists retain their focal-only Lab policy. A forced `completeBeforeResponse` setup must be authored into the native origin before an ordinary-clock timing comparison; it cannot pause the measured game to guarantee impact.
-
-`outputs.admissionTraceBytes` optionally enables a bounded transition trace (default zero; at most 1 MiB). It records captured intake cuts, demand/completion and selection for admission, not every tick or private prompt. Omitted transitions remain counted. Compare enabled/disabled observer overhead before interpreting timings. Request-count and dollar bounds come from the existing shared worker grant, including incidental actors; no additional per-request database counter or billing pipeline is introduced.
-
-Ordinary-game output includes `primary-outcome.json` at the end of the measured interval, native jobs/attempts/diagnostics, paged participant observations and a streamed current-format checkpoint. Started phases retain their stimulus and latest movement evidence when observation fails. Later snapshot/export work, original provider settlement and optional native acceptance count as collection, outside measured work; they do not prove effects within the primary interval. Runtime cleanup also covers setup failures. Recovery never purchases replacement cognition.
-
-## Execute an isolated episode
-
-The generic job declares separate `game` and `lab` database aliases and mounts its episode and origin inputs. Its step calls:
+A campaign declaration supplies `sourceRevision` (the full Git SHA used to build the nominated host), `expectedPositions` and `episodes` (paths relative to the declaration). A separately launched host’s source revision is operator-supplied. The runner verifies episode contents and the live server’s checkpoint and restore receipts.
 
 ```sh
-node --import tsx scripts/cognition-lab/episode.ts --input '{inputs}/episode/episode.json' --output '{results}/episode' --mode prepare
+pnpm cognition:campaign plan --input ./study/declaration.json --output ./study/plan
+pnpm cognition:campaign run --index ./study/plan/matrix-index.json --origin http://127.0.0.1:3000 --output ./study/prepared
+pnpm cognition:campaign run --index ./study/plan/matrix-index.json --origin http://127.0.0.1:3000 --output ./study/executed --execute
+pnpm cognition:campaign aggregate --index ./study/plan/matrix-index.json --collected ./study/executed --output ./study/summary
 ```
 
-`prepare` imports the origin through the ordinary Lab owner, checks its actors/profile/seed and records preparation with zero model calls. `execute` additionally applies the frozen settings and runs the native protocol in order. Each episode owns a loopback runtime, database pair, workspace/output and local lock; dependent movement, work, conversations and postludes remain serial. Mutable native game/Lab files use unique case-home scratch outside collected results. Complete Run bundles, request/receipt journals and terminal evidence remain in results. Successful export and host closure remove scratch; failed collection retains it for claim-fenced recovery. A lock refusal, missing opportunity, setup failure, unavailable model or uncertain attempt is an explicit result.
+Use repeated `--select ID` on the plan to execute a subset while keeping every position in the summary. Changed declarations or selections need a fresh plan directory. Each run directory is exclusive. Repeating a completed invocation skips its completed positions. An interrupted position retains its original checkpoint, load, stimulus, job and retention IDs as available. Inspect those original operations in the Lab before explicitly allocating a fresh experiment directory.
 
-Each stimulus phase records its committed source/action binding and follows a matching focal decision through terminal settlement, under the [Lab causal-boundary contract](../../docs/projects/cognition-lab-tech-design.md#82-run-policies-and-guards). A newly emitted decision about older work cannot complete the new stimulus; native time/perception may progress while unrelated decisions remain intact. Mechanical wait/arrival phases retain their explicit native completion conditions in both runtimes, independently of a character reply. Arrival requires native position, a new movement outcome and finished movement. Omitted prelude action/outcome names resolve through the declared world bindings. Capture already-running prelude work before opening ordinary time; use new native history plus its ended work identity for completion, without assuming that every outcome carries an action ID. Injected native checks retain fixture provenance when switching to ordinary time.
+## What the results show
 
-Execute declarations add `paid.limitMicroUsd`, `paid.lanesByModel` and `paid.modelPrices` using the existing public generation-price contract. The planner emits the native admission allowance and rates for each job; omitted cache/write rates use the ordinary input rate as an explicit estimate. Funded jobs retain their shared execution allowance/lanes in the generic plan. The supervisor supplies `OPENLEGEND_JOB_EXECUTION`; the trusted service keeps provider credentials and the durable paid ledger outside worker databases. Public frozen model prices and a local Lab allowance enable native admission without supplying fake provider keys. The actual grant and shared owner enforce spending. Normal embedding mode uses the granted embedding client; unavailable auxiliary model/tool operations stay unavailable rather than changing the experiment silently. Full world-tool reflection hosting has its separate permission/execution owner.
+Preparation records the digest of the actual held request and cancels before dispatch. Execution enables one complete native response per stimulus with background autonomy off and one shared episode allowance for simulated time, wall time and model calls. Read `outcome.applied`, `outcome.received`, `outcome.dispatched` and the interval stop reason to distinguish effects, provider work and refusals. A completed preparation can have a cancelled native job. Raw inputs and outputs stay behind the signed stage reader. Each episode records its own restore ID. The aggregate retains missing and unselected positions.
 
-The episode stops the run and awaits the normal durability owner before exporting retained requests, native effects, receipts and provenance, so accepted held-clock events and personal accounts survive runtime closure. Its journal persists operation bodies and IDs before submission. Existing completed/uncertain work is observed under its original identity; `--recover` does not authorize resubmitting a paid experiment. New comparisons inside one mutable Lab still use that Lab's serial owner.
+The CLI authenticates through the configured local sign-in on an explicit loopback origin or accepts the signed-in session token for the nominated HTTPS host in `OPEN_LEGEND_LAB_SESSION`. Supply it through a private environment and keep it out of declarations, logs and worker inputs.
 
-## Collect and aggregate
+## Managed workers
+
+The worker planner uses the same frozen episode index. Each worker opens a separate Rust server and two fresh PostgreSQL databases. Declare `source: "opening"` to use the reviewed opening or `source: "game"` to copy the signed, paused game from the backup. The worker creates the declared checkpoint UUID in its own Lab before restoring it. Private checkpoints from an existing Lab stay under their original source permissions.
+
+A worker declaration contains the following fields:
+
+- `taskId`, `cloudAllocationId`, `concurrency`, `deadlineSeconds` and the per-job `timeoutSeconds` from the managed worker plan.
+- `sourceHash`, the source archive SHA-256 from the pinned native executable’s toolchain record.
+- `runtime`, `release` and `backup`. Each has a local `root`, an explicit list of relative `paths` and the input bundle’s `sha256` manifest digest. Use the verified native runtime, reviewed release (including its opening) and stopped native backup from the worker procedure.
+- `mode: "prepare"` for zero provider calls. For execution, use `mode: "execute"` and `paid: { "limitMicroUsd": 1000000, "lanes": ["judge", "generate"] }` with the actual funded lane IDs. The numeric example permits up to one dollar **per selected job**. The episode’s `limits.maxCalls` also enters the worker grant. Funding, provider credentials and task-wide limits belong to the shared service. These files contain no token.
 
 ```sh
-pnpm verify:worker run /private/study/plan/campaign.json
-pnpm verify:worker resume CAMPAIGN_ID
-pnpm verify:worker collect CAMPAIGN_ID /private/study/collected
-pnpm exec tsx scripts/cognition-lab/campaign.ts aggregate --index /private/study/plan/matrix-index.json --collected /private/study/collected --output /private/study/analysis
+pnpm cognition:campaign workers --index ./study/plan/matrix-index.json --input ./study/worker.json --output ./study/worker-plan
+pnpm verify:worker plan ./study/worker-plan/campaign.json
+pnpm verify:worker run ./study/worker-plan/campaign.json
+pnpm verify:worker collect CAMPAIGN_ID ./study/collected
+pnpm cognition:campaign aggregate --index ./study/plan/matrix-index.json --collected ./study/collected --output ./study/worker-summary
 ```
 
-Resume/collection continue the original managed campaign; they do not launch episodes again. Aggregation verifies artifact checksums and source/job/spec identities and retains all denominator rows, including unselected, blocked, missing, failed and uncertain outcomes. Expected behavior is assessed outside model inputs. Preparation, actual work, provider observations, collection, cleanup and paid uncertainty remain separate, and model comparisons record their parallel execution conditions. Fresh databases also have cold vector caches; do not equate their normal embedding work or timing with a historical warm Lab.
+Planning packages the reviewed files locally. Worker execution requires its normal capacity and funding. The supervisor’s job, case, source and original attempt ID bind each Rust receipt to its central spending record. A lost result stays uncertain; its original service attempt can be inspected without authorizing another request. The native worker supports its single granted judgment lane and up to two granted generation lanes for fast and complex decisions. The worker provides source revision, source archive hash and executable hash with the completed episode. The shared execution endpoint must use HTTPS.
 
-[VW09](../../docs/maintainers/verification-workers.md) owns adapter qualification. The larger fleet and original full paid study retain their separate authorization and evidence requirements.
-
-## Compare response formats without running a world
-
-`response-format.ts` compiles four request-only arms from one frozen catalog `GenerateRequest`: A uses native JSON Schema; B adds the compiler's schema-in-system text to A; C uses JSON object with that same text; D keeps C's messages without its response-format flag. Planning checks the exact byte relations, preserves all model-facing semantics and does not launch workers or model calls. A captured `macrofoldOutputMode` is accepted and deliberately varied as this comparison’s factor. Each dispatched arm asserts its expected mode through the shared owner, so a misconfigured lane refuses before spending.
-
-```sh
-pnpm exec tsx scripts/cognition-lab/response-format.ts plan --request /private/study/request.json --source EXACT_40_CHARACTER_COMMIT --task-id TASK --allocation-id ALLOCATION --concurrency 2 --model meta/muse-spark-1.3-contributor --strict-lane contributor --json-object-lane contributor-json-object --prompted-lane contributor-prompted-json --call-limit-micro-usd 100000 --repeats 3 --output /private/study/format-plan
-```
-
-Use an exact source containing this tool, explicit configured lanes for the same model, and a request with its original output-token bound. Contributor's strict comparison lane must explicitly select `outputMode: "json_schema"`; omitting its mode now selects prompted JSON. The plan emits one one-call job per arm/replicate in predeclared cyclic order, `campaign.json` and `response-format-index.json`. Repeats may be one to three waves. The combined campaign dispatches all selected jobs; for R1, copy its first four jobs into a generic wave-one plan, inspect support/results, then explicitly run the remaining predeclared jobs. The index retains the complete denominator. Existing frozen outputs must match exactly. Only the explicit request fields enter input bundles; no environment, credential, service configuration or grading file is copied.
-
-The worker step persists a fresh request identity's 31-second deadline immediately before invoking the existing `execute-ai.ts` consumer. Artifacts are `cases/smoke/results/request.json`, `result.json` and `execution.json`. It refuses to repeat an existing request file; observe the original shared attempt after an ambiguous result. Managed admission, funding, collection and cleanup retain their ordinary owners. These request-only results establish output behavior, not native action effects or a production-default decision.
+The separate request-format study compiles four output-format variants of a frozen generation request and submits them through its original funded worker. Its source and procedure are in `response-format.ts` on main. It does not make gameplay claims. Ordinary lab request comparisons use the source-authorized stage in the Lab.

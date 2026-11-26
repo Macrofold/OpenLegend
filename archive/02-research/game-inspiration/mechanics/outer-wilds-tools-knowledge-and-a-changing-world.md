@@ -2,7 +2,7 @@
 
 **Gameplay inspiration; researched September 25, 2026.** This extends the [Outer Wilds chapter](../games/outer-wilds.md). **Spoiler guidance:** the introductory sections discuss the publicly advertised premise and tools. A later collapsed section describes specific discoveries. The ending is not explained. Linked sources can contain much larger spoilers.
 
-This is reference material, not a recommendation to add a time loop or mystery campaign to OpenLegend. No game session, complete video, or proprietary source implementation was inspected.
+This is reference material, not a recommendation to add a time loop or mystery campaign to Open Legend. No game session, complete video, or proprietary source implementation was inspected.
 
 ## 1. The important upgrade can be a different explanation
 

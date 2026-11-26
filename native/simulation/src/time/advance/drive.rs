@@ -1,0 +1,1547 @@
+use super::*;
+use crate::execution::PhysicalChange;
+
+impl AdvanceCursor {
+    fn after_motion(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
+        self.select_wanderers(core)?;
+        self.phase = Phase::Wander;
+        Ok(())
+    }
+
+    fn perceives(core: &CoreMutation<'_>, handle: EntityHandle) -> Result<bool, ExecutionError> {
+        let entity = core
+            .state
+            .physical
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(entity.actor.as_ref().is_some_and(|actor| actor.alive)
+            && entity.has_memory()
+            && entity.actively_participates()
+            && !core
+                .state
+                .installed
+                .capabilities
+                .capability_blocked(Some(entity), "perception")?)
+    }
+    fn capture_perceivers(&mut self, core: &CoreMutation<'_>) -> Result<(), AdvanceError> {
+        let count = self.roster.as_ref().ok_or_else(invalid)?.actors().len();
+        self.reserve(
+            count
+                .saturating_sub(self.perceivers.capacity())
+                .checked_mul(size_of::<EntityHandle>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.perceivers.clear();
+        self.perceivers
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        for handle in self.roster.as_ref().ok_or_else(invalid)?.actors() {
+            if Self::perceives(core, *handle)? {
+                self.perceivers.push(*handle);
+            }
+        }
+        self.perceivers_captured = true;
+        Ok(())
+    }
+    fn perceivers_changed(&self, core: &CoreMutation<'_>) -> Result<bool, ExecutionError> {
+        if !self.perceivers_captured {
+            return Ok(false);
+        }
+        let mut at = 0;
+        for handle in self.roster.as_ref().ok_or_else(invalid)?.actors() {
+            if Self::perceives(core, *handle)? {
+                if self.perceivers.get(at) != Some(handle) {
+                    return Ok(true);
+                }
+                at += 1;
+            }
+        }
+        Ok(at != self.perceivers.len())
+    }
+    fn perception_work_due(
+        &self,
+        core: &CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<bool, AdvanceError> {
+        for handle in self.roster.as_ref().ok_or_else(invalid)?.actors() {
+            if next_perception_work_at(core.state, self.actor(core, *handle)?, budget)?
+                .is_some_and(|at| at <= core.state.physical.header.sim_time)
+            {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+    fn accept_event(&mut self, core: &mut CoreMutation<'_>, value: CompletedEvent) -> Result<(), AdvanceError> {
+        let expected = self.expected.take().ok_or_else(invalid)?;
+        if expected.id != value.event.id
+            || expected.order != value.completed.order()
+            || expected.sequence != value.completed.sequence()
+            || expected.id != value.completed.event_id()
+        {
+            return Err(invalid().into());
+        }
+        let CompletedEvent {
+            event,
+            completed: receipt,
+            awareness,
+            reservation,
+        } = value;
+        drop(awareness);
+        match self.event_destination.take().ok_or_else(invalid)? {
+            EventDestination::Reconcile => {
+                self.reconcile_answer = Some(ReconcileAnswer::Occurrence(receipt))
+            }
+            EventDestination::Motion => {
+                self.motion_answer = Some(MoveAdvanceAnswer::Occurrence(receipt))
+            }
+            EventDestination::Endpoint => {
+                self.endpoint_answer = Some(EndpointAnswer::Occurrence(receipt))
+            }
+            EventDestination::Projectile => self.projectile_event = Some(receipt),
+            EventDestination::Appraisal
+            | EventDestination::Territorial
+            | EventDestination::Flight => {}
+            EventDestination::Travel => self.travel.as_mut().ok_or_else(invalid)?.link_notice(core, &receipt)?,
+        }
+        self.retain(EventBatch::Event {
+            event,
+            _reservation: reservation,
+        })?;
+        self.event = None;
+        Ok(())
+    }
+    fn queue_territorial(&mut self, handle: EntityHandle, intention: TerritorialIntention) {
+        self.queued_movement = Some((handle, NativeIntention::Territorial(intention), self.phase));
+        self.phase = Phase::NativeCommand;
+    }
+    fn territorial_notice(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        handle: EntityHandle,
+        notice: TerritorialNotice,
+        intention: Option<TerritorialIntention>,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        let active = core
+            .state
+            .physical
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .is_some_and(|actor| actor.action.is_some());
+        let follow =
+            intention.filter(|intention| matches!(intention, TerritorialIntention::Move(..)));
+        if active {
+            self.territorial_notice = Some(PendingTerritorialNotice {
+                handle,
+                notice,
+                follow,
+            });
+            self.queue_territorial(handle, TerritorialIntention::Stop);
+        } else {
+            if let Some(follow) = follow {
+                self.queue_territorial(handle, follow);
+            }
+            let staged = notice.stage(core, handle, budget)?;
+            self.stage_event(core, staged, EventDestination::Territorial, budget)?;
+        }
+        Ok(())
+    }
+    fn mechanical_change(
+        &self,
+        core: &CoreMutation<'_>,
+        attributes: bool,
+    ) -> Result<bool, ExecutionError> {
+        Ok(self.slice_invalidated
+            || core
+                .journal
+                .physical
+                .changes_since(self.slice_cursor)?
+                .iter()
+                .any(|change| match change {
+                    PhysicalChange::Body { .. }
+                    | PhysicalChange::Participation { .. }
+                    | PhysicalChange::Behavior { .. }
+                    | PhysicalChange::Contribution { .. }
+                    | PhysicalChange::Membership { .. } => true,
+                    PhysicalChange::Attribute { .. } => attributes,
+                    _ => false,
+                }))
+    }
+    fn pending_flush(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        destination: Phase,
+        budget: &ByteBudget,
+    ) -> Result<bool, AdvanceError> {
+        if self.pending_seconds == 0.0 {
+            return Ok(false);
+        }
+        if matches!(destination, Phase::SenseStart | Phase::SenseEnd) {
+            self.slice_invalidated |= self.mechanical_change(core, true)?;
+            self.slice_cursor = core.journal.physical.change_cursor();
+        }
+        let binding = self.binding(core)?;
+        self.endpoint = Some(EndpointCursor::new(
+            core,
+            self.roster.as_ref().ok_or_else(invalid)?,
+            &self.pending_rates.as_ref().ok_or_else(invalid)?.0,
+            self.pending_seconds,
+            None,
+            binding,
+            budget,
+        )?);
+        self.pending_seconds = 0.0;
+        self.pending_rates = None;
+        self.flush = Some(destination);
+        self.phase = Phase::Flush;
+        Ok(true)
+    }
+    fn discard_mechanics(&mut self) -> Result<(), AdvanceError> {
+        self.mechanics = None;
+        self.saved_interval = None;
+        self.local_changes = None;
+        Ok(())
+    }
+    fn localize_command(
+        &mut self,
+        core: &CoreMutation<'_>,
+        handle: EntityHandle,
+        before: LocalCommandPreparation,
+        budget: &ByteBudget,
+    ) -> Result<bool, AdvanceError> {
+        let Some(mechanics) = &self.mechanics else {
+            return Ok(false);
+        };
+        if !before.isolated
+            || self.event_count() != before.events
+            || !mechanics.can_refine(core, handle)?
+        {
+            return Ok(false);
+        }
+        // This sealed native movement may issue its own action identity. Source
+        // localizes that known transition by its affected owners, not ID equality.
+        let id = self.actor(core, handle)?;
+        let changes = core.journal.physical.changes_since(before.physical)?;
+        let mut changed = false;
+        for change in changes {
+            let owner = match change {
+                PhysicalChange::Body { entity_id }
+                | PhysicalChange::Behavior { entity_id, .. }
+                | PhysicalChange::Attribute { entity_id, .. }
+                | PhysicalChange::Contribution { entity_id } => {
+                    changed = true;
+                    entity_id
+                }
+                // These private controller/bookkeeping writes do not change a
+                // captured rate or physical deadline on their own.
+                PhysicalChange::Navigation { entity_id }
+                | PhysicalChange::AnimalClock { entity_id } => entity_id,
+                _ => return Ok(false),
+            };
+            if owner != id {
+                return Ok(false);
+            }
+        }
+        if !changed {
+            return Ok(true);
+        }
+        if self.local_changes.is_none() {
+            self.local_changes = Some(LocalForecastChanges {
+                handles: Vec::new(),
+                roster: self.roster.as_ref().ok_or_else(invalid)?.clone(),
+                _reservation: budget.reserve(0)?,
+            });
+        }
+        let local = self.local_changes.as_mut().ok_or_else(invalid)?;
+        if !local.handles.contains(&handle) {
+            if local.handles.len() == local.handles.capacity() {
+                local._reservation.resize(
+                    local
+                        ._reservation
+                        .bytes()
+                        .checked_add(size_of::<EntityHandle>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                local
+                    .handles
+                    .try_reserve_exact(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+            }
+            local.handles.push(handle);
+        }
+        Ok(true)
+    }
+    fn retain_navigation(
+        &mut self,
+        actor: EntityHandle,
+        pending: PendingRefugeNavigation,
+    ) -> Result<(), AdvanceError> {
+        if self.navigation.len() == self.navigation.capacity() {
+            self.reserve(size_of::<(EntityHandle, PendingRefugeNavigation)>())?;
+            self.navigation
+                .try_reserve_exact(1)
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        self.navigation.push((actor, pending));
+        Ok(())
+    }
+    fn begin_reconcile_remains(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        let handles = self.roster.as_ref().ok_or_else(invalid)?.remains();
+        let bytes = handles.iter().try_fold(
+            handles
+                .len()
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+            |bytes, handle| {
+                bytes
+                    .checked_add(self.actor(core, *handle)?.len())
+                    .ok_or(ExecutionError::Capacity)
+            },
+        )?;
+        let _scratch = budget.reserve(bytes)?;
+        let ids = handles
+            .iter()
+            .map(|handle| self.actor(core, *handle).map(str::to_owned))
+            .collect::<Result<Vec<_>, _>>()?;
+        self.reconcile = Some(ReconcileCursor::Remains(crate::body::RemainsCursor::new(
+            &ids, self.candidate, budget,
+        )?));
+        Ok(())
+    }
+    pub(super) fn drive(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        mut answer: Option<AdvanceAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<Progress, AdvanceError> {
+        if let Some(AdvanceAnswer::Event(value)) = answer {
+            self.accept_event(core, value)?;
+            answer = None;
+        }
+        if self.event.is_some() {
+            if answer.is_some() {
+                return Err(invalid().into());
+            }
+            return Ok(Progress::Event);
+        }
+        if self.participation.is_some() {
+            let Some(AdvanceAnswer::Participation(done)) = answer.take() else {
+                return Ok(Progress::Participation);
+            };
+            if self.participation_endpoint {
+                self.endpoint
+                    .as_mut()
+                    .ok_or_else(invalid)?
+                    .complete_participation(&done)?;
+            } else {
+                self.exits.as_mut().ok_or_else(invalid)?.complete(&done)?;
+            }
+            self.participation = None;
+            self.retain(EventBatch::Participation(done))?;
+        }
+        if self.preparation.is_some() {
+            let Some(AdvanceAnswer::Collation(value)) = answer.take() else {
+                return Ok(Progress::Collation);
+            };
+            self.roster = Some(
+                self.preparation
+                    .take()
+                    .ok_or_else(invalid)?
+                    .finish(core, &value)?,
+            );
+        }
+        if self.plan.is_some() {
+            let Some(AdvanceAnswer::Plan(done)) = answer.take() else {
+                return Ok(Progress::Plan);
+            };
+            if let Some(command) = done.command {
+                self.retain(EventBatch::Command(command))?;
+                self.discard_mechanics()?;
+            }
+            self.plan = None;
+        }
+        if self.command.is_some() {
+            let Some(AdvanceAnswer::Command(done)) = answer.take() else {
+                return Ok(Progress::Command);
+            };
+            let handle = self.command_actor.take().ok_or_else(invalid)?;
+            if done.command.actor_id() != self.actor(core, handle)? {
+                return Err(invalid().into());
+            }
+            if std::mem::take(&mut self.command_foraging) {
+                let name = self.actor(core, handle)?;
+                let _name = budget.reserve(name.len())?;
+                let name = name.to_owned();
+                crate::native_controller::foraging::admitted(
+                    core,
+                    &name,
+                    done.command.outcome(),
+                    budget,
+                )?;
+                core.sync_sensory_changes()?;
+            }
+            if self.command_mode.take() == Some(LocomotionMode::Escape)
+                && !done.command.outcome().ok
+            {
+                let actor = self.actor(core, handle)?;
+                let _name = budget.reserve(actor.len())?;
+                let actor = actor.to_owned();
+                crate::native_controller::movement_refused(core, &actor, done.command.outcome())?;
+            }
+            let successful = done.command.outcome().ok;
+            self.retain(EventBatch::Command(done))?;
+            self.command = None;
+            if std::mem::take(&mut self.command_territorial) && !successful {
+                let notice = crate::native_controller::territorial::refused(core, handle, budget)?;
+                self.territorial_notice(core, handle, notice, None, budget)?;
+            } else if let Some(pending) = self.territorial_notice.take() {
+                if !successful || pending.handle != handle {
+                    return Err(invalid().into());
+                }
+                if let Some(follow) = pending.follow {
+                    self.queue_territorial(handle, follow);
+                }
+                let staged = pending.notice.stage(core, handle, budget)?;
+                self.stage_event(core, staged, EventDestination::Territorial, budget)?;
+            }
+            let before = self.command_before.take();
+            if self.phase == Phase::Wander {
+                self.slice_invalidated = true;
+            } else if !successful
+                || match before {
+                    Some(before) => !self.localize_command(core, handle, before, budget)?,
+                    None => true,
+                }
+            {
+                self.discard_mechanics()?;
+            }
+            if self.event.is_some() {
+                return Ok(Progress::Event);
+            }
+        }
+        if self.perception.is_some() {
+            let Some(AdvanceAnswer::Perception(done)) = answer.take() else {
+                return Ok(Progress::Perception);
+            };
+            // Return the exact immutable policy preparation to its owning advance.
+            let (events, policies, reservation) = done.into_events()?;
+            self.policies = Some(policies);
+            self.retain(EventBatch::Perception {
+                events,
+                _reservation: reservation,
+            })?;
+            if let Some((cursor, events)) = self.perception_before.take() {
+                let changed = core
+                    .journal
+                    .physical
+                    .changes_since(cursor)?
+                    .iter()
+                    .any(|change| {
+                        matches!(
+                            change,
+                            PhysicalChange::Body { .. }
+                                | PhysicalChange::Participation { .. }
+                                | PhysicalChange::Behavior { .. }
+                                | PhysicalChange::Contribution { .. }
+                                | PhysicalChange::Attribute { .. }
+                                | PhysicalChange::Membership { .. }
+                        )
+                    });
+                if changed || self.event_count() != events {
+                    self.discard_mechanics()?;
+                }
+            }
+            self.perception = None;
+        }
+        loop {
+            if let Some(gate) = &mut self.navigation_gate {
+                let response = match answer.take() {
+                    None => None,
+                    Some(AdvanceAnswer::Geometry(value)) => Some(value),
+                    _ => return Err(invalid().into()),
+                };
+                let blocked = match gate.step(core, response, &self.prepared, budget)? {
+                    NavigationGateStep::Geometry(_) => return Ok(Progress::Geometry),
+                    NavigationGateStep::Complete(blocked) => blocked,
+                };
+                self.entity_routes_pending = gate.entity_routes_pending();
+                self.navigation_gate = None;
+                match self.navigation_after.take().ok_or_else(invalid)? {
+                    NavigationAfter::Start => {
+                        // A zero-duration read still classifies a current world
+                        // wait before opening receiving/attention scopes.
+                        if blocked || self.zero_duration {
+                            let child =
+                                self.child.take().ok_or(ExecutionError::InvalidCheckpoint)?;
+                            if self.action_routes_resolved {
+                                // Publish completed route records while another
+                                // world wait keeps elapsed time behind the gate.
+                                core.journal.keep(core.state, child)?;
+                            } else {
+                                core.journal.rollback_to(core.state, child)?;
+                            }
+                            self.outcome = Some(outcome(
+                                true,
+                                if self.action_routes_resolved {
+                                    "route-ready"
+                                } else if blocked {
+                                    "navigation-pending"
+                                } else {
+                                    "unchanged"
+                                },
+                                "No game time advanced.",
+                            ));
+                            self.phase = Phase::Done;
+                        } else {
+                            self.begin_scope(core, budget)?;
+                        }
+                    }
+                    NavigationAfter::Slice => {
+                        self.navigation_blocked |= blocked;
+                        self.prepare_slice(core, budget)?;
+                    }
+                    NavigationAfter::Publication => {
+                        self.navigation_blocked = blocked;
+                        self.complete_publication(core, budget)?;
+                    }
+                }
+                continue;
+            }
+            if self.roster.is_some()
+                && self.phase != Phase::ExitsStart
+                && self.reconcile.is_none()
+                && self.endpoint.is_none()
+                && self.motion.is_none()
+            {
+                let refresh = core
+                    .journal
+                    .physical
+                    .changes_since(self.roster_cursor)?
+                    .iter()
+                    .any(|change| {
+                        matches!(
+                            change,
+                            PhysicalChange::Body { .. }
+                                | PhysicalChange::Participation { .. }
+                                | PhysicalChange::Membership { .. }
+                        )
+                    });
+                self.roster_cursor = core.journal.physical.change_cursor();
+                if refresh {
+                    self.roster = None;
+                }
+            }
+            if self.phase != Phase::Done && self.roster.is_none() {
+                if self.preparation.is_none() {
+                    let binding = self.binding(core)?;
+                    self.preparation = Some(ParticipantPreparation::new(core, binding, budget)?);
+                }
+                return Ok(Progress::Collation);
+            }
+            if let Some(cursor) = &mut self.reconcile {
+                let input = match answer.take() {
+                    None => self.reconcile_answer.take(),
+                    Some(AdvanceAnswer::Geometry(value)) => Some(ReconcileAnswer::Geometry(value)),
+                    _ => return Err(invalid().into()),
+                };
+                match cursor.step(core, input)? {
+                    ReconcileStep::Geometry(_) => return Ok(Progress::Geometry),
+                    ReconcileStep::Occurrence(value) => {
+                        core.sync_sensory_changes()?;
+                        self.stage_event(core, value, EventDestination::Reconcile, budget)?;
+                        return Ok(Progress::Event);
+                    }
+                    ReconcileStep::Personal(pending) => {
+                        let prepared = prepare_activity_result(core, pending, budget)?;
+                        self.reconcile_answer =
+                            Some(ReconcileAnswer::Personal(acquire_activity_result(
+                                core,
+                                prepared,
+                                &core.state.installed.schema.clone(),
+                            )?));
+                    }
+                    ReconcileStep::EndEvidence { observer, life, at } => {
+                        let proof = crate::reception::end_current_evidence(core, observer, budget)?;
+                        if proof.physical_life() != life || proof.at() != at {
+                            return Err(invalid().into());
+                        }
+                        self.reconcile_answer = Some(ReconcileAnswer::Ended(proof));
+                    }
+                    ReconcileStep::Complete => {
+                        self.reconcile = None;
+                        core.sync_sensory_changes()?;
+                    }
+                }
+                continue;
+            }
+            if let Some(cursor) = &mut self.endpoint {
+                let input = match answer.take() {
+                    None => self.endpoint_answer.take(),
+                    Some(AdvanceAnswer::Geometry(value)) => Some(EndpointAnswer::Geometry(value)),
+                    _ => return Err(invalid().into()),
+                };
+                match cursor.step(core, input, &self.inputs, &mut self.release_reviews)? {
+                    EndpointStep::Participation(actor) => {
+                        self.participation = Some(crate::participation::ParticipationCursor::due(
+                            core,
+                            actor,
+                            self.candidate,
+                            budget,
+                        )?);
+                        self.participation_endpoint = true;
+                        return Ok(Progress::Participation);
+                    }
+                    EndpointStep::Geometry(_) => return Ok(Progress::Geometry),
+                    EndpointStep::Occurrence(value) => {
+                        core.sync_sensory_changes()?;
+                        self.stage_event(core, value, EventDestination::Endpoint, budget)?;
+                        return Ok(Progress::Event);
+                    }
+                    EndpointStep::Personal(pending) => {
+                        let prepared = prepare_activity_result(core, pending, budget)?;
+                        self.endpoint_answer =
+                            Some(EndpointAnswer::Personal(acquire_activity_result(
+                                core,
+                                prepared,
+                                &core.state.installed.schema.clone(),
+                            )?));
+                    }
+                    EndpointStep::Complete => {
+                        self.endpoint = None;
+                        core.sync_sensory_changes()?;
+                        if let Some(destination) = self.flush.take() {
+                            if matches!(destination, Phase::SenseStart | Phase::SenseEnd) {
+                                self.slice_invalidated |= self.mechanical_change(core, false)?;
+                                self.slice_cursor = core.journal.physical.change_cursor();
+                            }
+                            self.phase = destination;
+                        } else {
+                            self.phase = if self.rates_deferred {
+                                Phase::Arrival
+                            } else {
+                                Phase::StatusEnd
+                            };
+                            self.next = 0;
+                        }
+                    }
+                }
+                continue;
+            }
+            match self.phase {
+                Phase::Begin => {
+                    if answer.is_some() {
+                        return Err(invalid().into());
+                    }
+                    if self.mechanics.as_ref().is_some_and(|mechanics| {
+                        mechanics.seconds <= core.state.installed.time_epsilon
+                    }) {
+                        self.discard_mechanics()?;
+                    }
+                    if self.mechanics.is_none() && self.pending_flush(core, Phase::Begin, budget)? {
+                        continue;
+                    }
+                    expire_sensory_awareness(core)?;
+                    self.perceivers_captured = false;
+                    if self.mechanics.is_none() {
+                        self.capture_perceivers(core)?;
+                    }
+                    self.phase = if self.mechanics.is_none() {
+                        self.exits = Some(crate::participation::DueExits::prepare(
+                            &core.state.physical,
+                            core.state.installed.time_epsilon,
+                            budget,
+                        )?);
+                        Phase::ExitsStart
+                    } else {
+                        Phase::ActorCondition
+                    };
+                    self.next = 0;
+                }
+                Phase::ExitsStart => {
+                    if let Some(actor) = self.exits.as_ref().and_then(|exits| exits.current()) {
+                        self.participation = Some(crate::participation::ParticipationCursor::due(
+                            core,
+                            actor,
+                            self.candidate,
+                            budget,
+                        )?);
+                        self.participation_endpoint = false;
+                        return Ok(Progress::Participation);
+                    }
+                    self.exits = None;
+                    self.phase = Phase::RemainsStart;
+                }
+                Phase::RemainsStart | Phase::RemainsEnd => {
+                    let next = if self.phase == Phase::RemainsStart {
+                        Phase::AppraisalsStart
+                    } else {
+                        Phase::PoseReturnEnd
+                    };
+                    self.begin_reconcile_remains(core, budget)?;
+                    self.phase = next;
+                }
+                Phase::AppraisalsStart | Phase::AppraisalsEnd => {
+                    if let Some(value) = crate::appraisals::advance_next_appraisal(core, budget)? {
+                        self.stage_event(core, value, EventDestination::Appraisal, budget)?;
+                        return Ok(Progress::Event);
+                    }
+                    self.phase = if self.phase == Phase::AppraisalsStart {
+                        Phase::StatusStart
+                    } else {
+                        Phase::RemainsEnd
+                    };
+                    self.next = 0;
+                }
+                Phase::StatusStart | Phase::StatusEnd => {
+                    let group = self.roster.as_ref().ok_or_else(invalid)?.statuses();
+                    if let Some(handle) = group.get(self.next).copied() {
+                        self.next += 1;
+                        self.reconcile = Some(ReconcileCursor::Status(StatusReconcileCursor::new(
+                            self.actor(core, handle)?,
+                            budget,
+                        )?));
+                    } else {
+                        if self.phase == Phase::StatusStart {
+                            advance_commitments(core, &[], budget)?;
+                        }
+                        self.phase = if self.phase == Phase::StatusStart {
+                            Phase::ActorCondition
+                        } else {
+                            Phase::Arrival
+                        };
+                        self.next = 0;
+                    }
+                }
+                Phase::ActorCondition => {
+                    let group = self.roster.as_ref().ok_or_else(invalid)?.actors();
+                    let Some(handle) = group.get(self.next).copied() else {
+                        self.next = 0;
+                        self.phase = Phase::AnimalClocks;
+                        continue;
+                    };
+                    let entity = core
+                        .state
+                        .physical
+                        .entities
+                        .resolve(handle)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_ref().ok_or(ExecutionError::Invariant)?;
+                    if !actor.alive || actor.incapacitated {
+                        self.next += 1;
+                        continue;
+                    }
+                    let now = core.state.physical.header.sim_time;
+                    let due = entity
+                        .threat
+                        .as_ref()
+                        .and_then(|law| law.review_at(entity, now))
+                        .is_some_and(|at| at <= now);
+                    if self.mechanics.is_some() && actor.agency.plan.is_none() {
+                        if due {
+                            self.phase = Phase::ActorTerritorial;
+                        } else {
+                            self.next += 1;
+                        }
+                        continue;
+                    }
+                    self.reconcile = Some(ReconcileCursor::Conditions(
+                        crate::conditions::ConditionReconcileCursor::new(&entity.id, budget)?,
+                    ));
+                    self.phase = if due {
+                        Phase::ActorTerritorial
+                    } else {
+                        Phase::ActorPlan
+                    };
+                }
+                Phase::ActorTerritorial => {
+                    let handle = self.roster.as_ref().ok_or_else(invalid)?.actors()[self.next];
+                    if self.territorial.is_none() {
+                        let binding = self.binding(core)?;
+                        let Some(review) =
+                            TerritorialReview::prepare(core, handle, binding, budget)?
+                        else {
+                            self.phase = Phase::ActorPlan;
+                            continue;
+                        };
+                        if review.needs_materialized_rates(core)?
+                            && self.pending_flush(core, Phase::ActorTerritorial, budget)?
+                        {
+                            continue;
+                        }
+                        self.territorial = Some(review);
+                    }
+                    if self
+                        .territorial
+                        .as_ref()
+                        .and_then(TerritorialReview::queries)
+                        .is_some()
+                    {
+                        let Some(AdvanceAnswer::Geometry(visible)) = answer.take() else {
+                            return Ok(Progress::Geometry);
+                        };
+                        let binding = self.binding(core)?;
+                        self.territorial
+                            .as_mut()
+                            .ok_or_else(invalid)?
+                            .receive(core, visible, binding, budget)?;
+                    }
+                    let ranks = if self
+                        .territorial
+                        .as_ref()
+                        .and_then(TerritorialReview::collation)
+                        .is_some()
+                    {
+                        let Some(AdvanceAnswer::Collation(ranks)) = answer.take() else {
+                            return Ok(Progress::Collation);
+                        };
+                        Some(ranks)
+                    } else {
+                        None
+                    };
+                    let (intention, notice, changed) = self
+                        .territorial
+                        .take()
+                        .ok_or_else(invalid)?
+                        .apply(core, ranks.as_ref(), budget)?;
+                    if changed {
+                        self.discard_mechanics()?;
+                    }
+                    core.sync_sensory_changes()?;
+                    self.phase = Phase::ActorPlan;
+                    if let Some(notice) = notice {
+                        self.territorial_notice(core, handle, notice, intention, budget)?;
+                        if self.event.is_some() {
+                            return Ok(Progress::Event);
+                        }
+                    } else if let Some(intention) = intention {
+                        self.queue_territorial(handle, intention);
+                    }
+                }
+                Phase::ActorPlan => {
+                    let handle = self.roster.as_ref().ok_or_else(invalid)?.actors()[self.next];
+                    let entity = core
+                        .state
+                        .physical
+                        .entities
+                        .resolve(handle)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_ref().ok_or(ExecutionError::Invariant)?;
+                    if actor.agency.plan.is_some() || actor.agency.suspended_plan().is_some() {
+                        let _name = budget.reserve(entity.id.len())?;
+                        let actor = entity.id.clone();
+                        if self.pending_flush(core, Phase::ActorPlan, budget)? {
+                            continue;
+                        }
+                        if !self.perceivers_captured {
+                            self.capture_perceivers(core)?;
+                        }
+                        self.plan = Some(PlanRunCursor::new(core, &actor, self.candidate, budget)?);
+                        self.phase = Phase::ActorAction;
+                        return Ok(Progress::Plan);
+                    }
+                    self.phase = Phase::ActorAction;
+                }
+                Phase::ActorAction | Phase::Arrival => {
+                    let group = self.roster.as_ref().ok_or_else(invalid)?.actors();
+                    if let Some(handle) = group.get(self.next).copied() {
+                        let arrival = self.phase == Phase::Arrival;
+                        self.next += 1;
+                        let entity = core
+                            .state
+                            .physical
+                            .entities
+                            .resolve(handle)
+                            .ok_or(ExecutionError::Invariant)?;
+                        let actor = entity.actor.as_ref().ok_or(ExecutionError::Invariant)?;
+                        let action = actor.action.as_ref();
+                        let locomotion = !core
+                            .state
+                            .installed
+                            .capabilities
+                            .capability_blocked(Some(entity), "locomotion")?;
+                        if actor.alive
+                            && !actor.incapacitated
+                            && action.is_some()
+                            && (!arrival
+                                || action.is_some_and(|action| action.stage == "approaching" || action.follow.is_some()))
+                            && (locomotion
+                                || action.is_some_and(|action| action.kind == "status-effect" || action.follow.is_some() || action.is_guard()))
+                        {
+                            self.reconcile = Some(ReconcileCursor::Action(MoveAdvanceCursor::new(
+                                &entity.id.clone(),
+                                0.0,
+                                self.binding(core)?,
+                                budget,
+                            )?));
+                        }
+                        if !arrival {
+                            self.phase = Phase::ActorCondition;
+                        }
+                    } else {
+                        self.next = 0;
+                        self.phase = if self.phase == Phase::Arrival {
+                            Phase::WanderEndClocks
+                        } else {
+                            Phase::AnimalClocks
+                        };
+                    }
+                }
+                Phase::AnimalClocks | Phase::WanderEndClocks => {
+                    let installed = core.state.installed.clone();
+                    for handle in self.roster.as_ref().ok_or_else(invalid)?.animals() {
+                        let _name = budget.reserve(self.actor(core, *handle)?.len())?;
+                        let id = self.actor(core, *handle)?.to_owned();
+                        reconcile_wander(
+                            &mut core.physical(),
+                            &installed,
+                            &id,
+                            installed.time_epsilon,
+                        )?;
+                    }
+                    if self.phase == Phase::WanderEndClocks {
+                        self.phase = Phase::AppraisalsEnd;
+                        continue;
+                    }
+                    let count = self.roster.as_ref().ok_or_else(invalid)?.animals().len();
+                    self.reserve(
+                        count
+                            .saturating_sub(self.choices.capacity())
+                            .checked_mul(size_of::<EntityHandle>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    self.choices.clear();
+                    self.choices
+                        .try_reserve_exact(count)
+                        .map_err(|_| ExecutionError::Capacity)?;
+                    self.choices.extend(
+                        self.roster
+                            .as_ref()
+                            .ok_or_else(invalid)?
+                            .animals()
+                            .iter()
+                            .filter(|handle| {
+                                core.state
+                                    .physical
+                                    .entities
+                                    .resolve(**handle)
+                                    .and_then(|entity| entity.animal.as_ref())
+                                    .is_some_and(|animal| {
+                                        animal.episode.is_some() || animal.foraging.is_some()
+                                    })
+                            })
+                            .copied(),
+                    );
+                    self.choices.sort_by(|a, b| {
+                        let at = |h| {
+                            core.state
+                                .physical
+                                .entities
+                                .resolve(h)
+                                .and_then(|entity| entity.animal.as_ref())
+                                .and_then(|animal| animal.episode.as_ref())
+                                .map_or(f64::INFINITY, |episode| episode.review_at)
+                        };
+                        at(*a).total_cmp(&at(*b))
+                    });
+                    self.next = 0;
+                    self.phase = Phase::AnimalChoices;
+                }
+                Phase::AnimalChoices => {
+                    let Some(handle) = self.choices.get(self.next).copied() else {
+                        self.phase = Phase::FlightStart;
+                        continue;
+                    };
+                    let has_episode = core
+                        .state
+                        .physical
+                        .entities
+                        .resolve(handle)
+                        .and_then(|entity| entity.animal.as_ref())
+                        .is_some_and(|state| state.episode.is_some());
+                    if !has_episode {
+                        if self.forage.is_none() && self.hunt_route.is_none() {
+                            let entity = core
+                                .state
+                                .physical
+                                .entities
+                                .resolve(handle)
+                                .ok_or(ExecutionError::Invariant)?;
+                            let due = crate::native_controller::foraging::review_at(
+                                entity,
+                                &core.state.installed,
+                                core.state.physical.header.sim_time,
+                            )?
+                            .is_some_and(|at| at <= core.state.physical.header.sim_time);
+                            if !due {
+                                self.next += 1;
+                                continue;
+                            }
+                            if self.pending_flush(core, Phase::AnimalChoices, budget)? {
+                                continue;
+                            }
+                            let binding = self.binding(core)?;
+                            self.forage = ForageChoice::prepare(core, handle, binding, budget)?;
+                            if self.forage.is_none() {
+                                self.next += 1;
+                                continue;
+                            }
+                        }
+                        if self.forage.as_ref().is_some_and(|choice| choice.sight_request().is_some()) {
+                            let Some(AdvanceAnswer::Geometry(result)) = answer.take() else {
+                                return Ok(Progress::Geometry);
+                            };
+                            let next = self.binding(core)?;
+                            self.forage.as_mut().ok_or_else(invalid)?.observe(
+                                &core.state.physical,
+                                result,
+                                next,
+                                budget,
+                            )?;
+                            return Ok(Progress::Collation);
+                        }
+                        let before = core.journal.physical.change_cursor();
+                        let progress = if self.hunt_route.is_some() {
+                            let Some(AdvanceAnswer::Geometry(result)) = answer.take() else {
+                                return Ok(Progress::Geometry);
+                            };
+                            let binding = self.binding(core)?;
+                            self.hunt_route.take().ok_or_else(invalid)?.step(core, result, binding, budget)?
+                        } else {
+                            let Some(AdvanceAnswer::Collation(result)) = answer.take() else {
+                                return Ok(Progress::Collation);
+                            };
+                            let binding = self.binding(core)?;
+                            self.forage.take().ok_or_else(invalid)?.choose(core, &result, binding, budget)?
+                        };
+                        let decision = match progress {
+                            ForageProgress::Complete(decision) => decision,
+                            ForageProgress::Routes(route) => {
+                                self.hunt_route = Some(route);
+                                return Ok(Progress::Geometry);
+                            }
+                        };
+                        if core
+                            .journal
+                            .physical
+                            .changes_since(before)?
+                            .iter()
+                            .any(|change| matches!(change, PhysicalChange::Behavior { .. }))
+                        {
+                            self.discard_mechanics()?;
+                        }
+                        self.next += 1;
+                        if let Some(intention) = decision {
+                            self.queued_movement = Some((
+                                handle,
+                                NativeIntention::Forage(intention),
+                                Phase::AnimalChoices,
+                            ));
+                            self.phase = Phase::NativeCommand;
+                        }
+                        core.sync_sensory_changes()?;
+                        continue;
+                    }
+                    if self.response.is_none() {
+                        let id = self.actor(core, handle)?;
+                        let entity = core
+                            .state
+                            .physical
+                            .entities
+                            .resolve(handle)
+                            .ok_or(ExecutionError::Invariant)?;
+                        let state = entity.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+                        let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
+                        let has_flight =
+                            entity.spatial.flight.is_some() || episode.aerial_route_id.is_some();
+                        let prepared = self.prepared.iter().position(|(actor, _)| actor == id);
+                        // A saved wait can become ready or stale before its
+                        // review date. The controller owns that readiness read.
+                        if episode.review_at > core.state.physical.header.sim_time
+                            && prepared.is_none()
+                            && episode.proposal.is_none()
+                        {
+                            self.next += 1;
+                            continue;
+                        }
+                        // Aerial choices directly admit an existing flight
+                        // continuation. Settle elapsed rates from the old
+                        // movement first. Ground routes still use NativeCommand.
+                        if has_flight && self.pending_flush(core, Phase::AnimalChoices, budget)? {
+                            continue;
+                        }
+                        let id = self.actor(core, handle)?;
+                        let supplied = prepared.map(|at| self.prepared.remove(at).1);
+                        self.response = Some(GroundResponseCursor::prepare(
+                            id,
+                            self.candidate,
+                            supplied,
+                            budget,
+                        )?);
+                    }
+                    let input = match answer.take() {
+                        None => None,
+                        Some(AdvanceAnswer::Geometry(value)) => Some(value),
+                        _ => return Err(invalid().into()),
+                    };
+                    let flight_before = self.mechanics.as_ref().and_then(|_| {
+                        let entity = core.state.physical.entities.resolve(handle)?;
+                        let has_aerial_choice = entity.spatial.flight.is_some()
+                            || entity
+                                .animal
+                                .as_ref()
+                                .and_then(|animal| animal.episode.as_ref())
+                                .is_some_and(|episode| episode.aerial_route_id.is_some());
+                        has_aerial_choice.then(|| core.journal.physical.change_cursor())
+                    });
+                    let decision = match self
+                        .response
+                        .as_mut()
+                        .ok_or_else(invalid)?
+                        .step(core, input, budget)?
+                    {
+                        GroundResponseStep::Geometry(_) => return Ok(Progress::Geometry),
+                        GroundResponseStep::Complete(value) => value.into_decision(),
+                    };
+                    // A private review that only renews a clock leaves the
+                    // current mechanical forecast intact.
+                    if let Some(before) = flight_before
+                        && core
+                            .journal
+                            .physical
+                            .changes_since(before)?
+                            .iter()
+                            .any(|change| matches!(change, PhysicalChange::Behavior { .. }))
+                    {
+                        self.discard_mechanics()?;
+                    }
+                    self.response = None;
+                    self.next += 1;
+                    match decision {
+                        GroundResponseDecision::None => {}
+                        GroundResponseDecision::Pending(pending) => {
+                            self.navigation_blocked = core
+                                .state
+                                .physical
+                                .entities
+                                .resolve(handle)
+                                .and_then(|entity| entity.animal.as_ref())
+                                .and_then(|animal| animal.episode.as_ref())
+                                .and_then(|episode| episode.proposal.as_ref())
+                                .is_some_and(|proposal| {
+                                    proposal.wait != Some(NavigationWait::Entity)
+                                });
+                            self.retain_navigation(handle, pending)?;
+                            if self.navigation_blocked {
+                                self.phase = Phase::Publish;
+                            }
+                        }
+                        GroundResponseDecision::Stop => {
+                            self.queued_movement =
+                                Some((handle, NativeIntention::Stop, Phase::AnimalChoices));
+                            self.phase = Phase::NativeCommand;
+                        }
+                        GroundResponseDecision::Route { route, reservation } => {
+                            self.queued_movement = Some((
+                                handle,
+                                NativeIntention::Route(route, LocomotionMode::Escape, reservation),
+                                Phase::AnimalChoices,
+                            ));
+                            self.phase = Phase::NativeCommand;
+                        }
+                    }
+                    core.sync_sensory_changes()?;
+                }
+                Phase::FlightStart | Phase::FlightMove => {
+                    let start = self.phase == Phase::FlightStart;
+                    if !self
+                        .roster
+                        .as_ref()
+                        .ok_or_else(invalid)?
+                        .flyers()
+                        .is_empty()
+                    {
+                        if self.flight.is_none() {
+                            self.flight =
+                                Some(FlightCursor::new(if start { 0.0 } else { self.seconds }));
+                        }
+                        let binding = self.binding(core)?;
+                        let geometry = match answer.take() {
+                            Some(AdvanceAnswer::Geometry(geometry)) => Some(geometry),
+                            None => None,
+                            _ => return Err(invalid().into()),
+                        };
+                        let flyers = self.roster.as_ref().ok_or_else(invalid)?.flyers();
+                        let seconds = self.seconds;
+                        let mut passages = self
+                            .projectile_settlement
+                            .as_mut()
+                            .and_then(ProjectileSettle::passage_tracks_mut);
+                        let mut aims = self.working.as_mut().and_then(|work| work.aims.as_deref_mut());
+                        let result = self.flight.as_mut().ok_or_else(invalid)?.step(
+                            core,
+                            flyers,
+                            binding,
+                            geometry,
+                            budget,
+                            |handle, from, to| {
+                                let watched_aim = aims.as_ref().is_some_and(|aims| aims.recording(handle));
+                                let watched_passage = passages.as_ref()
+                                    .is_some_and(|passages| passages.recording(handle));
+                                if watched_aim || watched_passage {
+                                    let track = crate::time::movement::ExecutedMotion::straight(
+                                        from, to, seconds, budget,
+                                    )?;
+                                    if let Some(aims) = aims.as_deref_mut().filter(|_| watched_aim) {
+                                        aims.record(handle, Arc::clone(&track));
+                                    }
+                                    if let Some(passages) = passages.as_deref_mut().filter(|_| watched_passage) {
+                                        passages.record(handle, track)?;
+                                    }
+                                }
+                                Ok(())
+                            },
+                        )?;
+                        core.sync_sensory_changes()?;
+                        match result {
+                            FlightStep::Geometry => return Ok(Progress::Geometry),
+                            FlightStep::Event(event) => {
+                                self.stage_event(core, event, EventDestination::Flight, budget)?;
+                                return Ok(Progress::Event);
+                            }
+                            FlightStep::Done => self.flight = None,
+                        }
+                    }
+                    if start {
+                        self.phase = Phase::PoseReturnStart;
+                    } else if self.working.as_ref().is_some_and(|work| work.aims.is_some()) {
+                        self.phase = Phase::AimMotion;
+                    } else {
+                        self.after_motion(core)?;
+                    }
+                }
+                Phase::AimMotion => {
+                    let geometry = match answer.take() {
+                        Some(AdvanceAnswer::Geometry(geometry)) => Some(geometry),
+                        None => None,
+                        _ => return Err(invalid().into()),
+                    };
+                    let binding = self.binding(core)?;
+                    let work = self.working.as_mut().ok_or_else(invalid)?;
+                    let aims = work.aims.as_mut().ok_or_else(invalid)?;
+                    if aims.run(core, geometry, self.seconds, binding, budget)? {
+                        return Ok(Progress::Geometry);
+                    }
+                    work.aims = None;
+                    self.after_motion(core)?;
+                }
+                Phase::PoseReturnStart | Phase::PoseReturnEnd => {
+                    let start = self.phase == Phase::PoseReturnStart;
+                    if self.pose_return.is_none() && core.state.physical.bodies.has_local_poses() {
+                        if answer.is_some() {
+                            return Err(invalid().into());
+                        }
+                        let binding = self.binding(core)?;
+                        self.pose_return = super::super::projectiles::local_pose::ReturnProbe::prepare(core, binding, budget)?;
+                        if self.pose_return.as_ref().is_some_and(|probe| probe.question().is_some()) {
+                            return Ok(Progress::Geometry);
+                        }
+                    }
+                    if let Some(probe) = self.pose_return.take() {
+                        let input = match answer.take() {
+                            Some(AdvanceAnswer::Geometry(answer)) => Some(answer),
+                            None => None,
+                            _ => return Err(invalid().into()),
+                        };
+                        if let Some(event) = probe.finish(core, input, budget)? {
+                            core.sync_sensory_changes()?;
+                            self.stage_event(core, event, EventDestination::Flight, budget)?;
+                            return Ok(Progress::Event);
+                        }
+                        continue;
+                    }
+                    self.phase = if start {
+                        Phase::SenseStart
+                    } else if core.state.physical.projectiles.flights.is_empty() {
+                        Phase::SenseEnd
+                    } else {
+                        if self.projectile_settlement.is_none() {
+                            self.projectile_settlement = Some(ProjectileSettle::current(budget)?);
+                        }
+                        Phase::ProjectileSettle
+                    };
+                }
+                Phase::SenseStart | Phase::SenseEnd => {
+                    let destination = self.phase;
+                    if destination == Phase::SenseEnd && !self.boundary_recorded {
+                        let changed = self.mechanical_change(core, true)?
+                            || self.event_count() != self.slice_events;
+                        let shared = self
+                            .mechanics
+                            .as_ref()
+                            .is_none_or(|mechanics| mechanics.seconds == 0.0)
+                            || changed;
+                        if shared || self.slices_since_boundary == 32 {
+                            self.intervals += 1;
+                            self.slices_since_boundary = 0;
+                        }
+                        if shared {
+                            self.discard_mechanics()?;
+                        }
+                        self.boundary_recorded = true;
+                        self.slice_invalidated = false;
+                        self.slice_cursor = core.journal.physical.change_cursor();
+                        self.slice_events = self.event_count();
+                    }
+                    if destination == Phase::SenseStart
+                        && !self.perceivers_changed(core)?
+                        && !self.perception_work_due(core, budget)?
+                    {
+                        self.phase = Phase::Predict;
+                        continue;
+                    }
+                    let due = physical_sampling_due(
+                        core,
+                        self.roster.as_ref().ok_or_else(invalid)?.actors(),
+                        self.policies.as_mut().ok_or_else(invalid)?,
+                        budget,
+                    )?;
+                    if due && self.pending_flush(core, destination, budget)? {
+                        continue;
+                    }
+                    if self.slice_invalidated {
+                        self.discard_mechanics()?;
+                        self.slice_invalidated = false;
+                    }
+                    self.phase = if destination == Phase::SenseStart {
+                        Phase::Predict
+                    } else {
+                        Phase::Travel
+                    };
+                    self.perception = Some(PerceptionCursor::prepare(
+                        core,
+                        self.roster.as_ref().ok_or_else(invalid)?.actors(),
+                        self.policies.take().ok_or_else(invalid)?,
+                        self.candidate,
+                        budget,
+                    )?);
+                    self.perception_before =
+                        Some((core.journal.physical.change_cursor(), self.event_count()));
+                    return Ok(Progress::Perception);
+                }
+                Phase::Predict => {
+                    self.begin_navigation_gate(core, NavigationAfter::Slice, budget)?;
+                }
+                Phase::Steering => {
+                    return self.steer_slice(core, answer.take(), budget);
+                }
+                Phase::ProjectileBoundary => {
+                    return self.projectile_boundary(core, answer.take(), budget);
+                }
+                Phase::ProjectileSettle => {
+                    return self.settle_projectiles(core, answer.take(), budget);
+                }
+                Phase::NativeCommand => {
+                    if self.pending_flush(core, Phase::NativeCommand, budget)? {
+                        continue;
+                    }
+                    let (handle, intention, resume) =
+                        self.queued_movement.take().ok_or_else(invalid)?;
+                    let actor = self.actor(core, handle)?;
+                    let _name = budget.reserve(actor.len())?;
+                    let actor = actor.to_owned();
+                    self.command_before = Some(LocalCommandPreparation {
+                        physical: core.journal.physical.change_cursor(),
+                        events: self.event_count(),
+                        isolated: self
+                            .mechanics
+                            .as_ref()
+                            .map(|forecast| forecast.can_refine(core, handle))
+                            .transpose()?
+                            .unwrap_or(false),
+                    });
+                    let (command, mode) = match intention {
+                        NativeIntention::Stop => (
+                            begin_native_stop(core, &actor, self.candidate, budget)?,
+                            LocomotionMode::Escape,
+                        ),
+                        NativeIntention::Route(route, mode, reservation) => {
+                            let operation = begin_native_movement(
+                                core,
+                                &actor,
+                                route,
+                                mode,
+                                self.candidate,
+                                budget,
+                            )?;
+                            drop(reservation);
+                            (operation, mode)
+                        }
+                        NativeIntention::Forage(intention) => {
+                            self.command_foraging = !matches!(&intention, ForageIntention::Stop);
+                            let operation = match intention {
+                                ForageIntention::Stop => {
+                                    begin_native_stop(core, &actor, self.candidate, budget)?
+                                }
+                                ForageIntention::Feed(target, item, _allowance) => {
+                                    begin_native_feed(
+                                        core,
+                                        &actor,
+                                        &target,
+                                        item.as_deref(),
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
+                                ForageIntention::Move(point, _allowance) => {
+                                    begin_native_foraging_move(
+                                        core,
+                                        &actor,
+                                        &point,
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
+                                ForageIntention::HuntMove(point, route, _allowance) => {
+                                    crate::commands::begin_native_hunt_move(
+                                        core, &actor, &point, route, self.candidate, budget,
+                                    )?
+                                }
+                                ForageIntention::HuntStrike(target) => {
+                                    crate::commands::begin_native_hunt_contact(
+                                        core, &actor, target, self.candidate, budget,
+                                    )?
+                                }
+                            };
+                            (operation, LocomotionMode::Travel)
+                        }
+                        NativeIntention::Territorial(intention) => {
+                            let command = match intention {
+                                TerritorialIntention::Move(point, _funded) => {
+                                    self.command_territorial = true;
+                                    begin_territorial_move(
+                                        core,
+                                        &actor,
+                                        &point,
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
+                                TerritorialIntention::Stop => {
+                                    begin_native_stop(core, &actor, self.candidate, budget)?
+                                }
+                                TerritorialIntention::Strike(target) => begin_native_contact(
+                                    core,
+                                    &actor,
+                                    target,
+                                    self.candidate,
+                                    budget,
+                                )?,
+                            };
+                            (command, LocomotionMode::Travel)
+                        }
+                    };
+                    self.command = Some(command);
+                    self.command_actor = Some(handle);
+                    self.command_mode = Some(mode);
+                    self.phase = resume;
+                    return Ok(Progress::Command);
+                }
+                Phase::Move => {
+                    return self.move_slice(core, answer.take(), budget);
+                }
+                Phase::Wander => {
+                    return self.wander_slice(core, answer.take(), budget);
+                }
+                Phase::Endpoint => {
+                    self.begin_endpoint(core, budget)?;
+                }
+                Phase::Travel => {
+                    // Run after ordinary endpoint receiving, so arrival and
+                    // company are based on accepted results, not predictions.
+                    if self.travel.is_none() {
+                        if answer.is_some() {
+                            return Err(invalid().into());
+                        }
+                        self.travel = SettleTravel::new(core, self.candidate, budget)?;
+                    }
+                    if let Some(travel) = self.travel.as_mut() {
+                        let input = match answer.take() {
+                            None => None,
+                            Some(AdvanceAnswer::TravelTerms(value)) => Some(TravelAnswer::Terms(value)),
+                            Some(AdvanceAnswer::Geometry(value)) => Some(TravelAnswer::Geometry(value)),
+                            _ => return Err(invalid().into()),
+                        };
+                        match travel.step(core, input, budget)? {
+                            TravelStep::Terms => return Ok(Progress::TravelTerms),
+                            TravelStep::Geometry => return Ok(Progress::Geometry),
+                            TravelStep::Occurrence(value) => {
+                                self.stage_event(core, value, EventDestination::Travel, budget)?;
+                                return Ok(Progress::Event);
+                            }
+                            TravelStep::Complete => self.travel = None,
+                        }
+                    }
+                    self.phase = Phase::Continue;
+                }
+                Phase::Continue => {
+                    // Source settles the complete endpoint's commitments after
+                    // its remains and receiving occurrences, before continuing.
+                    advance_commitments(core, self.events(), budget)?;
+                    let changed = self.mechanical_change(core, true)?
+                        || self.event_count() != self.slice_events;
+                    if changed
+                        || self
+                            .mechanics
+                            .as_ref()
+                            .is_some_and(|mechanics| mechanics.seconds == 0.0)
+                    {
+                        self.discard_mechanics()?;
+                    }
+                    self.phase = if core.state.physical.header.sim_time >= self.end_at
+                        || self.intervals >= self.max_intervals
+                        || self.motion_slices >= 4096
+                        || self.publication_requested
+                        || self.navigation_blocked
+                    {
+                        Phase::Publish
+                    } else {
+                        Phase::Begin
+                    };
+                    if self.phase == Phase::Begin {
+                        return Ok(Progress::Continue);
+                    }
+                }
+                Phase::Publish => {
+                    if self.pending_flush(core, Phase::Publish, budget)? {
+                        continue;
+                    }
+                    self.prepare_publication(core, budget)?;
+                    self.begin_navigation_gate(core, NavigationAfter::Publication, budget)?;
+                }
+                Phase::Done => {
+                    if answer.is_some() {
+                        return Err(invalid().into());
+                    }
+                    return Ok(Progress::Complete(CompletedAdvance {
+                        outcome: self.outcome.take().ok_or_else(invalid)?,
+                        navigation: std::mem::take(&mut self.navigation),
+                        entity_routes_pending: self.entity_routes_pending,
+                        continuation: self.continuation.take(),
+                        release_reviews: std::mem::take(&mut self.release_reviews),
+                        events: std::mem::take(&mut self.events),
+                        _reservation: self.reservation.take().ok_or_else(invalid)?,
+                    }));
+                }
+                Phase::Flush => return Err(invalid().into()),
+            }
+        }
+    }
+}
+mod slice;

@@ -68,7 +68,7 @@ No decay from ordinary absence, misses, recovery or equipment changes; no cross-
 
 **Implemented selected consumer · Restrictiveness: Safe.** Native shot outcomes, practice credit, known-rule explanations and the finite improvement require no additional model call. NPC choice/conversation remains genuine and funded under existing admission, with no automatic paid retry or fictional assent on outage. Only the learner/authorized audience sees private practice and lesson information; a public skill definition does not disclose others' values or an animal's hidden danger factor. Existing recording, action, state, storage and spatial capacity limits control admission; these local bounds do not qualify population scale. Revisit complete action/lesson workloads before broader simultaneous training or background offers.
 
-Selected workload evidence: [practical competence](../verification/practical-competence.md#workload-and-cost). Three complete six-release journeys used the current 69-entity/23-actor prepared world; finite storage and episode ownership were inspected during complete coaching. This does not qualify broader simultaneous training, population capacity or human value.
+Selected workload evidence: [character skill](../verification/practical-competence.md#workload-and-cost). Three complete six-release journeys used the current 69-entity/23-actor prepared world; finite storage and episode ownership were inspected during complete coaching. This does not qualify broader simultaneous training, population capacity or human value.
 
 ## Maintained records
 

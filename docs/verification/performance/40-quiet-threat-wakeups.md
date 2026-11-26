@@ -20,7 +20,7 @@ The source assessment may select a small private implementation only if those de
 
 ## Relevant engine research
 
-Unreal's behavior trees avoid repeatedly evaluating unchanged decisions by reacting to relevant events. Rapier similarly stops simulating sleeping bodies, with explicit wake-up handling for user changes. These are useful design principles, not evidence that either library already manages OpenLegend's animal decisions. An OpenLegend change still needs its own complete wake-up conditions. [Epic's explanation](https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview), [Rapier's sleeping-body contract](https://rapier.rs/docs/user_guides/javascript/rigid_body_sleeping/).
+Unreal's behavior trees avoid repeatedly evaluating unchanged decisions by reacting to relevant events. Rapier similarly stops simulating sleeping bodies, with explicit wake-up handling for user changes. These are useful design principles, not evidence that either library already manages Open Legend's animal decisions. An Open Legend change still needs its own complete wake-up conditions. [Epic's explanation](https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview), [Rapier's sleeping-body contract](https://rapier.rs/docs/user_guides/javascript/rigid_body_sleeping/).
 
 [Current combined comparison](39-combined-idle-reviews.md) · [Standalone bottleneck report](bottlenecks.md) · [Plan](../../projects/three-times-scene-performance.md#quiet-territorial-review-assessment)
 

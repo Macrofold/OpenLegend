@@ -1,10 +1,17 @@
 import { validateAppearanceState } from './appearance-state.js';
-import { validateCartography } from './cartography.js';
+import { validateExpressions, type ExpressionDefinition } from './expression-definitions.js';
+import { supportsCommitmentCompletion } from './commitments.js';
+import { invalidateAttentionPreparation } from './attention.js';
+import { currentFacetGet, currentFacetGrant, receivedTrackKey } from './perception-current.js';
+import { validateMapMarkers, validateMapArtwork } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
-import { validateExpressions, type ExpressionDefinition } from './expression-definitions.js';
-import { validateSensoryProgress } from './perception-timing.js';
+import {
+  validateSensoryProgress,
+  validateSensoryContinuation,
+  requestSightWork,
+} from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
 import { validateNativeFeeding } from './native-feeding.js';
@@ -16,6 +23,20 @@ import { validateSocialOfferPolicy } from './social-offer-policy.js';
 import { validateSocialOffers } from './social-offers.js';
 import { validateCraftCatalogue } from './craft-catalogue.js';
 import { validExperienceSummary } from './experience-sources.js';
+import {
+  validateObservationContribution,
+  validatePerceptionEvidenceState,
+} from './perception-evidence.js';
+import { validateExperienceManifest, validPersonalSourceRef } from './experience-manifest.js';
+import {
+  validateRememberedImpression,
+  impressionFits,
+  validateExperienceRetention,
+  validatePersonalReceiptLocator,
+} from './remembered-impressions.js';
+import { validateTemporalEvidenceState } from './temporal-validation.js';
+import { validateAttentionState } from './attention.js';
+import { receivedAttentionSource } from './perception-current.js';
 import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
@@ -42,6 +63,7 @@ import {
   subjectNarration,
   presentVerb,
   validateNarration,
+  validateNativeText,
 } from './narration.js';
 import { validName } from '@open-legend/language';
 import { validatePlaces } from './places.js';
@@ -54,7 +76,8 @@ import { validateWorkState } from './work-budget.js';
 import { validateParticipation } from './participation.js';
 import { current, isDraft, original, freeze } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
-import { validateKnowledge } from './knowledge.js';
+import { validateKnowledge, validObserverSubject } from './knowledge.js';
+import { MIND_LIMITS } from './mind.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
@@ -69,7 +92,6 @@ import {
   validateConditionEpisodes,
   type ConditionPolicy,
 } from './conditions.js';
-import { validatePerceptionState } from './perception-frame.js';
 import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './acoustics.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
@@ -101,6 +123,12 @@ import { validateNativeResponseProfiles } from './native-response.js';
 import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
+import { validateSemanticContinuation } from './semantic-opportunities.js';
+import {
+  selectedTemporalPolicy,
+  selectedAttentionPolicy,
+  selectedAttributeAffectsObservation,
+} from './world-composition.js';
 import { trustedRecipeImplementations } from './world-composition.js';
 import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
@@ -112,7 +140,12 @@ import {
   validateNativeValueWindow,
 } from './native-values.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
+import {
+  hasRecordFields,
+  isSafeRecordId,
+  isImmutableData,
+  immutableDataSnapshot,
+} from './records.js';
 import { validateEquipment } from './equipment.js';
 import { validateContactDefense } from './contact-defense.js';
 import { validateEvasion } from './evasion.js';
@@ -125,7 +158,6 @@ import {
   validateCombatHelpReference,
 } from './outings.js';
 import { validateSocialPolicy } from './social-policy.js';
-import { validateSocialPerception, type SocialPerceptionPolicy } from './social-perception.js';
 import { readOnlyDraftView } from './draft.js';
 
 export type AttributeValue = number | string;
@@ -223,8 +255,6 @@ export interface WorldModuleManifest {
   sensePins: DefinitionPin[];
   acoustics: AcousticPolicy;
   acousticsPin: DefinitionPin;
-  socialPerception: SocialPerceptionPolicy | null;
-  socialPerceptionPin: DefinitionPin | null;
   rangedPolicy: RangedPolicy | null;
   rangedPolicyPin: DefinitionPin | null;
   activityHosts: DefinitionPin[];
@@ -335,7 +365,6 @@ export function createModuleManifest(
   recipeFamilies: readonly DefinitionPin[],
   activityHosts: readonly DefinitionPin[] = [],
   rangedPolicy: RangedPolicy | null = null,
-  socialPerception: SocialPerceptionPolicy | null = null,
   experimentGuides: readonly WorldExperimentGuide[] = [],
   expressions: readonly ExpressionDefinition[] = [],
 ): WorldModuleManifest {
@@ -354,8 +383,6 @@ export function createModuleManifest(
     sensePins: senses.map(definitionPin),
     acoustics: structuredClone(DEFAULT_ACOUSTICS),
     acousticsPin: definitionPin(DEFAULT_ACOUSTICS),
-    socialPerception: socialPerception && structuredClone(socialPerception),
-    socialPerceptionPin: socialPerception && definitionPin(socialPerception),
     recipeFamilies: recipeFamilies.map((pin) => ({ ...pin })),
     activityHosts: activityHosts.map((pin) => ({ ...pin })),
     rangedPolicy: rangedPolicy && structuredClone(rangedPolicy),
@@ -439,8 +466,6 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'appraisals',
     'acoustics',
     'acousticsPin',
-    'socialPerception',
-    'socialPerceptionPin',
     'activityHosts',
     'recipeFamilies',
     'rangedPolicy',
@@ -511,14 +536,6 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
   )
     throw new Error('Invalid sense bindings.');
   validateAcoustics(manifest.acoustics);
-  validateSocialPerception(manifest.socialPerception);
-  if (
-    manifest.socialPerception === null
-      ? manifest.socialPerceptionPin !== null
-      : !isDefinitionPin(manifest.socialPerceptionPin) ||
-        !sameDefinitionPin(manifest.socialPerceptionPin, definitionPin(manifest.socialPerception))
-  )
-    throw new Error('Missing exact social perception dependency.');
   if (canonicalJson(manifest.acousticsPin) !== canonicalJson(definitionPin(manifest.acoustics)))
     throw new Error('Missing exact acoustic policy dependency.');
   const senseIds = new Set<string>(),
@@ -535,6 +552,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
               'implementation',
               'radius',
               'sampleSeconds',
+              'detailSampleSeconds',
               'fieldOfViewRadians',
               'routineTiming',
             ]
@@ -557,6 +575,12 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       (sense.implementation === 'vision-geometry-v1' &&
         sense.sampleSeconds !== undefined &&
         (!finite(sense.sampleSeconds) || sense.sampleSeconds <= 0)) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.detailSampleSeconds !== undefined &&
+        (!finite(sense.detailSampleSeconds) ||
+          sense.detailSampleSeconds <= 0 ||
+          sense.sampleSeconds === undefined ||
+          sense.detailSampleSeconds > sense.sampleSeconds)) ||
       (sense.implementation === 'vision-geometry-v1' &&
         sense.fieldOfViewRadians !== undefined &&
         (!finite(sense.fieldOfViewRadians) ||
@@ -943,7 +967,21 @@ export function setAttribute(
   const before = prior.value;
   prior.value = value;
   prior.revision++;
-  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'attribute' });
+  recordSemanticChange(world, {
+    kind: 'state',
+    entityId: entity.id,
+    field: 'attribute',
+    // Private meter arithmetic has the same sensory meaning whether applied
+    // eagerly here or retained by the native numeric owner. Any resulting body
+    // or condition transition records its own outward change.
+    outwardChange: d.disclosure === 'public',
+  });
+  // A private receiver parameter can change its own next interpretation without
+  // presenting that value to anyone else or sensing during the attribute write.
+  if (selectedAttributeAffectsObservation(world, entity, d.id)) {
+    invalidateAttentionPreparation(world, entity.id);
+    requestSightWork(world, entity.id, 'detail');
+  }
   // Notice actual one-off outcomes, never infer their cause from later meter readings.
   // Passive rate/transfer callers opt out, avoiding per-interval history and UI noise.
   if (
@@ -1065,6 +1103,103 @@ function attributeCritical(
   const threshold = attributeThreshold(entity.actor, d, c.value, c.unit);
   return c.operator === 'lessThan' ? compared < threshold : compared <= threshold;
 }
+interface AttributeProjectionInput {
+  definition: AttributeDefinition;
+  value: AttributeValue;
+  range?: { min: number; max: number };
+  revision: number;
+  critical: boolean | undefined;
+  editorCritical: boolean | undefined;
+}
+function attributeProjectionInput(
+  world: WorldState,
+  entity: Entity,
+  definition: AttributeDefinition,
+  value: AttributeValue,
+): AttributeProjectionInput {
+  const actor = readOnlyDraftView(entity.actor!);
+  return {
+    definition,
+    value,
+    ...(definition.schema.kind === 'number' ? { range: attributeRange(actor, definition) } : {}),
+    revision:
+      actor.practice?.[definition.id]?.revision ??
+      currentAttributeState(world, entity, definition.id)?.revision ??
+      actor.body?.revision ??
+      0,
+    critical: attributeCritical(entity, definition, value, definition.critical),
+    editorCritical: attributeCritical(entity, definition, value, definition.editorCritical),
+  };
+}
+function projectAttributeInput(input: AttributeProjectionInput): AttributeView {
+  const { definition: d, value, range, revision, critical, editorCritical } = input;
+  return {
+    id: d.id,
+    version: d.version,
+    name: d.name,
+    display: d.schema.kind === 'number' ? 'meter' : 'category',
+    presentation: d.presentation,
+    ...((HOST_IMPLEMENTATIONS[d.implementation].storage === 'attributes' ||
+      d.implementation === 'native-health-v1') &&
+    d.schema.kind === 'number'
+      ? { changeFeedback: 'effects' as const }
+      : {}),
+    ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
+    value,
+    status: 'known',
+    critical,
+    editorCritical,
+    revision,
+    ...(d.schema.kind === 'number'
+      ? { min: range!.min, max: range!.max, unit: d.schema.unit }
+      : {}),
+  };
+}
+const publicProjectionDefinitions = new WeakMap<object, readonly AttributeDefinition[]>();
+function projectionDefinitions(world: WorldState, audience: 'owner' | 'public') {
+  const definitions = attributeDefinitions(world);
+  if (audience === 'owner') return definitions;
+  const immutable = isImmutableData(definitions);
+  let result = immutable ? publicProjectionDefinitions.get(definitions) : undefined;
+  if (!result) {
+    result = definitions.filter((definition) => definition.disclosure === 'public');
+    if (immutable) publicProjectionDefinitions.set(definitions, result);
+  }
+  return result;
+}
+export interface PublicAttributeProjection {
+  readonly key: string;
+  readonly inputs: readonly Readonly<AttributeProjectionInput>[];
+}
+/** A source phase captures numeric/category inputs without constructing presentation
+ * rows. Its later detailed receivers share these finite values, never a live world
+ * or draft definition that an earlier receiver could have changed. */
+export function capturePublicAttributeProjection(
+  world: WorldState,
+  entity: Entity,
+): PublicAttributeProjection {
+  const inputs: AttributeProjectionInput[] = [];
+  if (entity.actor)
+    for (const definition of projectionDefinitions(world, 'public')) {
+      const value = readAttribute(world, entity, definition);
+      if (value === undefined) continue;
+      const input = attributeProjectionInput(world, entity, definition, value);
+      input.definition = immutableDataSnapshot(definition, readOnlyDraftView);
+      if (input.range) Object.freeze(input.range);
+      inputs.push(Object.freeze(input));
+    }
+  // Every captured dynamic input participates, including future projection
+  // fields; static wording/presentation uses its existing exact definition pin.
+  const key = JSON.stringify(
+    inputs.map(({ definition, ...state }) => [definitionPin(definition), state]),
+  );
+  return Object.freeze({ key, inputs: Object.freeze(inputs) });
+}
+export function projectPublicAttributeProjection(
+  projection: PublicAttributeProjection,
+): AttributeView[] {
+  return projection.inputs.map(projectAttributeInput);
+}
 export function projectAttributes(
   world: WorldState,
   entity: Entity,
@@ -1072,72 +1207,44 @@ export function projectAttributes(
   attributeIds?: readonly string[],
 ): AttributeView[] {
   if (!entity.actor) return [];
-  const selected = attributeIds
-    ? attributeIds.flatMap((id) => {
-        const definition = attributeDefinition(world, id);
-        return definition && readAttribute(world, entity, definition) !== undefined
-          ? [definition]
-          : [];
-      })
-    : applicableAttributes(world, entity);
-  return selected
-    .filter((d) => audience === 'owner' || d.disclosure === 'public')
-    .map((d) => {
-      const value = readAttribute(world, entity, d);
-      const range = d.schema.kind === 'number' ? attributeRange(entity.actor, d) : undefined;
-      return {
-        id: d.id,
-        version: d.version,
-        name: d.name,
-        display: d.schema.kind === 'number' ? 'meter' : 'category',
-        presentation: d.presentation,
-        ...((HOST_IMPLEMENTATIONS[d.implementation].storage === 'attributes' ||
-          d.implementation === 'native-health-v1') &&
-        d.schema.kind === 'number'
-          ? { changeFeedback: 'effects' as const }
-          : {}),
-        ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
-        value: value ?? null,
-        status: value === undefined ? 'unknown' : 'known',
-        critical: attributeCritical(entity, d, value, d.critical),
-        editorCritical: attributeCritical(entity, d, value, d.editorCritical),
-        ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
-          ? {
-              editorCriticalComparison: {
-                operator: d.editorCritical.compare.operator,
-                rounding: d.editorCritical.compare.rounding,
-                value: attributeThreshold(
-                  entity.actor,
-                  d,
-                  d.editorCritical.compare.value,
-                  d.editorCritical.compare.unit,
-                ),
-              },
-            }
-          : {}),
-        revision:
-          entity.actor!.practice?.[d.id]?.revision ??
-          currentAttributeState(world, entity, d.id)?.revision ??
-          entity.actor!.body?.revision ??
-          0,
-        ...(d.schema.kind === 'number'
-          ? { min: range!.min, max: range!.max, unit: d.schema.unit }
-          : {}),
-        ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
-        ...(audience === 'owner' && d.condition
-          ? { condition: conditionText(world, entity, d, value) }
-          : {}),
-        ...(audience === 'owner' && attributeConcernActive(entity, d, value)
-          ? {
-              concern: renderNarration(
-                world,
-                narrationTemplate(d.concern!.text, { subject: entity }),
-                entity.id,
+  const result: AttributeView[] = [];
+  // Disclosure precedes value preparation, and each selected value is read once.
+  for (const d of projectionDefinitions(world, audience)) {
+    if (attributeIds && !attributeIds.includes(d.id)) continue;
+    const value = readAttribute(world, entity, d);
+    if (value === undefined) continue;
+    result.push({
+      ...projectAttributeInput(attributeProjectionInput(world, entity, d, value)),
+      ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
+        ? {
+            editorCriticalComparison: {
+              operator: d.editorCritical.compare.operator,
+              rounding: d.editorCritical.compare.rounding,
+              value: attributeThreshold(
+                entity.actor,
+                d,
+                d.editorCritical.compare.value,
+                d.editorCritical.compare.unit,
               ),
-            }
-          : {}),
-      };
+            },
+          }
+        : {}),
+      ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
+      ...(audience === 'owner' && d.condition
+        ? { condition: conditionText(world, entity, d, value) }
+        : {}),
+      ...(audience === 'owner' && attributeConcernActive(entity, d, value)
+        ? {
+            concern: renderNarration(
+              world,
+              narrationTemplate(d.concern!.text, { subject: entity }),
+              entity.id,
+            ),
+          }
+        : {}),
     });
+  }
+  return result;
 }
 export function bodyContext(
   world: WorldState,
@@ -1145,13 +1252,24 @@ export function bodyContext(
   options: { exactNumbers?: boolean } = {},
 ): string {
   const actor = entity.actor!;
-  return [
-    // Qualitative concerns supplement measurements; they must not replace them.
-    // docs/memory-architecture.md#3-one-compact-model-facing-context
-    ...projectAttributes(world, entity, 'owner').flatMap((v) => {
-      const name = v.name;
+  return formatBodyContext(
+    projectAttributes(world, entity, 'owner'),
+    activeStatusEffects(world, entity)
+      .filter((definition) => definition.actions)
+      .map((definition) =>
+        renderNarration(
+          world,
+          subjectNarration(entity, [
+            presentVerb(entity, 'be'),
+            ` ${definition.label.toLowerCase()}.`,
+          ]),
+          entity.id,
+        ),
+      ),
+    actor.action?.type,
+    (v) => {
       const definition = attributeDefinition(world, v.id)!;
-      const display = (value: unknown) => {
+      const value = v.value;
         if (typeof value !== 'number' || options.exactNumbers) return String(value);
         const formatted = formatDisplayNumber(value);
         const rounded = Number(formatted);
@@ -1170,25 +1288,34 @@ export function bodyContext(
           attributeCritical(entity, definition, value, definition.critical) !==
             attributeCritical(entity, definition, rounded, definition.critical);
         return changesMeaning || rounded === value ? String(value) : `approximately ${formatted}`;
-      };
+    },
+  );
+}
+
+/** Measurements and already rendered owner statuses form one finite context.
+ * This formatter cannot read private state from any other physical body. */
+export function formatBodyContext(
+  attributes: readonly ReturnType<typeof projectAttributes>[number][],
+  actionStatuses: readonly string[],
+  activityType: string | undefined,
+  formatMeasurement: (value: AttributeView) => string = (value) => String(value.value),
+): string {
+  return [
+    // Qualitative concerns supplement measurements; they must not replace them.
+    // docs/memory-architecture.md#3-one-compact-model-facing-context
+    ...attributes.flatMap((v) => {
+      const name = v.name;
+      const display = formatMeasurement(v);
       const measurement =
         v.status === 'unknown'
           ? `${name}: unknown.`
           : v.display === 'meter'
-            ? `${name}: ${display(v.value)}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
-            : `${name}: ${display(v.value)}.`;
+            ? `${name}: ${display}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
+            : `${name}: ${display}.`;
       return [measurement, v.condition ?? v.concern, v.meaning].filter(Boolean);
     }),
-    ...activeStatusEffects(world, entity)
-      .filter((d) => d.actions)
-      .map((d) =>
-        renderNarration(
-          world,
-          subjectNarration(entity, [presentVerb(entity, 'be'), ` ${d.label.toLowerCase()}.`]),
-          entity.id,
-        ),
-      ),
-    `Current activity: ${actor.action?.type ?? 'idle'}.`,
+    ...actionStatuses,
+    `Current activity: ${activityType ?? 'idle'}.`,
   ].join(' ');
 }
 export function advanceReservoirs(
@@ -1213,38 +1340,11 @@ export function advanceReservoirs(
       );
   }
 }
-export function validateWorldModules(world: WorldState): void {
-  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
-  if (Object.hasOwn(world, 'conversations'))
-    throw new Error(
-      'Current worlds contain personal speech evidence, not ordinary social membership records.',
-    );
-  if (world.pendingNativeIntegration !== undefined) {
-    // Validate the existing anchors before any pending operation is read, then the
-    // exact continuation and its current view. Neither validation installs a twin
-    // world or changes the candidate that the save owner actually persists.
-    const anchors = { ...world };
-    delete anchors.pendingNativeIntegration;
-    validateWorldModules(anchors);
-    validateNativeValueWindow(world);
-    validateWorldModules(materializeNativeValues(world));
-    return;
-  }
-  validateEntityCollection(world.entities);
-  validateOrderedRecord(
-    world.commandReceipts,
-    (entry) =>
-      hasRecordFields(entry, ['digest', 'outcome']) &&
-      typeof entry.digest === 'string' &&
-      !!entry.outcome &&
-      typeof entry.outcome === 'object' &&
-      Object.hasOwn(entry.outcome, 'ok') &&
-      typeof (entry.outcome as { ok: unknown }).ok === 'boolean' &&
-      Object.hasOwn(entry.outcome, 'code') &&
-      typeof (entry.outcome as { code: unknown }).code === 'string' &&
-      Object.hasOwn(entry.outcome, 'message') &&
-      typeof (entry.outcome as { message: unknown }).message === 'string',
-  );
+/** Authored presentation is immutable content, independently checked before a
+ * native installation. Saved map markers retain their separate live owner. */
+export function validateWorldPresentation(
+  world: Pick<WorldState, 'presentation' | 'statusEffectPolicy'>,
+): void {
   if (
     world.presentation !== undefined &&
     (!hasRecordFields(
@@ -1281,7 +1381,7 @@ export function validateWorldModules(world: WorldState): void {
           ))))
   )
     throw new Error('Invalid authored clock wording.');
-  validateCartography(world);
+  validateMapArtwork(world);
   validatePortraitArt(world);
   validateItemArt(world);
   const daylight = world.presentation?.daylight;
@@ -1300,16 +1400,179 @@ export function validateWorldModules(world: WorldState): void {
     throw new Error('Invalid authored daylight presentation.');
   if (world.presentation?.crafting !== undefined)
     validateCraftCatalogue(world.presentation.crafting);
-  for (const entries of Object.values(world.experience?.awareness ?? {}))
-    for (const entry of entries) validateEventEvidence(entry);
+}
+
+export function validateWorldModules(world: WorldState): void {
+  validateSensoryContinuation(world);
+  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
+  if (Object.hasOwn(world, 'conversations'))
+    throw new Error(
+      'Current worlds contain personal speech evidence, not ordinary social membership records.',
+    );
+  if (world.pendingNativeIntegration !== undefined) {
+    // Validate the existing anchors before any pending operation is read, then the
+    // exact continuation and its current view. Neither validation installs a twin
+    // world or changes the candidate that the save owner actually persists.
+    const anchors = { ...world };
+    delete anchors.pendingNativeIntegration;
+    validateWorldModules(anchors);
+    validateNativeValueWindow(world);
+    validateWorldModules(materializeNativeValues(world));
+    return;
+  }
+  validateEntityCollection(world.entities);
+  validateOrderedRecord(
+    world.commandReceipts,
+    (entry) =>
+      hasRecordFields(entry, ['digest', 'outcome']) &&
+      typeof entry.digest === 'string' &&
+      !!entry.outcome &&
+      typeof entry.outcome === 'object' &&
+      Object.hasOwn(entry.outcome, 'ok') &&
+      typeof (entry.outcome as { ok: unknown }).ok === 'boolean' &&
+      Object.hasOwn(entry.outcome, 'code') &&
+      typeof (entry.outcome as { code: unknown }).code === 'string' &&
+      Object.hasOwn(entry.outcome, 'message') &&
+      typeof (entry.outcome as { message: unknown }).message === 'string',
+  );
+  validateWorldPresentation(world);
+  validateMapMarkers(world);
+  const originalObservations = new Map<string, string>();
+  const validatePersonalOriginals = (
+    evidence: {
+      actorId: string;
+      observation?: import('./perception-evidence.js').ObservationContribution;
+      observations?: import('./perception-evidence.js').ObservationContribution[];
+    },
+    actorId: string,
+  ) => {
+    if (evidence.actorId !== actorId) throw new Error('Foreign personal evidence owner.');
+    for (const observation of [
+      ...(evidence.observation ? [evidence.observation] : []),
+      ...(evidence.observations ?? []),
+    ]) {
+      validateObservationContribution(observation, originalObservations);
+      if (observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime)
+        throw new Error('Foreign or future personal observation.');
+    }
+  };
+  for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {}))
+    for (const entry of entries) {
+      validateEventEvidence(entry);
+      validatePersonalOriginals(entry, actorId);
+      if (entry.retention) validateExperienceRetention(entry.retention, actorId);
+      if (entry.sourceReceipt) validatePersonalReceiptLocator(entry.sourceReceipt, actorId);
+    }
+  if (
+    !world.timePolicy ||
+    !Number.isFinite(world.timePolicy.normalGameSecondsPerSecond) ||
+    world.timePolicy.normalGameSecondsPerSecond <= 0
+  )
+    throw new Error('Invalid selected normal-time rate.');
+  validatePerceptionEvidenceState(world, originalObservations);
+  validateTemporalEvidenceState(world, world.experience?.temporal);
+  for (const [actorId, revision] of Object.entries(world.experience?.privacyRevisions ?? {}))
+    if (!isSafeRecordId(actorId) || !Number.isSafeInteger(revision) || revision < 0)
+      throw new Error('Invalid personal evidence revision.');
+  for (const entity of entityValues(world.entities))
+    if (
+      entity.actor?.attentionCapacity !== undefined &&
+      (!Number.isSafeInteger(entity.actor.attentionCapacity) ||
+        entity.actor.attentionCapacity < 1 ||
+        entity.actor.attentionCapacity > selectedAttentionPolicy(world).maximumCapacity)
+    )
+      throw new Error('Invalid actor attention capacity.');
+  for (const owner of Object.values(world.perceptionEvidence ?? {}))
+    if (owner.attention !== undefined) {
+      validateAttentionState(owner.attention, selectedAttentionPolicy(world), owner.observer!);
+      for (const annotation of Object.values(owner.attention.annotations)) {
+        const body = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
+        if (
+          !body ||
+          body.field.id !== annotation.leaseId ||
+          annotation.exposure.track !==
+            receivedTrackKey(
+              currentFacetGrant(owner, body).exposure,
+              currentFacetGrant(owner, body).channel,
+            )
+        )
+          throw new Error('Attention annotation has no matching received source.');
+      }
+    }
+  for (const [actorId, entries] of Object.entries(world.memories))
+    for (const memory of entries) {
+      if (memory.retention) validateExperienceRetention(memory.retention, actorId);
+      if (memory.sourceReceipt) validatePersonalReceiptLocator(memory.sourceReceipt, actorId);
+      if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
+      if (
+        memory.obligation?.completion &&
+        !supportsCommitmentCompletion(world, memory.obligation.completion.eventType)
+      )
+        throw new Error('Unsupported commitment completion event.');
+      if (
+        !['episode', 'belief', 'commitment', 'reflection', 'impression'].includes(memory.kind) ||
+        (memory.kind === 'impression') !== (memory.impression !== undefined)
+      )
+        throw new Error('Invalid personal memory kind.');
+      if (memory.impression) {
+        validateRememberedImpression(memory.impression, actorId, world.simTime);
+        if (!impressionFits(memory, selectedTemporalPolicy(world).impression))
+          throw new Error('Remembered impression exceeds installed limits.');
+        if (
+          memory.evidence ||
+          memory.observation ||
+          memory.observations ||
+          memory.manifest ||
+          memory.obligation
+        )
+          throw new Error('A remembered impression cannot masquerade as exact evidence.');
+      }
+      if (memory.evidence) {
+        validateEventEvidence(memory.evidence);
+        validatePersonalOriginals(memory.evidence, actorId);
+      }
+      for (const observation of [
+        ...(memory.observation ? [memory.observation] : []),
+        ...(memory.observations ?? []),
+      ]) {
+        validateObservationContribution(observation, originalObservations);
+        if (observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime)
+          throw new Error('Foreign or future personal observation.');
+      }
+      if (memory.manifest) {
+        validateExperienceManifest(memory.manifest, originalObservations);
+        if (
+          memory.manifest.observations.some(
+            (observation) =>
+              observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime,
+          )
+        )
+          throw new Error('Foreign or future remembered observation.');
+      }
+    }
   for (const [actorId, entries] of Object.entries(world.experience?.summaries ?? {}))
-    for (const entry of entries)
-      if (!validExperienceSummary(entry, actorId))
-        throw new Error('Invalid current experience summary.');
+    for (const summary of entries) {
+      if (summary.retention) validateExperienceRetention(summary.retention, actorId);
+      if (
+        !Array.isArray(summary.sources) ||
+        summary.sources.some((source) => !validPersonalSourceRef(source))
+      )
+        throw new Error('Invalid exact summary sources.');
+      validateExperienceManifest(summary.manifest, originalObservations);
+      if (
+        summary.manifest.observations.some(
+          (observation) =>
+            observation.observer.actorId !== actorId || observation.acquiredAt > world.simTime,
+        )
+      )
+        throw new Error('Foreign or future summary observation.');
+    }
   validateSocialPolicy(world);
   validateCombatEncounters(world);
-  for (const event of world.events)
+  for (const event of world.events) {
+    validateNativeText(event.text);
     if (event.narration !== undefined) validateNarration(event.narration);
+  }
   const interval = world.nativeInterval;
   if (
     interval !== undefined &&
@@ -1328,6 +1591,28 @@ export function validateWorldModules(world: WorldState): void {
   validateResourceReservations(world);
   validateParticipation(world);
   validateKnowledge(world);
+  for (const [actorId, mind] of Object.entries(world.minds ?? {})) {
+    if (
+      !entityGet(world.entities, actorId)?.actor ||
+      !mind ||
+      !Array.isArray(mind.documents) ||
+      !Array.isArray(mind.records) ||
+      mind.documents.length > MIND_LIMITS.documents ||
+      mind.records.length > MIND_LIMITS.records
+    )
+      throw new Error('Invalid saved personal mind owner.');
+    const documents = new Set(mind.documents.map((document) => document.id));
+    for (const record of mind.records)
+      if (
+        !record ||
+        !isSafeRecordId(record.id) ||
+        !Number.isSafeInteger(record.revision) ||
+        record.revision < 0 ||
+        !documents.has(record.documentId) ||
+        (record.subjectId !== null && !validObserverSubject(record.subjectId))
+      )
+        throw new Error('Invalid saved personal interpretation subject.');
+  }
   validateObserverIdentities(world);
   // Disposable development saves use current-state validation, not per-feature version gates.
   // docs/save-and-load.md#active-development-policy
@@ -1337,7 +1622,6 @@ export function validateWorldModules(world: WorldState): void {
   validateAssemblies(world);
   validateHearthDefinitions(world);
   validateSpatialWorld(world);
-  validatePerceptionState(world);
   validatePlaces(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
@@ -1400,6 +1684,9 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  for (const entity of entityValues(world.entities))
+    if (entity.actor?.agency.semantic !== undefined)
+      validateSemanticContinuation(entity.actor.agency.semantic);
   validateOutings(world);
   validateSocialCompacts(world);
   validateCooperationExperience(world);
@@ -1429,7 +1716,7 @@ export function validateWorldModules(world: WorldState): void {
     (definition) => definition.implementation === 'native-health-v1',
   );
   for (const e of entityValues(world.entities)) {
-    validateSensoryProgress(e);
+    validateSensoryProgress(world, e);
     validateGatheringBinding(world, e);
     if (
       e.actor?.capabilities &&
@@ -1504,9 +1791,10 @@ export function validateWorldModules(world: WorldState): void {
         e.actor.alive ||
         (remains.sourceId !== e.id &&
           !(
-            e.kind === 'remains' &&
+            e.kind === world.moduleManifest.bodyPolicy?.reincarnation?.corpseKind &&
             entityGet(world.entities, remains.sourceId)?.actor?.controller === 'player' &&
-            entityGet(world.entities, remains.sourceId)?.kind !== 'remains' &&
+            entityGet(world.entities, remains.sourceId)?.kind !==
+              world.moduleManifest.bodyPolicy?.reincarnation?.corpseKind &&
             !entityGet(world.entities, remains.sourceId)?.remains
           )) ||
         !Number.isFinite(remains.diedAt) ||
@@ -1555,7 +1843,15 @@ export function validateWorldModules(world: WorldState): void {
         !Array.isArray(inspection.itemIds) ||
         inspection.itemIds.length > 16 ||
         new Set(inspection.itemIds).size !== inspection.itemIds.length ||
-        inspection.itemIds.some((id) => typeof id !== 'string' || !id || id.length > 120))
+        inspection.itemIds.some((id) => typeof id !== 'string' || !id || id.length > 120) ||
+        !validName(inspection.containerName) ||
+        !Array.isArray(inspection.itemNames) ||
+        inspection.itemNames.length !== inspection.itemIds.length ||
+        inspection.itemNames.some((name) => !validName(name)) ||
+        !Array.isArray(inspection.evidenceIds) ||
+        inspection.evidenceIds.length !== inspection.itemIds.length + 1 ||
+        new Set(inspection.evidenceIds).size !== inspection.evidenceIds.length ||
+        inspection.evidenceIds.some((id) => typeof id !== 'string' || !isSafeRecordId(id)))
     )
       throw new Error('Invalid saved inventory inspection.');
     if (

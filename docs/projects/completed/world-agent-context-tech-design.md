@@ -66,7 +66,7 @@ Inspection that adds required facts returns a new `packetRef` alongside those fa
 
 Use stable keys, readable IDs, ordinary English and named units. Preserve multiline descriptions as escaped YAML scalars. Do not concatenate unescaped player text into trusted instructions. Tool observations, authored labels and evidence remain untrusted data even after formatting.
 
-The current renderer supplies fixed English safety/completion instructions followed by a `Task data (YAML)` section whose authored values are JSON-escaped YAML values. Macrofold receives this as the Run prompt; there is no separate OpenLegend trusted-instruction field on that call. Qualify a real instruction-channel contract before moving text between roles. Native authorization remains the enforcement boundary, and provider/persona/environment additions must be counted when measuring complete requests.
+The current renderer supplies fixed English safety/completion instructions followed by a `Task data (YAML)` section whose authored values are JSON-escaped YAML values. Macrofold receives this as the Run prompt; there is no separate Open Legend trusted-instruction field on that call. Qualify a real instruction-channel contract before moving text between roles. Native authorization remains the enforcement boundary, and provider/persona/environment additions must be counted when measuring complete requests.
 
 ## 3. Mechanical descriptions
 
@@ -168,7 +168,7 @@ Distinct reductions have distinct owners:
 
 Use current draft JSON as the complete selected candidate. Store accepted constraints and unresolved questions without letting a lossy model summary become their authority. User wording stays attributable; an agent hypothesis never becomes an accepted requirement. Retain unresolved effects/costs and original operation IDs through reduction. If a summary cannot preserve required meaning, retrieve the source rather than fabricate a smaller equivalent.
 
-Macrofold currently owns its harness transcript. OpenLegend cannot arbitrarily delete or reorder tool exchanges inside it. First implement deterministic packet assembly and fresh-session continuity; optional native harness compaction is separate qualified work. The NPC [conversation compaction project](conversation-compaction-tech-design.md) is related guidance, not a store or authority to reuse for this administrative conversation.
+Macrofold currently owns its harness transcript. Open Legend cannot arbitrarily delete or reorder tool exchanges inside it. First implement deterministic packet assembly and fresh-session continuity; optional native harness compaction is separate qualified work. The NPC [conversation compaction project](conversation-compaction-tech-design.md) is related guidance, not a store or authority to reuse for this administrative conversation.
 
 ## 8. Plain English, YAML and field templates
 
@@ -194,7 +194,7 @@ Changed admission configuration requires a fresh remote session with safe contin
 
 Macrofold should derive filesystem affordances from effective file permissions: no access means no file tool/instructions; read-only means reading guidance without save promises; writable output scope permits output guidance. Internal harness checkpoint persistence remains available without exposing agent file access. `harness_prompt_mode: replace` alone does not remove unconditional worker output instructions. Use readable unique tool aliases rather than opaque hashes where safely supported. The initial foundation suppressed harness questions; the implemented and qualified [structured-question design](invention-questions-tech-design.md) supersedes that choice for the OpenCode owner conversation with capture-and-stop and explicit fresh continuation. Harnesses without the qualified bridge retain ordinary final-text clarification.
 
-The companion Macrofold changes preserve defaults and expose optional question permissions. Local live qualification also uses the owner's existing filesystem/reliability work as an explicitly recorded temporary build overlay, outside the companion PR. The [deployment handoff](../../macrofold-world-agent-handoff.md#qualified-build-and-deployment-boundary) distinguishes those sources and links remaining WW07 work. An OpenLegend prompt cannot securely remove tools or override a conflicting privileged system message. Qualify permission intersections, resumed/warm sessions and file-enabled regression cases in that owner.
+The companion Macrofold changes preserve defaults and expose optional question permissions. Local live qualification also uses the owner's existing filesystem/reliability work as an explicitly recorded temporary build overlay, outside the companion PR. The [deployment handoff](../../macrofold-world-agent-handoff.md#qualified-build-and-deployment-boundary) distinguishes those sources and links remaining WW07 work. An Open Legend prompt cannot securely remove tools or override a conflicting privileged system message. Qualify permission intersections, resumed/warm sessions and file-enabled regression cases in that owner.
 
 ## 10. Verification and measurements
 

@@ -1,0 +1,674 @@
+//! Issue opaque references only for facts the existing observer read grants.
+//! Body, person and historical handles serve different lifetimes and roles.
+
+use crate::authority::RequestScope;
+use openlegend_simulation::{
+    capture::ContextActionWitness,
+    commands::SpeechTargetRole,
+    encoding::{append_hex, json_record, sha256_hex, write_json_record},
+    host::{ByteBudget, ByteReservation},
+    received::TemporalReceiptLocator,
+    reception::ObserverSubject,
+    runtime::{NativeWorldSession, RuntimeError},
+};
+use ring::{aead, hmac};
+use serde::{Serialize, de::DeserializeOwned};
+use std::{
+    cell::RefCell,
+    io::{self, Write},
+};
+
+pub struct ReferenceIssuer {
+    body: hmac::Key,
+    person: hmac::Key,
+    historical: hmac::Key,
+    private_cursor: aead::LessSafeKey,
+}
+
+const RECENT_CURSOR: &[u8] = b"openlegend-private-recent-cursor";
+const RECENT_EDIT: &[u8] = b"openlegend-private-recent-edit";
+const PEOPLE_CURSOR: &[u8] = b"openlegend-private-people-cursor";
+const TRADE_CURSOR: &[u8] = b"openlegend-private-trade-cursor";
+const OFFER_RECIPIENT_CURSOR: &[u8] = b"openlegend-private-offer-recipient-cursor";
+const OBJECT_HISTORY_CURSOR: &[u8] = b"openlegend-private-object-history-cursor";
+const EVIDENCE_CURSOR: &[u8] = b"openlegend-private-evidence-cursor";
+pub(crate) const PRIVATE_CURSOR_BYTES: usize = 2048;
+
+const INVENTORY_GROUP: &[u8] = b"openlegend-private-inventory-group";
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct InventoryGroupClaim<Text> {
+    pub(crate) scope: Text,
+    pub(crate) container: Text,
+    pub(crate) revision: u64,
+    pub(crate) key: [u8; 32],
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RecentEditReference<Text, Receipt> {
+    pub(crate) scope: Text,
+    pub(crate) world: Text,
+    pub(crate) generation: Text,
+    pub(crate) life: u64,
+    pub(crate) privacy_revision: u64,
+    pub(crate) receipt: Receipt,
+}
+
+pub(crate) struct ResolvedContact {
+    pub(crate) id: String,
+    pub(crate) life: Option<u64>,
+    _custody: ByteReservation,
+}
+
+impl ResolvedContact {
+    pub(crate) fn new(
+        id: &str,
+        life: Option<u64>,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        let custody = budget.reserve(id.len())?;
+        Ok(Self {
+            id: id.to_owned(),
+            life,
+            _custody: custody,
+        })
+    }
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PrimaryActionSelection<Text> {
+    pub(crate) target_id: Text,
+    pub(crate) action_id: Text,
+    pub(crate) reference: Text,
+}
+
+pub(crate) struct ResolvedSpeechTarget {
+    pub(crate) id: String,
+    pub(crate) role: SpeechTargetRole,
+    pub(crate) custody: ByteReservation,
+}
+
+pub struct PlayerReferences<'a> {
+    issuer: &'a ReferenceIssuer,
+    origin: &'a RequestScope,
+    scope: String,
+    history: String,
+}
+
+impl ReferenceIssuer {
+    pub fn new() -> Result<Self, getrandom::Error> {
+        let mut secret = [0; 32];
+        getrandom::fill(&mut secret)?;
+        Ok(Self {
+            body: random_key()?,
+            person: random_key()?,
+            historical: random_key()?,
+            private_cursor: aead::LessSafeKey::new(
+                aead::UnboundKey::new(&aead::AES_256_GCM, &secret)
+                    .expect("the private cursor key has the required fixed size"),
+            ),
+        })
+    }
+
+    /// Opaque continuation for a bounded private history read. Internal
+    /// positions never leave the server in plaintext. The caller owns the
+    /// current grant and query checks, and funds this short encoded token.
+    pub(crate) fn seal_recent_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(RECENT_CURSOR, value)
+    }
+
+    pub(crate) fn open_recent_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(RECENT_CURSOR, token)
+    }
+
+    /// A previously disclosed receipt is only a candidate for a creator's
+    /// protected edit. Scope and native source ownership are checked again.
+    pub(crate) fn seal_recent_edit(
+        &self,
+        reference: &RecentEditReference<&str, &TemporalReceiptLocator>,
+    ) -> Option<String> {
+        self.seal_private(RECENT_EDIT, reference)
+    }
+
+    pub(crate) fn open_recent_edit(
+        &self,
+        token: &str,
+    ) -> Option<RecentEditReference<String, TemporalReceiptLocator>> {
+        self.open_private(RECENT_EDIT, token)
+    }
+
+    pub(crate) fn seal_people_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(PEOPLE_CURSOR, value)
+    }
+
+    pub(crate) fn open_people_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(PEOPLE_CURSOR, token)
+    }
+
+    pub(crate) fn seal_trade_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(TRADE_CURSOR, value)
+    }
+
+    pub(crate) fn open_trade_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(TRADE_CURSOR, token)
+    }
+
+    pub(crate) fn seal_offer_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(OFFER_RECIPIENT_CURSOR, value)
+    }
+
+    pub(crate) fn open_offer_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(OFFER_RECIPIENT_CURSOR, token)
+    }
+
+    pub(crate) fn seal_object_history_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(OBJECT_HISTORY_CURSOR, value)
+    }
+
+    pub(crate) fn open_object_history_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(OBJECT_HISTORY_CURSOR, token)
+    }
+
+    pub(crate) fn seal_evidence_cursor(&self, value: &impl Serialize) -> Option<String> {
+        self.seal_private(EVIDENCE_CURSOR, value)
+            .filter(|token| token.len() <= PRIVATE_CURSOR_BYTES)
+    }
+
+    pub(crate) fn open_evidence_cursor<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(EVIDENCE_CURSOR, token)
+    }
+
+    pub(crate) fn seal_inventory_group(&self, group: &InventoryGroupClaim<&str>) -> Option<String> {
+        self.seal_private(INVENTORY_GROUP, group)
+    }
+
+    pub(crate) fn open_inventory_group(&self, token: &str) -> Option<InventoryGroupClaim<String>> {
+        self.open_private(INVENTORY_GROUP, token)
+    }
+
+    pub(crate) fn seal_gate_choice(&self, choice: &impl Serialize) -> Option<String> {
+        self.seal_private(b"gate-choice", choice)
+            .filter(|token| token.len() <= PRIVATE_CURSOR_BYTES)
+    }
+
+    pub(crate) fn open_gate_choice<T: DeserializeOwned>(&self, token: &str) -> Option<T> {
+        self.open_private(b"gate-choice", token)
+    }
+
+    fn seal_private(&self, purpose: &[u8], value: &impl Serialize) -> Option<String> {
+        let mut nonce = [0; aead::NONCE_LEN];
+        getrandom::fill(&mut nonce).ok()?;
+        let mut body = json_record(value).ok()?.into_bytes();
+        self.private_cursor
+            .seal_in_place_append_tag(
+                aead::Nonce::assume_unique_for_key(nonce),
+                aead::Aad::from(purpose),
+                &mut body,
+            )
+            .ok()?;
+        let mut result = String::with_capacity(2 * (nonce.len() + body.len()));
+        append_hex(&mut result, &nonce);
+        append_hex(&mut result, &body);
+        Some(result)
+    }
+
+    fn open_private<T: DeserializeOwned>(&self, purpose: &[u8], token: &str) -> Option<T> {
+        if token.len() > PRIVATE_CURSOR_BYTES || token.len() % 2 != 0 {
+            return None;
+        }
+        let hex = |byte| char::from(byte).to_digit(16).map(|digit| digit as u8);
+        let mut decoded = token
+            .as_bytes()
+            .chunks_exact(2)
+            .map(|pair| Some((hex(pair[0])? << 4) | hex(pair[1])?))
+            .collect::<Option<Vec<_>>>()?;
+        let (prefix, body) = decoded.split_at_mut_checked(aead::NONCE_LEN)?;
+        let nonce = aead::Nonce::try_assume_unique_for_key(prefix).ok()?;
+        let clear = self
+            .private_cursor
+            .open_in_place(nonce, aead::Aad::from(purpose), body)
+            .ok()?;
+        serde_json::from_slice(clear).ok()
+    }
+
+    /// Bind all references in one permitted view to one session, controller
+    /// and timeline. The caller retains its own admitted output fields.
+    pub fn scoped<'a>(
+        &'a self,
+        scope: &'a RequestScope,
+    ) -> Result<PlayerReferences<'a>, serde_json::Error> {
+        let key = scope.key()?;
+        let timeline_scope = format!("{}:{key}", scope.timeline_id);
+        let history = json_record(&(&scope.world_id, timeline_scope))?;
+        Ok(PlayerReferences {
+            issuer: self,
+            origin: scope,
+            scope: key,
+            history,
+        })
+    }
+
+    /// Resolve only a current body reference issued for this view. The returned
+    /// private source ID funds its own lifetime in the owning turn.
+    pub(crate) fn resolve_contact(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_body(session, scope, selected, None, budget)
+    }
+
+    /// A body-bound choice can also require the physical-life reference
+    /// issued inside this same scoped view. Non-actors carry no physical life.
+    pub(crate) fn resolve_contact_body(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        expected_body: Option<&str>,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_matching(
+            session,
+            scope,
+            selected,
+            expected_body,
+            |_| Ok(true),
+            budget,
+        )
+    }
+
+    /// An exact pile contact grants only already observed stock or a still
+    /// current inspection member. The native owner checks both read paths.
+    pub(crate) fn resolve_ground_pickup(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        item: Option<&str>,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        self.resolve_contact_matching(
+            session,
+            scope,
+            selected,
+            None,
+            |body| session.pickup_contact_allows(&scope.actor_id, body, item),
+            budget,
+        )
+    }
+
+    fn resolve_contact_matching(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        expected_body: Option<&str>,
+        matches: impl Fn(
+            &openlegend_simulation::capture::PlayerObservedBody<'_>,
+        ) -> Result<bool, RuntimeError>,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedContact>, RuntimeError> {
+        if !selected.starts_with("contact-") {
+            return Ok(None);
+        }
+        let _workspace = budget.reserve(2048)?;
+        let scoped = self
+            .scoped(scope)
+            .map_err(RuntimeError::application_refused)?;
+        let mut selected_source = None;
+        session.with_player_contacts(&scope.account_id, &scope.actor_id, |body| {
+            match scoped.contact(
+                body.source_id,
+                body.physical_life.unwrap_or(0),
+                body.lease_id,
+            ) {
+                Ok(current) if current == selected => {
+                    match matches(&body) {
+                        Ok(true) => {}
+                        Ok(false) => return true,
+                        Err(error) => {
+                            selected_source = Some(Err(error));
+                            return true;
+                        }
+                    }
+                    if let Some(expected) = expected_body {
+                        match scoped.body(body.source_id, body.physical_life.unwrap_or(0)) {
+                            Ok(actual) if actual == expected => (),
+                            Ok(_) => return true,
+                            Err(error) => {
+                                selected_source =
+                                    Some(Err(RuntimeError::application_refused(error)));
+                                return true;
+                            }
+                        }
+                    }
+                    selected_source = Some(ResolvedContact::new(
+                        body.source_id,
+                        body.actor.then(|| body.physical_life.unwrap_or(0)),
+                        budget,
+                    ));
+                    true
+                }
+                Ok(_) => false,
+                Err(error) => {
+                    selected_source = Some(Err(RuntimeError::application_refused(error)));
+                    true
+                }
+            }
+        })?;
+        selected_source.transpose()
+    }
+
+    /// Read only the current speech targets and return the selected public
+    /// reference's independently funded body or remembered-person role.
+    pub(crate) fn resolve_speech_target(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+        selected: &str,
+        budget: &ByteBudget,
+    ) -> Result<Option<ResolvedSpeechTarget>, RuntimeError> {
+        if !selected.starts_with("contact-") && !selected.starts_with("person-") {
+            return Ok(None);
+        }
+        let _workspace = budget.reserve(2048)?;
+        let scoped = self
+            .scoped(scope)
+            .map_err(RuntimeError::application_refused)?;
+        let matched = RefCell::new(None);
+        let resolve = |reference: Result<String, _>, actor: &str, role| match reference {
+            Ok(value) if value == selected => {
+                matched.replace(Some(
+                    budget
+                        .reserve(actor.len())
+                        .map(|custody| ResolvedSpeechTarget {
+                            id: actor.to_owned(),
+                            role,
+                            custody,
+                        })
+                        .map_err(RuntimeError::from),
+                ));
+                true
+            }
+            Ok(_) => false,
+            Err(error) => {
+                matched.replace(Some(Err(RuntimeError::application_refused(error))));
+                true
+            }
+        };
+        session.with_player_targets(
+            &scope.account_id,
+            &scope.actor_id,
+            |body| {
+                resolve(
+                    scoped.contact(body.source_id, body.physical_life.unwrap_or(0), body.lease_id),
+                    body.source_id,
+                    SpeechTargetRole::Body,
+                )
+            },
+            |person| resolve(scoped.person(person), person, SpeechTargetRole::Remembered),
+        )?;
+        matched.into_inner().transpose()
+    }
+}
+
+impl PlayerReferences<'_> {
+    pub fn matches_reader(&self, world: &str, actor: &str) -> bool {
+        self.origin.world_id == world && self.origin.actor_id == actor
+    }
+
+    /// Stream the exact presented choice and its current dependency facts to the
+    /// signer. The caller owns the admitted choice and short encoded reference.
+    pub(crate) fn primary_action(
+        &self,
+        witness: &impl Serialize,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.body,
+            "",
+            &("primary-action", &self.scope, witness),
+        )
+    }
+
+    pub(crate) fn encounter_control(
+        &self,
+        operation: openlegend_simulation::combat_encounters::EncounterOperation,
+        binding: &openlegend_simulation::capture::EncounterPreference<&str>,
+    ) -> Result<String, serde_json::Error> {
+        sign(&self.issuer.body, "", &("encounter-control", &self.scope, operation, binding))
+    }
+
+    pub fn context_action(
+        &self,
+        witness: &ContextActionWitness,
+    ) -> Result<String, serde_json::Error> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Encounter<'a> {
+            actor_life: u64,
+            episode: Option<&'a str>,
+            hostile_revision: u64,
+            revision: u64,
+            target_id: &'a str,
+            target_life: u64,
+        }
+        // The preview tuple hashes its nested fields in canonical Source
+        // order. A current lesson changes the available consent choices.
+        let encounter = witness.encounter.as_ref().map(|value| Encounter {
+            actor_life: value.actor_life,
+            episode: value.episode.as_deref(),
+            hostile_revision: value.hostile_revision,
+            revision: value.revision,
+            target_id: &value.target_id,
+            target_life: value.target_life,
+        });
+        sign(
+            &self.issuer.body,
+            "",
+            &(
+                "context-preview",
+                &self.scope,
+                witness.module_revision,
+                witness.actor_life,
+                witness.target_life,
+                encounter,
+                &witness.coaching,
+                witness.combat_ready,
+                witness.ranged_ready,
+                witness.encounter_family,
+            ),
+        )
+    }
+
+    /// These display handles carry the same 144 keyed bits as Source. They
+    /// cannot turn acquired evidence into a fresh body lease or participant.
+    pub fn personal_source(
+        &self,
+        identity: &(impl Serialize + ?Sized),
+    ) -> Result<String, serde_json::Error> {
+        let signed = signed(
+            &self.issuer.body,
+            &(
+                "personal-source",
+                &self.origin.world_id,
+                &self.origin.actor_id,
+                identity,
+            ),
+        )?;
+        const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        let mut reference = String::with_capacity(24);
+        for bytes in signed.as_ref()[..18].chunks_exact(3) {
+            for index in [
+                bytes[0] >> 2,
+                (bytes[0] & 3) << 4 | bytes[1] >> 4,
+                (bytes[1] & 15) << 2 | bytes[2] >> 6,
+                bytes[2] & 63,
+            ] {
+                reference.push(char::from(ALPHABET[index as usize]));
+            }
+        }
+        Ok(reference)
+    }
+
+    pub fn trade_draft(
+        &self,
+        subject: Option<&ObserverSubject>,
+        contact: &str,
+        life: u64,
+    ) -> Result<String, serde_json::Error> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct DraftScope<'a> {
+            account_id: &'a str,
+            session_id: &'a str,
+            session_revision: u64,
+            world_id: &'a str,
+            timeline_id: &'a str,
+            grant_revision: u64,
+            actor_id: &'a str,
+            audience: &'static str,
+        }
+        let scope = self.origin;
+        let draft = sha256_hex(&serde_json::to_vec(&DraftScope {
+            account_id: &scope.account_id,
+            session_id: &scope.session_id,
+            session_revision: scope.session_revision,
+            world_id: &scope.world_id,
+            timeline_id: &scope.timeline_id,
+            grant_revision: scope.grant_revision,
+            actor_id: &scope.actor_id,
+            audience: if scope.embodied() {
+                "embodied"
+            } else {
+                "authorized-inspection"
+            },
+        })?);
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum Subject<'a> {
+            Known(&'a ObserverSubject),
+            Observed(&'a str),
+        }
+        self.personal_source(&(
+            "trade-draft",
+            draft,
+            &scope.timeline_id,
+            subject.map_or(Subject::Observed(contact), Subject::Known),
+            life,
+        ))
+    }
+
+    pub fn contact(
+        &self,
+        id: &str,
+        life: u64,
+        lease_id: &str,
+    ) -> Result<String, serde_json::Error> {
+        let scope = format!("{}:{lease_id}", self.scope);
+        sign(&self.issuer.body, "contact-", &(scope, id, life))
+    }
+
+    pub fn body(&self, id: &str, life: u64) -> Result<String, serde_json::Error> {
+        sign(&self.issuer.body, "", &(&self.scope, id, life))
+    }
+
+    pub fn person(&self, id: &str) -> Result<String, serde_json::Error> {
+        sign(&self.issuer.person, "person-", &(&self.scope, id))
+    }
+
+    pub fn historical(
+        &self,
+        event_id: &str,
+        entity_id: &str,
+        role: &str,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.historical,
+            "",
+            &(&self.history, event_id, entity_id, role),
+        )
+    }
+
+    /// A selected event can be reread for the same observer and timeline.
+    /// The token identifies its original revision, never authorizes disclosure.
+    pub(crate) fn event_source(
+        &self,
+        generation: &str,
+        family: &str,
+        event: &str,
+        revision: &str,
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.historical,
+            "",
+            &(
+                &self.history,
+                "event-source",
+                generation,
+                family,
+                event,
+                revision,
+            ),
+        )
+    }
+
+    /// The selected input is the literal self role, a captured source subject
+    /// or the event identity when no subject was learned.
+    pub fn speech_participant(
+        &self,
+        label_route: &(impl Serialize + ?Sized),
+    ) -> Result<String, serde_json::Error> {
+        sign(
+            &self.issuer.historical,
+            "",
+            &(&self.history, "speech-participant", label_route),
+        )
+    }
+}
+
+fn random_key() -> Result<hmac::Key, getrandom::Error> {
+    let mut bytes = [0_u8; 32];
+    getrandom::fill(&mut bytes)?;
+    Ok(hmac::Key::new(hmac::HMAC_SHA256, &bytes))
+}
+
+struct Signature(hmac::Context);
+impl Write for Signature {
+    fn write(&mut self, input: &[u8]) -> io::Result<usize> {
+        self.0.update(input);
+        Ok(input.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+fn sign(
+    key: &hmac::Key,
+    prefix: &str,
+    body: &(impl Serialize + ?Sized),
+) -> Result<String, serde_json::Error> {
+    let signed = signed(key, body)?;
+    let mut reference = String::with_capacity(prefix.len() + signed.as_ref().len() * 2);
+    reference.push_str(prefix);
+    append_hex(&mut reference, signed.as_ref());
+    Ok(reference)
+}
+
+fn signed(
+    key: &hmac::Key,
+    body: &(impl Serialize + ?Sized),
+) -> Result<hmac::Tag, serde_json::Error> {
+    let mut signature = Signature(hmac::Context::with_key(key));
+    // Hash the existing tuple directly. No intermediate JSON buffer is
+    // needed just to issue one visible reference.
+    write_json_record(body, &mut signature)?;
+    Ok(signature.0.sign())
+}

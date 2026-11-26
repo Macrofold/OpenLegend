@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { uiOwnsShortcut } from './keyboard';
 import { composerDraftScope } from '../draft';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import type { GameView, InventoryItemSummary, InventoryBindingsView } from '@open-legend/protocol';
+import type { GameView, InventoryItemBinding, InventoryBindingsView } from '@open-legend/protocol';
 import { worldClockText, worldDayText } from '@open-legend/protocol';
 import { Button, Icon, IconButton, TextTooltip } from '../design-system/components';
 import { revealHorizontalChild } from '../design-system/horizontal-reveal';
@@ -161,7 +161,7 @@ export function QuickSlots({
   view: GameView;
   connected: boolean;
   visible: boolean;
-  browse(item: InventoryItemSummary, opener: Element): void;
+  browse(item: InventoryItemBinding, opener: Element): void;
 }) {
   const privateScope = composerDraftScope(view);
   const storageKey = privateScope ? `open-legend:quick-slots:${privateScope}` : null;
@@ -185,7 +185,7 @@ export function QuickSlots({
   const [refresh, setRefresh] = useState(0);
   const [bindings, setBindings] = useState<{
     key: string;
-    items: InventoryItemSummary[];
+    items: InventoryItemBinding[];
     error?: string;
   }>();
   const readKey = JSON.stringify([
@@ -194,6 +194,8 @@ export function QuickSlots({
     view.access?.controlGeneration,
     view.historyEpoch,
     view.player.inventoryRevision,
+    view.player.inventoryReadRevision.bindings,
+    view.player.inventoryReadRevision.disclosure,
     slots,
     refresh,
   ]);
@@ -368,18 +370,22 @@ function QuickSlotPicker({
   view: GameView;
   connected: boolean;
   visible: boolean;
-  selected?: InventoryItemSummary;
+  selected?: InventoryItemBinding;
   error?: string;
   refresh(): void;
   choose(id: string | null): void;
   cancel(): void;
 }) {
-  const [selection, setSelection] = useState<InventoryItemSummary | null | undefined>(selected);
+  const [selection, setSelection] = useState<InventoryItemBinding | null | undefined>(selected);
   const inventory = useInventoryCollection({
     initialId: view.player.id,
     scope: view.access?.scope ?? '',
     displayOwner: composerDraftScope(view) ?? '',
-    revisionKey: JSON.stringify([view.player.inventoryRevision, view.historyEpoch]),
+    revisionKey: JSON.stringify([
+      view.player.inventoryRevision,
+      view.player.inventoryReadRevision.details,
+    ]),
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
     visible,
     connected: connected && !!view.access?.scope,
     expectedRootId: view.player.id,
@@ -462,7 +468,7 @@ export function GildmossHotbar({
   intent(mode: 'speak' | 'act'): void;
   show(id: MainDestination | 'building'): void;
   game(): void;
-  browse(item: InventoryItemSummary, opener: Element): void;
+  browse(item: InventoryItemBinding, opener: Element): void;
 }) {
   return (
     <nav className="ol-gildmoss-hotbar" aria-label="Play controls">

@@ -1,4 +1,4 @@
-# Why OpenLegend is still slow
+# Why Open Legend is still slow
 
 Updated October 17, 2026 after the seventh compromise observation. **The game averages2.995×but still fails smooth3×.** One working minute runs at 2.156×; accepted walking confirmation takes up to 3.870 seconds, and drawing pauses for 1.592 seconds. All 16 residents now survive, work, sleep and wake. [Complete seventh result](overhaul-compromises.md#seventh-combined-compromise-result--catches-up-walking-and-drawing-still-fail).
 

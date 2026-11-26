@@ -7,6 +7,10 @@
 - [Renderer preparation](verification/renderer-preparation.md) — current PlayCanvas responsibility/consumer inventory, exact study assets/settings, independent cloth extraction and bounded baseline evidence; shared-controller and dual-renderer qualification remain separate.
 
 - [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions, revision-3 material kit and 14 character-panel styles, and remaining UIUX21 screen, responsive and performance qualification.
+- [Attention and personal memory core](verification/attention-and-memory-core.md) — native detail, geometry, familiarity, exact-source retention and discovery restart checks; semantic, browser and scale qualification remain explicit.
+- [Witness memory references](verification/witness-memory-references.md) — signed NPC decisions, exact and masked speech, original calendar meaning, PostgreSQL restart, and hourly and daily summaries.
+- [Personal perception foundation](verification/personal-perception-foundation.md) — supported-channel evidence, local recognition, faithful retention, complete place preparation and safe player/NPC publication; future sensing and full integrated acceptance remain open.
+- [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions and remaining screen, responsive and performance qualification.
 
 - [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.
 
@@ -138,6 +142,9 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 
 ## Performance, hearing and spatial behavior
 
+- [Bookkeeping simplification](verification/performance/2026-10/bookkeeping-simplification.md): direct saves, compact received evidence, connected recovery/cleanup checks and failed normal/crowded qualification.
+- [Integrated attention runtime diagnosis](verification/performance/2026-10/attention-runtime.md): October 30 standard/crowded failures, exact processing and reader costs, delivered mechanisms and unimplemented root proposals.
+
 - [Native performance investigation](verification/performance-investigation.md): query amplification, mature worlds, snapshots and population measurements.
 - [Immediate gameplay limits](verification/immediate-gameplay-limits.md): work admission, publication, history and measured limits.
 - [Consolidation pressure and content limits](verification/consolidation-and-content-limits.md): continued walking, memory work and removed content ceilings.
@@ -156,7 +163,7 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 
 ## Fixed character pixels
 
-[Character visibility and target feedback](verification/character-visibility.md) records scenery-only read-through, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
+[Character visibility and target feedback](verification/character-visibility.md) records scenery-only see-through reveal, protected people, the perceived selected target in front, refused remembered-image clicks and delayed silhouette outlines, including bounded draw/timing and teardown observations.
 
 [Mercenary evidence](verification/mercenary-default.md) retains the original sampled-model integration, [rejected first block figure](verification/mercenary-default.md#authored-voxel-iteration--october-14-2026) and [sculpted source-guided replacement](verification/mercenary-default.md#sculpted-source-guided-iteration--october-14-2026), distinguishing art inspection, immutable geometry, walking fit, lighting, selection/depth, fallback and resource ownership. The [original-model refinement](verification/mercenary-default.md#original-model-refinement--october-14-2026) records the later restoration, material/size/cloth decisions and its own corrected browser checks. The later [size/surface-pixel correction](verification/mercenary-default.md#size-and-surface-pixel-correction--october-15-2026) records reduced world proportions, fixed coarse paint and its own texture-ownership checks. [Visible-height and whole-character pixel correction](verification/mercenary-default.md#visible-height-and-whole-character-pixels--october-15-2026) records MER12's measured 94-versus-86 opaque rows, fixed coarse image, camera/picking alignment and scoped motion/resource checks; MER11's visible result was rejected. The larger generated-art pipeline and crowd/low-end qualification remain open.
 

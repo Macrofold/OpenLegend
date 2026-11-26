@@ -1,21 +1,21 @@
-# OpenLegend MCP and Macrofold harness integration
+# Open Legend MCP and Macrofold harness integration
 
 **Status: accepted target design with disabled-by-default read and opt-in session-bound write MCP implemented.** The native Macrofold execution adapter and unified owner conversation are implemented; actual hosted connector/harness interoperability remains unqualified. The [read-only mode](#implemented-read-only-bootstrap) and [write surface](#implemented-write-surface) expose only actual native owners, not the whole target catalogue below. This document owns transport, authentication/context binding, connector provisioning, wire behavior and interoperability qualification. The [shared tool service](invention-workshop-tools.md) owns operations and the [World Agent runtime](world-agent-runtime.md) owns conversation/funding. Research and protocol-version evidence are retained in [MCP tooling](../archive/02-research/mcp-tooling-and-integration.md). Delivery is INV-16/18/21; no parallel tool registry or mutation system is permitted.
 
 ## 1. Architecture and selected stack
 
 ```text
-Unified OpenLegend conversation and approval UI
+Unified Open Legend conversation and approval UI
   -> application session/authority/budget coordinator
   -> Macrofold native agent harness
   -> Macrofold approved remote-MCP connector/broker
-  -> authenticated OpenLegend /mcp adapter
+  -> authenticated Open Legend /mcp adapter
   -> shared application tool dispatcher
   -> definition/draft/graph/validation/art/job/native-action owners
   -> existing authoritative domain and repository commit
 ```
 
-Use the official TypeScript MCP SDK with a thin Node HTTP adapter and the existing Zod/schema infrastructure. OpenLegend already uses Node HTTP, TypeScript, server-owned services and strict schemas; no Express, Hono, Python service, API gateway or agent framework is required just to expose them. The MCP adapter owns protocol conversion and request lifecycle only.
+Use the official TypeScript MCP SDK with a thin Node HTTP adapter and the existing Zod/schema infrastructure. Open Legend already uses Node HTTP, TypeScript, server-owned services and strict schemas; no Express, Hono, Python service, API gateway or agent framework is required just to expose them. The MCP adapter owns protocol conversion and request lifecycle only.
 
 **Compatibility first:** the inspected Macrofold revision uses `@modelcontextprotocol/sdk` v1 (`^1.27.0`). The preferred new server uses audited, exact-pinned official SDK v2 packages (`@modelcontextprotocol/server` plus its thin `@modelcontextprotocol/node` adapter) with the SDK-provided stateless 2025-era compatibility path, initially targeting 2025-11-25 with that existing client. SDK major version and negotiated protocol revision are separate: the official v2 HTTP handler supports both 2025-era and 2026-07-28 traffic without application-written dual codecs. Verify the actual installed Macrofold client, bearer flow, discovery and result forwarding before enablement; documentation support is not live interoperability evidence.
 
@@ -25,17 +25,17 @@ Use the SDK's documented `createMcpHandler` and Node bridge rather than copy v1 
 
 Expose one explicit MCP route, initially `/mcp`, with HTTPS at the deployment boundary. Keep browser gameplay/admin routes and cookies separate. Authenticate before dispatch, reject invalid Host/Origin, enforce request body/read/decode deadlines and size limits, and reject unsupported methods through SDK-compatible responses. For server-to-server requests with no Origin, authenticate normally; a missing browser Origin is not itself a credential.
 
-For the initial 2025-11-25 compatibility profile, use the SDK stateless Streamable HTTP handler with JSON responses for short tools. That protocol still requires SDK initialization/negotiation; disabling `Mcp-Session-Id` is not skipping initialization. A fresh request-scoped server/transport or an equally isolated SDK pattern must not retain one principal's closures for another. Long operations return durable OpenLegend job handles rather than holding an HTTP stream open for minutes.
+For the initial 2025-11-25 compatibility profile, use the SDK stateless Streamable HTTP handler with JSON responses for short tools. That protocol still requires SDK initialization/negotiation; disabling `Mcp-Session-Id` is not skipping initialization. A fresh request-scoped server/transport or an equally isolated SDK pattern must not retain one principal's closures for another. Long operations return durable Open Legend job handles rather than holding an HTTP stream open for minutes.
 
 Do not add legacy HTTP+SSE transport, resource subscriptions, sampling, roots, MCP Apps or experimental tasks as prerequisites. Notifications can improve UX later, but clients must be able to recover state through job/status tools. Browser SSE gameplay transport is a different subsystem. Network disconnect does not undo a committed action or prove a paid job was canceled.
 
 ## 3. Authentication and world-level authority
 
-Initial trusted-product integration uses a dedicated high-entropy opaque bearer credential for the OpenLegend MCP connection. Store only its hash/identity and scoped grant in OpenLegend, and the actual secret in Macrofold's encrypted connection store. Give it one world/deployment audience, an authorized service principal, expiry/rotation/revocation and a maximum tool ceiling. Never put it in model prompts, ordinary tool arguments, URLs, game saves or public logs.
+Initial trusted-product integration uses a dedicated high-entropy opaque bearer credential for the Open Legend MCP connection. Store only its hash/identity and scoped grant in Open Legend, and the actual secret in Macrofold's encrypted connection store. Give it one world/deployment audience, an authorized service principal, expiry/rotation/revocation and a maximum tool ceiling. Never put it in model prompts, ordinary tool arguments, URLs, game saves or public logs.
 
-This is an explicitly configured service integration, not a claim to implement interoperable OAuth discovery. Hosted multi-user installation later uses the SDK's OAuth resource-server facilities and an existing qualified authorization server. Required controls include exact resource/audience validation, current grant checks, PKCE/issuer/client binding where applicable, protected-resource metadata and refresh/revocation handling. Do not build a new identity provider or forward Macrofold's own platform token to OpenLegend as proof of authority.
+This is an explicitly configured service integration, not a claim to implement interoperable OAuth discovery. Hosted multi-user installation later uses the SDK's OAuth resource-server facilities and an existing qualified authorization server. Required controls include exact resource/audience validation, current grant checks, PKCE/issuer/client binding where applicable, protected-resource metadata and refresh/revocation handling. Do not build a new identity provider or forward Macrofold's own platform token to Open Legend as proof of authority.
 
-A world connection is not enough to identify the current funding session or selected project. The OpenLegend application issues a random opaque `contextHandle` bound to that connection principal, world/generation, authenticated initiating account, audience, funding session, allowed operations and expiry. The harness receives it as a scoped tool-context selector. Every session-scoped operation verifies both the bearer principal and this retained binding; a user-supplied world/actor/session ID cannot substitute for it. Independently granted world-level reads can use the read-only connection scope without a funded context. Do not expose a tool that mints broader handles, lists other session handles or increases grants.
+A world connection is not enough to identify the current funding session or selected project. The Open Legend application issues a random opaque `contextHandle` bound to that connection principal, world/generation, authenticated initiating account, audience, funding session, allowed operations and expiry. The harness receives it as a scoped tool-context selector. Every session-scoped operation verifies both the bearer principal and this retained binding; a user-supplied world/actor/session ID cannot substitute for it. Independently granted world-level reads can use the read-only connection scope without a funded context. Do not expose a tool that mints broader handles, lists other session handles or increases grants.
 
 Treat context handles as sensitive scoped capabilities: avoid retaining them in public traces, do not put them into invention metadata, invalidate them on cancellation/restoration/scope change, and make them useless without the intended connection identity. The initial integration does not assume Macrofold injects a trusted run ID or arbitrary custom header; its inspected broker explicitly does not provide a custom-header escape hatch. Trusted run correlation can be added only through a separately verified broker contract, not model-authored metadata.
 
@@ -43,18 +43,18 @@ Recheck current grants and generation at each tool call and immediately before c
 
 ## 4. Macrofold connector installation
 
-Use Macrofold's existing connection creation/authentication, Tools approval, Access rules and run-selection APIs through their current documented schemas. Do not create a second connector manager inside OpenLegend. The setup sequence is:
+Use Macrofold's existing connection creation/authentication, Tools approval, Access rules and run-selection APIs through their current documented schemas. Do not create a second connector manager inside Open Legend. The setup sequence is:
 
 1. Deploy and health-check only the authenticated MCP surface; choose the exact protocol/SDK profile.
-2. Create the remote MCP connection with the dedicated OpenLegend credential. Discover tools without invoking paid work.
+2. Create the remote MCP connection with the dedicated Open Legend credential. Discover tools without invoking paid work.
 3. Approve the implemented tool names and bind access to a dedicated workspace/preset or pair. New definitions are data, not newly approved MCP tools.
 4. Configure the World Agent run to select that connection explicitly and deny unrelated shell/files/connectors unless required and authorized.
-5. From the authenticated OpenLegend UI, create the durable funding session, context binding and initial goal. Journal the remote mapping before starting the run.
+5. From the authenticated Open Legend UI, create the durable funding session, context binding and initial goal. Journal the remote mapping before starting the run.
 6. Exercise a native harness discovery/read/validate/draft/approval/apply loop on an isolated world, including denial and cancellation cases, before enabling live mutation.
 
 Macrofold's inspected remote destination policy is public-HTTPS-only with DNS/private-address checks. A hosted agent cannot reach a developer's loopback server merely because a URL is configured. Use a narrowly exposed authenticated staging endpoint or an explicitly supported operator connection arrangement. Do not disable SSRF checks globally, tunnel all owner endpoints, or make the game publicly multiplayer as a shortcut.
 
-A dedicated connection may be reused across authorized sessions; context bindings isolate session purpose and budget. Reusing a connector or warm worker must not reuse another conversation's model history. If current connection grants change, Macrofold and OpenLegend both enforce reductions; newly added tools need an appropriately renewed run/session configuration.
+A dedicated connection may be reused across authorized sessions; context bindings isolate session purpose and budget. Reusing a connector or warm worker must not reuse another conversation's model history. If current connection grants change, Macrofold and Open Legend both enforce reductions; newly added tools need an appropriately renewed run/session configuration.
 
 ## 5. Tool registration and schema rules
 
@@ -121,7 +121,7 @@ On timeout, the client checks the original operation/job before a new attempt. A
 
 Tools are the first interoperable surface. Optional resources can expose immutable definitions, graph/report pages and project summaries under an `openlegend://` URI scheme. Resource reads have exactly the same scope and current revocation checks. They are not filesystem paths or arbitrary URL fetches. Required information remains accessible through tools if the chosen harness/broker does not support resource reading.
 
-An optional authoring prompt can teach the agent how to inspect before modifying, preserve chosen constraints, distinguish draft from installation and cite evidence. It grants no authority. Sampling/roots are unnecessary because Macrofold owns model execution and OpenLegend owns authoritative files/data. Interactive graph and approval UI belongs in the existing React app first; MCP Apps is optional future projection, not a second place to grant approval independently.
+An optional authoring prompt can teach the agent how to inspect before modifying, preserve chosen constraints, distinguish draft from installation and cite evidence. It grants no authority. Sampling/roots are unnecessary because Macrofold owns model execution and Open Legend owns authoritative files/data. Interactive graph and approval UI belongs in the existing React app first; MCP Apps is optional future projection, not a second place to grant approval independently.
 
 ## 9. Security and operational controls
 
@@ -137,7 +137,7 @@ Pin exact SDK, protocol, Macrofold revision/deployment, harness/model configurat
 
 Use the official MCP Inspector for protocol inspection and optional MCPJam for model/tool UX evaluation; keep both local against disposable data unless sharing is authorized. Neither substitutes for the actual Macrofold harness journey. Tests are planned in the maintainer TODO; specification and local protocol execution do not establish live interoperability.
 
-MCP version changes remain behind the thin adapter. Keep OpenLegend funding sessions, operation receipts and jobs independent of `initialize`, `Mcp-Session-Id`, transport cancellation and protocol task IDs. A new protocol release must not turn an old operation into a new physical or paid action.
+MCP version changes remain behind the thin adapter. Keep Open Legend funding sessions, operation receipts and jobs independent of `initialize`, `Mcp-Session-Id`, transport cancellation and protocol task IDs. A new protocol release must not turn an old operation into a new physical or paid action.
 
 ## Implemented read-only bootstrap
 
@@ -158,6 +158,16 @@ Only server-to-server POST requests without an Origin are accepted. The SDK owns
 ### Growth boundary
 
 Reuse the same application descriptors, source readers and typed projections as local owner inspection. Add implemented capabilities under their actual application owners; do not register the entire target catalogue as stub tools. Current account-bound reads enforce their initiating scope, and unbound service reads exclude human-private subjects; broader recipient grants and sustained revocation qualification remain WW07/WW11 work. Private-memory reads also retain the selected subject's current permission and evidence checks through final disclosure under [private retrieval fencing](memory-architecture.md#private-retrieval-fencing). A broad service credential must never substitute for the recipient's authority. Read-only hints are not enforcement; actual handlers and dispatch grants determine behavior.
+
+### Stand-alone Rust read scope
+
+The Rust listener uses the same dedicated, expiring world credential and exact host settings, with the stateless `2025-11-25` protocol profile. `ol_context` reads the installed profile and policy from the current accepted world. `ol_inspect` reads exact installed item, attribute, sense and recipe definitions by ID, and the installed body policy with `kind: "body-policy"` and `id: "current"`. The recipe read omits private authoring provenance and versions the remaining public fields in authored order. A recipe can refer to the installed item handling policy with `kind: "item-handling-policy"` and `id: "engine:item-handling-policy"`. Its result includes the exact policy pin used when checking recipe dependencies. Each inspection accepts an optional version check. Attribute definitions describe when a value can be shown. Actual attribute values remain in their separately permitted gameplay views. The sense read returns the authored detector configuration.
+
+With the installed language provider, `ol_find` finds those same six kinds by case-insensitive label or ID, with no paid work. Each result contains the exact versioned reference accepted by `ol_inspect`. Browse up to 50 results per page and keep the opaque cursor for the same query, kinds and installed definition snapshot. A page can be empty with more definitions to examine. The first lookup prepares and retains only the order of the installed records. Searches run outside the simulation turn.
+
+The bearer credential is limited to the installed public kinds above. **Inspect world** is a separate signed browser reader. On a server configured for creator tools, a current Inspect grant opens exact installed definitions, recipe relationships, and permitted live character, item, activity and memory records. Every request uses the signed player's scope. A grant change clears the open panel and invalidates its continuations. A stale stream can obtain a fresh view through the normal signed connection. [Browser and permission checks](verification/creator-tools-and-diagnostics.md#inspect-world-in-the-signed-rust-browser).
+
+A supplied authoring handle never turns a service read into an account read. Loading a checkpoint closes old connector requests and invalidates old cursors. A new request with the same still-valid world credential can read the restored timeline. Setting `OPEN_LEGEND_MCP_WRITES=true` fails Rust startup until its authoring owner is connected. Hosted forwarding and authoring have separate [conversion work](maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory). [Official Rust transport SDK](https://github.com/modelcontextprotocol/rust-sdk).
 
 ## Implemented write surface
 

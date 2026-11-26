@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: original PC Deus Ex and its GOTY distribution, with PS2, community modifications and the announced remaster kept separate. Five independent PC review bodies were read in the original pass: four describe the original/GOTY game, while the fifth explicitly used the preservation-oriented Community Update. A PS2 review and a substantially modded GMDX review supply additional contrasts, not interchangeable mechanics evidence. The follow-up checked the full dossier against R01–R14 and preserved those original reviews, examples and source identities; fresh evidence is distinguished below. No gameplay, footage or source-code execution was performed.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted Open Legend requirements. Scope: original PC Deus Ex and its GOTY distribution, with PS2, community modifications and the announced remaster kept separate. Five independent PC review bodies were read in the original pass: four describe the original/GOTY game, while the fifth explicitly used the preservation-oriented Community Update. A PS2 review and a substantially modded GMDX review supply additional contrasts, not interchangeable mechanics evidence. The follow-up checked the full dossier against R01–R14 and preserved those original reviews, examples and source identities; fresh evidence is distinguished below. No gameplay, footage or source-code execution was performed.
 
 ## 1. Identity, editions and the first-session contract
 

@@ -1,0 +1,153 @@
+export { default as BASE_FOLLOW_MENU } from './config/follow-menu.json' with { type: 'json' };
+import { namePhrase, type Named } from '@open-legend/language';
+import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
+import { BASE_FAMILY_FACTS } from './actions.js';
+import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
+import { FOLLOW_OUTCOMES, FOLLOW_RULES } from './navigation.js';
+import { BASE_STRIKE_BODY_RULES } from './strikes.js';
+import { BASE_GUARD_TEXT } from './shield-defense.js';
+import { BASE_HUNTING } from './hunting.js';
+import { BASE_TYPED_NOUNS } from './typed-requests.js';
+import { formatHuntingDescription } from './hunting.js';
+import { describeAttack, type StrikeDefinition } from '../../strikes.js';
+
+/** These are discovery rules and labels for this world's finite native choices.
+ * Offering a choice never grants execution, target continuity or future work. */
+export const BASE_DECISION_OFFERS = {
+  inspectionCommand: 'inspect-inventory',
+  followCommand: 'follow',
+  strikeCommand: 'strike',
+  interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
+  follow: FOLLOW_RULES,
+  followOutcomes: FOLLOW_OUTCOMES,
+  followSuggestions: 4,
+  manualWorkBodyPlans: BASE_MANUAL_WORK_BODY_PLANS,
+  naturalStrikeBodyPlans: BASE_STRIKE_BODY_RULES.unrestrictedBodyPlans,
+  huntingPurpose: 'Hunt once',
+  hunting: BASE_HUNTING,
+  slotRequirements: {
+    toolFields: BASE_FAMILY_FACTS.toolFields,
+    unitPerCommand: BASE_FAMILY_FACTS.unitPerCommand,
+  },
+  typedNouns: BASE_TYPED_NOUNS,
+  availability: {
+    invalidFollow: {
+      code: 'invalid-follow',
+      message:
+        'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
+    },
+    unknownStrike: { code: 'unknown-action', message: 'Choose a registered strike.' },
+    unsupportedStrike: {
+      code: 'unsupported-body',
+      message: 'This body cannot perform that natural strike.',
+    },
+    manualWork: {
+      code: 'unsupported-body',
+      message: 'This native manual-work family requires a supported biped body.',
+    },
+    combatRecovery: { code: 'combat-recovery', message: BASE_GUARD_TEXT.recovery },
+    strikeRange: { code: 'out-of-range', message: 'Move within strike range first.' },
+    unperceived: { code: 'not-visible', message: 'The action target is not currently perceived.' },
+    attackSource: {
+      code: 'attack-source-unavailable',
+      message: 'This body cannot begin an attack.',
+    },
+    attackTarget: {
+      code: 'attack-target-unavailable',
+      message: 'The selected living body is unavailable.',
+    },
+    attackPermission: {
+      code: 'attack-not-permitted',
+      message: 'Combat is unavailable in this world.',
+    },
+    followUnavailableCode: 'follow-unavailable',
+    followUnperceived: 'the followed target is no longer perceived.',
+    followRestricted: 'following is no longer available to this body.',
+    followUnsupported: 'a supported ground stance is required.',
+    followDead: 'the followed actor is no longer alive.',
+    followChanged: 'the physical participant selected for following has changed.',
+    followBudget: 'the follow route exceeds the current navigation budget.',
+    followNoRoute: 'no supported route to the perceived target remains.',
+  },
+  probes: [
+    { direction: 'north', dx: 0, dz: -0.75 },
+    { direction: 'east', dx: 0.75, dz: 0 },
+    { direction: 'south', dx: 0, dz: 0.75 },
+    { direction: 'west', dx: -0.75, dz: 0 },
+  ],
+} as const;
+
+export type DecisionOfferDescription =
+  | { kind: 'activities' }
+  | { kind: 'inspection' }
+  | { kind: 'continuation'; actionType?: string; planPending: boolean }
+  | { kind: 'follow'; target: Named | string }
+  | { kind: 'probe'; direction: string }
+  | { kind: 'approach'; targetDescription: string; distance: string; reach: number };
+// A status action's authored label and a strike's installed profile are supplied
+// by their actual selected owners. These formatter inputs create no availability.
+export type PhysicalDecisionOfferDescription =
+  | { kind: 'status'; label: string; targetName?: string }
+  | {
+      kind: 'natural-strike';
+      target: Named | string;
+      definition: StrikeDefinition;
+      hunting: boolean;
+    };
+
+/** Both current Source discovery and the detached native candidate formatter
+ * call this owner with already permitted names and measured facts. */
+export function decisionOfferDescription(
+  input: DecisionOfferDescription | PhysicalDecisionOfferDescription,
+): {
+  description: string;
+  firstActionDescription?: string;
+} {
+  switch (input.kind) {
+    case 'activities':
+      return {
+        description:
+          'Inspect a page of my own past actions, results and learned activities. This does not perform them again.',
+      };
+    case 'status':
+      return {
+        description: `${input.label}${input.targetName === undefined ? '' : ` · ${input.targetName}`}`,
+      };
+    case 'natural-strike': {
+      const definition = input.definition;
+      const attack = input.hunting
+        ? formatHuntingDescription(input.target)
+        : `${definition.label}. ${definition.autoMoveToRange ? 'Approach and attempt one attack.' : 'Attempt one attack from my current position.'}`;
+      return {
+        firstActionDescription: `${definition.label} ${namePhrase(input.target, 'definite')}`,
+        description: `${attack} ${definition.label}. ${describeAttack(definition)}`,
+      };
+    }
+    case 'inspection':
+      return {
+        description:
+          'Inspect the first page of my own accessible possessions if the selected context omits needed information. This reads at most 16 possessions; it does not change them.',
+      };
+    case 'continuation':
+      return {
+        description: input.actionType
+          ? `Continue the ${input.actionType} already in progress.`
+          : input.planPending
+            ? 'Continue the remaining chosen work, including steps not yet started. Each step rechecks its prerequisites.'
+            : 'Remain in place while considering the next useful step.',
+      };
+    case 'follow':
+      return {
+        description: `Follow ${namePhrase(input.target, 'definite')} while visible; no stealth or automatic sunset stop.`,
+      };
+    case 'probe':
+      return { description: `Probe a short distance ${input.direction}.` };
+    case 'approach': {
+      const target = input.targetDescription;
+      return {
+        firstActionDescription: `Move once near ${target}'s observed position`,
+        description: `Move near the currently observed position of ${target}, currently ${input.distance} m away. Stop at the selected reachable place within ${input.reach} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
+      };
+    }
+  }
+}

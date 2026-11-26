@@ -197,7 +197,7 @@ Both accessed Steam surfaces were **English, Most Helpful (All Time)**; the seco
 
 ## 11. Transferable patterns, dependencies and cautions
 
-These are research interpretations, not accepted OpenLegend architecture or implementation tasks.
+These are research interpretations, not accepted Open Legend architecture or implementation tasks.
 
 **Separate what an effect does from how it reaches the world.** Trigger delivery, fields, timing and trajectory can make a familiar payload newly useful. Copying only a long list of magical nouns misses the compositional depth. The dependency is clear targeting, timing, resource and collateral semantics.
 

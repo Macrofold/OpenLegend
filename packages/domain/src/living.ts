@@ -1,4 +1,5 @@
 import { reconcileNativeControl } from './native-response-controller.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
 import { entityGet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
@@ -11,7 +12,7 @@ import { reconcileConditions } from './conditions.js';
 import { recordSemanticChange } from './dependencies.js';
 import { worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
-import { livingBody, nativeActor } from './worlds/base/bodies.js';
+import { BASE_MANUAL_WORK_BODY_PLANS, livingBody, nativeActor } from './worlds/base/bodies.js';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
@@ -26,6 +27,7 @@ import { canonicalJson, emit, finish, outcome } from './events.js';
 import { attributeRange, projectAttributes, readAttribute } from './world-modules.js';
 import { canNoticeInternalChange } from './conditions.js';
 import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { selectedObservationRules, selectedOrdinaryActionRules } from './world-composition.js';
 import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
 export interface LivingBody {
@@ -49,7 +51,7 @@ export function hasMemory(entity: Entity | undefined): boolean {
 export function supportsManualWork(entity: Entity | undefined): boolean {
   const stored = entity && readOnlyDraftView(entity).actor;
   const actor = stored && readOnlyDraftView(stored);
-  return !!actor?.body && readOnlyDraftView(actor.body).plan === 'biped';
+  return !!actor?.body && BASE_MANUAL_WORK_BODY_PLANS.includes(readOnlyDraftView(actor.body).plan);
 }
 export function canSpeak(entity: Entity | undefined): boolean {
   const stored = entity && readOnlyDraftView(entity).actor;
@@ -73,6 +75,7 @@ export function reconcileBody(
 ): void {
   const actor = entity.actor!;
   const body = actor.body!;
+  const notices = selectedObservationRules(world).body;
   // Every body writer shares this revision. Refuse exhaustion before publishing
   // a body that current-format validation could no longer accept.
   if (!Number.isSafeInteger(body.revision + 1)) throw new Error('Body revision exhausted.');
@@ -86,7 +89,7 @@ export function reconcileBody(
         world,
         entity.id,
         actor.action.id,
-        outcome(false, 'actor-unavailable', 'The body can no longer continue this work.'),
+        outcome(false, notices.unavailableCode, notices.unavailableText),
       );
     actor.action = null;
     if (worldSupport(entity) === null) {
@@ -123,6 +126,7 @@ export function reconcileBody(
       separateDeadLife(world, entity, events);
     }
     if (!actor.alive) {
+      retirePerceptionLife(world, entity.id);
       delete actor.encounters;
       // Death ends live sensory continuity, not retained knowledge or historical evidence.
       // docs/knowledge.md#subject-binding
@@ -136,7 +140,7 @@ export function reconcileBody(
     emit(
       world,
       events,
-      actor.incapacitated ? 'incapacitated' : 'death',
+      actor.incapacitated ? notices.incapacitatedEvent : notices.deathEvent,
       actor.incapacitated
         ? bodyNarration(lifecycle.incapacitateNarration, entity)
         : bodyNarration(lifecycle.deathNarration, entity),
@@ -166,6 +170,7 @@ export function recordHealthChange(
   causeMeaning?: string,
 ): void {
   const actor = entity.actor!;
+  const notices = selectedObservationRules(world).body;
   const definition = world.moduleManifest.definitions.find(
     (d) => d.implementation === 'native-health-v1',
   );
@@ -185,11 +190,11 @@ export function recordHealthChange(
   emit(
     world,
     events,
-    'attribute-changed',
+    notices.healthEvent,
     {
       parts: [
         person(entity, 'subject'),
-        ` ${after < beforeValue ? 'took' : 'recovered'} ${formatDisplayNumber(Math.abs(after - beforeValue), { integer: definition.nativeHealth?.precision === 'whole-points' })} ${after < beforeValue ? 'damage' : definition.name.toLowerCase()}.`,
+        ` ${after < beforeValue ? notices.damagedVerb : notices.recoveredVerb} ${formatDisplayNumber(Math.abs(after - beforeValue), { integer: definition.nativeHealth?.precision === 'whole-points' })} ${after < beforeValue ? notices.damageName : definition.name.toLowerCase()}.`,
       ],
     },
     entity,
@@ -339,11 +344,13 @@ export function commitBodyEffects(
     actor.action = null;
   }
   if (actor.health < before && actor.action?.type === 'treat-scar') {
+    const policy = bodyPolicy(world)?.reincarnation;
+    if (!policy) throw new Error('Scar treatment lacks its installed body policy.');
     finishPlanAction(
       world,
       entity.id,
       actor.action.id,
-      outcome(false, 'interrupted', 'Injury interrupted scar treatment.'),
+      outcome(false, 'interrupted', policy.treatmentInterruptedText),
     );
     actor.action = null;
   }
@@ -371,7 +378,7 @@ export function commitBodyEffects(
       world,
       entity.id,
       interrupted.id,
-      outcome(false, 'interrupted', 'Injury interrupted the prepared strike.'),
+      outcome(false, 'interrupted', selectedOrdinaryActionRules(world).naturalContact.interrupted),
     );
     actor.action = null;
   }
@@ -379,7 +386,12 @@ export function commitBodyEffects(
     world,
     events,
     'body-effect',
-    { parts: [person(entity, 'possessive'), ' body changed.'] },
+    {
+      parts: [
+        person(entity, 'possessive'),
+        selectedOrdinaryActionRules(world).naturalContact.bodyChanged,
+      ],
+    },
     entity,
     entity.id,
     {

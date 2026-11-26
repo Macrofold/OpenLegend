@@ -1,6 +1,6 @@
 # Factorio and Satisfactory: flows, reusable designs, and inhabiting a machine
 
-**Gameplay inspiration; researched September 25, 2026.** Read alongside the [existing comparative chapter and separate field guides](../games/factorio-and-satisfactory.md). Earlier reviews, videos, growth context, and conclusions remain there. This study adds specific interaction chains and a developer-documented implementation example; it is not an architecture prescription for OpenLegend.
+**Gameplay inspiration; researched September 25, 2026.** Read alongside the [existing comparative chapter and separate field guides](../games/factorio-and-satisfactory.md). Earlier reviews, videos, growth context, and conclusions remain there. This study adds specific interaction chains and a developer-documented implementation example; it is not an architecture prescription for Open Legend.
 
 ## 1. Five different things the player manages
 
@@ -51,7 +51,7 @@ The Factorio wiki distinguishes pollution produced by machines, the spread and a
 
 **Interpretation:** this couples expansion to environment and defense. A factory's external cost is not just deducted from an abstract score: it changes what pressure reaches the player. This is an example of a system generating a reason to care about its surroundings.
 
-It is not evidence that every constructive game needs enemies or escalating punishment. The useful question is whether growth introduces new meaningful responsibilities, rather than only longer production times. A social workshop might produce noise, demand transport, or consume a contested resource instead; those are inspiration hypotheses, not existing Factorio features or approved OpenLegend mechanics.
+It is not evidence that every constructive game needs enemies or escalating punishment. The useful question is whether growth introduces new meaningful responsibilities, rather than only longer production times. A social workshop might produce noise, demand transport, or consume a contested resource instead; those are inspiration hypotheses, not existing Factorio features or approved Open Legend mechanics.
 
 ## 6. One actual implementation lesson: preserve the experience while doing less work
 

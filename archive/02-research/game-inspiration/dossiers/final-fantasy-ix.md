@@ -129,7 +129,7 @@ This is a strong architecture because it separates:
 - **learned knowledge**;
 - **currently active build policy**.
 
-OpenLegend could use a similar distinction between what a person *knows* and what they can *actively maintain/prepare* under attention, equipment, physiological or social constraints.
+Open Legend could use a similar distinction between what a person *knows* and what they can *actively maintain/prepare* under attention, equipment, physiological or social constraints.
 
 ## 6. Character identity remains hard-bounded
 
@@ -185,7 +185,7 @@ That makes Steal:
 
 The downside is repeated failure. Current Steam criticism and older reviews often note that long steal attempts can stall boss pacing.
 
-**OpenLegend lesson:** profession-specific verbs should be valuable outside damage, but chance-based repetition can turn role expression into tedium.
+**Open Legend lesson:** profession-specific verbs should be valuable outside damage, but chance-based repetition can turn role expression into tedium.
 
 ## 9. Trance: identity-specific temporary transformation
 
@@ -228,7 +228,7 @@ The ability is not:
 
 It exists because **two particular people with compatible capabilities are present together**.
 
-This is highly relevant to OpenLegend:
+This is highly relevant to Open Legend:
 - cooperative capabilities can emerge from relationships/skill complementarity;
 - “party composition” can change the available action graph, not only aggregate stats.
 
@@ -299,11 +299,11 @@ ATEs serve several purposes:
 - make towns feel simultaneous rather than protagonist-centered;
 - occasionally grant items or alter later scene availability.
 
-This is a major OpenLegend inspiration.
+This is a major Open Legend inspiration.
 
 > A world feels alive when other people appear to have lives while the player is elsewhere.
 
-FFIX scripts these moments. OpenLegend can generalize the principle with actual autonomous actors and selective observation surfaces.
+FFIX scripts these moments. Open Legend can generalize the principle with actual autonomous actors and selective observation surfaces.
 
 ## 14. Chocobo Hot & Cold becomes world-scale exploration
 
@@ -329,7 +329,7 @@ The sidequest therefore combines:
 - world revisitation;
 - ultimate equipment.
 
-This is exactly the kind of side system OpenLegend should value: it gives a hobby **world consequences**.
+This is exactly the kind of side system Open Legend should value: it gives a hobby **world consequences**.
 
 ## 15. Tetra Master: weaker core integration than Triple Triad
 
@@ -359,7 +359,7 @@ Tetra Master:
 
 Even though Tetra Master is mechanically richer in some local ways, it is less valuable to the core RPG loop.
 
-**OpenLegend lesson:** system complexity alone does not create systemic relevance. Connections to other world loops matter.
+**Open Legend lesson:** system complexity alone does not create systemic relevance. Connections to other world loops matter.
 
 ## 16. World traversal and environmental progression
 
@@ -414,7 +414,7 @@ Zidane faces a different version:
 
 Director Hiroyuki Ito's anniversary reflection says concepts such as “what it really means to be human,” circumstances, kindness, and hatred became central to his understanding of the game's “return to roots.” [FFIX02](#ffix02)
 
-This is highly aligned with OpenLegend's broader goal: personhood should be expressed by behavior, memory, relationship and choice, not only by origin metadata.
+This is highly aligned with Open Legend's broader goal: personhood should be expressed by behavior, memory, relationship and choice, not only by origin metadata.
 
 ## 18. NPCs and authored world-life
 
@@ -585,7 +585,7 @@ Those are qualitative examples, not prevalence estimates.
 | Building/settlements | No player construction/management |
 | Endgame/optional | Chocograph chain, ultimate gear, Ozma/Hades, Friendly Monsters, Stellazzio, Mognet repair, Quale and Excalibur II challenge |
 
-## 25. OpenLegend transferable lessons and limits
+## 25. Open Legend transferable lessons and limits
 
 ### A. Equipment can be a teacher
 
@@ -607,7 +607,7 @@ FFIX lets gear teach only compatible dormant abilities.
 
 **Borrow:** prior training/body/culture can determine what an artifact teaches easily.
 
-**Limit:** OpenLegend should allow retraining/change where fiction supports it rather than hard-coded immutable classes.
+**Limit:** Open Legend should allow retraining/change where fiction supports it rather than hard-coded immutable classes.
 
 ### D. Let people do things off-screen
 
@@ -641,7 +641,7 @@ FFIX invests writing in non-protagonists.
 
 ## 26. Preservation and requirement audit
 
-No FFIX-specific prior game/mechanics/dossier owner existed on this branch before G86, so this dossier is additive. The corrective pass retains all FFIX01–22 sources and the original examples, corrects the Eiko/Garnet conflation, adds side-system operations and six complete situations, and makes meaningful spoilers explicit. Recommendations remain research interpretations, not adopted OpenLegend requirements.
+No FFIX-specific prior game/mechanics/dossier owner existed on this branch before G86, so this dossier is additive. The corrective pass retains all FFIX01–22 sources and the original examples, corrects the Eiko/Garnet conflation, adds side-system operations and six complete situations, and makes meaningful spoilers explicit. Recommendations remain research interpretations, not adopted Open Legend requirements.
 
 | Requirement | Coverage |
 | --- | --- |
@@ -678,7 +678,7 @@ Characters have durable identities. Equipment does more than raise stats: it tea
 
 ATEs and Chocobo Hot & Cold extend the same philosophy outside battle: other people have lives elsewhere, and optional activities can become world-travel systems.
 
-For OpenLegend, the most useful principle is:
+For Open Legend, the most useful principle is:
 
 > **Make abilities emerge from who someone is, what they have used, what they have learned, and who they are with—while letting those histories persist after the immediate item or encounter is gone.**
 

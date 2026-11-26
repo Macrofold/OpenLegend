@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -333,7 +333,7 @@ The following observations come from written evidence, not a hands-on audiovisua
 
 **R13. Alternative feedback.** Battery Saver disables the downward-pointed phone's display while tracking distance; enabled vibration announces nearby Pokémon. This does not establish a complete nonvisual capture flow. Full current help body read; its update date is only relative. [Official help](https://niantic.helpshift.com/hc/en/6-pokemon-go/faq/2472-what-is-the-battery-saver-setting/)
 
-### Research interpretation for OpenLegend
+### Research interpretation for Open Legend
 
 The evidence suggests separating four motivations when studying return behavior: wanting a particular creature, improving a collection, joining known people and discovering something on an outing. They can coexist without being interchangeable. A player who returns for a friend may tolerate a weak encounter; another can enjoy collecting alone while rejecting organized battle schedules. Conversely, an activity's existence is not sufficient evidence that a player can participate in it.
 
@@ -345,7 +345,7 @@ Three bounded hypotheses follow. They are questions for research, not implementa
 2. **Coordination effort:** How does satisfaction depend on finding companions, reaching them or succeeding together? Include people unable to attend alongside participants. R9 motivates this comparison.
 3. **Attachment after withdrawal:** Ask separately about affection, participation and expenditure. Reduced spending or event completion need not mean total dislike. R6 and R10 motivate this distinction.
 
-These hypotheses do not transfer Pokémon's audience, license recognition, location infrastructure or financial results to OpenLegend. Any comparison needs evidence about the intended audience and its actual constraints. They also do not establish that pressure produces durable retention: being present, having fun and feeling free to stop are separate things to investigate.
+These hypotheses do not transfer Pokémon's audience, license recognition, location infrastructure or financial results to Open Legend. Any comparison needs evidence about the intended audience and its actual constraints. They also do not establish that pressure produces durable retention: being present, having fun and feeling free to stop are separate things to investigate.
 
 ### Access register and limits
 

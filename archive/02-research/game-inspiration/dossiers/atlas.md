@@ -1,12 +1,12 @@
 # G180 — ATLAS
 
-**Completed full research pass — evidence through 20 October 2026 (America/New_York).** R01–R14 and the economics, enjoyment, lore and creation amendment are covered; the external-mod applicability finding is **yes**, with the full R15 investigation included. The dossier contains eleven constructed situations, five independent original written reviews, two supplementary firsthand accounts, contrasting helpful Steam testimony, dated commercial evidence and an OpenLegend interpretation. The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records completion and review against the [full requirements](../research-requirements.md).
+**Completed full research pass — evidence through 20 October 2026 (America/New_York).** R01–R14 and the economics, enjoyment, lore and creation amendment are covered; the external-mod applicability finding is **yes**, with the full R15 investigation included. The dossier contains eleven constructed situations, five independent original written reviews, two supplementary firsthand accounts, contrasting helpful Steam testimony, dated commercial evidence and an Open Legend interpretation. The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records completion and review against the [full requirements](../research-requirements.md).
 
-**Read:** [Actions and objects](#r02) · [Progression and loss](#r04) · [Worked situations](#r05) · [People](#r06) · [Presentation](#r07) · [Lore and spoilers](#r08) · [Production](#r09) · [Marketing](#r10) · [Economics](#r11) · [Reception](#r12) · [Creation](#player-creation) · [External mods](#r15) · [OpenLegend interpretation](#r13) · [Coverage and sources](#r14).
+**Read:** [Actions and objects](#r02) · [Progression and loss](#r04) · [Worked situations](#r05) · [People](#r06) · [Presentation](#r07) · [Lore and spoilers](#r08) · [Production](#r09) · [Marketing](#r10) · [Economics](#r11) · [Reception](#r12) · [Creation](#player-creation) · [External mods](#r15) · [Open Legend interpretation](#r13) · [Coverage and sources](#r14).
 
 **Product and reception capture — 20 October 2026 (America/New_York):** ATLAS is paid Early Access, released 22 December 2018; the recorded US price is $29.99. Steam credits Grapeshot Games and Instinct Games as developers, and Grapeshot Games/Snail Games USA as publishers, warns of no developer update for over three years, and reports **Mixed: 46% positive across 19,980 English reviews**. Store availability does not establish official-server operation. [Steam](https://store.steampowered.com/app/834910/ATLAS/)
 
-**Research judgment:** the [reception evidence](#r12) makes ATLAS useful as a cautionary comparison: attachment to a project can coexist with costly repetition and pressure to protect it. A documented dependency is not evidence of enjoyable play. Read the [OpenLegend interpretation](#r13) alongside the mechanics; the review sample mainly describes earlier versions.
+**Research judgment:** the [reception evidence](#r12) makes ATLAS useful as a cautionary comparison: attachment to a project can coexist with costly repetition and pressure to protect it. A documented dependency is not evidence of enjoyable play. Read the [Open Legend interpretation](#r13) alongside the mechanics; the review sample mainly describes earlier versions.
 
 <a id="r01"></a>
 
@@ -244,7 +244,7 @@ Before release, Grapeshot used named music to introduce the adventure. Its Decem
 
 Music also has a functional interface inside the game. The February 2019 patch roundup discusses Accordion and War Drum song buffs, gaps in the note-sheet preview, inaccurate looping-buff timers, notes failing near loop boundaries and frame stutters disrupting automatic notes. The same roundup adds a twelve-second gap between character status voice clips. These are historical change records, not measurements of the latest build. **Interpretation:** the examples show two separate design problems: correctly representing a timed action and avoiding repetitive spoken feedback. A soundtrack can support atmosphere while playable music creates actions, rewards and opportunities for interface failure. [Captain's Log 20, 6 February 2019, official patch roundup through v18.46](https://store.steampowered.com/news/posts/?appids=834910&enddate=1555648084&feed=steam_community_announcements)
 
-The written sources obtained do not disclose a verified ATLAS composer credit, recording-session account, complete sound-effects pipeline, dynamic-music implementation, spatial-audio model or accessibility evaluation. An ARK music credit cannot fill those gaps merely because the games share production history. The dossier therefore keeps its audio findings at the level actually supported: official music publication, playable instruments and documented feedback problems. No media assets have been copied into OpenLegend.
+The written sources obtained do not disclose a verified ATLAS composer credit, recording-session account, complete sound-effects pipeline, dynamic-music implementation, spatial-audio model or accessibility evaluation. An ARK music credit cannot fill those gaps merely because the games share production history. The dossier therefore keeps its audio findings at the level actually supported: official music publication, playable instruments and documented feedback problems. No media assets have been copied into Open Legend.
 
 <a id="r08"></a>
 
@@ -286,7 +286,7 @@ The Great Temple is a multi-stage Wonder built through specialized monument faci
 
 Industrial Lab structures extend a different reconstruction path through specialist production rooms. Brimstone and related industrial resources connect late technology to particular resource sites, while a generator can change the products of eligible nodes. These systems make “recovering lost power” an activity involving infrastructure and material access. Their exact node lifetimes, unlocks and placement restrictions are server/version-sensitive and should be checked before planning a live play route. [Industrial Lab](https://atlas.fandom.com/wiki/Industrial_Lab); [Brimstone](https://atlas.fandom.com/wiki/Brimstone); [Industrial Generator](https://atlas.fandom.com/wiki/Industrial_Generator)
 
-**Interpretation:** the richest lore delivery is systemic and spatial. A rejuvenating site changes the history visible on a body; a cursed ritual turns violence into a resource; a guarded book makes knowledge stealable; a Wonder converts collective labor into a claim to historical significance. The evidence is thinner for intimate authored characterization, dialogue and romance. OpenLegend can study the former without assuming that a large mythical vocabulary supplies the latter.
+**Interpretation:** the richest lore delivery is systemic and spatial. A rejuvenating site changes the history visible on a body; a cursed ritual turns violence into a resource; a guarded book makes knowledge stealable; a Wonder converts collective labor into a claim to historical significance. The evidence is thinner for intimate authored characterization, dialogue and romance. Open Legend can study the former without assuming that a large mythical vocabulary supplies the latter.
 
 <a id="r09"></a>
 
@@ -485,7 +485,7 @@ No recovered creator account documents AI assistance in making these representat
 
 <a id="r13"></a>
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These interpretations do not change the [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) or [engine/world boundary](../../../../AGENTS.md#engine-and-bundled-world-separation). Compare [Sea of Thieves](sea-of-thieves.md) and [ARK: Survival Evolved](ark-survival-evolved.md) for different preparation, ownership and continuing obligations.
 
@@ -493,47 +493,47 @@ These interpretations do not change the [playable-game priorities](../../../../d
 | --- | --- |
 | Player experience — [R12](#r12) | Qualitative support for both attachment to constructed projects and frustration with recovery or obligation; chiefly historical, with no prevalence estimate. |
 | Interpretation | Preparation is valuable when it changes a worthwhile choice. More prerequisites, upkeep or incompatibilities do not establish that value. |
-| OpenLegend possibilities below | Commissions, companions, property, lore and creator workflows remain untested applications. They establish no feature priority, population target, AI architecture or business model. |
+| Open Legend possibilities below | Commissions, companions, property, lore and creator workflows remain untested applications. They establish no feature priority, population target, AI architecture or business model. |
 
 ### A vessel can be both a tool and a record of its owners' decisions
 
-[R02–R03](#r02) supply the reference cases. **Interpretation:** a hypothetical OpenLegend expedition wagon could gain significance through who built it, what it can carry, which route it can survive and what the group chose to leave behind. The useful pattern to study is an object whose history changes the player's next decision.
+[R02–R03](#r02) supply the reference cases. **Interpretation:** a hypothetical Open Legend expedition wagon could gain significance through who built it, what it can carry, which route it can survive and what the group chose to leave behind. The useful pattern to study is an object whose history changes the player's next decision.
 
 The danger is making experimentation too expensive. If discovering that a design is inconvenient means discarding hours of routine collection, players may seek a prescribed optimal design instead of trying their own. A possible study could compare replacing one component with rebuilding the whole object. Neither unlimited free reconstruction nor irreversible construction follows automatically from the desire for meaningful ownership. The cost should be legible before the player commits and should preserve an interesting recovery choice.
 
 ### Resource variety matters when it changes a journey
 
-See [R03](#r03) for the reference systems. A possible OpenLegend example is a craftsperson who can make a useful ordinary tool locally, while a more specialized commission gives an expedition a concrete reason to visit another place. What matters is the new choice of route, trading partner or risk; simply adding differently named ingredients does not supply that choice.
+See [R03](#r03) for the reference systems. A possible Open Legend example is a craftsperson who can make a useful ordinary tool locally, while a more specialized commission gives an expedition a concrete reason to visit another place. What matters is the new choice of route, trading partner or risk; simply adding differently named ingredients does not supply that choice.
 
 The alternative is to let knowledge, technique or a relationship unlock a different result using familiar materials. That may fit a world better than a globally distributed collection checklist. Resource specificity can also exclude newcomers from cooperation if all valuable work requires distant supplies. The comparison should ask whether a beginning participant can contribute something immediately and whether the advanced recipe produces a new use rather than only a larger number.
 
 ### Paid crew demonstrate useful assistance with clear limits
 
-See [R06](#r06) for the reference's social boundaries. A possible OpenLegend study would examine bounded assistance: a character performs a recognizable task and the player can understand why that task stops. The study need not assume a generally simulated society or require an AI-generated decision for every routine job.
+See [R06](#r06) for the reference's social boundaries. A possible Open Legend study would examine bounded assistance: a character performs a recognizable task and the player can understand why that task stops. The study need not assume a generally simulated society or require an AI-generated decision for every routine job.
 
-For a hypothetical OpenLegend companion helping with travel, useful questions include whether the player can see what the companion is doing, what supplies the work consumes and what happens when the companion cannot continue. A fixed arrangement can be dependable but impersonal; richer preferences can make the companion distinctive but harder to predict and support. The research leaves that choice open. A crew member who merely hides busywork and a companion who adds a meaningful relationship serve different purposes.
+For a hypothetical Open Legend companion helping with travel, useful questions include whether the player can see what the companion is doing, what supplies the work consumes and what happens when the companion cannot continue. A fixed arrangement can be dependable but impersonal; richer preferences can make the companion distinctive but harder to predict and support. The research leaves that choice open. A crew member who merely hides busywork and a companion who adds a meaningful relationship serve different purposes.
 
 ### Persistent property needs a comprehensible promise about absence
 
-The ownership and persistence account in [R04](#r04), together with the lived criticism in [R12](#r12), shows why a game's logout rules belong in its core experience. A structure or ship can remain meaningful between visits while also becoming an obligation to monitor. For a possible OpenLegend settlement, the essential question is what another participant may change while its owner is absent, and whether the owner can reasonably anticipate that possibility.
+The ownership and persistence account in [R04](#r04), together with the lived criticism in [R12](#r12), shows why a game's logout rules belong in its core experience. A structure or ship can remain meaningful between visits while also becoming an obligation to monitor. For a possible Open Legend settlement, the essential question is what another participant may change while its owner is absent, and whether the owner can reasonably anticipate that possibility.
 
-There are several possible bargains: losses during an explicitly chosen expedition, scheduled periods of vulnerability, negotiated shared access, or a continuing world whose ordinary hazards do not erase a home. Each changes the social story. Protection can weaken conquest and create abandoned property; unrestricted exposure can reward availability more than good decisions. ATLAS does not select a policy for OpenLegend. It demonstrates why the policy must be evaluated through a person's ability to stop playing, return and understand what happened.
+There are several possible bargains: losses during an explicitly chosen expedition, scheduled periods of vulnerability, negotiated shared access, or a continuing world whose ordinary hazards do not erase a home. Each changes the social story. Protection can weaken conquest and create abandoned property; unrestricted exposure can reward availability more than good decisions. ATLAS does not select a policy for Open Legend. It demonstrates why the policy must be evaluated through a person's ability to stop playing, return and understand what happened.
 
 ### Rebuilding is valuable when it reopens choices
 
 Mike's [attributed Apocalypse Rising observation](../research-economics-engagement-and-creation.md#replay-loss-and-rebuilding) makes ATLAS a useful counterexample as well as an inspiration. Losing equipment can renew discovery and uncertainty; it can also demand that the player repeat already mastered collection before reaching another interesting decision. The reviews and [worked cases](#r05) distinguish the pleasure of assembling an expedition from the frustration of losing preparations to failures the player could not understand or influence.
 
-A possible OpenLegend comparison would track what remains after a setback: knowledge, relationships, a changed place, tools, access or only the player's memory. Then ask how soon the next attempt offers a meaningful alternative. A quick restart is not automatically better if it erases all attachment, and a durable world is not automatically better if every defeat creates another maintenance burden. The useful outcome is a recovery that continues the story while allowing a different approach.
+A possible Open Legend comparison would track what remains after a setback: knowledge, relationships, a changed place, tools, access or only the player's memory. Then ask how soon the next attempt offers a meaningful alternative. A quick restart is not automatically better if it erases all attachment, and a durable world is not automatically better if every defeat creates another maintenance burden. The useful outcome is a recovery that continues the story while allowing a different approach.
 
 ### Scale should be judged by encounters and continuity
 
 The distinction between advertised capacity, actual launch experiences and the present service evidence appears in [R09–R12](#r09). It is relevant to an authored-world engine because a large world matters to a player through travel, people, conflicts and remembered consequences. A population figure alone does not establish that these experiences are frequent, understandable or affordable to maintain.
 
-A hypothetical OpenLegend study could compare a small region with several consequential relationships against a larger region with longer gaps between meaningful decisions. The smaller world might feel more alive despite containing fewer simulated entities; the larger world might make distance and discovery valuable. Those are hypotheses to assess through play. ATLAS's technical history does not validate an OpenLegend server design, current AI cost, concurrent population or operating budget. Private and singleplayer routes also deserve separate evaluation because their continuity promises differ from a publisher-operated world.
+A hypothetical Open Legend study could compare a small region with several consequential relationships against a larger region with longer gaps between meaningful decisions. The smaller world might feel more alive despite containing fewer simulated entities; the larger world might make distance and discovery valuable. Those are hypotheses to assess through play. ATLAS's technical history does not validate an Open Legend server design, current AI cost, concurrent population or operating budget. Private and singleplayer routes also deserve separate evaluation because their continuity promises differ from a publisher-operated world.
 
 ### Creation has several audiences, and each inherits different work
 
-[R15](#r15) separates arranging a ship within native rules, making external game content and configuring a multi-region server. This helps clarify what an OpenLegend author is actually trying to make. A player decorating a home should not need to understand a publishing toolchain; someone distributing reusable behavior needs more than a screenshot of a successful local experiment. The artifact another person receives, its dependencies and the conditions under which it works are part of the creative experience.
+[R15](#r15) separates arranging a ship within native rules, making external game content and configuring a multi-region server. This helps clarify what an Open Legend author is actually trying to make. A player decorating a home should not need to understand a publishing toolchain; someone distributing reusable behavior needs more than a screenshot of a successful local experiment. The artifact another person receives, its dependencies and the conditions under which it works are part of the creative experience.
 
 An illustrative study could follow a small authored encounter from editing its setting through trying it with another participant, saving it and sharing a reusable copy. What remains to be supplied by the author—goals, dialogue, pacing, rights and testing—should be visible. A permissive tool can support ambitious community work while leaving maintenance, compatibility and support with volunteers. A limited native editor can be easier to share while unable to express a new ruleset. Neither case implies permission to load arbitrary player-supplied code into a trusted runtime.
 
@@ -541,13 +541,13 @@ An illustrative study could follow a small authored encounter from editing its s
 
 The lore in [R08](#r08) should be assessed separately from the social stories produced by companies, journeys and losses. Named mysteries can give a destination significance, but a distant promise does not guarantee that the intervening actions are satisfying. Conversely, players can form memorable loyalties and rivalries without an elaborate authored chronology.
 
-A possible OpenLegend adventure could let a local belief affect a journey's preparation or a character's willingness to help. The player would encounter the belief through a decision rather than only a lore entry. The tradeoff is that a practical consequence may narrow interpretation: making one belief mechanically correct is different from portraying several people who disagree. ATLAS reference names and imagery are research examples, not proposed OpenLegend content or evidence of permission to reuse assets.
+A possible Open Legend adventure could let a local belief affect a journey's preparation or a character's willingness to help. The player would encounter the belief through a decision rather than only a lore entry. The tradeoff is that a practical consequence may narrow interpretation: making one belief mechanically correct is different from portraying several people who disagree. ATLAS reference names and imagery are research examples, not proposed Open Legend content or evidence of permission to reuse assets.
 
 ### Evaluate what people enjoy and what the production can sustain separately
 
 The [commercial evidence](#r11) and [reception](#r12) answer different questions. A reviewer can love a building system in a product whose commercial expectations later weaken. Strong initial attention can coexist with poor entry conditions or a continuing support burden. Equally, public criticism does not reveal every revenue source or the full development cost. The dossier therefore keeps financial observations, player testimony and causal interpretations distinct.
 
-For OpenLegend, the useful lesson is to inspect whether the ordinary repeated actions are worthwhile and whether the promised experience can be delivered over time. Social surprise, a vast world or flexible authoring can enrich an enjoyable activity, but they can also obscure expensive repetition or unfinished fundamentals. No evidence here establishes a required monetization model, live-service schedule, AI architecture or feature backlog. The completed comparison supplies concrete questions and observed failure modes for future judgment without making another game's answers universal.
+For Open Legend, the useful lesson is to inspect whether the ordinary repeated actions are worthwhile and whether the promised experience can be delivered over time. Social surprise, a vast world or flexible authoring can enrich an enjoyable activity, but they can also obscure expensive repetition or unfinished fundamentals. No evidence here establishes a required monetization model, live-service schedule, AI architecture or feature backlog. The completed comparison supplies concrete questions and observed failure modes for future judgment without making another game's answers universal.
 
 <a id="r15"></a>
 
@@ -627,7 +627,7 @@ Darkside RP's primary Patreon description says its service is volunteer-operated
 
 These cases support studying a progression from native making, to content authoring, to operating a shared world. Useful principles include explaining each layer's output, making compatibility requirements visible, preserving author credit and recording the tested version. The cost is broader support responsibility: content, saves, updates and community rules must remain coherent. A powerful editor can lower the barrier to creating an object while leaving deployment and long-term stewardship demanding.
 
-For OpenLegend, these remain research observations subject to its current root policies and generated-content boundaries. They do not authorize adopting ATLAS's executable extensions, importing its assets, promising mod compatibility or creating a player marketplace. The dossier's R13 synthesis owns any cross-game comparison; this supplement contributes the concrete evidence and limitations.
+For Open Legend, these remain research observations subject to its current root policies and generated-content boundaries. They do not authorize adopting ATLAS's executable extensions, importing its assets, promising mod compatibility or creating a player marketplace. The dossier's R13 synthesis owns any cross-game comparison; this supplement contributes the concrete evidence and limitations.
 
 <a id="r14"></a>
 
@@ -651,7 +651,7 @@ For OpenLegend, these remain research observations subject to its current root p
 | [R10 — Marketing and distribution](#r10) | The advertised pirate-world promise, paid Early Access, platform expansion, communication and the service-history evidence boundary |
 | [R11 — Economics](#r11) | Dated commercial evidence, estimation limits, revenue versus impairment and profit, cost/support unknowns and qualified economic interpretation |
 | [R12 — Reception and enjoyment](#r12) | Original written criticism, contrasting helpful Steam bodies, the appeal of making and sailing, frustration, repetition, group entry, return and abandonment |
-| [R13 — OpenLegend interpretation](#r13) | Concrete possible studies, prerequisites, tradeoffs, alternatives and failure modes; no accepted gameplay or implementation requirements |
+| [R13 — Open Legend interpretation](#r13) | Concrete possible studies, prerequisites, tradeoffs, alternatives and failure modes; no accepted gameplay or implementation requirements |
 | [Player creation](#player-creation) | Native construction, external content and world configuration treated as distinct activities, with separate author responsibilities |
 | [R15 — External modifications](#r15) | Gate **yes**: documented creation and adoption, representative mods and an overhaul, authoring/deployment, dependencies, compatibility, support, rights and incentives |
 
@@ -673,7 +673,7 @@ The records support a detailed study of the game's documented systems and their 
 
 A present-play comparison would need recent positive and negative accounts identified by mode, version and play stage. Historical testimony does not settle reception of later changes; unrecovered review permalinks limit reproducibility.
 
-No executable, mod, host configuration or save was installed or tested. No assets were copied into OpenLegend and no gameplay or architecture was changed. The [scoped completion ledger](../research-progress-pirate-games-2026-10-20.md) records the actual manuscript and documentation review; the source registers below distinguish complete relevant text, indexed bodies, mirrored developer posts and unavailable destinations.
+No executable, mod, host configuration or save was installed or tested. No assets were copied into Open Legend and no gameplay or architecture was changed. The [scoped completion ledger](../research-progress-pirate-games-2026-10-20.md) records the actual manuscript and documentation review; the source registers below distinguish complete relevant text, indexed bodies, mirrored developer posts and unavailable destinations.
 
 ### Mechanics, people and lore sources
 

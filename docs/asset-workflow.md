@@ -63,13 +63,15 @@ For a recipe spanning several folders, prepare a small projection of a published
 
 Generated catalogs remain outside Git until explicitly reviewed. After publication, deliberately update the small tracked catalogs, provenance and selected exact asset list that consume those outputs; do not copy the workspace wholesale into the checkout. Check that exported bounds, filenames and hashes match the published files. The scripts do not automatically edit tracked catalogs or change the game's selected release.
 
-The native starting-world replay capture also requires an explicit external destination:
+To refresh the seven starting-world replay views, prepare an untouched, paused Main opening with seed 1086 in an owned disposable PostgreSQL database. Run the matching stand-alone Rust release on loopback with local authentication, AI provider settings absent, and `AI_BUDGET_USD=0`. Take the world ID from the reviewed opening. Leave the game idle until the capture tab signs in.
 
 ```sh
-pnpm exec tsx scripts/capture-starting-art-study.ts --output /private/tmp/starting-world-study.json
+pnpm exec tsx scripts/capture-starting-art-study.ts \
+  --origin http://127.0.0.1:4311 --world "$REVIEWED_WORLD_ID" \
+  --output /private/tmp/starting-world-study.json
 ```
 
-It requires the explicit disposable-test PostgreSQL configuration from [verification guidance](../.agents/rules/verification.md), uses ordinary authenticated native travel with no paid AI calls, and refuses an existing output. `--camp-only` captures just the initial current Main view for a small renderer baseline; omission retains all seven stops. The disposable world uses the current Main initializer and fresh-startup preparation without an installed-artwork binding, so capture needs no cloud asset-authority catalog; the consuming study selects its exact artwork release separately. Publish the resulting JSON as study data before updating its selected exact reference. Never use a real player's database to refresh a visual study.
+The command uses the running game’s normal character control, travel and permitted views. Pass `--camp-only` to capture the initial camp without walking. It refuses a different or already-started world and an existing output. It pauses the same world and releases its own control on completion. Stop the task-owned game and remove its disposable database under the [verification guidance](../.agents/rules/verification.md). Review the capture through the scene-study viewer and publish it as study data before changing the exact selected reference. Never capture a real player's world.
 
 ## Publish an exact revision
 
@@ -176,7 +178,7 @@ Each file keeps the shared project settings and selects the verified runtime buc
 
 Publish the same exact reviewed runtime manifest and release to each selected environment with `publish --config /absolute/environment.json`. Use distinct operation IDs and independent `--selection` names for development and production, with `--expected N` matching each selection's current revision; a new selection starts at zero. Promotion preserves the exact asset identity and bytes, verifies the destination copy, and updates only the explicitly chosen selection. It does not install the release into a saved game.
 
-Set `OPEN_LEGEND_ASSET_CONFIG=/private/tmp/openlegend-development-assets.json` when running `pnpm dev`, `pnpm build` or asset commands against development. The server, browser build and public downloads then use the same selected runtime environment. Choose the production configuration explicitly for production work. Keep these external configurations with the operator records needed to recover publications from both environments.
+Set `OPEN_LEGEND_ASSET_CONFIG=/private/tmp/openlegend-development-assets.json` when preparing the reviewed release, building its browser or running asset commands against development. The [Rust launcher](../README.md#run-locally) serves the exact asset index packaged in that release. Choose the production configuration and index explicitly when preparing a production release. Keep these external configurations with the operator records needed to recover publications from both environments.
 
 Migration preparation may supply `--sources FILE` instead of a common `--source-root`. That explicit registry maps exact references to verified local files or approved historical Git blobs. It is an operator migration input, remains outside Git and grants no rights by itself. Large collections can be partitioned into bounded child manifests and an exact parent dependency set; publish the children before their parent. The [migration tools](../scripts/assets/migration.ts) prepare plans and staging without uploading or deleting originals.
 
@@ -211,6 +213,18 @@ For local authentication, `pnpm assets install --operation selected-art-release`
 
 A clean code checkout can pull, verify and copy explicitly public files with `--public` without AWS credentials or PostgreSQL. Running a world has an additional prerequisite: its owning PostgreSQL database must contain the real records of the selected release's publication and current permissions. Downloading public bytes does not create those records or grant game installation. `pnpm assets sync` copies them from the [shared asset authority](#shared-asset-authority). On a fresh machine, restore the verified publication catalog and reconcile the independently current authority through the recovery workflow below before creating the world or installing its release. An existing local world uses its existing owning database; ordinary asset installation does not require resetting it.
 
+### Prepare the Rust runtime asset mount
+
+After building the Rust release, prepare its exact `assets.json` selection once in a new directory outside Git and outside the public browser build:
+
+```sh
+pnpm assets mount-runtime --server-release /external/release --output /external/runtime-assets
+```
+
+The operator command uses the existing asset identity and current catalog permissions. Use `--public` only for an entirely public runtime release. It can use the shared download cache, then copies each distinct checked file into the read-only mount. The Rust-visible files appear together after the complete selection passes. A failed preparation leaves no usable partial mount and preserves any existing destination. Prepare a different destination for another release.
+
+Give the Rust process read access to that directory and set `OPEN_LEGEND_RUNTIME_ASSET_ROOT=/external/runtime-assets` when running `openlegend-game-server serve /external/release`. The mounted files and the installed release are inputs to the server. Current sign-in and catalog permission still govern download and selection. Preparation grants no world access and changes neither the saved artwork selection nor the publication catalog. The server needs no Node process or storage credential to serve these mounted files.
+
 ## Preserve and remove repository payloads
 
 Before removal, inventory current tracked media, embedded payloads, generated geometry, historical changes and linked local sources. Freeze the approved history scope, preserve exact sources and provenance, publish the intended study/runtime copies, verify complete dependency closure, and qualify isolated recovery. Historical comparison pages must retain their original assets and the limits of their original verification. Missing original evidence must be identified explicitly; do not silently replace it with a different iteration.
@@ -224,11 +238,16 @@ Removing tracked files makes the current checkout smaller. Old reachable Git obj
 Use the configured recovery writer to preserve coherent publication metadata and every admitted physical asset location, including named viewer/mirror copies. `recovery-initialize --output /external/authority-work` establishes the independent current-permission marker for a new installation; normal operation reuses its configured marker and work directory. Access/rights changes must update that independent record, so an older backup cannot resurrect withdrawn content.
 
 ```sh
-pnpm assets recovery-create --operation selected-asset-checkpoint --output /private/tmp/asset-checkpoint
+pnpm assets recovery-create --operation selected-asset-checkpoint \
+  --output /private/tmp/asset-checkpoint \
+  --server-directory /path/to/server-binary-directory \
+  --server-release /path/to/exact-server-release
 pnpm assets recovery-verify --manifest /private/tmp/asset-checkpoint/locator.json --output /private/tmp/asset-verified-restore
 ```
 
-Keep the returned checkpoint locator in durable operator storage. `recovery-create` captures the current owning database and its configured operational data directory; an explicitly selected `--source-root` can supply that directory. Use a new checkpoint identity and external work directory. `recovery-verify` uses the recovery reader, retains the checkpoint manifest and metadata locally, and streams every protected asset through a full hash check before reporting success. It does not retain those media streams in the verification directory, restore the application's database or publish recovered content.
+Stop the game server before taking a new capture. For a database with a world, `recovery-create` runs the selected Rust executable's `backup-world` command and captures the asset catalog under the same stopped-writer guard. The guard releases before uploads. The operating data directory comes from configuration or `--source-root`. Omit the Rust arguments for a catalog-only database. Use a new checkpoint identity and external work directory. Retry the same identity and directory after an interruption to reuse the verified local capture.
+
+Keep the returned checkpoint locator in durable operator storage. `recovery-verify` uses the recovery reader, retains the checkpoint manifest and metadata locally, and streams every protected asset through a full hash check before reporting success. It does not retain those media streams in the verification directory, restore the application's database or publish recovered content.
 
 The verified migration checkpoint has a small [checked-in exact locator](../assets/recovery/asset-migration-complete-20261017.json), so recovering its preserved collection does not depend on a temporary directory surviving. Supply that file to `recovery-verify --manifest`. It contains no credentials or saved-world data; the protected backup still requires the configured recovery permissions. Keep future checkpoint locators in durable operator storage too, rather than relying on terminal output or cache files.
 
@@ -244,4 +263,15 @@ Recovery rehearsal copies are untagged and remain private after verification; no
 
 The operator's waiting period preserves the terminal cleanup grace. The deployed intake rule applies only to `runs/` objects with that explicit tag: current versions become eligible after seven days of object age, and noncurrent versions after seven days as noncurrent. Tagging starts no additional grace period; an older object may become eligible immediately after tagging. S3 lifecycle processing is asynchronous. Untagged work remains retained, and durable asset/recovery prefixes have no age-based expiration. The [intake retention limit](limits/game-asset-storage.md#ast06--temporary-intake-and-previews) owns this policy.
 
-For a complete saved-world restore into a fresh target, use the existing operational restore directly: after `recovery-verify`, select a genuinely empty target database and fresh `OPEN_LEGEND_DATA_DIR`, then run `pnpm exec tsx scripts/restore-world.ts /private/tmp/asset-verified-restore/metadata/world`. Keep the game stopped. Do not run `recovery-restore-catalog` into that same target first; this fresh-target path requires empty operational tables. A world with external assets checks independently current authority before installation and restores captured asset records under quarantine. After the slow file/database work, it fetches current authority again and activates access in a short transaction that verifies the complete saved asset dependencies. An interrupted activation remains quarantined; retry the identical backup against the unchanged target to complete it. A changed target is refused. A native-only backup needs no AWS access. The [operational save/restore contract](save-and-load.md) owns the full-world procedure and its current-format requirements.
+For a saved world with an asset catalog, run `recovery-verify`, keep the game stopped, and configure an empty target database and its own `OPEN_LEGEND_DATA_DIR`. Keep `openlegend-game-server` in the selected executable directory. Use the matching server release. If the saved world selected artwork, the server release must contain that exact artwork index and its files must be materialized through the normal deployment workflow.
+
+```sh
+pnpm assets recovery-restore-world \
+  --source-root /private/tmp/asset-verified-restore/metadata/world \
+  --server-directory /path/to/server-binary-directory \
+  --server-release /path/to/exact-server-release
+```
+
+The asset operator tool verifies current authority using the configured recovery role. The stopped Rust executable installs the world, catalog and checkpoints under quarantine. The tool reads current authority again, then uses the existing catalog owner to activate the exact staged world in a short transaction. A world with no selected artwork reopens with that same choice. Its catalog and retained checkpoints remain available under their own permissions. When authority is unavailable or the selected artwork was withdrawn, the staged world and its files stay inaccessible through the server. Retry the identical backup against the unchanged target after resolving authority coverage. The asset operator tool runs separately from the game server. Launch and restart the Rust server normally afterward with Node absent.
+
+The target starts empty, including its catalog tables. Keep the separate `recovery-restore-catalog` command for asset-only recovery. A backup without artwork authority, catalog rows or retained artwork can use the direct Rust restore command without AWS. An occupied target uses its current catalog and permissions during replacement. A readable predecessor's recovery file keeps its own asset pins. [Operational save/restore](save-and-load.md#stopped-operational-backup) · [Restore verification](verification/checkpoints-and-recovery.md#artwork-authority-during-empty-target-restore).

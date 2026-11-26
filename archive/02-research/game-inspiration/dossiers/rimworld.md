@@ -247,7 +247,7 @@ This creates one of RimWorld's strongest role-transition patterns:
 
 The person's physical history and relationships persist across that transition. The preserved overview already uses the attacker-to-recruit case as a concrete example of why persistent identity matters.
 
-**Ideology boundary:** slavery is an Ideology system, not a base-game mechanic. Ideology explicitly adds slave ownership/trade and belief-system precepts that can approve or condemn slavery. Slaves can perform much colony work but require suppression and can rebel. The mechanic is ethically charged content and should be described, not normalized as a default model for OpenLegend. [RW23](#rw23)
+**Ideology boundary:** slavery is an Ideology system, not a base-game mechanic. Ideology explicitly adds slave ownership/trade and belief-system precepts that can approve or condemn slavery. Slaves can perform much colony work but require suppression and can rebel. The mechanic is ethically charged content and should be described, not normalized as a default model for Open Legend. [RW23](#rw23)
 
 ## 13. Factions, goodwill, trade, quests, caravans and the world map
 
@@ -572,7 +572,7 @@ These are either documented mechanics composed into rules-based illustrations or
 
 KingKuma's helpful review describes an old tortoise becoming important enough that preservation, resurrection/stasis and eventual evacuation shaped the run's goals. The game supplied animal/medical/storage/combat systems; the player supplied much of the meaning. [RW30](#rw30)
 
-## 24. Transferable inspiration for OpenLegend — and limits
+## 24. Transferable inspiration for Open Legend — and limits
 
 ### 1. Make identity causally expensive
 
@@ -625,7 +625,7 @@ The tortoise story works partly because the game does not narrate a definitive l
 
 **Borrow:** factual event history plus selective character expression can leave interpretive space.
 
-**Counterpoint:** PC Gamer's criticism shows that too little expressive behavior can make people feel like spreadsheets. OpenLegend's opportunity is not “more prose”; it is stronger coupling between private motive, visible choice and remembered consequence.
+**Counterpoint:** PC Gamer's criticism shows that too little expressive behavior can make people feel like spreadsheets. Open Legend's opportunity is not “more prose”; it is stronger coupling between private motive, visible choice and remembered consequence.
 
 ### 7. Expansion design can add a new axis instead of inflating a content list
 

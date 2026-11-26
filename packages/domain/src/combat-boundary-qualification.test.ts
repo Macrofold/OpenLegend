@@ -6,6 +6,7 @@ import { PLAYER_ID, NPC_ID } from './worlds/base/world.js';
 import { worldPosition } from './spatial-state.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { settleProjectiles } from './ranged.js';
+import { freezeWorld } from './draft.js';
 import { validateWorldModules } from './world-modules.js';
 import type { WorldEvent, WorldState } from './types.js';
 import type { AdmittedWorldInput } from './execution-input.js';
@@ -52,7 +53,8 @@ describe('retained crossings and release at a current contact boundary', () => {
     const duration = 1 / nativeMovementSpeed(initial, target),
       restoreAt = target.spatial.localPose!.restoreAt;
     function exercise(step: number) {
-      let world = structuredClone(initial);
+      // Compare time cuts from the same completed publication used by live play.
+      let world = freezeWorld(structuredClone(initial));
       const events: WorldEvent[] = [];
       const out = advance(world, duration, step, [
         {

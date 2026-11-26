@@ -30,7 +30,7 @@ The sequence and follow-up below describe delivered work. The completed pilot is
 
 1. Produce one self-contained model with both existing clips, preserve source provenance/digests, and bound this pilot to the known bundled asset. Keep the source study intact.
 2. Add typed, scene-owned model/material/cloth resources. Drive heading and movement from projected state; freeze on pause and release or hide immediately on replacement/removal. Bind contacts to the reference skeleton and ground the cloth relative to current support height.
-3. Integrate model geometry with existing shadows, depth-aware selection and authorized read-through. Do not leave an effective sprite caster/picker under the model. Unsupported states restore the existing truthful sprite.
+3. Integrate model geometry with existing shadows, depth-aware selection and see-through reveal. Do not leave an effective sprite caster/picker under the model. Unsupported states restore the existing truthful sprite.
 4. Inspect the actual playable scene at full HD: idle/walk/turn, camera orbit, sunlight/firelight, ground/ramp contact, picking/reveal, pause, fallback and reload/teardown. Use disposable native state and zero provider budget. Run focused static/build checks and appropriate existing camera/spatial checks where their dependencies are available; record missing coverage honestly.
 5. Review the full task diff against the preserved baseline, reconcile V3D01/SW18.14, current presentation documentation and limits/evidence. Do not close the broader 3D pipeline or claim crowd/low-end qualification from one character.
 

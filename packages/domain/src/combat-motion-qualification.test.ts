@@ -10,7 +10,8 @@ import { PLAYER_ID, NPC_ID } from './worlds/base/world.js';
 import { bodyProfile, setSpatialPosition, worldPosition, worldSupport } from './spatial-state.js';
 import { validateWorldModules } from './world-modules.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
-import { TERMINAL_FALL_SPEED, motionTrackPosition } from './flight.js';
+import { motionTrackPosition } from './flight.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { movementTrack } from './action-movement.js';
 import { SPATIAL_LIMITS } from '@open-legend/spatial';
 import type { WorldEvent, WorldState, Command } from './types.js';
@@ -231,7 +232,7 @@ describe('native motion producers at projectile boundaries', () => {
       p = worldPosition(target),
       flight = Object.values(world.projectiles!)[0]!;
     setSpatialPosition(world, target, { ...p, y: p.y + 8 }, null);
-    target.spatial.fallVelocity = -TERMINAL_FALL_SPEED;
+    target.spatial.fallVelocity = -selectedOccurrenceRules(world).flight.terminalFallSpeed;
     flight.position = { x: p.x - 1.5, y: p.y + 1.5, z: p.z };
     flight.direction = { x: 1, y: 0, z: 0 };
     flight.speed = 0.5;

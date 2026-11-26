@@ -12,7 +12,7 @@ Mike selected S3/CloudFront for substantial game/source/study assets, with exact
 
 **Prefer AWS for the first deployment: ordinary ECS Fargate On-Demand, RDS PostgreSQL with pgvector, Auth0, and S3/CloudFront. Keep the current Node/React/PlayCanvas stack and HTTP/SSE protocol. Buy no GPUs.** This is a modest operational-fit recommendation, not evidence that AWS is cheaper, faster or more scalable than GCP. Fargate supplies a managed persistent-container starting point without requiring Kubernetes or a game-server SDK. The application must still implement safe ownership, recovery and deployment.
 
-**GCP is a credible long-term alternative.** Compute Engine does not require Kubernetes; GKE Autopilot reduces node management and supports Agones with constraints. Cloud SQL/PostgreSQL and Cloud Storage/CDN cover the corresponding data/asset needs. Stronger GCP expertise, a materially better commercial offer, or measured regional performance can reverse the preference. No equivalent OpenLegend workload has been benchmarked on either cloud. Avoid dual-cloud operation at launch merely to preserve an option. [3] [37] [38] [51]
+**GCP is a credible long-term alternative.** Compute Engine does not require Kubernetes; GKE Autopilot reduces node management and supports Agones with constraints. Cloud SQL/PostgreSQL and Cloud Storage/CDN cover the corresponding data/asset needs. Stronger GCP expertise, a materially better commercial offer, or measured regional performance can reverse the preference. No equivalent Open Legend workload has been benchmarked on either cloud. Avoid dual-cloud operation at launch merely to preserve an option. [3] [37] [38] [51]
 
 This is not a claim that one Fargate task serves 100,000 players. Either cloud can be the platform while world ownership, working sets, admission and data placement evolve. Do not deploy Kubernetes, a global database, Kafka, Redis, a separate vector database or a replacement multiplayer framework simply to appear production-ready.
 
@@ -143,7 +143,7 @@ The [asset release procedure](production-deployment-playbook.md#5-publish-assets
 
 ## 7. Inference and GPU decisions
 
-**Managed execution first; no owned GPUs and no permanent process per NPC.** Preserve native continuation, scoped recall, judgment and generation through [the current AI boundary](../ai-providers.md). Full deliberation and workspace reflection use the configured Macrofold Worker; the separate direct-inference path remains available for immediate calls. OpenLegend does not create, resume, replace or destroy shared Workers; its operator must separately qualify upstream capacity, isolation, region, support, idle policy and billing.
+**Managed execution first; no owned GPUs and no permanent process per NPC.** Preserve native continuation, scoped recall, judgment and generation through [the current AI boundary](../ai-providers.md). Full deliberation and workspace reflection use the configured Macrofold Worker; the separate direct-inference path remains available for immediate calls. Open Legend does not create, resume, replace or destroy shared Workers; its operator must separately qualify upstream capacity, isolation, region, support, idle policy and billing.
 
 Use bounded admission classes for player dialogue, autonomous decisions, reflection/maintenance and art. Apply per-account/world fairness plus global concurrency, queue age and reserved-spend controls. Native simulation does not wait on a model. Persist attempt identity before dispatch, reconcile unknown outcomes, and revalidate relevant authority/timeline/state before publication. A queue transport such as SQS may be added when separate workers need it; it does not replace the existing durable job/receipt owner or provide exactly-once paid execution. Model output remains untrusted; executor tool/network grants must not expose database administration or unrelated private worlds.
 
@@ -175,7 +175,7 @@ The [playbook](production-deployment-playbook.md#8-close-the-non-server-release-
 
 ## 9. Capacity, cost and the scale path
 
-Retain the [selected workloads](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product): first release **100 humans, 100 agents, 100 animals and 1,000 other objects**, with half of each in one scene; growth **10,000 concurrent humans**, with **200 humans and agents combined** in the local scene and an explicit animal/object/activity profile. These are unqualified targets, not stored-content ceilings.
+Retain the [selected workloads](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product): the first release targets **100 players, 100 NPCs, 100 animals and 1,000 other objects** across the shared world. One scene must contain half of each group. The growth target is **10,000 concurrent players**, with **200 player characters and NPCs combined** in one scene. State the animal population, other objects and activity tested. These are unqualified targets, not stored-content ceilings.
 
 **Pilot → qualified first release.** One recoverable world; bounded native/AI/client work; infrastructure above. Promotion requires real Auth0/browser mixed play, dense scene, aged history, sustained load, failure/recovery and measured spend.
 
@@ -199,7 +199,7 @@ The [fleet stepping stones](production-deployment-playbook.md#7-expand-without-m
 
 `monthly cost = simulation + connection/edge + database/I/O/backups + asset/storage/egress + inference/Worker allocation + observability + support/on-call`.
 
-Record peak/average CCU, active and unattended worlds, hot-scene density, bytes/player-second, history growth and model request/token distributions. Useful arithmetic: **10 kB/s per player at 100,000 CCU is 1 GB/s, or 3.6 TB/hour** before overhead. That is why the GameLift bandwidth change matters. Separately, 1,000 active players each causing one model request/minute produce about 16.7 requests/second; at 20 seconds mean completion time, about 333 requests are in flight before headroom. These are illustrative assumptions, not predicted OpenLegend traffic. [2] [34]
+Record peak/average CCU, active and unattended worlds, hot-scene density, bytes/player-second, history growth and model request/token distributions. Useful arithmetic: **10 kB/s per player at 100,000 CCU is 1 GB/s, or 3.6 TB/hour** before overhead. That is why the GameLift bandwidth change matters. Separately, 1,000 active players each causing one model request/minute produce about 16.7 requests/second; at 20 seconds mean completion time, about 333 requests are in flight before headroom. These are illustrative assumptions, not predicted Open Legend traffic. [2] [34]
 
 Compare cost per active player-hour and per world-day, including idle worlds. Count provider charges, Macrofold shared allocation and uncertain reservations once; per-agent allowances do not cap fleet spend. Price the measured bill of materials with current region/plan rates before provisioning, and obtain Auth0/provider/cloud quotas before a launch event. No defensible monthly bill or GPU count follows from an unspecified “100,000 users.”
 
@@ -211,9 +211,9 @@ For a cloud comparison, hold region proximity, application revision, database du
 
 **Old School RuneScape (Jagex, August 2025):** whole-world authority and regional hosting remained useful, while VM contention, shared backend capacity and specific expensive content affected performance. Borrow workload profiling and deliberate CPU placement; do not copy its 0.6-second tick or equate its scripted NPCs with our cognition workload. [19]
 
-**Supersolid / Google's browser multiplayer example:** GKE/Agones is a real deployment route, but server allocation remains separate from game-state correctness. **EVE's historical time-dilation design** demonstrates that one dense interaction can require explicit overload policy; it does not authorize changing OpenLegend's clock. [20] [31] [32]
+**Supersolid / Google's browser multiplayer example:** GKE/Agones is a real deployment route, but server allocation remains separate from game-state correctness. **EVE's historical time-dilation design** demonstrates that one dense interaction can require explicit overload policy; it does not authorize changing Open Legend's clock. [20] [31] [32]
 
-**Riot Games (AWS-published customer engineering case):** EKS, Karpenter and Terraform illustrate standardized deployment, fleet utilization and isolation at an established operator. This is evidence that serious games use Kubernetes successfully, not that a new game must start with it or that every Riot workload has one architecture. Reported vendor-case results are not an independent OpenLegend benchmark. [50]
+**Riot Games (AWS-published customer engineering case):** EKS, Karpenter and Terraform illustrate standardized deployment, fleet utilization and isolation at an established operator. This is evidence that serious games use Kubernetes successfully, not that a new game must start with it or that every Riot workload has one architecture. Reported vendor-case results are not an independent Open Legend benchmark. [50]
 
 **Synthesis:** there is no demonstrated universal “modern MMO stack.” The useful common pattern is durable identities, a bounded unit of simulation authority, managed/repeatable infrastructure, deliberate placement, separate content/intelligence work and measured recovery. Our fastest credible route is a small complete instance of those patterns, then repeatable cells and separately qualified regional ownership—not a premature recreation of an established studio's fleet.
 
@@ -234,7 +234,7 @@ This proposal adds no runtime code, infrastructure, paid generation, migration o
 
 ## Sources
 
-Primary sources checked 1–2 October 2026. The numbered links above point directly to the sources below; command-specific references are in the playbook. Vendor features/prices must be rechecked at implementation; historical case studies describe their stated dates. Recommendations and application to OpenLegend are this design's synthesis, not measured provider comparisons.
+Primary sources checked 1–2 October 2026. The numbered links above point directly to the sources below; command-specific references are in the playbook. Vendor features/prices must be rechecked at implementation; historical case studies describe their stated dates. Recommendations and application to Open Legend are this design's synthesis, not measured provider comparisons.
 
 [1]: https://aws.amazon.com/blogs/gametech/host-persistent-world-games-on-amazon-gamelift-servers/
 [2]: https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-gamelift-servers-free-network-bandwidth/

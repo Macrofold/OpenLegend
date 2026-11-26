@@ -1,0 +1,1060 @@
+//! Current account, session, grant and control checks use the existing
+//! operational tables outside gameplay checkpoints.
+
+use crate::{
+    command_epoch::RequestIdentity,
+    player_view::profile::{Reveal, Voice},
+    store::{CommitError, Store, StoreError},
+};
+use openlegend_simulation::host::{ByteBudget, ByteReservation};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::{HashMap, HashSet};
+use std::future::Future;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use tokio::time::Instant;
+use tokio_postgres::{Row, Transaction};
+use uuid::Uuid;
+
+pub(crate) mod binding;
+pub(crate) mod bootstrap;
+mod control;
+mod desktop;
+mod lab;
+pub(crate) mod invites;
+mod managed_access;
+pub use control::{ControlChange, ControlOperation, ControlRequest};
+pub(crate) use control::{DepartureControl, PendingExit, RestoredExitAttempts, apply_exit};
+pub(crate) use desktop::DesktopBrowser;
+pub(crate) use managed_access::{
+    AccessUpdateError, UpdateGrant, assert_saved_access_manager, assert_saved_grant,
+};
+
+pub(crate) const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
+pub(crate) const LOCAL_SUBJECT: &str = "local-player";
+const CHARACTERLESS: &str = "#characterless:";
+const TOKEN_CACHE_LIMIT: usize = 4096;
+const ACCESS_COLUMN_BYTES: i32 = 512;
+
+/// A grant without a character still carries account authority, but it may
+/// never become a gameplay actor binding.
+pub(crate) fn granted_actor(stored: &str) -> Option<&str> {
+    (!stored.starts_with(CHARACTERLESS)).then_some(stored)
+}
+
+#[derive(Debug)]
+pub enum AccessError {
+    Session,
+    Forbidden,
+    Characterless,
+    Changed,
+    Busy,
+    Availability,
+    Read(StoreError),
+    Write(CommitError),
+}
+
+impl std::fmt::Display for AccessError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Session => f.write_str("No current session"),
+            Self::Forbidden => f.write_str("The current account cannot use this capability"),
+            Self::Characterless => f.write_str("The current account has no character"),
+            Self::Changed => f.write_str("The request's authority changed"),
+            Self::Busy => f.write_str("Session admission is busy"),
+            Self::Availability => f.write_str("Session authority is unavailable"),
+            Self::Read(error) => error.fmt(f),
+            Self::Write(error) => error.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for AccessError {}
+
+impl From<StoreError> for AccessError {
+    fn from(error: StoreError) -> Self {
+        Self::Read(error)
+    }
+}
+impl From<CommitError> for AccessError {
+    fn from(error: CommitError) -> Self {
+        Self::Write(error)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Capability {
+    Play,
+    Spectate,
+    Create,
+    Inspect,
+    Save,
+    ManageAccess,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum Audience {
+    Embodied,
+    AuthorizedInspection,
+}
+
+// The browser's existing scope digest hashes these fields in this order.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RequestScope {
+    pub account_id: String,
+    pub session_id: String,
+    pub session_revision: u64,
+    pub world_id: String,
+    pub timeline_id: String,
+    pub grant_revision: u64,
+    pub actor_id: String,
+    pub control_generation: u64,
+    pub connection_id: String,
+    audience: Audience,
+}
+
+impl RequestScope {
+    pub fn key(&self) -> Result<String, serde_json::Error> {
+        Ok(openlegend_simulation::encoding::sha256_hex(
+            &serde_json::to_vec(self)?,
+        ))
+    }
+
+    pub fn embodied(&self) -> bool {
+        self.audience == Audience::Embodied
+    }
+
+    /// A player stream may follow control changes for its original audience.
+    /// A new session, grant, character or timeline needs a fresh connection.
+    pub(crate) fn same_view_connection(&self, next: &Self) -> bool {
+        self.connection_id == next.connection_id && self.recovery_fields() == next.recovery_fields()
+    }
+
+    /// The existing private draft and command-recovery identity excludes page
+    /// and control changes. Neither digest provides admission or permission.
+    pub(crate) fn recovery_fields(&self) -> impl Serialize + Eq + '_ {
+        #[derive(Eq, PartialEq, Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Scope<'a> {
+            account_id: &'a str,
+            session_id: &'a str,
+            session_revision: u64,
+            world_id: &'a str,
+            timeline_id: &'a str,
+            grant_revision: u64,
+            actor_id: &'a str,
+            audience: Audience,
+        }
+        Scope {
+            account_id: &self.account_id,
+            session_id: &self.session_id,
+            session_revision: self.session_revision,
+            world_id: &self.world_id,
+            timeline_id: &self.timeline_id,
+            grant_revision: self.grant_revision,
+            actor_id: &self.actor_id,
+            audience: self.audience,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorldGrant {
+    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actor_id: Option<String>,
+    pub capabilities: Vec<Capability>,
+    #[serde(skip)]
+    revision: u64,
+}
+
+impl WorldGrant {
+    fn can_manage_access(&self) -> bool {
+        self.capabilities.contains(&Capability::ManageAccess)
+    }
+}
+
+pub(crate) struct ViewAccess {
+    pub controlling: bool,
+    pub can_save: bool,
+    pub can_retry_npc_replies: bool,
+    pub can_operate: bool,
+    pub can_inspect: bool,
+    pub can_create: bool,
+    pub local: bool,
+}
+
+struct Control {
+    generation: u64,
+    account_id: String,
+    session_id: String,
+    connection_id: String,
+}
+
+struct Access {
+    session: String,
+    account: String,
+    session_revision: u64,
+    expires_at: i64,
+    grant: Option<WorldGrant>,
+    control: Option<Control>,
+    _custody: ByteReservation,
+}
+type TokenHash = [u8; 32];
+
+pub(crate) struct AssetAccess {
+    key: TokenHash,
+    session: Arc<Access>,
+}
+
+impl AssetAccess {
+    pub(crate) fn account_id(&self) -> &str {
+        &self.session.account
+    }
+}
+
+struct Cache {
+    tokens: HashMap<TokenHash, Arc<Access>>,
+    revision: u64,
+    revoking: HashSet<TokenHash>,
+    changing_control: HashSet<String>,
+    changing_grant: Option<String>,
+}
+
+pub struct Authority {
+    lab: bool,
+    evidence: Mutex<(u64, usize)>,
+    store: Arc<Store>,
+    world_id: String,
+    timeline: String,
+    duration_ms: i64,
+    session_capacity: i64,
+    budget: ByteBudget,
+    cache: Mutex<Cache>,
+    changes: Arc<tokio::sync::Mutex<()>>,
+    local: bool,
+}
+
+pub fn now_ms() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_millis()
+        .try_into()
+        .unwrap_or(i64::MAX)
+}
+
+fn exact_integer(value: i64) -> Result<u64, StoreError> {
+    u64::try_from(value)
+        .ok()
+        .filter(|n| *n <= openlegend_simulation::identity::MAX_SAFE_INTEGER)
+        .ok_or(StoreError::InvalidRecord)
+}
+
+fn token_hash(token: &str) -> Result<TokenHash, AccessError> {
+    if token.len() != 64
+        || !token
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err(AccessError::Session);
+    }
+    Ok(Sha256::digest(token.as_bytes()).into())
+}
+
+fn digest_text(digest: TokenHash) -> String {
+    openlegend_simulation::encoding::hex_bytes(&digest)
+}
+
+/// Use the same issuer, limits and lifetime for browser and desktop sessions.
+struct SessionSeed {
+    token: String,
+    hash: String,
+    id: String,
+}
+
+impl SessionSeed {
+    fn new() -> Result<Self, AccessError> {
+        let mut bytes = [0_u8; 32];
+        getrandom::fill(&mut bytes).map_err(|_| AccessError::Availability)?;
+        let token = digest_text(bytes);
+        Ok(Self {
+            hash: digest_text(token_hash(&token)?),
+            token,
+            id: Uuid::new_v4().to_string(),
+        })
+    }
+
+    async fn insert(
+        self,
+        tx: &Transaction<'_>,
+        account: &str,
+        now: i64,
+        duration: i64,
+        limit: i64,
+    ) -> Result<String, StoreError> {
+        let expires = now.checked_add(duration).ok_or(StoreError::InvalidRecord)?;
+        tx.execute("DELETE FROM auth_sessions WHERE expires_at <= $1", &[&now])
+            .await?;
+        let count: i64 = tx
+            .query_one("SELECT count(*) FROM auth_sessions", &[])
+            .await?
+            .try_get(0)?;
+        if count >= limit {
+            return Err(StoreError::Capacity);
+        }
+        tx.execute(
+            "INSERT INTO auth_sessions VALUES ($1,$2,$3,1,$4)",
+            &[&self.id, &self.hash, &account, &expires],
+        )
+        .await?;
+        Ok(self.token)
+    }
+}
+
+fn session_world_grant(current: &Access) -> Option<&WorldGrant> {
+    current.grant.as_ref().filter(|grant| {
+        if grant.actor_id.is_some() {
+            grant.capabilities.contains(&Capability::Play)
+        } else {
+            !grant.capabilities.is_empty()
+        }
+    })
+}
+
+impl Authority {
+    /// The account write serializes with logout. A scope superseded before
+    /// writer admission cannot change the profile for that request.
+    pub(crate) async fn set_display_preferences(
+        &self,
+        authorized: &AuthorizedScope,
+        reveal: Option<Reveal>,
+        voice: Option<Voice>,
+    ) -> Result<(), AccessError> {
+        let _change = self.changes.lock().await;
+        self.current_view(authorized, |_, _| ())?;
+        self.store
+            .set_display_preferences(&authorized.scope, reveal, voice)
+            .await?;
+        Ok(())
+    }
+    pub fn session_lifetime_secs(&self) -> i64 {
+        self.duration_ms / 1000
+    }
+
+    pub(crate) fn output_budget(&self) -> &ByteBudget {
+        &self.budget
+    }
+
+    /// Asset access shares the authenticated session, without granting a
+    /// world, player body or asset permission. The asset repository selects
+    /// the independently permitted release before the actual transfer.
+    pub(crate) async fn asset_access(&self, token: &str) -> Result<AssetAccess, AccessError> {
+        let (key, session) = self.access(token).await?;
+        Ok(AssetAccess { key, session })
+    }
+
+    /// Order the handoff of one already permitted asset against logout and
+    /// session expiry. The callback must finish synchronously in this lease.
+    pub(crate) fn disclose_asset<T>(
+        &self,
+        authorized: &AssetAccess,
+        publish: impl FnOnce() -> T,
+    ) -> Result<T, AccessError> {
+        self.current_session(authorized.key, &authorized.session, |_| publish())
+    }
+
+    fn current_session<T>(
+        &self,
+        key: TokenHash,
+        selected: &Access,
+        publish: impl FnOnce(&Access) -> T,
+    ) -> Result<T, AccessError> {
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let current = cache.tokens.get(&key).ok_or(AccessError::Changed)?;
+        if cache.revoking.contains(&key)
+            || current.expires_at <= now_ms()
+            || current.session != selected.session
+            || current.account != selected.account
+            || current.session_revision != selected.session_revision
+        {
+            return Err(AccessError::Changed);
+        }
+        Ok(publish(current))
+    }
+
+    /// Bind the listener to the installed writer's durable timeline before
+    /// disclosing a private scope. Command admission owns the returned epoch.
+    pub async fn for_world(
+        store: Arc<Store>,
+        world_id: String,
+        duration: Duration,
+        session_capacity: i64,
+        local: bool,
+        budget: ByteBudget,
+    ) -> Result<(Self, RequestIdentity), AccessError> {
+        let identity = RequestIdentity::open(&store, &world_id).await?;
+        let authority = Self::new(
+            store,
+            world_id,
+            identity.timeline.clone(),
+            duration,
+            session_capacity,
+            local,
+            budget,
+        );
+        Ok((authority, identity))
+    }
+
+    fn new(
+        store: Arc<Store>,
+        world_id: String,
+        timeline: String,
+        duration: Duration,
+        session_capacity: i64,
+        local: bool,
+        budget: ByteBudget,
+    ) -> Self {
+        Self {
+            store,
+            world_id,
+            lab: false,
+            evidence: Mutex::default(),
+            timeline,
+            duration_ms: duration.as_millis().min(i64::MAX as u128) as i64,
+            session_capacity,
+            local,
+            budget,
+            cache: Mutex::new(Cache {
+                tokens: HashMap::new(),
+                revision: 0,
+                revoking: HashSet::new(),
+                changing_control: HashSet::new(),
+                changing_grant: None,
+            }),
+            changes: Arc::new(tokio::sync::Mutex::new(())),
+        }
+    }
+
+    pub(crate) fn is_lab(&self) -> bool { self.lab }
+
+    pub(crate) fn for_lab(mut self, enabled: bool) -> Self {
+        self.lab = enabled;
+        self
+    }
+
+    pub async fn sign_in_local(self: &Arc<Self>) -> Result<String, AccessError> {
+        if !self.local {
+            return Err(AccessError::Forbidden);
+        }
+        self.login(LOCAL_ISSUER, LOCAL_SUBJECT, None, None).await
+    }
+
+    /// Called only with an identity of the configured, verified issuer. The
+    /// account identity and body grant come from SQL, never browser fields.
+    pub(crate) async fn sign_in_verified(
+        self: &Arc<Self>,
+        issuer: &str,
+        subject: &str,
+        previous: Option<&str>,
+        deadline: Instant,
+    ) -> Result<String, AccessError> {
+        if self.local {
+            return Err(AccessError::Forbidden);
+        }
+        self.login(issuer, subject, previous, Some(deadline)).await
+    }
+
+    async fn login(
+        self: &Arc<Self>,
+        issuer: &str,
+        subject: &str,
+        previous: Option<&str>,
+        deadline: Option<Instant>,
+    ) -> Result<String, AccessError> {
+        let previous = previous.and_then(|token| token_hash(token).ok());
+        // The verified identity text may outlive the provider's response.
+        let text_bytes = issuer
+            .len()
+            .checked_add(subject.len())
+            .ok_or(AccessError::Busy)?;
+        let custody = self
+            .budget
+            .reserve(text_bytes)
+            .map_err(|_| AccessError::Busy)?;
+        let client_identity = (issuer.to_owned(), subject.to_owned());
+        let authority = self.clone();
+        self.finish_session_change(async move {
+            let _custody = custody;
+            let current = move || deadline.is_none_or(|until| until > Instant::now());
+            if !current() {
+                return Err(AccessError::Session);
+            }
+            let _fence = previous
+                .map(|key| authority.begin_revocation(key))
+                .transpose()?;
+            let previous = previous.map(digest_text);
+            let session = SessionSeed::new()?;
+            let duration = authority.duration_ms;
+            let limit = authority.session_capacity;
+            let token = authority
+                .store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        // The shared writer may have been busy after admission.
+                        if !current() {
+                            return Ok(None);
+                        }
+                        let now = now_ms();
+                        let (issuer, subject) = client_identity;
+                        let account = match tx
+                            .query_opt(
+                                "SELECT id FROM auth_accounts WHERE issuer=$1 AND subject=$2",
+                                &[&issuer, &subject],
+                            )
+                            .await?
+                        {
+                            Some(row) => row.try_get::<_, String>(0)?,
+                            None => {
+                                let id = Uuid::new_v4().to_string();
+                                tx.execute(
+                                    "INSERT INTO auth_accounts VALUES ($1,$2,$3)",
+                                    &[&id, &issuer, &subject],
+                                )
+                                .await?;
+                                id
+                            }
+                        };
+                        let token = session.insert(tx, &account, now, duration, limit).await?;
+                        if let Some(previous) = previous {
+                            tx.execute(
+                                "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 \
+                                 WHERE token_hash=$2 AND expires_at>$1",
+                                &[&now, &previous],
+                            )
+                            .await?;
+                        }
+                        Ok(Some(token))
+                    })
+                })
+                .await?;
+            token.ok_or(AccessError::Session)
+        })
+        .await
+    }
+
+    /// Read the session and synchronously hand off its currently permitted
+    /// account and grants. Logout fences the same lease before awaiting SQL.
+    pub(crate) async fn session<T>(
+        &self,
+        token: &str,
+        publish: impl FnOnce(&str, &[WorldGrant]) -> T,
+    ) -> Result<T, AccessError> {
+        let (key, access) = self.access(token).await?;
+        self.current_session(key, &access, |current| {
+            let grant = session_world_grant(current);
+            publish(&current.account, grant.map_or(&[], std::slice::from_ref))
+        })
+    }
+
+    pub async fn scope(
+        &self,
+        token: &str,
+        connection: String,
+    ) -> Result<AuthorizedScope, AccessError> {
+        let (key, access) = self.access(token).await?;
+        let grant = access.grant.as_ref().ok_or(AccessError::Forbidden)?;
+        let (actor_id, audience) = match &grant.actor_id {
+            Some(actor) if grant.capabilities.contains(&Capability::Play) => {
+                (actor.clone(), Audience::Embodied)
+            }
+            None if !grant.capabilities.is_empty() => {
+                (String::new(), Audience::AuthorizedInspection)
+            }
+            _ => return Err(AccessError::Forbidden),
+        };
+        let scope = RequestScope {
+            account_id: access.account.clone(),
+            session_id: access.session.clone(),
+            session_revision: access.session_revision,
+            world_id: self.world_id.clone(),
+            timeline_id: self.timeline.clone(),
+            grant_revision: grant.revision,
+            actor_id,
+            control_generation: access.control.as_ref().map_or(0, |c| c.generation),
+            connection_id: connection,
+            audience,
+        };
+        Ok(AuthorizedScope {
+            scope,
+            key,
+            parent: if self.lab { Some(crate::lab::host_permit()?) } else { None },
+            expires_at: access.expires_at,
+        })
+    }
+
+    /// Reauthorize immediately before the synchronous acceptance/disclosure
+    /// callback. Operational mutations fence reads before they await SQL.
+    pub fn current<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        capability: Capability,
+        controlling: bool,
+        use_scope: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, capability, controlling, |scope, _, controls| {
+            use_scope(scope, controls)
+        })
+    }
+
+    /// Recheck a retained account-to-character grant without requiring the
+    /// original browser session. The caller drops the authority lock after
+    /// the synchronous provider start. Grant edits share this lock.
+    pub(crate) async fn background_grant(
+        &self,
+        world: &str,
+        account: &str,
+        actor: &str,
+        revision: u64,
+    ) -> Result<tokio::sync::OwnedMutexGuard<()>, AccessError> {
+        if world != self.world_id || granted_actor(actor).is_none() {
+            return Err(AccessError::Changed);
+        }
+        let revision = i64::try_from(revision).map_err(|_| AccessError::Changed)?;
+        let bytes = world
+            .len()
+            .checked_add(account.len())
+            .and_then(|n| n.checked_add(actor.len()))
+            .and_then(|n| n.checked_add(512))
+            .ok_or(StoreError::Capacity)?;
+        let _query = self
+            .budget
+            .reserve(bytes)
+            .map_err(|_| StoreError::Capacity)?;
+        let (world, account, actor) = (world.to_owned(), account.to_owned(), actor.to_owned());
+        let lease = self.changes.clone().lock_owned().await;
+        if self
+            .cache
+            .lock()
+            .map_err(|_| AccessError::Availability)?
+            .changing_grant
+            .as_deref()
+            == Some(account.as_str())
+        {
+            return Err(AccessError::Changed);
+        }
+        let permitted: bool = self
+            .store
+            .read_operational(move |tx| {
+                Box::pin(async move {
+                    Ok(tx.query_one(
+                    "SELECT EXISTS (SELECT 1 FROM auth_grants WHERE world_id=$1 AND account_id=$2 \
+                     AND actor_id=$3 AND revision=$4 AND capabilities::jsonb ? 'play')",
+                    &[&world, &account, &actor, &revision],
+                ).await?.try_get(0)?)
+                })
+            })
+            .await?;
+        if !permitted {
+            return Err(AccessError::Changed);
+        }
+        Ok(lease)
+    }
+
+    /// Editing someone else's recall also needs the same currently held
+    /// inspection grant. Check both under one lease before handing off data.
+    pub(crate) fn current_recall_operator<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        needs_inspect: bool,
+        use_scope: impl FnOnce(&RequestScope) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Create, false, |scope, grant, _| {
+            if needs_inspect && !grant.capabilities.contains(&Capability::Inspect) {
+                return Err(AccessError::Forbidden);
+            }
+            Ok(use_scope(scope))
+        })?
+    }
+
+    pub(crate) fn current_checkpoint_operator<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        publish: impl FnOnce(&RequestScope, &[Capability], bool) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Save, false, |scope, grant, _| {
+            publish(scope, &grant.capabilities, self.local)
+        })
+    }
+
+    /// Check administrative permission and current character control together.
+    pub(crate) fn current_npc_reply_retry<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        use_scope: impl FnOnce(&RequestScope) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Play, true, |scope, grant, _| {
+            if !grant.can_manage_access() {
+                return Err(AccessError::Forbidden);
+            }
+            Ok(use_scope(scope))
+        })?
+    }
+
+    pub(crate) fn view_access(
+        &self,
+        authorized: &AuthorizedScope,
+    ) -> Result<ViewAccess, AccessError> {
+        self.with_current(
+            authorized,
+            Capability::Play,
+            false,
+            |_, grant, controlling| ViewAccess {
+                controlling,
+                can_save: grant.capabilities.contains(&Capability::Save),
+                can_retry_npc_replies: controlling && grant.can_manage_access(),
+                can_operate: grant.capabilities.contains(&Capability::Create)
+                    || grant.can_manage_access(),
+                can_inspect: grant.capabilities.contains(&Capability::Inspect),
+                can_create: grant.capabilities.contains(&Capability::Create),
+                local: self.local,
+            },
+        )
+    }
+
+    fn with_current<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        capability: Capability,
+        controlling: bool,
+        use_scope: impl FnOnce(&RequestScope, &WorldGrant, bool) -> T,
+    ) -> Result<T, AccessError> {
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let (grant, controls) = self.selected(&cache, authorized, capability, controlling)?;
+        authorized.publish(||use_scope(&authorized.scope, grant, controls))
+    }
+
+    pub(crate) fn current_inputs<T>(
+        &self,
+        permits: &[Arc<AuthorizedScope>],
+        accept: impl FnOnce() -> T,
+    ) -> Result<T, AccessError> {
+        if permits.is_empty() {
+            return Ok(accept());
+        }
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        for permit in permits {
+            self.selected(&cache, permit, Capability::Play, true)?;
+        }
+        Ok(accept())
+    }
+
+    pub(crate) fn current_view<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        publish: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
+        self.current_private_view(authorized, false, publish)
+    }
+
+    pub(crate) fn current_private_view<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        inspect_other: bool,
+        publish: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let (grant, controlling) = self.selected(&cache, authorized, Capability::Play, false)?;
+        if inspect_other && !grant.capabilities.contains(&Capability::Inspect) {
+            return Err(AccessError::Forbidden);
+        }
+        let generation = cache
+            .tokens
+            .get(&authorized.key)
+            .and_then(|access| access.control.as_ref())
+            .map_or(0, |control| control.generation);
+        if generation != authorized.scope.control_generation {
+            return Err(AccessError::Changed);
+        }
+        authorized.publish(||publish(&authorized.scope, controlling))
+    }
+
+    fn selected<'cache>(
+        &self,
+        cache: &'cache Cache,
+        authorized: &AuthorizedScope,
+        capability: Capability,
+        controlling: bool,
+    ) -> Result<(&'cache WorldGrant, bool), AccessError> {
+        let (grant, controls) = self.selected_grant(cache, authorized, controlling)?;
+        if !grant.capabilities.contains(&capability) {
+            return Err(AccessError::Changed);
+        }
+        Ok((grant, controls))
+    }
+
+    fn selected_grant<'cache>(
+        &self,
+        cache: &'cache Cache,
+        authorized: &AuthorizedScope,
+        controlling: bool,
+    ) -> Result<(&'cache WorldGrant, bool), AccessError> {
+        authorized.check_host()?;
+        let scope = &authorized.scope;
+        if cache.revoking.contains(&authorized.key)
+            || cache.changing_grant.as_deref() == Some(scope.account_id.as_str())
+            || cache.changing_control.contains(&scope.actor_id)
+            || scope.world_id != self.world_id
+            || scope.timeline_id != self.timeline
+        {
+            return Err(AccessError::Changed);
+        }
+        let current = cache
+            .tokens
+            .get(&authorized.key)
+            .ok_or(AccessError::Changed)?;
+        let grant = current.grant.as_ref().ok_or(AccessError::Forbidden)?;
+        if current.expires_at <= now_ms()
+            || scope.account_id != current.account
+            || scope.session_id != current.session
+            || scope.session_revision != current.session_revision
+            || scope.grant_revision != grant.revision
+            || scope.actor_id != grant.actor_id.as_deref().unwrap_or("")
+            || grant.capabilities.is_empty()
+        {
+            return Err(AccessError::Changed);
+        }
+        let controls = current.control.as_ref().is_some_and(|control| {
+            control.generation == scope.control_generation
+                && control.account_id == scope.account_id
+                && control.session_id == scope.session_id
+                && control.connection_id == scope.connection_id
+        });
+        if controlling && !controls {
+            return Err(AccessError::Changed);
+        }
+        Ok((grant, controls))
+    }
+
+    /// The request can stop while waiting for session-change admission.
+    /// Once admitted, keep the permit and caller-owned fence, resources and
+    /// post-commit work until completion, even after the HTTP connection closes.
+    /// Dropping a dispatched COMMIT would stop ordinary world writes.
+    async fn finish_session_change<T: Send + 'static>(
+        &self,
+        write: impl Future<Output = Result<T, AccessError>> + Send + 'static,
+    ) -> Result<T, AccessError> {
+        let change = self.changes.clone().lock_owned().await;
+        tokio::spawn(async move {
+            let _change = change;
+            write.await
+        })
+        .await
+        .map_err(|_| AccessError::Availability)?
+    }
+
+    pub(crate) async fn logout(
+        self: &Arc<Self>,
+        token: &str,
+        after_revocation: impl FnOnce(&str) + Send + 'static,
+    ) -> Result<(), AccessError> {
+        let (key, access) = self.access(token).await?;
+        let authority = self.clone();
+        self.finish_session_change(async move {
+            let _fence = authority.begin_revocation(key)?;
+            let row = access.clone();
+            authority
+                .store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        tx.execute(
+                            "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 WHERE id=$2",
+                            &[&now_ms(), &row.session],
+                        )
+                        .await?;
+                        Ok(())
+                    })
+                })
+                .await?;
+            after_revocation(&access.session);
+            Ok(())
+        })
+        .await
+    }
+
+    fn begin_revocation(&self, key: TokenHash) -> Result<AccessChange<'_>, AccessError> {
+        let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        cache.revision = cache
+            .revision
+            .checked_add(1)
+            .ok_or(AccessError::Availability)?;
+        // This scope loses its ability to publish before the SQL await. Other
+        // still-current sessions do not depend on this logout.
+        cache.tokens.remove(&key);
+        cache.revoking.insert(key);
+        Ok(AccessChange {
+            cache: &self.cache,
+            key,
+        })
+    }
+
+    async fn access(&self, token: &str) -> Result<(TokenHash, Arc<Access>), AccessError> {
+        let key = token_hash(token)?;
+        let revision = {
+            let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+            if cache.revoking.contains(&key) {
+                return Err(AccessError::Changed);
+            }
+            if let Some(access) = cache
+                .tokens
+                .get(&key)
+                .filter(|row| row.expires_at > now_ms())
+            {
+                return Ok((key, Arc::clone(access)));
+            }
+            cache.revision
+        };
+        let hash = digest_text(key);
+        let world = self.world_id.clone();
+        let query_world = world.clone();
+        // Seven finite text fields and the fixed tuple/frame. The SQL guard
+        // runs before transfer, including when a damaged access row is large.
+        let _transfer = self
+            .budget
+            .reserve(8192)
+            .map_err(|_| StoreError::Capacity)?;
+        let row = self.store.read_operational(move |tx| {
+            Box::pin(async move {
+                Ok(tx.query_opt(
+                    "SELECT s.id,s.account_id,s.revision,s.expires_at,g.actor_id,g.revision,g.capabilities, \
+                            c.generation,c.account_id,c.session_id,c.connection_id \
+                     FROM auth_sessions s \
+                     LEFT JOIN auth_grants g ON g.world_id=$1 AND g.account_id=s.account_id \
+                     LEFT JOIN auth_controls c ON c.world_id=g.world_id AND c.actor_id=g.actor_id \
+                     WHERE s.token_hash=$2 AND s.expires_at>$3 AND \
+                         greatest(octet_length(s.id),octet_length(s.account_id), \
+                             octet_length(g.actor_id),octet_length(g.capabilities), \
+                             octet_length(c.account_id),octet_length(c.session_id), \
+                             octet_length(c.connection_id))<=$4",
+                    &[&query_world, &hash, &now_ms(), &ACCESS_COLUMN_BYTES],
+                ).await?)
+            })
+        }).await?.ok_or(AccessError::Session)?;
+        let access = Arc::new(self.decode_access(&row, world)?);
+        let mut cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        if cache.revoking.contains(&key)
+            || cache.revision != revision
+            || cache.changing_grant.as_deref() == Some(access.account.as_str())
+            || access.expires_at <= now_ms()
+        {
+            return Err(AccessError::Changed);
+        }
+        if cache.tokens.len() >= TOKEN_CACHE_LIMIT {
+            let now = now_ms();
+            cache.tokens.retain(|_, value| value.expires_at > now);
+            if cache.tokens.len() >= TOKEN_CACHE_LIMIT {
+                return Err(AccessError::Busy);
+            }
+        }
+        cache.tokens.insert(key, Arc::clone(&access));
+        Ok((key, access))
+    }
+
+    fn decode_access(&self, row: &Row, world: String) -> Result<Access, StoreError> {
+        // All members are finite identity/control fields with current-format
+        // validation. Reserve the retained graph before decoding its text.
+        let custody = self
+            .budget
+            .reserve(4096)
+            .map_err(|_| StoreError::Capacity)?;
+        let text = |column| -> Result<Option<&str>, StoreError> {
+            let text: Option<&str> = row.try_get(column)?;
+            if text.is_some_and(|value| value.len() > ACCESS_COLUMN_BYTES as usize) {
+                return Err(StoreError::InvalidRecord);
+            }
+            Ok(text)
+        };
+        let required = |column| text(column)?.ok_or(StoreError::InvalidRecord);
+        let grant = if let Some(capabilities) = text(6)? {
+            let actor = required(4)?;
+            let actor_id = granted_actor(actor).map(str::to_owned);
+            let capabilities: Vec<Capability> =
+                serde_json::from_str(capabilities).map_err(|_| StoreError::InvalidRecord)?;
+            if capabilities.len() > 6
+                || (actor_id.is_none() && capabilities.contains(&Capability::Play))
+            {
+                return Err(StoreError::InvalidRecord);
+            }
+            Some(WorldGrant {
+                id: world,
+                actor_id,
+                revision: exact_integer(row.try_get(5)?)?,
+                capabilities,
+            })
+        } else {
+            None
+        };
+        let control = row
+            .try_get::<_, Option<i64>>(7)?
+            .map(|generation| {
+                Ok::<_, StoreError>(Control {
+                    generation: exact_integer(generation)?,
+                    account_id: required(8)?.to_owned(),
+                    session_id: required(9)?.to_owned(),
+                    connection_id: required(10)?.to_owned(),
+                })
+            })
+            .transpose()?;
+        Ok(Access {
+            session: required(0)?.to_owned(),
+            account: required(1)?.to_owned(),
+            session_revision: exact_integer(row.try_get(2)?)?,
+            expires_at: row.try_get(3)?,
+            grant,
+            control,
+            _custody: custody,
+        })
+    }
+}
+
+struct AccessChange<'a> {
+    cache: &'a Mutex<Cache>,
+    key: TokenHash,
+}
+impl Drop for AccessChange<'_> {
+    fn drop(&mut self) {
+        if let Ok(mut cache) = self.cache.lock() {
+            cache.revoking.remove(&self.key);
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct AuthorizedScope {
+    parent: Option<crate::lab::HostPermit>,
+    pub scope: RequestScope,
+    key: TokenHash,
+    pub(crate) expires_at: i64,
+}
+
+impl AuthorizedScope {
+    pub(crate) fn for_lab_source(&self, permit: crate::lab::HostPermit)->Self {
+        Self {parent:Some(permit),..self.clone()}
+    }
+    pub(crate) fn lab_permit(&self) -> Option<&crate::lab::HostPermit>{self.parent.as_ref()}
+    pub(crate) fn lab_host_scope(&self) -> Option<&RequestScope> {
+        self.parent.as_ref().map(crate::lab::HostPermit::scope)
+    }
+    fn publish<T>(&self, action:impl FnOnce()->T)->Result<T,AccessError>{
+        match &self.parent {Some(host)=>host.publish(action),None=>Ok(action())}
+    }
+
+    pub(crate) fn check_host(&self) -> Result<(), AccessError> {
+        self.parent.as_ref().map_or(Ok(()), |host| host.check())
+    }
+}

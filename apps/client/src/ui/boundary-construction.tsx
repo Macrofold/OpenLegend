@@ -7,7 +7,7 @@ import type {
   ConstructionShape,
   ConstructionView,
 } from '@open-legend/protocol';
-import { getScoped, post } from '../api';
+import { getScoped, post, postContactRead } from '../api';
 import { playerActionStatusKey } from '../action-browser';
 import { Button, SelectField } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
@@ -409,9 +409,10 @@ export function BoundaryConstruction({
     const timer = setTimeout(async () => {
       setChecking(true);
       try {
-        const result = await post<ApiResult & { shapes: ConstructionShape[] }>(
+        const result = await postContactRead<ApiResult & { shapes: ConstructionShape[] }>(
           '/api/construction/preview',
           plan,
+          [],
           AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]),
         );
         // Repeated pointer events can keep the exact same selection. Only the

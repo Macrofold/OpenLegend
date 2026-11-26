@@ -1,0 +1,1850 @@
+//! One serialized native writer. Provider work and host settlement leave this
+//! owner parked without retaining a compute worker. No TypeScript world is
+//! constructed or used as an incremental predecessor.
+use super::{
+    CompletedOperation, DriveError, DriveStep, OperationDriver, PreparedPublication,
+    ProviderQuestion, ProviderResponse, PublicationError, Simulation, SimulationState,
+};
+use crate::administration::InstalledHostSettings;
+use crate::execution::{CandidateJournal, CoreMutation, ExecutionError};
+use crate::experience::{CapturedHistoryInput, HistorySettings, capture_history_input};
+use crate::host::{
+    ByteBudget, ByteReservation, CandidateFence, CandidateKey, CandidatePhase, FenceError,
+    ResidentReservation,
+};
+use crate::install::SelectedInstallation;
+use crate::received::TemporalSaveLimits;
+use crate::records::save::{
+    SaveAcknowledgement, SaveError, SaveJournal, SavePrefix, TemporalSaveCut,
+};
+use crate::time::{AcceptedAdvanceContinuation, AdmittedWorldInput, AdvanceCursor};
+use crate::values::WorkVector;
+use std::sync::Arc;
+mod restore;
+pub(crate) use restore::PreparedRestoreFacts;
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CurrentInstallation<'a> {
+    world_id: &'a str,
+    generation: &'a str,
+    revision: u64,
+    accepted_cut: u64,
+    history_event_count: u64,
+    memory_allowance: MemoryAllowance<'a>,
+    work_allocation: WorkVector,
+}
+/// Finite progress beside one prepared delta. The application publishes these
+/// facts only after the same candidate is accepted; they are never a world.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreparedReadProgress<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub base_cut: u64,
+    pub through_cut: u64,
+    pub identity_through: u64,
+    pub at: f64,
+    pub sequence: u64,
+    pub paused: bool,
+}
+
+pub(crate) struct CapturedActorReadCut<'a> {
+    state: &'a SimulationState,
+    actor: &'a str,
+    save: crate::records::save::SaveReadMetadata,
+    temporal: crate::records::EncodedRows,
+    history: crate::experience::CapturedHistoryCuts,
+}
+impl serde::Serialize for CapturedActorReadCut<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut out = serializer.serialize_struct("ActorReadCut", 11)?;
+        out.serialize_field("worldId", &self.state.physical.header.id)?;
+        out.serialize_field("generation", &self.state.generation)?;
+        out.serialize_field("actorId", self.actor)?;
+        out.serialize_field("acceptedCut", &self.state.accepted_cut)?;
+        out.serialize_field("identityThrough", &self.state.physical.identity.next_id())?;
+        out.serialize_field("at", &self.state.physical.header.sim_time)?;
+        out.serialize_field("sequence", &self.state.physical.header.sequence)?;
+        out.serialize_field("paused", &self.state.physical.header.paused)?;
+        out.serialize_field("save", &self.save)?;
+        out.serialize_field("temporal", self.temporal.changes())?;
+        out.serialize_field("history", &self.history.value())?;
+        out.end()
+    }
+}
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct MemoryAllowance<'a> {
+    world_id: &'a str,
+    policy_id: &'a str,
+    policy_version: u64,
+    max_bytes: u64,
+    pub(crate) hard_bytes: f64,
+    low_bytes: f64,
+}
+
+impl<'a> MemoryAllowance<'a> {
+    pub(crate) fn capture(state: &'a SimulationState) -> Self {
+        let policy = state.installed.attention.value();
+        let retention = &policy.retention;
+        Self {
+            world_id: &state.physical.header.id,
+            policy_id: &policy.id,
+            policy_version: policy.version,
+            max_bytes: retention.derived_max_bytes,
+            hard_bytes: (retention.derived_max_bytes as f64
+                * (1.0 + retention.maintenance_headroom))
+                .floor(),
+            low_bytes: (retention.derived_max_bytes as f64 * retention.derived_low_water).floor(),
+        }
+    }
+}
+
+impl<'a> CurrentInstallation<'a> {
+    /// Capture only actual validated installation metadata. The public session
+    /// reader additionally requires its accepted Idle boundary.
+    pub(crate) fn capture(state: &'a SimulationState) -> Result<Self, SessionError> {
+        let history_event_count = state
+            .occurrences
+            .archived_count()
+            .unwrap_or(0)
+            .checked_add(
+                u64::try_from(state.occurrences.hot().count())
+                    .map_err(|_| ExecutionError::Invariant)?,
+            )
+            .filter(|count| *count <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(CurrentInstallation {
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            revision: state.durable_revision,
+            accepted_cut: state.accepted_cut,
+            history_event_count,
+            work_allocation: state.work_allocation().map_err(ExecutionError::Work)?,
+            memory_allowance: MemoryAllowance::capture(state),
+        })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum SessionError {
+    Cancelled,
+    Fence(FenceError),
+    Execution(ExecutionError),
+    Drive(DriveError),
+    Publication(PublicationError),
+    Save(SaveError),
+    History(crate::experience::ExperienceError),
+}
+impl From<FenceError> for SessionError {
+    fn from(e: FenceError) -> Self {
+        Self::Fence(e)
+    }
+}
+impl From<ExecutionError> for SessionError {
+    fn from(e: ExecutionError) -> Self {
+        Self::Execution(e)
+    }
+}
+impl From<DriveError> for SessionError {
+    fn from(e: DriveError) -> Self {
+        Self::Drive(e)
+    }
+}
+impl From<PublicationError> for SessionError {
+    fn from(e: PublicationError) -> Self {
+        Self::Publication(e)
+    }
+}
+impl From<SaveError> for SessionError {
+    fn from(e: SaveError) -> Self {
+        Self::Save(e)
+    }
+}
+impl From<crate::experience::ExperienceError> for SessionError {
+    fn from(e: crate::experience::ExperienceError) -> Self {
+        Self::History(e)
+    }
+}
+
+/// Minted only after every native publication owner is funded. The operational
+/// host first reserves this actual allocation, then marks Ready and checks its
+/// current authority/input immediately before settlement, without a world lock.
+pub(crate) struct PreparedCandidate {
+    pub key: CandidateKey,
+    pub allocation: WorkVector,
+    fence: Arc<CandidateFence>,
+}
+impl PreparedCandidate {
+    pub(crate) fn ready(&self) -> Result<(), FenceError> {
+        self.fence.ready(self.key)
+    }
+}
+pub(crate) enum SessionStep {
+    LearningBatch(Arc<crate::activity::PreparedActivityLearning>),
+    Continue,
+    Question(Arc<ProviderQuestion>),
+    Prepared(PreparedCandidate),
+    Preview(PreviewOutcome),
+    NpcCandidates(crate::capture::PreparedNpcRead),
+    NpcSources(crate::capture::PreparedNpcSources),
+}
+pub(crate) struct PreviewOutcome {
+    command: crate::commands::CompletedCommand,
+}
+impl PreviewOutcome {
+    pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
+        self.command.outcome()
+    }
+}
+/// Only accepted effects leave the writer. Their existing guards stay with
+/// these actual products until the server's history/output owners consume them.
+pub(crate) struct AcceptedOperation {
+    pub key: CandidateKey,
+    pub result: CompletedOperation,
+    pub history: CapturedHistoryInput,
+    pub notices: crate::cognition::PreparedSemanticNotices,
+}
+struct Preparing {
+    journal: CandidateJournal,
+    driver: OperationDriver,
+    key: CandidateKey,
+    preview: bool,
+}
+struct Prepared {
+    journal: CandidateJournal,
+    publication: PreparedPublication,
+    result: CompletedOperation,
+    history: CapturedHistoryInput,
+    predecessors: crate::experience::PersonalPredecessors,
+    temporal_predecessors: crate::received::TemporalPredecessors,
+    notices: crate::cognition::PreparedSemanticNotices,
+    key: CandidateKey,
+}
+enum Candidate {
+    Preparing(Preparing),
+    Prepared(Prepared),
+}
+
+struct HostControlSnapshot {
+    speed: f64,
+    manually_paused: bool,
+    maintenance: (bool, u64),
+    generation: u64,
+    milestones: super::milestones::MilestoneJournal,
+    presentation: Option<Box<(crate::administration::SavedPresentation, ByteReservation)>>,
+}
+
+pub(crate) struct Session {
+    simulation: Simulation,
+    host: InstalledHostSettings,
+    host_before: Option<HostControlSnapshot>,
+    maintenance: (bool, u64),
+    save: SaveJournal,
+    pending_residency: Option<Arc<crate::received::SavedTemporalResidency>>,
+    restore_adoption: Option<restore::RestoreAdoption>,
+    candidate: Option<Candidate>,
+    continuation: Option<AcceptedAdvanceContinuation>,
+    generation: u64,
+    budget: ByteBudget,
+    temporal_save_limits: TemporalSaveLimits,
+    _reservation: ResidentReservation,
+}
+impl Session {
+    /// These application-owned settings participate in the same accepted
+    /// candidate as actor views. They do not confer access to saved assets.
+    pub(crate) fn player_view_settings(&self) -> &InstalledHostSettings {
+        &self.host
+    }
+
+    /// Consumes the fully checked current selected closure. Installation and
+    /// writer adoption remain private until their server transaction succeeds.
+    pub(crate) fn new(
+        installed: SelectedInstallation,
+        generation: u64,
+        budget: ByteBudget,
+        pending_save_budget: ByteBudget,
+        temporal_save_limits: TemporalSaveLimits,
+    ) -> Result<Self, SessionError> {
+        if generation == 0 || generation > crate::identity::MAX_SAFE_INTEGER {
+            return Err(FenceError::Stale.into());
+        }
+        if temporal_save_limits.target_bytes == 0 || temporal_save_limits.row_bytes == 0 {
+            return Err(SaveError::Binding.into());
+        }
+        let reservation = budget
+            .reserve_record(std::mem::size_of::<Self>())
+            .map_err(|_| ExecutionError::Capacity)?;
+        let state = installed.state;
+        let save = SaveJournal::new(
+            state.physical.header.id.clone(),
+            state.generation.clone(),
+            state.durable_revision,
+            state.accepted_cut,
+            state.physical.identity.next_id(),
+            pending_save_budget,
+        )?;
+        Ok(Self {
+            simulation: Simulation {
+                fence: Arc::new(CandidateFence::new()),
+                state,
+            },
+            host: installed.host_settings,
+            host_before: None,
+            maintenance: (false, 0),
+            save,
+            pending_residency: None,
+            restore_adoption: None,
+            candidate: None,
+            continuation: None,
+            generation,
+            budget,
+            temporal_save_limits,
+            _reservation: reservation,
+        })
+    }
+    pub(crate) fn fence(&self) -> Arc<CandidateFence> {
+        self.simulation.fence.clone()
+    }
+    pub(crate) fn operator_maintenance_active(&self) -> bool {
+        self.maintenance.0
+    }
+
+    pub(crate) fn operational_generation(&self) -> u64 {
+        self.generation
+    }
+
+    pub(crate) fn durable_identity_through(&self) -> u64 {
+        self.save.durable_identity_through()
+    }
+    /// Actual validated install facts used by the existing SQL writer's cold
+    /// adoption. This finite summary conveys no actor facts or write permission.
+    pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
+        CurrentInstallation::capture(&self.accepted()?.state)
+    }
+
+    /// Lend the current candidate only to its actual pending provider. A tentative
+    /// geometry or restore input cannot become a public read before SQL adoption.
+    pub(crate) fn pending_provider_state(
+        &self,
+        key: CandidateKey,
+        provider: &Arc<ProviderQuestion>,
+    ) -> Result<&SimulationState, SessionError> {
+        self.simulation
+            .fence
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let Some(Candidate::Preparing(candidate)) = &self.candidate else {
+            return Err(FenceError::Stale.into());
+        };
+        if candidate.key != key
+            || candidate
+                .driver
+                .pending()
+                .is_none_or(|pending| !Arc::ptr_eq(provider, pending))
+        {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(&self.simulation.state)
+    }
+
+    pub(crate) fn restore_projection_state(
+        &self,
+        key: Option<CandidateKey>,
+    ) -> Result<&SimulationState, SessionError> {
+        if let Some(key) = key {
+            self.simulation
+                .fence
+                .validate_phase(key, CandidatePhase::Preparing)?;
+            Ok(&self.simulation.state)
+        } else {
+            Ok(&self.accepted()?.state)
+        }
+    }
+
+    pub(crate) fn ordinary_recall_rows(
+        &self,
+        through: u64,
+    ) -> Result<(&SimulationState, &crate::records::ChangedRows), SessionError> {
+        let state = &self.accepted()?.state;
+        let metadata = self.save.read_metadata()?;
+        let (detached, rows) = self.save.pending_read_rows();
+        if through != state.accepted_cut || through != metadata.through_cut || detached.is_some() {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((state, rows))
+    }
+
+    /// The browser opens one independent private SQL read at the current
+    /// accepted cut. Borrow only the existing pending owners for that cut.
+    pub(crate) fn player_place_cut(
+        &self,
+    ) -> Result<
+        (
+            &SimulationState,
+            crate::records::save::SaveReadMetadata,
+            (
+                Option<&crate::records::ChangedRows>,
+                &crate::records::ChangedRows,
+            ),
+        ),
+        SessionError,
+    > {
+        let state = &self.accepted()?.state;
+        let save = self.save.read_metadata()?;
+        if state.accepted_cut != save.through_cut {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((state, save, self.save.pending_read_rows()))
+    }
+
+    /// Remembered-place preparation runs before the physical cursor. Match
+    /// its actual preparing ticket and borrow the independently accepted
+    /// save rows without exposing tentative physical or knowledge changes.
+    pub(crate) fn known_place_read(
+        &self,
+        binding: crate::geometry::GeometryBinding,
+        world: &str,
+        generation: &str,
+        actor: &str,
+        life: u64,
+        privacy_revision: u64,
+        known_place_revision: u64,
+    ) -> Result<
+        (
+            crate::records::save::SaveReadMetadata,
+            &crate::experience::ActorPrivacy,
+            (
+                Option<&crate::records::ChangedRows>,
+                &crate::records::ChangedRows,
+            ),
+        ),
+        SessionError,
+    > {
+        let key = CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        };
+        self.fence()
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let state = &self.simulation.state;
+        let save = self.save.read_metadata()?;
+        if world != state.physical.header.id
+            || generation != state.generation
+            || save.through_cut != binding.base_cut
+            || state.accepted_cut != binding.base_cut
+            || state
+                .physical
+                .entities
+                .get(actor)
+                .and_then(|row| row.physical_life())
+                != Some(life)
+            || state.experience.known_place_revision(actor) != known_place_revision
+        {
+            return Err(FenceError::Stale.into());
+        }
+        let privacy = &state
+            .experience
+            .actor(actor)
+            .ok_or(FenceError::Stale)?
+            .privacy;
+        if privacy.revision() != privacy_revision {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((save, privacy, self.save.pending_read_rows()))
+    }
+
+    /// The source planner consumes the accepted predecessor, even though
+    /// this candidate has already prepared a possible personal replacement.
+    pub(crate) fn source_versions_read(
+        &self,
+        binding: crate::geometry::GeometryBinding,
+        world: &str,
+        generation: &str,
+    ) -> Result<(crate::records::save::SaveReadMetadata, &SaveJournal), SessionError> {
+        let key = CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        };
+        self.fence()
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let state = &self.simulation.state;
+        let save = self.save.read_metadata()?;
+        if world != state.physical.header.id
+            || generation != state.generation
+            || save.through_cut != binding.base_cut
+            || state.accepted_cut != binding.base_cut
+        {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((save, &self.save))
+    }
+
+    /// Pack only the selected actor's pending receipt pages for an actual
+    /// NPC Sources query. SQL and native subsequently select exact receipts.
+    pub(crate) fn npc_source_temporal(
+        &self,
+        actor: &str,
+        represented_before: u64,
+        limits: TemporalSaveLimits,
+        budget: &ByteBudget,
+    ) -> Result<crate::records::EncodedRows, SessionError> {
+        let state = &self.simulation.state;
+        crate::received::preview_temporal_rows(
+            &TemporalSaveCut {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                through_cut: state.accepted_cut,
+                identity_through: state.physical.identity.next_id(),
+                temporal: &state.temporal,
+            },
+            actor,
+            represented_before,
+            limits,
+            &state.installed.schema,
+            budget,
+        )
+        .map_err(SaveError::from)
+        .map_err(SessionError::from)
+    }
+
+    /// Borrow the exact ordinary save owners of an accepted read, before
+    /// releasing the simulation turn. A candidate is never part of the cut.
+    pub(crate) fn accepted_save_read(
+        &self,
+    ) -> Result<
+        (
+            crate::records::save::SaveReadMetadata,
+            &crate::records::save::SaveJournal,
+        ),
+        SessionError,
+    > {
+        let accepted = self.accepted()?;
+        let metadata = self.save.read_metadata()?;
+        if metadata.through_cut != accepted.state.accepted_cut {
+            return Err(ExecutionError::Invariant.into());
+        }
+        Ok((metadata, &self.save))
+    }
+    /// Capture the actor's real unsaved page representation before any private
+    /// writes. Pending non-temporal deltas/history already belong to the
+    /// application's pre-Ready immutable publication owner and are not copied
+    /// again for this read. Metadata binds that owner to this exact accepted cut.
+    pub(crate) fn read_cut<'a>(
+        &'a self,
+        actor: &'a str,
+        limits: TemporalSaveLimits,
+        budget: &ByteBudget,
+    ) -> Result<CapturedActorReadCut<'a>, SessionError> {
+        let (save, _) = self.accepted_save_read()?;
+        let state = &self.simulation.state;
+        // This is metadata for the actual scoped SQL reader, not a memory
+        // capability grant. Source permits an empty history for any real actor.
+        if !state
+            .physical
+            .entities
+            .get(actor)
+            .is_some_and(|entity| entity.actor.is_some())
+            && state.temporal.actor(actor).is_none()
+            && state.experience.actor(actor).is_none()
+        {
+            return Err(ExecutionError::MissingActor.into());
+        }
+        let temporal = crate::received::preview_temporal_rows(
+            &TemporalSaveCut {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                through_cut: state.accepted_cut,
+                identity_through: state.physical.identity.next_id(),
+                temporal: &state.temporal,
+            },
+            actor,
+            save.represented_before,
+            limits,
+            &state.installed.schema,
+            budget,
+        )
+        .map_err(SaveError::from)?;
+        let history =
+            crate::experience::capture_history_cuts(state, std::iter::once(actor), budget)
+                .map_err(ExecutionError::from)?;
+        Ok(CapturedActorReadCut {
+            state,
+            actor,
+            save,
+            temporal,
+            history,
+        })
+    }
+    pub(crate) fn begin_advance(
+        &mut self,
+        seconds: f64,
+        max_intervals: usize,
+        prepared: Vec<(String, crate::native_refuge::PreparedRefugeNavigation)>,
+        action_routes: &[(&str, &crate::time::PreparedActionNavigation)],
+        inputs: Vec<AdmittedWorldInput>,
+        material_gather: crate::construction_gather::ConstructionGather,
+    ) -> Result<CandidateKey, SessionError> {
+        if material_gather.protected && !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        journal.material_gather = material_gather;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let continuation = self
+                .continuation
+                .as_ref()
+                .map(|prior| prior.prepare(&core, key, &self.budget))
+                .transpose()?
+                .flatten();
+            let cursor = AdvanceCursor::new(
+                &mut core,
+                seconds,
+                max_intervals,
+                key,
+                prepared,
+                action_routes,
+                inputs,
+                continuation.as_ref(),
+                &self.budget,
+            )
+            .map_err(DriveError::from)?;
+            OperationDriver::advance(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_command(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+        options: crate::commands::CommandOptions,
+    ) -> Result<CandidateKey, SessionError> {
+        self.begin_command_with_materials(command, canonical, options, Default::default())
+    }
+    pub(crate) fn begin_command_with_materials(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+        options: crate::commands::CommandOptions,
+        material_gather: crate::construction_gather::ConstructionGather,
+    ) -> Result<CandidateKey, SessionError> {
+        self.begin_command_with_plan(
+            crate::commands::CommandStart::Separate(command, canonical),
+            options,
+            material_gather,
+            None,
+            None,
+        )
+    }
+    pub(crate) fn begin_command_with_plan(
+        &mut self,
+        input: crate::commands::CommandStart,
+        options: crate::commands::CommandOptions,
+        material_gather: crate::construction_gather::ConstructionGather,
+        typed_plan: Option<crate::plans::TypedPlan>,
+        strike: Option<crate::contact::review::PlayerStrike<'_>>,
+    ) -> Result<CandidateKey, SessionError> {
+        let preview = options.preview;
+        if preview
+            && !matches!(
+                input.command(),
+                crate::commands::NativeCommand::Cancel { .. }
+                    | crate::commands::NativeCommand::Move { .. }
+                    | crate::commands::NativeCommand::PlaceHearth { .. }
+                    | crate::commands::NativeCommand::Follow { .. }
+            )
+        {
+            return Err(ExecutionError::UnsupportedFamily.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        journal.material_gather = material_gather;
+        let driver = (|| {
+            let binding = crate::geometry::GeometryBinding::new(
+                key,
+                self.simulation.state.geometry_revision(),
+                journal.next_provider_serial()?,
+            );
+            let cursor =
+                crate::commands::CommandCursor::from_start(input, options, binding, &self.budget)?
+                    .with_typed_plan(typed_plan);
+            let cursor = match strike {
+                Some(strike) => cursor.for_player_contact(strike)?,
+                None => cursor,
+            };
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let command = crate::commands::CommandOperation::from_cursor(
+                &mut core,
+                cursor,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::command(&mut core, command, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, preview)
+    }
+    /// Bindings are the native context producer's opaque, guard-owning ticket;
+    /// no caller supplied permission map enters the writer.
+    pub(crate) fn begin_response(
+        &mut self,
+        id: &str,
+        response: crate::response::ActorResponse,
+        bindings: Arc<crate::response::ResponseBindings>,
+        protected: bool,
+        reconsider_choice: bool,
+    ) -> Result<CandidateKey, SessionError> {
+        if protected && !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::response::ResponseCursor::new(
+                &mut core,
+                id,
+                response,
+                bindings,
+                key,
+                protected,
+                reconsider_choice,
+                &self.budget,
+            )
+            .map_err(DriveError::from)?;
+            OperationDriver::response(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_npc_candidates(
+        &mut self,
+        read: &super::AcceptedActorRead,
+        expanded: &[usize],
+        coverage: Option<crate::capture::NpcOfferCoverage>,
+        inspection: Option<crate::activity::ActivityInspectionNavigation>,
+        guard_threat: Option<crate::runtime::RuntimeNpcGuardThreat>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::capture::NpcCandidateCursor::prepare(
+                &core,
+                read,
+                expanded,
+                coverage,
+                inspection,
+                guard_threat,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::npc_candidates(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_npc_candidates(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_candidates())
+    }
+    pub(crate) fn begin_npc_sources(
+        &mut self,
+        scope: Arc<crate::capture::NpcHistoricalScope>,
+        selection: crate::capture::NpcSourceSelection,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::capture::NpcSourcesCursor::new(
+                &mut core,
+                scope,
+                selection,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::npc_sources(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_npc_sources(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_sources())
+    }
+    pub(crate) fn begin_recall_edit(
+        &mut self,
+        actor: &str,
+        source: &str,
+        mode: crate::experience::PrivacyEditMode,
+        held: Option<crate::runtime::HeldSourceProof>,
+        limits: crate::experience::HistoryEditLimits,
+    ) -> Result<CandidateKey, SessionError> {
+        // This protected edit commits its proposed prefix before acceptance.
+        // An ordinary accepted suffix must finish its genuine SQL barrier first.
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::experience::RecallEditCursor::new(
+                &mut core,
+                actor,
+                source,
+                mode,
+                crate::experience::RecallAdmission::Live(held),
+                key,
+                limits,
+                &self.budget,
+            )?;
+            OperationDriver::recall_edit(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    /// Host controls commit SQL before acceptance, just like protected privacy
+    /// edits. The caller owns authorization, presence and admitted clock debt.
+    pub(crate) fn begin_control(
+        &mut self,
+        paused: bool,
+        speed: f64,
+        manually_paused: bool,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let binding = crate::geometry::GeometryBinding::new(
+                key,
+                self.simulation.state.geometry_revision(),
+                journal.next_provider_serial()?,
+            );
+            let cursor =
+                super::host_control::HostControlCursor::new(binding, paused, speed, &self.budget)?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::host_control(&mut core, cursor, &self.budget)
+        })();
+        let key = self.install_driver(key, journal, driver, false)?;
+        self.host.speed = speed;
+        self.host.manually_paused = manually_paused;
+        Ok(key)
+    }
+
+    /// Application-owned holds rotate the existing operational work generation.
+    /// Gameplay storage and the recovery timeline keep their own identities.
+    pub(crate) fn begin_operator_maintenance(
+        &mut self,
+        paused: bool,
+        speed: f64,
+        manually_paused: bool,
+        maintenance: bool,
+        revision: u64,
+    ) -> Result<CandidateKey, SessionError> {
+        let transition = self.maintenance.0 != maintenance;
+        let generation = self
+            .generation
+            .checked_add(u64::from(transition))
+            .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(FenceError::Stale)?;
+        if revision < self.maintenance.1 || (maintenance && !paused) {
+            return Err(FenceError::Stale.into());
+        }
+        let key = self.begin_control(paused, speed, manually_paused)?;
+        self.maintenance = (maintenance, revision);
+        self.generation = generation;
+        Ok(key)
+    }
+
+    /// The application checks the exact installed release and owns its
+    /// catalog permission. The private candidate owns only the saved choice.
+    pub(crate) fn begin_presentation_release(
+        &mut self,
+        reference: Box<serde_json::value::RawValue>,
+        expected_revision: u64,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        if self.host.presentation_release_revision.unwrap_or(0) != expected_revision
+            || expected_revision >= crate::identity::MAX_SAFE_INTEGER
+        {
+            return Err(FenceError::Stale.into());
+        }
+        let workspace = self
+            .budget
+            .reserve(std::mem::size_of::<(
+                crate::administration::SavedPresentation,
+                ByteReservation,
+            )>())
+            .map_err(|_| ExecutionError::Capacity)?;
+        let body = self
+            .budget
+            .reserve(reference.get().len())
+            .map_err(|_| ExecutionError::Capacity)?;
+        let storage = self
+            .budget
+            .adopt_backing(body)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let cursor = super::host_control::HostControlCursor::presentation(&self.budget)?;
+        let (key, mut journal) = self.begin()?;
+        let mut core = CoreMutation {
+            state: &mut self.simulation.state,
+            journal: &mut journal,
+        };
+        let driver = OperationDriver::host_control(&mut core, cursor, &self.budget);
+        let key = self.install_driver(key, journal, driver, false)?;
+        let before = self
+            .host_before
+            .as_mut()
+            .expect("host candidate has a snapshot");
+        let original = self
+            .host
+            .replace_presentation(crate::administration::SavedPresentation {
+                reference: Some(reference),
+                revision: Some(expected_revision + 1),
+                storage: Some(storage),
+            });
+        before.presentation = Some(Box::new((original, workspace)));
+        Ok(key)
+    }
+    pub(crate) fn begin_npc_intake(
+        &mut self,
+        request: super::npc_intake::NpcIntakeRequest,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let cursor = super::npc_intake::NpcIntakeCursor::new(request, &self.budget)?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::npc_intake(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    /// Existing current-format openings reconcile imported hot events before
+    /// disclosure. A prepared creation is already initialized and never uses
+    /// this path; subsequent live operations use only their new emitted events.
+    pub(crate) fn begin_startup(
+        &mut self,
+        materials: Option<Arc<crate::construction_gather::MaterialGrants>>,
+        owners: Option<&[crate::runtime::RestoreBinding]>,
+    ) -> Result<CandidateKey, SessionError> {
+        if self.accepted()?.state.accepted_cut != 0 {
+            return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        journal.material_gather =
+            crate::construction_gather::ConstructionGather::for_command(materials);
+        let driver = {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::startup(&mut core, owners, &self.budget)
+        };
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_support_retention(
+        &mut self,
+        actors: Vec<String>,
+        preparation: crate::received::SupportPreparation,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::SupportRetentionCursor::new(
+                key,
+                actors,
+                preparation,
+                &self.budget,
+            )?;
+            OperationDriver::support_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_account_retention(
+        &mut self,
+        read: crate::experience::AccountRetentionRead,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::experience::AccountRetentionCursor::new(read, &self.budget)?;
+            OperationDriver::account_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_knowledge_retention(
+        &mut self,
+        actors: Vec<String>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::KnowledgeRetentionCursor::new(actors, &self.budget)?;
+            OperationDriver::knowledge_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_knowledge_edit(
+        &mut self,
+        actor: String,
+        edit: crate::knowledge::KnowledgeEdit,
+        permitted: bool,
+    ) -> Result<CandidateKey, SessionError> {
+        let cursor =
+            crate::knowledge::KnowledgeEditCursor::new(actor, edit, permitted, &self.budget)?;
+        self.begin_personal_edit(cursor)
+    }
+
+    pub(crate) fn begin_personal_edit(
+        &mut self,
+        cursor: crate::knowledge::KnowledgeEditCursor,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::knowledge_edit(&mut core, cursor, key, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_recent_retention(
+        &mut self,
+        actors: Vec<String>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::RecentRetentionCursor::new(actors, &self.budget)?;
+            OperationDriver::recent_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_learning_preparation(
+        &mut self,
+        actor: &str,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::activity::LearningPreparationCursor::new(
+                &mut core,
+                actor,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::learning_prepare(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_learning_preparation(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate,Some(Candidate::Preparing(p))if p.key==key&&p.driver.is_learning_prepare())
+    }
+    pub(crate) fn begin_learning_publication(
+        &mut self,
+        batch: Arc<crate::activity::PreparedActivityLearning>,
+        request: crate::activity::LearningPublicationRequest,
+        admission: Option<(
+            Arc<crate::capture::maintenance::MaintenanceCapture>,
+            crate::capture::maintenance::MaintenanceAdmission,
+        )>,
+    ) -> Result<CandidateKey, SessionError> {
+        if request.protected && !self.save_barrier_complete() {
+            return Err(FenceError::NotReady.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::activity::LearningPublicationCursor::new(
+                &mut core,
+                batch,
+                request,
+                admission,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::learning_publish(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_consolidation(
+        &mut self,
+        input: crate::cognition::consolidation::ConsolidationInput,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::cognition::consolidation::ConsolidationCursor::new(
+                &mut core,
+                input,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::consolidation(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_reflection(
+        &mut self,
+        input: crate::cognition::publication::ReflectionInput,
+    ) -> Result<CandidateKey, SessionError> {
+        if input.protected && !self.save_barrier_complete() {
+            return Err(FenceError::NotReady.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::cognition::publication::ReflectionCursor::new(
+                &mut core,
+                input,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::reflection(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+
+    /// Operational control and the exact domain participation effects commit
+    /// together. No prior accepted suffix may be omitted from that SQL barrier.
+    pub(crate) fn begin_participation(
+        &mut self,
+        request: crate::participation::ParticipationRequest,
+    ) -> Result<CandidateKey, SessionError> {
+        self.begin_participation_sequence(request, None)
+    }
+
+    pub(crate) fn begin_participation_sequence(
+        &mut self,
+        request: crate::participation::ParticipationRequest,
+        follow_up: Option<crate::participation::ParticipationRequest>,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut cursor =
+                crate::participation::ParticipationCursor::new(request, key, &self.budget)?;
+            if let Some(follow_up) = follow_up {
+                cursor.follow_with(follow_up)?;
+            }
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::participation(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_command_preview(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+    ) -> Result<CandidateKey, SessionError> {
+        self.begin_command(
+            command,
+            canonical,
+            crate::commands::CommandOptions {
+                preview: true,
+                native_controller: false,
+                native_movement: None,
+                trade_evidence: None,
+                durable_receipt: false,
+            },
+        )
+    }
+    fn begin(&mut self) -> Result<(CandidateKey, CandidateJournal), SessionError> {
+        if self.candidate.is_some() {
+            return Err(FenceError::Busy.into());
+        }
+        self.apply_pending_residency()?;
+        let key = self
+            .simulation
+            .fence
+            .begin(self.simulation.state.accepted_cut, self.generation)?;
+        let journal = match CandidateJournal::begin(&self.simulation.state, &self.budget) {
+            Ok(journal) => journal,
+            Err(error) => {
+                self.simulation.fence.rollback_preparation(key)?;
+                self.simulation.fence.rollback_complete(key)?;
+                return Err(error.into());
+            }
+        };
+        self.host_before = Some(HostControlSnapshot {
+            speed: self.host.speed,
+            manually_paused: self.host.manually_paused,
+            maintenance: self.maintenance,
+            generation: self.generation,
+            milestones: super::milestones::MilestoneJournal::new(&self.host),
+            presentation: None,
+        });
+        Ok((key, journal))
+    }
+    fn install_driver(
+        &mut self,
+        key: CandidateKey,
+        mut journal: CandidateJournal,
+        driver: Result<OperationDriver, DriveError>,
+        preview: bool,
+    ) -> Result<CandidateKey, SessionError> {
+        match driver {
+            Ok(driver) => {
+                self.candidate = Some(Candidate::Preparing(Preparing {
+                    journal,
+                    driver,
+                    key,
+                    preview,
+                }));
+                Ok(key)
+            }
+            Err(error) => {
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut journal, key)?;
+                Err(error.into())
+            }
+        }
+    }
+    pub(crate) fn step(
+        &mut self,
+        key: CandidateKey,
+        answer: Option<ProviderResponse>,
+        history: HistorySettings<'_>,
+    ) -> Result<SessionStep, SessionError> {
+        self.step_with_history_cuts(key, answer, history, true)
+    }
+
+    pub(crate) fn step_with_history_cuts(
+        &mut self,
+        key: CandidateKey,
+        answer: Option<ProviderResponse>,
+        history: HistorySettings<'_>,
+        include_actor_cuts: bool,
+    ) -> Result<SessionStep, SessionError> {
+        self.simulation
+            .fence
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        if self.simulation.fence.stop_requested() {
+            self.cancel(key)?;
+            return Err(SessionError::Cancelled);
+        }
+        let Some(Candidate::Preparing(preparing)) = self.candidate.as_mut() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if preparing.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        if self.simulation.fence.take_advance_publication(key) {
+            preparing.driver.request_advance_publication();
+        }
+        let step = {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut preparing.journal,
+            };
+            preparing
+                .driver
+                .step(&mut core, answer, key, !preparing.preview, &self.budget)
+        };
+        let step = match step {
+            Ok(step) => step,
+            Err(error) => {
+                // Invalid incoming replies leave the same question retryable.
+                // A failed real continuation has already aborted its child;
+                // finish the root rollback before admitting another operation.
+                if preparing.driver.finished() {
+                    let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                        unreachable!()
+                    };
+                    self.simulation.fence.rollback_preparation(key)?;
+                    self.rollback(&mut preparing.journal, key)?;
+                }
+                return Err(error.into());
+            }
+        };
+        match step {
+            DriveStep::Continue => Ok(SessionStep::Continue),
+            DriveStep::Question(question) => Ok(SessionStep::Question(question)),
+            DriveStep::NpcCandidates(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::NpcCandidates(done))
+            }
+            DriveStep::LearningBatch(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::LearningBatch(done))
+            }
+            DriveStep::NpcSources(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::NpcSources(done))
+            }
+            DriveStep::Complete(result) => {
+                if preparing.preview {
+                    let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                        unreachable!()
+                    };
+                    self.simulation.fence.rollback_preparation(key)?;
+                    self.rollback(&mut preparing.journal, key)?;
+                    let CompletedOperation::Command(completed) = result else {
+                        return Err(ExecutionError::Invariant.into());
+                    };
+                    return Ok(SessionStep::Preview(PreviewOutcome {
+                        command: completed.command,
+                    }));
+                }
+                // No candidate is exposed Ready if recording or accumulating
+                // save admission fails after semantic execution has completed.
+                let products = (|| {
+                    let host_journal = &mut self
+                        .host_before
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?
+                        .milestones;
+                    if matches!(
+                        &result,
+                        CompletedOperation::Restore(_) | CompletedOperation::Startup(_)
+                    ) {
+                        host_journal.apply_hot(
+                            &mut self.host,
+                            &self.simulation.state,
+                            &self.budget,
+                        )?;
+                    } else {
+                        host_journal.apply(
+                            &mut self.host,
+                            &self.simulation.state,
+                            result.events(),
+                            &self.budget,
+                        )?;
+                    }
+                    let notices = preparing.journal.cognition.prepare_semantic_notices(
+                        self.simulation.state.installed.maximum_change_scopes,
+                        &self.budget,
+                    )?;
+                    let captured = capture_history_input(
+                        &self.simulation.state,
+                        &self.simulation.state.occurrences,
+                        &preparing.journal.experience,
+                        history,
+                        include_actor_cuts,
+                        &self.budget,
+                    )?;
+                    let predecessors = crate::experience::capture_personal_predecessors(
+                        &preparing.journal.experience,
+                        None,
+                        &self.budget,
+                    )
+                    .map_err(PublicationError::from)?;
+                    let temporal_predecessors = crate::received::capture_temporal_predecessors(
+                        &self.simulation.state.temporal,
+                        &self.simulation.state.installed.schema,
+                        &self.budget,
+                    )
+                    .map_err(PublicationError::from)?;
+                    // A participation refusal carries only its outcome. It must
+                    // not prepare a commit for a new control or account grant.
+                    let protected = (preparing.journal.material_gather.protected
+                        && matches!(&result, CompletedOperation::Advance(done) if done.outcome.ok))
+                        || matches!(&result, CompletedOperation::RecallEdit(done)
+                        if done.privacy_change().is_some() || done.replacement().is_some())
+                        || matches!(
+                            &result,
+                            CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)
+                        )
+                        || matches!(&result, CompletedOperation::Startup(done) if done.protected)
+                        || matches!(&result, CompletedOperation::Participation(done) if done.outcome.ok)
+                        || matches!(&result, CompletedOperation::ActivityLearning(done) if done.protected && done.outcome.ok)
+                        || matches!(&result, CompletedOperation::Reflection(done) if done.protected && done.outcome.ok)
+                        || matches!(&result, CompletedOperation::Response(done) if done.protected())
+                        || matches!(&result, CompletedOperation::Consolidation(done) if done.protected);
+                    let source_versions = preparing.driver.take_source_versions();
+                    let (source_plan, _source_storage) = source_versions.map_or_else(
+                        || (crate::received::SourceVersionPlan::empty(), None),
+                        |(plan, storage)| (plan, Some(storage)),
+                    );
+                    let publication = PreparedPublication::prepare(
+                        &mut self.simulation.state,
+                        &mut preparing.journal,
+                        &mut self.save,
+                        &self.simulation.fence,
+                        key,
+                        {
+                            let host_before =
+                                self.host_before.as_ref().ok_or(ExecutionError::Invariant)?;
+                            let presentation = host_before.presentation.is_some();
+                            let controls = !presentation
+                                && matches!(
+                                    &result,
+                                    CompletedOperation::Restore(_)
+                                        | CompletedOperation::HostControl(_)
+                                );
+                            let milestones = &host_before.milestones;
+                            (controls || presentation || milestones.changed()).then_some(
+                                super::save::HostSave {
+                                    settings: &self.host,
+                                    milestones,
+                                    controls,
+                                    presentation,
+                                },
+                            )
+                        },
+                        protected.then_some(self.temporal_save_limits),
+                        source_plan,
+                        &self.budget,
+                    )?;
+                    Ok::<_, SessionError>((
+                        captured,
+                        predecessors,
+                        temporal_predecessors,
+                        notices,
+                        publication,
+                    ))
+                })();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                match products {
+                    Ok((history, predecessors, temporal_predecessors, notices, publication)) => {
+                        let allocation = publication.allocation();
+                        self.candidate = Some(Candidate::Prepared(Prepared {
+                            journal: preparing.journal,
+                            publication,
+                            result,
+                            history,
+                            predecessors,
+                            temporal_predecessors,
+                            notices,
+                            key,
+                        }));
+                        Ok(SessionStep::Prepared(PreparedCandidate {
+                            key,
+                            allocation,
+                            fence: self.fence(),
+                        }))
+                    }
+                    Err(error) => {
+                        self.simulation.fence.rollback_preparation(key)?;
+                        self.rollback(&mut preparing.journal, key)?;
+                        Err(error)
+                    }
+                }
+            }
+        }
+    }
+    /// Settlement itself uses the separate fence. This continuation installs
+    /// the stored outcome; no permission recheck can undo accepted gameplay.
+    pub(crate) fn finish_settlement(
+        &mut self,
+        key: CandidateKey,
+    ) -> Result<Option<AcceptedOperation>, SessionError> {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        let phase = self.simulation.fence.phase();
+        if !matches!(phase, CandidatePhase::Accepted | CandidatePhase::Rejected) {
+            return Err(FenceError::NotReady.into());
+        }
+        self.simulation.fence.validate_phase(key, phase)?;
+        let Some(Candidate::Prepared(mut prepared)) = self.candidate.take() else {
+            unreachable!()
+        };
+        if phase == CandidatePhase::Rejected {
+            // Keep every owner if an invariant fails; poisoning is required,
+            // rather than silently losing the only rollback/save token.
+            if let Err((error, publication)) = prepared.publication.reject(&mut self.save) {
+                prepared.publication = publication;
+                self.candidate = Some(Candidate::Prepared(prepared));
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
+            self.simulation.fence.start_rollback(key)?;
+            self.rollback(&mut prepared.journal, key)?;
+            return Ok(None);
+        }
+        let (release, accepted) = match prepared.publication.apply_accepted(
+            &mut self.simulation.state,
+            &prepared.journal,
+            &mut self.save,
+        ) {
+            Ok(value) => value,
+            Err((error, publication)) => {
+                prepared.publication = publication;
+                self.candidate = Some(Candidate::Prepared(prepared));
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
+        };
+        self.continuation = {
+            let core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut prepared.journal,
+            };
+            prepared
+                .result
+                .take_continuation()
+                .map(|continuation| continuation.accepted(&core, accepted))
+                .transpose()
+                .map_err(|error| {
+                    self.simulation.fence.poison();
+                    SessionError::Execution(error)
+                })?
+        };
+        // A missing forecast does not remove the genuine receipt needed to
+        // destroy undo: retrieve it from this exact accepted fence again.
+        let accepted = self.simulation.fence.accepted_candidate(key)?;
+        if let Err((error, journal)) =
+            prepared
+                .journal
+                .finish_accepted(&mut self.simulation.state, release, &accepted)
+        {
+            drop(journal);
+            self.simulation.fence.poison();
+            return Err(error.into());
+        }
+        self.simulation.fence.accepted_complete(key)?;
+        self.host_before = None;
+        self.apply_pending_residency()?;
+        Ok(Some(AcceptedOperation {
+            key,
+            result: prepared.result,
+            history: prepared.history,
+            notices: prepared.notices,
+        }))
+    }
+    /// The bridge funds and encodes accepted outputs before Ready. Returning
+    /// borrowed products cannot publish them or consume their rollback owner.
+    pub(crate) fn prepared_products(
+        &self,
+        key: CandidateKey,
+    ) -> Result<
+        (
+            &CompletedOperation,
+            &CapturedHistoryInput,
+            &crate::cognition::PreparedSemanticNotices,
+            &crate::records::ChangedRows,
+            &crate::experience::PersonalPredecessors,
+            &crate::received::TemporalPredecessors,
+            &crate::received::SourceVersionPlan,
+            Option<&crate::records::SaveRows>,
+            PreparedReadProgress<'_>,
+            &SimulationState,
+        ),
+        SessionError,
+    > {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        let state = &self.simulation.state;
+        Ok((
+            &prepared.result,
+            &prepared.history,
+            &prepared.notices,
+            prepared.publication.read_changes(&self.save)?,
+            &prepared.predecessors,
+            &prepared.temporal_predecessors,
+            prepared.publication.source_versions(&self.save)?,
+            prepared.publication.read_protected_prefix(&self.save)?,
+            PreparedReadProgress {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                base_cut: key.base_cut,
+                through_cut: key.base_cut + 1,
+                identity_through: state.physical.identity.next_id(),
+                at: state.physical.header.sim_time,
+                sequence: state.physical.header.sequence,
+                paused: state.physical.header.paused,
+            },
+            state,
+        ))
+    }
+    pub(crate) fn prepared_material_acquisitions(
+        &self,
+        key: CandidateKey,
+    ) -> Result<&[Arc<crate::construction_gather::ConstructionEffect>], SessionError> {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(prepared.journal.material_gather.effects())
+    }
+
+    pub(crate) fn pin_protected_prefix(
+        &self,
+        key: CandidateKey,
+    ) -> Result<Option<Arc<crate::records::save::SavePrefix>>, SessionError> {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(prepared.publication.pin_protected_prefix(&self.save)?)
+    }
+    pub(crate) fn cancel(&mut self, key: CandidateKey) -> Result<(), SessionError> {
+        if self.simulation.fence.phase() != CandidatePhase::Preparing {
+            return Err(FenceError::NotReady.into());
+        }
+        self.simulation
+            .fence
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let Some(candidate) = self.candidate.take() else {
+            return Err(FenceError::NotReady.into());
+        };
+        self.simulation.fence.rollback_preparation(key)?;
+        match candidate {
+            Candidate::Preparing(mut preparing) => {
+                let mut core = CoreMutation {
+                    state: &mut self.simulation.state,
+                    journal: &mut preparing.journal,
+                };
+                if let Err(error) = preparing.driver.abort(&mut core) {
+                    self.simulation.fence.poison();
+                    return Err(error.into());
+                }
+                self.rollback(&mut preparing.journal, key)
+            }
+            Candidate::Prepared(mut prepared) => {
+                if let Err((error, _publication)) = prepared.publication.reject(&mut self.save) {
+                    self.simulation.fence.poison();
+                    return Err(error.into());
+                }
+                self.rollback(&mut prepared.journal, key)
+            }
+        }
+    }
+    fn rollback(
+        &mut self,
+        journal: &mut CandidateJournal,
+        key: CandidateKey,
+    ) -> Result<(), SessionError> {
+        self.restore_adoption = None;
+        if let Err(error) = journal.rollback_all(&mut self.simulation.state) {
+            self.simulation.fence.poison();
+            return Err(error.into());
+        }
+        if let Some(mut before) = self.host_before.take() {
+            self.host.speed = before.speed;
+            self.host.manually_paused = before.manually_paused;
+            self.maintenance = before.maintenance;
+            self.generation = before.generation;
+            if let Some(presentation) = before.presentation.take() {
+                let (original, _workspace) = *presentation;
+                self.host.replace_presentation(original);
+            }
+            if let Err(error) = before.milestones.rollback(&mut self.host) {
+                self.host_before = Some(before);
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
+        }
+        self.simulation.fence.rollback_complete(key)?;
+        self.apply_pending_residency()?;
+        Ok(())
+    }
+    pub(crate) fn capture_save(&mut self) -> Result<Arc<SavePrefix>, SessionError> {
+        if self.simulation.fence.phase() != CandidatePhase::Idle {
+            return Err(FenceError::Busy.into());
+        }
+        // The next immutable prefix must see the physical tail selected by the
+        // previous ACK. Capacity pressure can defer maintenance, never SQL ACK.
+        if !self.apply_pending_residency()? {
+            return Err(ExecutionError::Capacity.into());
+        }
+        let state = &mut self.simulation.state;
+        Ok(self.save.capture(
+            TemporalSaveCut {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                through_cut: state.accepted_cut,
+                identity_through: state.physical.identity.next_id(),
+                temporal: &state.temporal,
+            },
+            self.temporal_save_limits,
+            &state.installed.schema,
+            &mut state.records,
+            &self.budget,
+        )?)
+    }
+    /// ACK touches the independent save owner and durable metadata only; an old
+    /// exact prefix may finish while a newer candidate is privately preparing.
+    pub(crate) fn acknowledge(&mut self, ack: SaveAcknowledgement<'_>) -> Result<(), SessionError> {
+        if let Some(residency) = self.save.acknowledge(ack)? {
+            // capture_save cannot create another prefix while this token is
+            // pending. Exact duplicate ACKs return no second token.
+            debug_assert!(self.pending_residency.is_none());
+            self.pending_residency = Some(residency);
+        }
+        self.simulation.state.durable_revision = self.save.durable_revision();
+        if self.simulation.fence.phase() == CandidatePhase::Idle {
+            self.apply_pending_residency()?;
+        }
+        Ok(())
+    }
+    fn apply_pending_residency(&mut self) -> Result<bool, SessionError> {
+        let Some(saved) = self.pending_residency.as_ref() else {
+            return Ok(true);
+        };
+        let prepared = match saved.prepare_apply(&self.simulation.state, &self.budget) {
+            Ok(prepared) => prepared,
+            Err(ExecutionError::Capacity) => return Ok(false),
+            Err(error) => {
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
+        };
+        if let Err((error, _prepared)) = prepared.apply(&mut self.simulation.state) {
+            self.simulation.fence.poison();
+            return Err(error.into());
+        }
+        self.pending_residency = None;
+        Ok(true)
+    }
+    pub(crate) fn install_value_holds(&mut self, holds: Option<Arc<crate::runtime::NativeValueHolds>>) -> Result<(),SessionError> {
+        self.accepted()?;
+        self.simulation.state.physical.value_holds=holds;
+        Ok(())
+    }
+    pub(crate) fn accepted(&self) -> Result<&Simulation, SessionError> {
+        if self.simulation.fence.phase() != CandidatePhase::Idle {
+            return Err(FenceError::Busy.into());
+        }
+        Ok(&self.simulation)
+    }
+
+    pub(crate) fn clock(&self) -> Result<crate::runtime::RuntimeClock, SessionError> {
+        let state = &self.accepted()?.state.physical;
+        let header = &state.header;
+        Ok(crate::runtime::RuntimeClock {
+            at: header.sim_time,
+            paused: header.paused,
+            manually_paused: self.host.manually_paused,
+            speed: self.host.speed,
+            maintenance: self.maintenance.0,
+            maintenance_revision: self.maintenance.1,
+            exit_exposure_active: state
+                .participation
+                .exposures()
+                .is_some_and(|rows| !rows.is_empty()),
+        })
+    }
+    /// A synchronous owner check may run inside the already-held disclosure
+    /// lease. It must never inspect a candidate or mint a nested publication.
+    pub(crate) fn publication_read(&self) -> Result<&Simulation, SessionError> {
+        if self.candidate.is_some()
+            || !matches!(
+                self.simulation.fence.phase(),
+                CandidatePhase::Idle | CandidatePhase::Publishing
+            )
+            || self.simulation.fence.stop_requested()
+        {
+            return Err(FenceError::Busy.into());
+        }
+        Ok(&self.simulation)
+    }
+    pub(crate) fn resolve_receipt_tail(
+        &mut self,
+        world_id: &str,
+        generation: &str,
+        accepted_cut: u64,
+        identity_through: u64,
+        request: &crate::received::TemporalReceiptTailRequest<'_>,
+        tail: Option<crate::received::TemporalReceiptTail>,
+    ) -> Result<(), SessionError> {
+        let state = &self.accepted()?.state;
+        if state.physical.header.id != world_id
+            || state.generation != generation
+            || state.accepted_cut != accepted_cut
+            || state.physical.identity.next_id() != identity_through
+        {
+            return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        self.simulation
+            .state
+            .temporal
+            .resolve_receipt_tail(request, tail, identity_through)
+            .map_err(ExecutionError::Received)?;
+        Ok(())
+    }
+    /// Closing admission is a separate fence operation. Final shutdown waits
+    /// for the actual accepted save prefix acknowledgement, not merely for the
+    /// calculation to stop or for a SQL request to have been dispatched.
+    pub(crate) fn finish_stop(&self) -> Result<(), SessionError> {
+        if self.candidate.is_some() || !self.save.barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        Ok(self.simulation.fence.finish_stop()?)
+    }
+    pub(crate) fn save_barrier_complete(&self) -> bool {
+        self.candidate.is_none() && self.save.barrier_complete()
+    }
+}

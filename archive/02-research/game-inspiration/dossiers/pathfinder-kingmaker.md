@@ -1,6 +1,6 @@
 # G58 — Pathfinder: Kingmaker
 
-**Original research September 26, 2026; identified operational gaps addressed September 27.** Reference research, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Party rules and kingdom operations](../mechanics/kingmaker-party-rules-and-kingdom-operations.md).
+**Original research September 26, 2026; identified operational gaps addressed September 27.** Reference research, not an approved Open Legend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Party rules and kingdom operations](../mechanics/kingmaker-party-rules-and-kingdom-operations.md).
 
 ## 1. Identity, editions and the promise
 
@@ -266,7 +266,7 @@ A useful play study would distinguish time spent deciding, executing, traveling,
 | P01–P03 | Direct selected player writing: GOG helpful bodies, Reddit discussion and dated early impressions. Not representative sampling. |
 | P04 | Attempted Steam helpful surface; gated, no review-body evidence obtained. |
 
-**Preservation:** the target dossier and same-named original chapter were absent before the original pass. The checkpoint's three review accounts, exact campaign figures and access limitation were retained and extended. Existing chapters, mechanics studies, source records and [packet provenance](../references/packet-provenance.md) were not replaced. The subsequent operational supplement adds the identified missing rules and five named cases while preserving this dossier's original nine cases, all independent criticism and its historical limitations. This is not a new line-by-line reconciliation of the seven historical packet inputs. No new companion/character names here are proposed as OpenLegend assets.
+**Preservation:** the target dossier and same-named original chapter were absent before the original pass. The checkpoint's three review accounts, exact campaign figures and access limitation were retained and extended. Existing chapters, mechanics studies, source records and [packet provenance](../references/packet-provenance.md) were not replaced. The subsequent operational supplement adds the identified missing rules and five named cases while preserving this dossier's original nine cases, all independent criticism and its historical limitations. This is not a new line-by-line reconciliation of the seven historical packet inputs. No new companion/character names here are proposed as Open Legend assets.
 
 **Verification:** documentary review, source/edition checks and requirement mapping only. No gameplay, local game run, full video viewing, performance benchmark or source-code inspection. Originally inaccessible mechanics sites were not treated as read. The September 27 supplement supplies newly accessible guide and indexed rules, with its own source boundaries rather than retroactively claiming the original failed reads succeeded. Neither document claims exhaustive formulas or item lists.
 

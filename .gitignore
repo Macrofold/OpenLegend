@@ -5,6 +5,7 @@ coverage/
 .env.*
 !.env.example
 # Local runtime database and manual saves (.data/saves/).
+.data-cognition-lab/
 .data/
 *.sqlite
 *.sqlite-shm

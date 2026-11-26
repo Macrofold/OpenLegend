@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Research standard](../research-requirements.md)
 
-**Research pass and follow-up audit: September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the single-player base game, its documented post-launch changes, separate competitive multiplayer and the delivered War Sails expansion. Historical guides establish systems, not current balance tables. The audit read the complete existing dossier and checked R01–R14; original external-source reading is not represented as repeated. Six original written reviews and a helpful-player-review sample were read in the original pass. Newly retrieved patch records resolve the earlier release-identification gap, and direct negative Steam bodies resolve the earlier negative-filter failure. No gameplay, footage or source-code audit was performed.
+**Research pass and follow-up audit: September 26, 2026.** Reference research, not accepted Open Legend requirements. Scope: the single-player base game, its documented post-launch changes, separate competitive multiplayer and the delivered War Sails expansion. Historical guides establish systems, not current balance tables. The audit read the complete existing dossier and checked R01–R14; original external-source reading is not represented as repeated. Six original written reviews and a helpful-player-review sample were read in the original pass. Newly retrieved patch records resolve the earlier release-identification gap, and direct negative Steam bodies resolve the earlier negative-filter failure. No gameplay, footage or source-code audit was performed.
 
 ## 1. Identity, promise and edition boundaries
 

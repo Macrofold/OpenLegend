@@ -2,7 +2,7 @@
 
 **Evidence checked through 20 October 2026 (America/New_York). Status: completed full research pass, with the evidence limits below.** This independent dossier follows the [full research requirements](../research-requirements.md) and the [economics, enjoyment, lore and creation amendment](../research-economics-engagement-and-creation.md). The [scoped progress ledger](../research-progress-pirate-games-2026-10-20.md) records completion and commits. Historical accounts retain their dates; current rules are checked through Season 21. The lore section contains spoilers.
 
-**Research judgment:** the strongest reference is the way a shared vessel, vulnerable cargo, incomplete information and ordinary tools create understandable reasons to cooperate, improvise and take risks. Its limits are equally useful: people differ in whether uncertainty feels exciting, whether repetition remains satisfying, and whether cosmetic achievement supplies a meaningful next goal. The mechanical evidence and conflicting reviews below support that interpretation; it is not an accepted OpenLegend feature specification or a measured explanation of commercial success.
+**Research judgment:** the strongest reference is the way a shared vessel, vulnerable cargo, incomplete information and ordinary tools create understandable reasons to cooperate, improvise and take risks. Its limits are equally useful: people differ in whether uncertainty feels exciting, whether repetition remains satisfying, and whether cosmetic achievement supplies a meaningful next goal. The mechanical evidence and conflicting reviews below support that interpretation; it is not an accepted Open Legend feature specification or a measured explanation of commercial success.
 
 **Steam English reception — 20 October 2026 (America/New_York): Very Positive, 88% positive across 147,899 reviews.** This is recommendation context, not a causal explanation. [Steam](https://store.steampowered.com/app/1172620/Sea_of_Thieves_2026_Edition/)
 
@@ -13,7 +13,7 @@ This is a written-source investigation. It includes original developer testimony
 - **Understand play:** R01–R04 explain the promise, actions, objects, activities and what survives loss; R05 follows nine worked situations.
 - **Understand people and fiction:** R06 covers crews, communication, NPCs and social boundaries; R08 covers cosmology, institutions, character histories and campaigns, with spoilers.
 - **Understand how it was made and sustained:** R07 and R09 cover presentation, accessibility, production and technology; R10–R12 cover distribution, economics, criticism and reasons to return or stop.
-- **Understand creation and relevance:** the native-creation section traces Custom Seas from setup to repeat play; R13 assesses possible lessons for OpenLegend; R15 records the external-mod applicability result.
+- **Understand creation and relevance:** the native-creation section traces Custom Seas from setup to repeat play; R13 assesses possible lessons for Open Legend; R15 records the external-mod applicability result.
 - **Check evidence:** R14 maps every requirement to its substantive coverage and supplies dated source registers and reading/viewing routes.
 
 ### Product, editions and release boundaries
@@ -204,7 +204,7 @@ Rare's SIGGRAPH 2018 paper documents these Unreal Engine 4 techniques for scalab
 | Ropes | Analytic catenaries and vertex processing support endpoints, slack and pulleys. |
 | Kraken and lightning | Houdini deformation/generated geometry is baked into textures for shader playback, exchanging runtime work for stored data. |
 
-**Interpretation:** A physically suggestive base remains under artistic control. This historical paper does not establish current performance, network behavior or suitability for OpenLegend. Character-rig and locomotion implementation details were not recovered.
+**Interpretation:** A physically suggestive base remains under artistic control. This historical paper does not establish current performance, network behavior or suitability for Open Legend. Character-rig and locomotion implementation details were not recovered.
 
 ### Sound conveys state, space and social possibility
 
@@ -467,7 +467,7 @@ Rare's guidelines permit limited sales of original handcrafted fan creations und
 
 <a id="r13"></a>
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These interpretations do not change the [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) or [engine/world boundaries](../../../../AGENTS.md#engine-and-bundled-world-separation).
 
@@ -475,61 +475,61 @@ These interpretations do not change the [playable-game priorities](../../../../d
 | --- | --- |
 | Player experience — [R12](#r12) | Multiple accounts support the appeal of shared ship work; preferences for PvP, loss and cosmetic progression differ. This is qualitative evidence, not a measured retention effect. |
 | Interpretation | Readable contributions and manageable recovery may help cooperation. The effect of each individual mechanic has not been isolated. |
-| OpenLegend possibilities below | Illustrative play studies and documented native authoring capabilities remain untested transfers. They do not validate creator income, a business model, world population, AI economics or an art direction. |
+| Open Legend possibilities below | Illustrative play studies and documented native authoring capabilities remain untested transfers. They do not validate creator income, a business model, world population, AI economics or an art direction. |
 
 ### Shared objects can give people reasons to cooperate
 
-The ship systems described in R02–R06 are useful because several people can improve one shared outcome through different actions. The interesting coordination happens when the priorities compete: a crew wants to keep moving, stop incoming damage and repair the damage already received. A proposed OpenLegend study could put two people around a damaged wagon or a threatened camp, with several intelligible ways to help. It would test whether a player can recognize another character's contribution without a quest label announcing it.
+The ship systems described in R02–R06 are useful because several people can improve one shared outcome through different actions. The interesting coordination happens when the priorities compete: a crew wants to keep moving, stop incoming damage and repair the damage already received. A proposed Open Legend study could put two people around a damaged wagon or a threatened camp, with several intelligible ways to help. It would test whether a player can recognize another character's contribution without a quest label announcing it.
 
 The transferable principle is **visible interdependence**. It is not a requirement to have four players, naval combat, fixed classes or a high-frequency AI conversation about every action. Requiring a group for basic competence can make an otherwise inviting world inaccessible when friends are absent. A useful task should have a viable small-group form, or a clear reason it is optional.
 
 ### Ordinary tools become memorable through different uses
 
-R03 and the worked situations show how physical tools connect navigation, combat, carrying and recovery. The reference is strongest where a player understands a tool well enough to improvise a second use. A hypothetical OpenLegend rope could matter in travel, rescue or moving an object, provided those possibilities follow comprehensible world rules. This is a study of legible combinations, not a demand to support every sentence that mentions a rope.
+R03 and the worked situations show how physical tools connect navigation, combat, carrying and recovery. The reference is strongest where a player understands a tool well enough to improvise a second use. A hypothetical Open Legend rope could matter in travel, rescue or moving an object, provided those possibilities follow comprehensible world rules. This is a study of legible combinations, not a demand to support every sentence that mentions a rope.
 
 The tradeoff is discoverability. A theoretically flexible object adds little if players cannot infer its possibilities or understand why an attempt failed. Equally, giving every object every use destroys useful distinctions. Compare a small set of meaningful combinations with a large list of barely different actions.
 
 ### Choose the consequence that makes failure worth recovering from
 
-Sea of Thieves separates bodily defeat, ship loss, unsecured treasure and durable account achievements; R04 identifies those boundaries. The useful question for OpenLegend is which part of a setback should remain emotionally meaningful after the player resumes. A hypothetical failed expedition might cost its cargo or change a relationship while leaving enough capability for a different next attempt. That can preserve a story without demanding repetition of every solved opening chore.
+Sea of Thieves separates bodily defeat, ship loss, unsecured treasure and durable account achievements; R04 identifies those boundaries. The useful question for Open Legend is which part of a setback should remain emotionally meaningful after the player resumes. A hypothetical failed expedition might cost its cargo or change a relationship while leaving enough capability for a different next attempt. That can preserve a story without demanding repetition of every solved opening chore.
 
-This is not an argument for universal session resets. Lasting buildings, relationships and discoveries may be part of OpenLegend's appeal. A research comparison should distinguish the value of continuity from the burden of maintaining every possession, and distinguish chosen risk from a loss that the player could neither anticipate nor influence.
+This is not an argument for universal session resets. Lasting buildings, relationships and discoveries may be part of Open Legend's appeal. A research comparison should distinguish the value of continuity from the burden of maintaining every possession, and distinguish chosen risk from a loss that the player could neither anticipate nor influence.
 
 ### Different adventures can fit different amounts of time and risk
 
 In the official 2022 Xbox podcast transcript, Joe Neate contrasts compact Sea Fort encounters intended for solo or small crews with conspicuous forts that draw several crews together. The smaller activity deliberately does not advertise its active state in the same way. That is an attributed historical design explanation, not a measurement of current session duration. [Xbox podcast, machine-transcribed developer interview](https://news.xbox.com/en-us/podcast/sea-of-thieves-2022-and-more/).
 
-**Interpretation:** OpenLegend could study adventures whose danger and likely commitment can be judged before setting out. A quiet discovery and a publicly contested objective need not be balanced into the same experience. The cost is that travel, rewards and social consequences must still make each choice worthwhile; a supposedly short activity that routinely expands into an uninterruptible ordeal breaks the promise.
+**Interpretation:** Open Legend could study adventures whose danger and likely commitment can be judged before setting out. A quiet discovery and a publicly contested objective need not be balanced into the same experience. The cost is that travel, rewards and social consequences must still make each choice worthwhile; a supposedly short activity that routinely expands into an uninterruptible ordeal breaks the promise.
 
 ### Players can share a world without sharing one preferred kind of play
 
-High Seas, Safer Seas and Custom Seas make different bargains about other crews, rewards and authorship. Their current boundaries appear in R01 and R04. For OpenLegend the transferable question is how clearly a participant understands what another person may interrupt, steal, change or preserve. Good communication about those stakes is part of the game experience.
+High Seas, Safer Seas and Custom Seas make different bargains about other crews, rewards and authorship. Their current boundaries appear in R01 and R04. For Open Legend the transferable question is how clearly a participant understands what another person may interrupt, steal, change or preserve. Good communication about those stakes is part of the game experience.
 
 Mode separation has costs: fewer spontaneous encounters across audiences, different reward expectations, fragmented groups and additional maintenance. A world in which every participant is protected from every unwanted consequence would also lose some sources of surprise. The research does not select a PvP policy; it identifies a decision that cannot be answered by describing a game as simply multiplayer.
 
 ### Growth can create new purposes without making old friends obsolete
 
-The progression and reception sections distinguish personal mastery, cosmetic identity, access to activities and the temporary advantages accumulated during play. A possible OpenLegend study could ask whether a more experienced character gains interesting responsibilities and options while a newcomer can still make a useful contribution. There are several possible solutions: specialization, knowledge, social access or situational equipment, rather than a single required progression curve.
+The progression and reception sections distinguish personal mastery, cosmetic identity, access to activities and the temporary advantages accumulated during play. A possible Open Legend study could ask whether a more experienced character gains interesting responsibilities and options while a newcomer can still make a useful contribution. There are several possible solutions: specialization, knowledge, social access or situational equipment, rather than a single required progression curve.
 
 The counterpoint from the reviews is substantial: some players want an improvement they can feel in their capabilities, and presentation-only rewards do not satisfy them. Preserving useful group entry is a design goal to investigate, not evidence that permanent power progression must be removed.
 
 ### Making an activity and extending an engine are different kinds of creation
 
-Custom Seas provides a concrete case of supported in-game authoring, while R15 separately screens for external modification. This distinction matters for an authored-world engine: a player can arrange a competition or tell a story with supported objects without receiving permission to redefine every underlying rule. A useful hypothetical OpenLegend study would ask what another player can actually replay from a saved authored situation, and what still depends on the original host explaining or supervising it.
+Custom Seas provides a concrete case of supported in-game authoring, while R15 separately screens for external modification. This distinction matters for an authored-world engine: a player can arrange a competition or tell a story with supported objects without receiving permission to redefine every underlying rule. A useful hypothetical Open Legend study would ask what another player can actually replay from a saved authored situation, and what still depends on the original host explaining or supervising it.
 
 The tradeoff is expressive range. A limited editor can be understandable and easy to share while being unable to produce a radically different game. More expressive authoring introduces new obligations around explanation, coordination, rights and trust. Neither approach automatically supplies good goals, interesting characters or enjoyable pacing.
 
 ### A simulation's value is the experience people can notice
 
-The production research describes selected historical rendering and service techniques. Those accounts are useful examples of choosing an implementation to serve an intended experience. They are not evidence that OpenLegend needs the same engine, cloud services or rendering methods. Likewise, an impressive concurrent-player claim does not explain how many consequential encounters a person experiences, how much of a world remains interesting between those encounters, or what it costs to keep it running.
+The production research describes selected historical rendering and service techniques. Those accounts are useful examples of choosing an implementation to serve an intended experience. They are not evidence that Open Legend needs the same engine, cloud services or rendering methods. Likewise, an impressive concurrent-player claim does not explain how many consequential encounters a person experiences, how much of a world remains interesting between those encounters, or what it costs to keep it running.
 
-A proposed play study should start with what the participant can perceive and do: notice danger, understand a companion's action, pursue a goal and recover from a setback. Only then does a measurement of population or simulation detail help assess whether the experience can be delivered. Sea of Thieves' popularity cannot validate OpenLegend's unmeasured AI economics or persistent-world scale.
+A proposed play study should start with what the participant can perceive and do: notice danger, understand a companion's action, pursue a goal and recover from a setback. Only then does a measurement of population or simulation detail help assess whether the experience can be delivered. Sea of Thieves' popularity cannot validate Open Legend's unmeasured AI economics or persistent-world scale.
 
 ### An adventure needs both surprises and satisfying repeatable actions
 
 The review disagreement in R12 should survive the synthesis. Social improvisation can make a simple task memorable, but it can also conceal repetitive underlying work until a player has seen the surprises. The opposite risk is making every activity so elaborate that ordinary cooperation disappears inside instructions and menus.
 
-For OpenLegend, the useful research question is whether an ordinary trip, fight, discovery or crafting attempt remains satisfying when no extraordinary AI-generated event happens. A richer world can add surprise to an already enjoyable activity; novelty alone is a weak substitute for a readable, responsive and worthwhile activity.
+For Open Legend, the useful research question is whether an ordinary trip, fight, discovery or crafting attempt remains satisfying when no extraordinary AI-generated event happens. A richer world can add surprise to an already enjoyable activity; novelty alone is a weak substitute for a readable, responsive and worthwhile activity.
 
 <a id="r15"></a>
 
@@ -561,7 +561,7 @@ This is neither a categorical claim that unofficial modifications never exist no
 | R10 — Marketing and reach | Actual release channels, platform expansion, events, streaming and community promotion; word-of-mouth explanations are hypotheses. |
 | R11 — Economics | Dated paid units versus players, transparent three-scenario calculation for the first five million Steam units, exclusions, monetization changes and a reasoned sustainability judgment. Product profit and total revenue remain undisclosed. |
 | R12 — Reception and enjoyment | Five substantive independent reviews across 2018, 2020 and 2024; contrasting Steam helpful-week bodies; first/middle/longer-term motivations, frustration, recovery, return, satisfaction and abandonment hypotheses. |
-| R13 — OpenLegend interpretation | Concrete transferable patterns, costs, audience differences, alternatives and reasons not to prescribe the same solution. No new implementation task or accepted game requirement. |
+| R13 — Open Legend interpretation | Concrete transferable patterns, costs, audience differences, alternatives and reasons not to prescribe the same solution. No new implementation task or accepted game requirement. |
 | R14 — Sources and preservation | Adjacent citations, dated annotated registers, access qualifications, purpose-based reading routes and additive repository navigation. |
 | R15 — Conditional external modding | Uncertain gate after an actual search; no popular maintained external ecosystem demonstrated. Native Custom Seas has its own substantive tools/workflow/persistence/governance coverage and is not mislabeled as external modding. |
 
@@ -583,7 +583,7 @@ All accessed **20 October 2026 UTC**. These supplement the mechanics, production
 
 This is a new subject, added after checking the main-branch roster and dossier tree; no earlier Sea of Thieves dossier was found. It does not replace the [ARK: Survival Evolved dossier](ark-survival-evolved.md), its distinct [Survival Ascended study](ark-survival-ascended.md), earlier mechanics chapters or the packet-wide preservation ledger. ATLAS is a separately authorized subject in the scoped ledger. No older dossier is silently recertified against later amendments.
 
-Use the [dossier index](README.md), [library navigation](../README.md), [research roster](../research-roster.md) and [interaction lookup](../mechanics/interaction-lookup.md) to find neighboring studies. The comparisons proposed in R13 remain research interpretations under the existing OpenLegend priorities.
+Use the [dossier index](README.md), [library navigation](../README.md), [research roster](../research-roster.md) and [interaction lookup](../mechanics/interaction-lookup.md) to find neighboring studies. The comparisons proposed in R13 remain research interpretations under the existing Open Legend priorities.
 
 ### Mechanics, people and lore sources
 

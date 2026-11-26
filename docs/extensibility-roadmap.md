@@ -1,8 +1,8 @@
-# Extensibility roadmap: from OpenLegend to authored realities
+# Extensibility roadmap: from Open Legend to authored realities
 
 **Status: target capability sequence, not a delivery-status report or a second task tracker.** [Engine/world boundaries](engine-and-world-boundaries.md) owns principles; [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns shared contracts. The [maintainer index](maintainers/README.md) points to actual work. The [current gameplay priorities](repertoires/gameplay-priorities.md) and [whole-game coverage](repertoires/coverage.md) control player-facing selection; capability stages here are not a competing feature order.
 
-Build OpenLegend through this sequence, extracting an engine from real needs. A stage becomes useful when its narrow end-to-end capability works; it does not require perfect generality across all future examples. Later stages are enabled by interfaces, not made prerequisites for the first game.
+Build Open Legend through this sequence, extracting an engine from real needs. A stage becomes useful when its narrow end-to-end capability works; it does not require perfect generality across all future examples. Later stages are enabled by interfaces, not made prerequisites for the first game.
 
 ## Starting architecture and preservation rule
 
@@ -103,4 +103,4 @@ For each promoted interface, state what is implemented now: native-only, replace
 
 A creator can ask the world agent for a supported reality, reuse or specialize player-authored constructs at several levels, review consequential choices, and activate a coherent change. Actors can perceive and act through the installed senses, needs, abilities, and controller policies; work persists and changes honestly with its evidence. Runtime integrity and human/account authority remain protected.
 
-That destination does not mean arbitrary prose always works, every imaginable solver is installed, or OpenLegend must be finished as a general-purpose engine before its own game is enjoyable.
+That destination does not mean arbitrary prose always works, every imaginable solver is installed, or Open Legend must be finished as a general-purpose engine before its own game is enjoyable.

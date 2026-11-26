@@ -1,3 +1,4 @@
+import { inCognitionLab } from '../lab-location';
 import { LoadingIndicator } from '../design-system/loading';
 import {
   checkpointRequestKey,
@@ -21,7 +22,7 @@ import type {
   GameSaveCatalog,
   GameSaveSummary,
 } from '@open-legend/protocol';
-import { loadGameSave, post } from '../api';
+import { getOperations, loadGameSave, post } from '../api';
 import { Button, Section } from '../design-system/components';
 import './lifecycle.css';
 
@@ -91,6 +92,11 @@ export function GameSavesPanel({
   const [autosaves, setAutosaves] = useState<AutosaveStatus>();
   const [next, setNext] = useState<GameSaveCatalog['next']>();
   const [label, setLabel] = useState('');
+  const [startingScenario, setStartingScenario] = useState(false);
+  const [bundleId, setBundleId] = useState('');
+  const [scenarioSource, setScenarioSource] = useState<'opening' | 'game'>('opening');
+  const preparedSource = useRef<{ source: 'opening' | 'game'; id: string } | undefined>(undefined);
+  const [keepCurrentModels, setKeepCurrentModels] = useState(false);
   const [listing, setListing] = useState(false);
   const [listed, setListed] = useState(false);
   const [catalogError, setCatalogError] = useState('');
@@ -205,7 +211,7 @@ export function GameSavesPanel({
     const request: CheckpointRequest = {
       operation: 'create',
       requestId: crypto.randomUUID(),
-      label: label.trim() || 'Manual save',
+      label: label.trim() || (startingScenario ? 'Starting scenario' : 'Manual save'),
       timeline: context.timeline,
     };
     try {
@@ -214,6 +220,7 @@ export function GameSavesPanel({
       const result = await post('/api/saves/create', {
         id: request.requestId,
         label: request.label,
+        ...(inCognitionLab && startingScenario ? { scenario: true } : {}),
       });
       if (!alive.current) return;
       if (result.ok || ['busy', 'invalid-input', 'loading', 'deferred'].includes(result.code))
@@ -236,6 +243,34 @@ export function GameSavesPanel({
       if (alive.current) setCreating(false);
     }
   }
+  async function exchange(direction: 'import' | 'export' | 'start', id: string) {
+    if (mutationActive.current || pending.current.status !== 'empty' || !id.trim()) return;
+    mutationActive.current = true;
+    setRowBusy(true);
+    try {
+      const result = await post(`/api/cognition-lab/scenarios/${direction}`, {
+        id: id.trim(),
+        ...(direction === 'start' ? { source: scenarioSource } : {}),
+      });
+      if (!alive.current) return;
+      if (!result.ok) setMessage(result.message || 'The scenario files could not be verified.');
+      else if (direction === 'export')
+        setMessage(`Exported to exchange/${id} in the private Lab data directory.`);
+      else {
+        setMessage('The scenario is available. Choose Load to replace the current scene.');
+        if (direction === 'start') preparedSource.current = undefined;
+        else setBundleId('');
+        await refresh();
+      }
+    } catch (error) {
+      if (alive.current)
+        setMessage(error instanceof Error ? error.message : 'Transfer could not be confirmed.');
+    } finally {
+      mutationActive.current = false;
+      if (alive.current) setRowBusy(false);
+    }
+  }
+
   async function run(action: 'load' | 'delete', save: GameSaveSummary) {
     if (
       mutationActive.current ||
@@ -263,7 +298,11 @@ export function GameSavesPanel({
         remember({ status: 'pending', request });
       }
       const result = request
-        ? await loadGameSave({ id: save.id, requestId: request.requestId })
+        ? await loadGameSave({
+            id: save.id,
+            requestId: request.requestId,
+            ...(inCognitionLab && keepCurrentModels ? { keepCurrentModels: true } : {}),
+          })
         : await post('/api/saves/delete', { id: save.id });
       if (!result) return;
       if (!alive.current) return;
@@ -302,6 +341,13 @@ export function GameSavesPanel({
     mutationActive.current = true;
     setChecking(true);
     try {
+      // The operations screen opens no stream. A load may have replaced its
+      // scope while its first response was lost. Read the current permission
+      // before asking about this same retained request.
+      const current = request.operation === 'load' ? (await getOperations()).checkpoint : context;
+      if (!current || current.recoveryScope !== context.recoveryScope)
+        throw new Error('Checkpoint access changed. Refresh before checking the original result.');
+      if (!alive.current) return;
       const result = await post<RequestRecoveryResult>('/api/saves/receipt', request);
       if (
         !alive.current ||
@@ -313,10 +359,14 @@ export function GameSavesPanel({
         setMessage(result.message);
         return;
       }
-      if (result.scope !== context.scope)
+      if (result.scope !== current.scope)
         throw new Error('Checkpoint access changed. Refresh before checking the original result.');
       if (result.status === 'resolved') {
         settle(result.result, request);
+        if (request.operation === 'load' && result.result.ok) {
+          window.location.reload();
+          return;
+        }
         await refresh();
       } else setMessage(result.message);
     } catch (error) {
@@ -393,13 +443,14 @@ export function GameSavesPanel({
     <div className="ol-checkpoints">
       <Section title="Checkpoints">
         <p>
-          Keep named points in this world’s history. Loading a checkpoint replaces the current world
-          and starts it paused.
+          Keep named points in this world’s history.
+          {context.canLoad &&
+            ' Loading a checkpoint replaces the current world and starts it paused.'}
         </p>
         <p className="ol-setting-scope">Whole world · save permission required</p>
         <p className="ol-caption">
           “Saved” in the game’s status display reports the last ordinary save. A checkpoint is a
-          separate point you can deliberately load later.
+          separate recovery point.
         </p>
         {failure && (
           <div className="ol-notice" role="alert">
@@ -463,8 +514,21 @@ export function GameSavesPanel({
         )}
         {message && <p role="status">{message}</p>}
         <div className="ol-checkpoint-create">
+          {inCognitionLab && (
+            <label>
+              Save as
+              <select
+                value={startingScenario ? 'scenario' : 'checkpoint'}
+                disabled={busy || unresolved}
+                onChange={(event) => setStartingScenario(event.target.value === 'scenario')}
+              >
+                <option value="checkpoint">Continuation checkpoint</option>
+                <option value="scenario">Reusable starting scenario</option>
+              </select>
+            </label>
+          )}
           <label>
-            Checkpoint name
+            {startingScenario ? 'Scenario name' : 'Checkpoint name'}
             <input
               value={label}
               maxLength={80}
@@ -481,9 +545,61 @@ export function GameSavesPanel({
             disabled={rowBusy || unresolved}
             onPress={() => void create()}
           >
-            Create checkpoint
+            {startingScenario ? 'Save starting scenario' : 'Create checkpoint'}
           </Button>
         </div>
+        {inCognitionLab && (
+          <details>
+            <summary>Prepare another starting scenario</summary>
+            <label>
+              Source
+              <select
+                value={scenarioSource}
+                disabled={busy || unresolved}
+                onChange={(event) =>
+                  setScenarioSource(event.target.value === 'game' ? 'game' : 'opening')
+                }
+              >
+                <option value="opening">Reviewed opening</option>
+                <option value="game">Current paused game</option>
+              </select>
+            </label>
+            <Button
+              size="sm"
+              disabled={busy || unresolved}
+              onPress={() => {
+                if (preparedSource.current?.source !== scenarioSource)
+                  preparedSource.current = { source: scenarioSource, id: crypto.randomUUID() };
+                void exchange('start', preparedSource.current.id);
+              }}
+            >
+              Prepare starting scenario
+            </Button>
+            <p className="ol-caption">
+              The current Lab stays open until you choose Load on the new scenario.
+            </p>
+          </details>
+        )}
+        {inCognitionLab && (
+          <details>
+            <summary>Import a private Lab export</summary>
+            <label>
+              Bundle ID
+              <input
+                value={bundleId}
+                onChange={(event) => setBundleId(event.target.value.trim())}
+              />
+            </label>
+            <Button
+              size="sm"
+              disabled={busy || unresolved || !bundleId}
+              onPress={() => void exchange('import', bundleId)}
+            >
+              Import scenario
+            </Button>
+            <p className="ol-caption">Use a bundle from this Lab’s private exchange directory.</p>
+          </details>
+        )}
         {!creating && autosaves?.pendingManual && (
           <p role="status">A manual checkpoint is waiting for the current capture to finish.</p>
         )}
@@ -523,7 +639,9 @@ export function GameSavesPanel({
                 ? 'Automatic checkpoint'
                 : save.kind === 'recovery'
                   ? 'Recovery checkpoint'
-                  : 'Named checkpoint'}
+                  : save.kind === 'scenario'
+                    ? 'Starting scenario'
+                    : 'Named checkpoint'}
             </span>
             <small>
               Saved{' '}
@@ -546,18 +664,30 @@ export function GameSavesPanel({
               </p>
             )}
             <div className="ol-save-actions">
-              <Button
-                size="sm"
-                disabled={busy || unresolved || !save.compatible}
-                aria-label={`Load ${save.label}`}
-                onPress={(event) => {
-                  confirmTrigger.current =
-                    event.target instanceof HTMLElement ? event.target : null;
-                  setConfirm({ save, action: 'load' });
-                }}
-              >
-                Load
-              </Button>
+              {inCognitionLab && (save.kind === 'scenario' || save.kind === 'manual') && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy || unresolved || !save.compatible}
+                  onPress={() => void exchange('export', save.id)}
+                >
+                  Export
+                </Button>
+              )}
+              {context.canLoad && (
+                <Button
+                  size="sm"
+                  disabled={busy || unresolved || !save.compatible}
+                  aria-label={`Load ${save.label}`}
+                  onPress={(event) => {
+                    confirmTrigger.current =
+                      event.target instanceof HTMLElement ? event.target : null;
+                    setConfirm({ save, action: 'load' });
+                  }}
+                >
+                  Load
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="quiet"
@@ -595,6 +725,16 @@ export function GameSavesPanel({
                     ? 'This replaces the current world. The world pauses and a “Before last load” recovery checkpoint is written first. If that protection fails, loading is refused and the current world stays paused.'
                     : 'This permanently deletes the named checkpoint. It does not rewind or delete the current world.'}
                 </p>
+                {inCognitionLab && confirm.action === 'load' && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={keepCurrentModels}
+                      onChange={(event) => setKeepCurrentModels(event.target.checked)}
+                    />
+                    Keep the current model choices and output limit
+                  </label>
+                )}
                 <div className="ol-lifecycle-actions">
                   <Button
                     variant="danger"

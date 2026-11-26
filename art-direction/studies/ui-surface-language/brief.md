@@ -8,7 +8,7 @@ identify the examples; they are not download links or proof that this checkout c
 
 ## Request
 
-Explore an original OpenLegend UI surface language: borders, textured panels, corners,
+Explore an original Open Legend UI surface language: borders, textured panels, corners,
 inset frames, title rails, dividers, tabs, brackets, medallions and scaffolding-like elements
 that connect interface parts. Study material, construction and ornament before designing
 whole screens.

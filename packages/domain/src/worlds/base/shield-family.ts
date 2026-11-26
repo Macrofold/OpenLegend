@@ -1,3 +1,4 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate, WorldState } from '../../types.js';
 import { BASE_BINDING_MATERIAL } from './items.js';
@@ -6,10 +7,10 @@ import { BASE_GUARD_PROFILE, guardDescription } from './shield-defense.js';
 import { installRecipe } from '../../declarations.js';
 
 const rules = {
-  woodQuantity: 3,
-  cordQuantity: 2,
-  workSeconds: 240,
-  packingLoad: 3,
+  woodQuantity: arms.shieldCandidate.inputs.find((input) => input.role === 'body')!.quantity,
+  cordQuantity: arms.shieldCandidate.inputs.find((input) => input.role === 'binding')!.quantity,
+  workSeconds: arms.shieldWorkSeconds,
+  packingLoad: arms.shieldPackingLoad,
   minimumReduction: 0.25,
   maximumReduction: 0.6,
   minimumCoverage: 90,
@@ -17,8 +18,8 @@ const rules = {
 };
 export const BASE_SHIELD_FAMILY: RecipeFamilyDescriptor = {
   definition: {
-    id: 'base:shield',
-    version: 1,
+    id: arms.shieldCandidate.family.id,
+    version: arms.shieldCandidate.family.version,
     interface: 'recipe-family-v1',
     implementationVersion: 1,
     name: 'Held contact shield',
@@ -145,25 +146,8 @@ export const BASE_SHIELD_FAMILY: RecipeFamilyDescriptor = {
   },
 };
 export const KNOWN_SHIELD_METHOD = {
-  candidate: {
-    family: { id: BASE_SHIELD_FAMILY.definition.id, version: 1 },
-    name: 'Wooden shield',
-    description: 'Bind three worked branches into a rigid shield using two fiber cords.',
-    inputs: [
-      { definitionId: 'wood', quantity: rules.woodQuantity, role: 'body' },
-      { definitionId: 'cord', quantity: rules.cordQuantity, role: 'binding' },
-    ],
-    output: {
-      name: 'Wooden shield',
-      description:
-        'A wooden off-hand shield that can share both hands with a knife. Choose Guard to reduce one timely front contact blow.',
-    },
-    parameters: {
-      reduction: BASE_GUARD_PROFILE.reduction,
-      coverageDegrees: BASE_GUARD_PROFILE.coverageDegrees,
-    },
-  } satisfies RecipeCandidate,
-};
+  candidate: arms.shieldCandidate,
+} satisfies { candidate: RecipeCandidate };
 export function installKnownShieldMethod(world: WorldState) {
   return installRecipe(world, KNOWN_SHIELD_METHOD.candidate, {
     source: 'authored-world',

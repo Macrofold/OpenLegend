@@ -14,7 +14,8 @@ import { getOwn } from './records.js';
 import { isSafeRecordId } from './records.js';
 import { materialInventoryRule } from './material-inventory.js';
 import { manufactureToolProblem } from './manufacture.js';
-import { MANUFACTURE_LIMITS } from './manufacture-limits.js';
+import { FIXED_TRANSFORM_IMPLEMENTATION } from './manufacture-limits.js';
+export { FIXED_TRANSFORM_IMPLEMENTATION } from './manufacture-limits.js';
 import { definitionPin, recipeFamily, type DefinitionPin } from './world-modules.js';
 
 /** Standard JSON Schema scalars and closed one-level records; native validation shares these constraints. */
@@ -511,13 +512,6 @@ export function recipeDependencyReferences(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, ref]) => ref);
 }
-/** The trusted compiler's finite work envelope does not enlarge invention-family powers. */
-export const FIXED_TRANSFORM_IMPLEMENTATION = Object.freeze({
-  id: 'engine:finite-material-transform',
-  version: 1,
-  ...MANUFACTURE_LIMITS,
-});
-
 export function compileFixedTransform(world: WorldState, value: unknown) {
   const problem = (): never => {
     throw new Error('Invalid trusted finite material transformation.');

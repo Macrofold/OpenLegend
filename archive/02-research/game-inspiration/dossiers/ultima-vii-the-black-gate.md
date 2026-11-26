@@ -1,6 +1,6 @@
 # G128 — Ultima VII: The Black Gate
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Ultima VII: The Black Gate is one of the clearest early demonstrations that a role-playing world can feel alive because **ordinary objects and ordinary people behave as if they belong there**. Its most transferable contribution is not combat or character-build depth; it is the density of mundane simulation around a strongly written investigation.
 

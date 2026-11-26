@@ -60,6 +60,8 @@ const { values, positionals } = parseArgs({
     expected: { type: 'string' },
     selection: { type: 'string' },
     'source-root': { type: 'string' },
+    'server-release': { type: 'string' },
+    'server-directory': { type: 'string' },
     all: { type: 'boolean' },
     help: { type: 'boolean' },
     port: { type: 'string' },
@@ -154,6 +156,7 @@ async function repository<T>(
     repo: AssetRepository,
     storage: S3AssetStorage,
     principal: { accountId: string },
+    database: PostgresDatabase,
   ) => Promise<T>,
   readOnly = false,
 ): Promise<T> {
@@ -164,7 +167,7 @@ async function repository<T>(
     database = await openAssetAuthority(configuration, readOnly);
     const repo = new AssetRepository(database);
     if (!readOnly) await repo.initialize();
-    return await operation(repo, storage, principal);
+    return await operation(repo, storage, principal, database);
   } finally {
     try {
       await database?.close();
@@ -237,11 +240,14 @@ async function run(): Promise<void> {
   login --page /restricted/curated-private/PUBLISHED/PAGE.html
   install --operation ID [--origin http://127.0.0.1:3211]
   sync   (copy the shared authority's records into this machine's game database)
+  mount-runtime [--public] --server-release DIRECTORY --output NEW_DIRECTORY
   authority-export --output /outside/repository/current-authority.json
   recovery-initialize --output /outside/repository/authority-work
   recovery-create --operation CHECKPOINT --output /outside/repository/checkpoint-work [--source-config FROZEN_ENV_CONFIG]
+    [--server-directory /path/to/server-binary-directory --server-release /path/to/release]
   recovery-verify --manifest LOCATOR.json --output /outside/repository/verified-restore
   recovery-restore-catalog --source-root /outside/repository/verified-restore
+  recovery-restore-world --source-root /outside/repository/verified-restore/metadata/world --server-directory /path/to/server-binary-directory --server-release /path/to/release
   recovery-reconcile --output /outside/repository/current-authority-work
   recovery-restore-objects --source-root /outside/repository/verified-restore --quarantine-domain recovery-ID --output /outside/repository/restored-locations.json
 All commands accept --config FILE; pulls/viewers accept --index FILE.
@@ -292,6 +298,48 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
           2,
         ),
       );
+    return;
+  }
+  if (command === 'mount-runtime') {
+    if (values.index || values.path || values.prefix || values.all)
+      throw new Error('The runtime mount uses the complete index pinned by --server-release.');
+    const { prepareRuntimeMount, readRuntimeMountInput } = await import(
+      './assets/runtime-mount.js'
+    );
+    const release = await readRuntimeMountInput(
+      resolve(required('server-release')),
+      required('output'),
+    );
+    const resolver = await createAssetResolver({
+      ...resolverOptions,
+      indexPath: release.indexPath,
+      purpose: 'runtime',
+      publicOnly: values.public === true,
+    });
+    const prepare = (authorize?: (reference?: ArtifactReference) => Promise<void>) =>
+      prepareRuntimeMount({
+        ...release,
+        maximumBytes: configuration.publication.maxBytes,
+        maximumFiles: configuration.publication.maxFiles,
+        resolver,
+        ...(authorize ? { authorize } : {}),
+      });
+    try {
+      const result = values.public
+        ? await prepare()
+        : await repository(
+            (repo, _storage, principal) =>
+              prepare(async (reference) => {
+                if (reference)
+                  await repo.authorizeArtifact(principal, release.index.release, reference);
+                else await repo.revision(release.index.release, principal);
+              }),
+            true,
+          );
+      console.log(JSON.stringify({ operation: command, ...result }));
+    } finally {
+      await resolver.close();
+    }
     return;
   }
   if (['pull', 'verify', 'workspace'].includes(command)) {
@@ -749,6 +797,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
       [
         'recovery-verify',
         'recovery-restore-catalog',
+        'recovery-restore-world',
         'recovery-reconcile',
         'recovery-restore-objects',
       ].includes(command)
@@ -757,6 +806,21 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
     );
     const additionalStorages: S3AssetStorage[] = [];
     try {
+      if (command === 'recovery-restore-world') {
+        const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
+        const { restoreRustWorld } = await import('./assets/restore-rust-world.js');
+        const { databaseUrl, dataDirectory } = readStorageLocation();
+        const result = await restoreRustWorld(storage, {
+          serverDirectory: await realpath(required('server-directory')),
+          release: await realpath(required('server-release')),
+          backup: await realpath(required('source-root')),
+          databaseUrl,
+          dataDirectory,
+          domain: authorityDomain,
+        });
+        console.log(JSON.stringify(result));
+        return;
+      }
       if (command === 'recovery-verify') {
         const locator = JSON.parse(
           await readAssetManifestText(resolve(required('manifest')), 128 * 1024),
@@ -773,7 +837,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
         );
         return;
       }
-      await repository(async (repo) => {
+      await repository(async (repo, _readerStorage, _principal, database) => {
         if (command === 'recovery-initialize') {
           const result = await workflows.initializeRecoveryAuthority(repo, storage, {
             domain: authorityDomain,
@@ -787,16 +851,29 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
             }),
           );
         } else if (command === 'recovery-create') {
-          const { readConfig } = await import('../apps/server/src/config.js');
+          const { readStorageLocation } = await import('../apps/server/src/storage-location.js');
+          const { backupRustWorld } = await import('./assets/restore-rust-world.js');
+          const { databaseUrl, dataDirectory } = readStorageLocation();
           const directory = await outsideRepository(required('output'));
           for (const source of await sourceConfigurations())
             additionalStorages.push(new S3AssetStorage(source, 'recovery-writer'));
           const locator = await workflows.createAssetRecoveryCheckpoint(repo, storage, {
             checkpointId: required('operation'),
             authorityDomain,
-            sourceDirectory: values['source-root']
-              ? await realpath(values['source-root'])
-              : readConfig().dataDirectory,
+            withStoppedSource: (capture) => database.withStoppedWorld(capture),
+            backupWorld: async (destination) => {
+              await backupRustWorld(
+                {
+                  serverDirectory: await realpath(required('server-directory')),
+                  release: await realpath(required('server-release')),
+                  databaseUrl,
+                  dataDirectory: values['source-root']
+                    ? await realpath(values['source-root'])
+                    : dataDirectory,
+                },
+                destination,
+              );
+            },
             directory,
             sourceStorages: additionalStorages,
           });
@@ -839,7 +916,7 @@ AWS credentials remain in the named CLI/SDK session and are never written to a l
             }),
           );
         } else throw new Error('Unknown recovery command.');
-      });
+      }, command === 'recovery-create');
     } finally {
       storage.close();
       for (const source of additionalStorages) source.close();

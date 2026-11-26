@@ -22,7 +22,7 @@ What helps someone find a suitable world, join friends or understand a reusable 
 
 <!-- Identify the audience and promised activity. Compare approachable standalone entry, community invitations, discovery of shared creations and deeper optional lore rather than requiring prior expertise. -->
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-discovery) and [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions), including existing discovery, community-entry and demo proposals. A capability being describable does not prove it is delivered or easy to discover.
 

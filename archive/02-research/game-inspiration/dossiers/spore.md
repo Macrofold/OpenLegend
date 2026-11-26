@@ -2,7 +2,7 @@
 
 **G16 · Complete research pass, September 26, 2026.** This dossier studies Maxis' 2008 PC/Mac *Spore* as the primary subject, with *Creepy & Cute* and *Galactic Adventures* treated as edition/expansion boundaries rather than separate games. The Nintendo DS/mobile spin-offs are not substituted for the PC game. [Preserved earlier chapter](../games/spore.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Spore is one of the most directly relevant precedents for OpenLegend's player-invention goal. Its strongest achievement was a set of editors that let ordinary users construct creatures, buildings and vehicles while the engine automatically solved hard downstream problems such as rigging, animation, skinning and content distribution. Its central limitation was that **expressive creation often outran functional consequence**: the thing a player made could feel unique while the surrounding stage reduced it to a small set of familiar statistics and verbs.
+Spore is one of the most directly relevant precedents for Open Legend's player-invention goal. Its strongest achievement was a set of editors that let ordinary users construct creatures, buildings and vehicles while the engine automatically solved hard downstream problems such as rigging, animation, skinning and content distribution. Its central limitation was that **expressive creation often outran functional consequence**: the thing a player made could feel unique while the surrounding stage reduced it to a small set of familiar statistics and verbs.
 
 **Spoilers:** progression, the Grox, Space tools and authored Galactic Adventures examples are discussed; the final Galactic Core sequence is not reproduced.
 
@@ -31,7 +31,7 @@ That division is worth making explicit:
 
 > **Spore shares authored artifacts, not live players or persistent simulated lives.**
 
-For OpenLegend, that is a useful lightweight alternative to assuming every shared invention requires an MMO.
+For Open Legend, that is a useful lightweight alternative to assuming every shared invention requires an MMO.
 
 <a id="1-five-activities-share-the-history-of-one-created-species"></a>
 <a id="study-1"></a>
@@ -74,7 +74,7 @@ This produces a form of **diegetic skill loadout**. Instead of equipping “Char
 
 However, Spore does not simulate arbitrary biological consequences. A very long neck does not automatically produce every real advantage/disadvantage of a long neck; a creature's arbitrary body mass, center of gravity or surface area is not a universal source of systemic behavior. Most meaningful gameplay consequences are mediated through discrete part stats/abilities.
 
-**OpenLegend lesson:** visual invention becomes mechanically legible when the engine exposes concrete capabilities, but a capability/tag layer should not pretend to be a complete physical simulation.
+**Open Legend lesson:** visual invention becomes mechanically legible when the engine exposes concrete capabilities, but a capability/tag layer should not pretend to be a complete physical simulation.
 
 ## 3. Procedural animation is the editor's hidden superpower
 
@@ -92,7 +92,7 @@ The user experience is:
 
 The engine turns **geometry authored by a novice** into something capable of participating in a game.
 
-That is a powerful analogy for OpenLegend inventions. A player should be able to define a meaningful high-level object—new creature morphology, machine, need, spell family, social institution—and have lower-level infrastructure derive as much boilerplate as safely possible:
+That is a powerful analogy for Open Legend inventions. A player should be able to define a meaningful high-level object—new creature morphology, machine, need, spell family, social institution—and have lower-level infrastructure derive as much boilerplate as safely possible:
 - default UI;
 - serialization;
 - event subscriptions;
@@ -204,7 +204,7 @@ Posse allies are useful companions, but Spore does not simulate party relationsh
 
 Professional and player reviews repeatedly single out Creature stage because **the editor and the embodied game still touch each other directly**. The creature the player sculpted is the thing walking, dancing, fighting and recruiting. [SP54](#sp54) [SP57](#sp57)
 
-This is the embodiment standard OpenLegend should preserve when player inventions later move into larger social/economic systems.
+This is the embodiment standard Open Legend should preserve when player inventions later move into larger social/economic systems.
 
 <a id="3-creature-anatomy-supplies-a-vocabulary-not-arbitrary-biomechanics"></a>
 <a id="study-3"></a>
@@ -248,7 +248,7 @@ The deeper transferable design idea is still useful:
 
 > repeated behavior can become a persistent identity trait.
 
-OpenLegend can generalize that beyond biology:
+Open Legend can generalize that beyond biology:
 - a character repeatedly solving conflict through intimidation becomes feared;
 - a settlement repeatedly honoring debts becomes trusted;
 - a school of magic repeatedly causing ecological harm acquires regulation/stigma;
@@ -291,7 +291,7 @@ This is one of Spore's key design tensions:
 
 > the farther the game zooms out, the less the lovingly authored body determines everyday play.
 
-For OpenLegend, changing simulation scale should not erase previously meaningful capabilities. If a player invents nocturnal echolocation, moving from “one person” to “manage a settlement” should still create concrete implications for scouting, architecture, professions and warfare.
+For Open Legend, changing simulation scale should not erase previously meaningful capabilities. If a player invents nocturnal echolocation, moving from “one person” to “manage a settlement” should still create concrete implications for scouting, architecture, professions and warfare.
 
 <a id="4-tribal-bodies-stop-changing-while-responsibilities-expand"></a>
 <a id="study-4"></a>
@@ -349,7 +349,7 @@ and can specialize them for military, economic or religious roles. [SP48](#sp48)
 
 But the editor's expressiveness exceeds the strategy simulation. Wildly different vehicle silhouettes can converge to similar functional stat roles.
 
-That asymmetry is not necessarily bad—appearance itself can be rewarding—but it is exactly what OpenLegend should label carefully. A player-defined “tank with spider legs” should only receive spider-like locomotion if the mechanics system actually supports it.
+That asymmetry is not necessarily bad—appearance itself can be rewarding—but it is exactly what Open Legend should label carefully. A player-defined “tank with spider legs” should only receive spider-like locomotion if the mechanics system actually supports it.
 
 <a id="5-civilization-politics-city-layout-and-vehicle-roles"></a>
 <a id="study-5"></a>
@@ -376,7 +376,7 @@ Land, sea and air vehicles are fitted for their terrain and specialization. Thei
 
 By contrast, **Spaceship Creator** parts are cosmetic: a visible weapon, sensor or landing appendage does not itself grant that tool's operational ability. Space capabilities are acquired separately. [SP15](#sp15)
 
-**Constructed comparison:** reshape a UFO to resemble a heavily armed predator without changing its purchased weapons; redesign a Civilization vehicle and alter its performance tradeoff. The editor's similar visual language conceals different rules. Importing a ship silhouette into OpenLegend should not silently import capabilities that the source artifact never possessed.
+**Constructed comparison:** reshape a UFO to resemble a heavily armed predator without changing its purchased weapons; redesign a Civilization vehicle and alter its performance tradeoff. The editor's similar visual language conceals different rules. Importing a ship silhouette into Open Legend should not silently import capabilities that the source artifact never possessed.
 
 ## 9. Space stage — the broadest and longest systemic layer
 
@@ -414,9 +414,9 @@ However, the ecology is still highly abstract. It is not a continuous predator-p
 
 A technologically primitive species can be influenced with a **Monolith**, eventually producing a spacefaring civilization. [SP63](#sp63)
 
-That is a rare mechanic with strong OpenLegend inspiration value: one civilization can deliberately change another society's technological trajectory.
+That is a rare mechanic with strong Open Legend inspiration value: one civilization can deliberately change another society's technological trajectory.
 
-The original's implementation is simple and one-directional; OpenLegend could model the consequences:
+The original's implementation is simple and one-directional; Open Legend could model the consequences:
 - dependency;
 - cultural shock;
 - political factions around adoption;
@@ -553,7 +553,7 @@ It does contain effects that function *like* powers:
 
 Mechanically, these are contextual abilities rather than a universal “magic” resource/spellbook.
 
-For OpenLegend, this is a reminder that the common extensibility layer should not be named after one fiction. The engine needs generic concepts—capability, cost, target, condition, effect, cooldown, authority—on which magic, technology, biology and social powers can all be built.
+For Open Legend, this is a reminder that the common extensibility layer should not be named after one fiction. The engine needs generic concepts—capability, cost, target, condition, effect, cooldown, authority—on which magic, technology, biology and social powers can all be built.
 
 ## 12. World generation and the asynchronous “multiplayer” trick
 
@@ -581,13 +581,13 @@ The current Sporepedia still exposes:
 
 Spore famously embeds creation data in shareable PNG files. The official FAQ still describes dragging a PNG into the game and sharing through web/email/Sporecasts. [SP65](#sp65)
 
-This is a striking OpenLegend precedent:
+This is a striking Open Legend precedent:
 - the artifact is easy to preview;
 - the same artifact can carry machine-readable reconstruction data;
 - users can move it outside the original UI;
 - authorship/distribution does not require live multiplayer.
 
-OpenLegend invention packs can adopt the conceptual equivalent: **portable, inspectable, versioned bundles with human-legible previews.**
+Open Legend invention packs can adopt the conceptual equivalent: **portable, inspectable, versioned bundles with human-legible previews.**
 
 <a id="10-sharing-distributes-a-creation-not-its-owners-entire-life"></a>
 <a id="study-10"></a>
@@ -639,7 +639,7 @@ There is no general:
 - belief model;
 - long-term individual relationship arc.
 
-**OpenLegend lesson:** procedural appearance plus a behavior archetype can make a world feel populated, but it does not by itself create inhabitants who feel like people.
+**Open Legend lesson:** procedural appearance plus a behavior archetype can make a world feel populated, but it does not by itself create inhabitants who feel like people.
 
 ## 14. Story, narrative and player-authored meaning
 
@@ -704,13 +704,13 @@ The Sporepedia classifies adventures as:
 
 GameSpot's review praised the creator, captain progression and online sharing while noting collision/creation limitations. [SP66](#sp66)
 
-### Why it matters for OpenLegend
+### Why it matters for Open Legend
 
 Galactic Adventures is effectively a second answer to Spore's original weakness:
 - base Spore excels at **creating nouns**;
 - Galactic Adventures lets players create more **verbs, goals and authored situations** around those nouns.
 
-OpenLegend should start closer to that second layer: inventions should be able to define actual world mechanics and situations, not only skins/models.
+Open Legend should start closer to that second layer: inventions should be able to define actual world mechanics and situations, not only skins/models.
 
 <a id="9-galactic-adventures-a-created-universe-gets-playable-episodes"></a>
 <a id="study-9"></a>
@@ -759,7 +759,7 @@ That abstraction is a major part of why the creator became culturally memorable.
 
 The simpler the controls, the more the system decides on the creator's behalf. Players cannot specify every physical or biological consequence of their geometry.
 
-For OpenLegend, the appropriate equivalent is **progressive disclosure**:
+For Open Legend, the appropriate equivalent is **progressive disclosure**:
 - simple semantic authoring first;
 - deeper constraints/parameters when desired;
 - full scripting only behind explicit capability boundaries.
@@ -812,7 +812,7 @@ This is an important design success: **progression changes to match the scale of
 
 The weakness is continuity. Many earlier mechanics become less relevant rather than being transformed into higher-scale consequences.
 
-OpenLegend can use stage-relative progression while preserving causal inheritance.
+Open Legend can use stage-relative progression while preserving causal inheritance.
 
 <a id="8-loss-and-recovery-are-stage-specific"></a>
 <a id="study-8"></a>
@@ -854,7 +854,7 @@ Wright later defended the casual-accessibility choice, but the useful research f
 
 **Disliked / limitation:** later stages reduce intimacy; each borrowed genre is simplified; Spore is broad rather than deep. [SP54](#sp54)
 
-This is the single clearest articulation of the core OpenLegend risk: expressive identity can be weakened when a system zooms out.
+This is the single clearest articulation of the core Open Legend risk: expressive identity can be weakened when a system zooms out.
 
 ### 2. Ars Technica — Mark DeSanto, September 7, 2008
 
@@ -1070,7 +1070,7 @@ The broader product uses the same philosophy repeatedly:
 - let reusable editors serve many visual outcomes;
 - compress/share creations efficiently.
 
-That is the right kind of inspiration for OpenLegend: **put engineering effort into leverage points that multiply player authorship.**
+That is the right kind of inspiration for Open Legend: **put engineering effort into leverage points that multiply player authorship.**
 
 ### Post-launch
 
@@ -1093,17 +1093,17 @@ In the preserved **YourSpore interview**, Wright identifies procedural animation
 
 The later Galactic Adventures release addressed another desired activity—leaving the UFO to act on a planet—through a bounded adventure system, not by making every Space planet a completely unconstrained walkable society. [SP25](#sp25) [SP28](#sp28)
 
-**Interpretation:** a narrower implemented feature can provide real value without satisfying every inference made from earlier demos. OpenLegend's demonstrations should communicate the actual scope and limits of an invention, not rely on viewers assuming every adjacent capability exists.
+**Interpretation:** a narrower implemented feature can provide real value without satisfying every inference made from earlier demos. Open Legend's demonstrations should communicate the actual scope and limits of an invention, not rely on viewers assuming every adjacent capability exists.
 
 The available accounts establish several collaborators and important production decisions. They do not establish an audited total project budget, exact person-years or the claim that user-created content removed most development cost. Tools, runtime adaptation, discovery and integration were themselves major work.
 
-## 25. Transferable inspiration for OpenLegend
+## 25. Transferable inspiration for Open Legend
 
 ### A. The best creator magic is often hidden infrastructure
 
 Players do not want to hand-author skeleton rigs because they added an extra leg. Spore automatically solves animation.
 
-OpenLegend should similarly infer safe boilerplate:
+Open Legend should similarly infer safe boilerplate:
 - register new state types;
 - generate default event hooks;
 - make NPCs able to perceive/use a new item;
@@ -1118,7 +1118,7 @@ The player should spend effort on **meaningful rules**, not plumbing.
 
 Spore's best embodied moments occur when adding a functional part gives a real action.
 
-OpenLegend should preserve the same truth:
+Open Legend should preserve the same truth:
 - echolocation changes perception;
 - blindness changes available evidence;
 - wings change traversal;
@@ -1133,7 +1133,7 @@ Do not let invention become elaborate flavor text around unchanged mechanics.
 
 Spore loses some identity moving from Creature → Tribe → Civilization.
 
-OpenLegend should propagate lower-level differences upward:
+Open Legend should propagate lower-level differences upward:
 - a nocturnal species changes work schedules/cities;
 - telepaths change privacy/law;
 - flight changes architecture;
@@ -1144,7 +1144,7 @@ That is how “invent anything” becomes a coherent world rather than isolated 
 
 ### D. Use behavior history to derive identity
 
-Spore's late archetype grows from prior choices. OpenLegend can derive:
+Spore's late archetype grows from prior choices. Open Legend can derive:
 - reputation;
 - cultural norms;
 - faction expectations;
@@ -1158,7 +1158,7 @@ from accumulated behavior rather than assigning them only in menus.
 
 Sporepedia is a strong precedent for asynchronous world enrichment.
 
-OpenLegend invention packs can be:
+Open Legend invention packs can be:
 - browsed;
 - tagged;
 - previewed;
@@ -1174,7 +1174,7 @@ without requiring creators to share a server.
 
 The standalone Creature Creator produced millions of creations before the full game matured.
 
-OpenLegend can release narrow creation surfaces early:
+Open Legend can release narrow creation surfaces early:
 - species builder;
 - spell/invention builder;
 - settlement institution builder;
@@ -1192,7 +1192,7 @@ Spore is the sharp warning:
 
 can coexist with persistent criticism that the *actual games using those creations* are shallow.
 
-OpenLegend should repeatedly ask:
+Open Legend should repeatedly ask:
 > after the novelty of inventing this mechanic fades, did the mechanic create a new decision, relationship, risk, strategy or story?
 
 ### H. Galatic Adventures points toward the missing layer
@@ -1205,12 +1205,12 @@ It made the creations serve:
 - authored spaces;
 - progression.
 
-OpenLegend should make “invent a noun” and “invent a rule/situation” equally native.
+Open Legend should make “invent a noun” and “invent a rule/situation” equally native.
 
 <a id="15-transferable-patterns-and-limits-for-openlegend"></a>
 <a id="study-15"></a>
 
-### Detailed study 15: Transferable patterns and limits for OpenLegend
+### Detailed study 15: Transferable patterns and limits for Open Legend
 
 **Preserve identity without pretending every rule persists.** A species can remain recognizable across changed control scales; a downloaded Captain can retain form without imported achievements. State the actual continuity contract.
 

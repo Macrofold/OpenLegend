@@ -195,7 +195,7 @@ The original game's Metacritic user-review page supplied directly attributed alt
 
 **Synthesis — interpretation:** the dispute is not reducible to people either understanding or failing to understand one ending. Some wanted clearer events, some a different philosophical resolution, and some a stronger acknowledgment of personal relationships. A response aimed at only one of those requests can satisfy one player while missing another's objection entirely.
 
-## 12. Conditional research lessons for OpenLegend
+## 12. Conditional research lessons for Open Legend
 
 **Keep the identity of a contribution visible.** An aggregate may help players understand overall readiness, but relationships should not disappear into a total. A useful experiment would show both the shared resource and the particular person, obligation or risk behind it. The failure mode is pretending every contribution is narratively interchangeable because it is numerically additive.
 

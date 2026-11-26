@@ -2,7 +2,9 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-25   |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-11-21   |
+
+**Core attention integration, October 25, 2026, 22:38 EDT:** [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) and its [technical contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) own ordinary detailed attention, shared received chronology, familiarity, bounded relation cues and justified cognition. None requires this project's deliberate watch/follow action. Chosen physical observation may favor current-work focus and retain the minimum exact evidence its accepted finite method requires; it does not grant unbounded regional history or bypass common recording admission. This integration does not complete ATI runtime, combat preparation or PP07/SAI-A acceptance.
 
 ## 1. Authority, baseline and dependency reads
 
@@ -175,6 +177,8 @@ B's orient-once completion leaves achieved pose. Maintained directives stop at t
 ## 4. Monitoring and search continuation
 
 ### 4.1 Event and level subscriptions
+
+The activity owns the watch, its expiry and its outcome. Bind one installed event or level predicate under the [selected watch scope](../limits/attention-and-investigation.md#ati-l03--selected-input-and-composition-envelope).
 
 Required method, coverage and stop predicates run at the existing domain action, acquisition and temporal boundary. Derived EPR/interests/ActorWork subscriptions notify optional semantic reconsideration; they do not gate native completion or expiration. Scope subscriptions to the exact active owner; they are disposable dependency indexes, never evidence or continuation authority.
 

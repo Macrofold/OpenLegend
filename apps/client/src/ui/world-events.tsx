@@ -86,7 +86,7 @@ export const WorldEvents = memo(function WorldEvents({
     <ScopedComparisonOwner
       key={ownerScope}
       {...props}
-      canShowAll={!!view.godMode}
+      canShowAll={view.access?.canShowAllEvents ?? !!view.godMode}
       controlScope={view.access?.scope ?? ''}
       historyEpoch={view.historyEpoch ?? ''}
       day={view.clock.day}
@@ -117,6 +117,7 @@ type HistoryProps = Omit<Props, 'view'> & {
 // meters must not rebuild all loaded event rows on every world update.
 const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
   viewerId,
+  inspectEntity,
   addressPerson,
   controlScope,
   historyEpoch,
@@ -124,7 +125,6 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
   day,
   offsetHours,
   dayLabel,
-  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -239,6 +239,7 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
     <ScopedWorldEvents
       viewerId={viewerId}
       addressPerson={addressPerson}
+      inspectEntity={inspectEntity}
       key={`${historyEpoch}:${canShowAll}`}
       scope={scope}
       controlScope={controlScope}
@@ -247,7 +248,6 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
       day={day}
       offsetHours={offsetHours}
       dayLabel={dayLabel}
-      inspectEntity={inspectEntity}
       revision={revision}
       visible={visible}
       layout={layout}
@@ -278,12 +278,12 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 
 function ScopedWorldEvents({
   viewerId,
+  inspectEntity,
   addressPerson,
   canShowAll,
   day,
   offsetHours,
   dayLabel,
-  inspectEntity,
   scope,
   revision,
   visible = true,
@@ -632,6 +632,7 @@ function ScopedWorldEvents({
                 .filter(
                   (ref, index, refs) =>
                     ref.id !== viewerId &&
+                    !!ref.communicationReference &&
                     (ref.role === 'actor' || ref.role === 'target') &&
                     refs.findIndex((candidate) => candidate.id === ref.id) === index,
                 )
@@ -653,7 +654,7 @@ function ScopedWorldEvents({
                       size="sm"
                       variant="secondary"
                       isDisabled={!currentPage}
-                      onPress={() => addressPerson(ref.id, label)}
+                      onPress={() => addressPerson(ref.communicationReference!, label)}
                     >
                       Speak to {label}
                     </Button>
@@ -662,16 +663,18 @@ function ScopedWorldEvents({
             </div>
           )}
           {inspectEntity &&
-            (event.references ?? []).map((ref) => (
-              <button
-                type="button"
-                key={`${ref.role}:${ref.id}`}
-                className="ol-inline-reference"
-                onClick={() => inspectEntity(ref.id)}
-              >
-                {ref.label}
-              </button>
-            ))}
+            (event.references ?? [])
+              .filter((ref) => !!ref.contactReference)
+              .map((ref) => (
+                <button
+                  type="button"
+                  key={`${ref.role}:${ref.id}`}
+                  className="ol-inline-reference"
+                  onClick={() => inspectEntity(ref.contactReference!)}
+                >
+                  {ref.label}
+                </button>
+              ))}
           {source && (
             <div className="ol-world-event-actions">
               <Button
@@ -1369,11 +1372,11 @@ function ScopedWorldEvents({
                         )
                         .map((ref) => (
                           <span key={ref.id}>
-                            {inspectEntity ? (
+                            {inspectEntity && ref.contactReference ? (
                               <button
                                 className="ol-inline-reference"
                                 type="button"
-                                onClick={() => inspectEntity(ref.id)}
+                                onClick={() => inspectEntity(ref.contactReference!)}
                               >
                                 {ref.label}
                               </button>

@@ -6,7 +6,20 @@ import {
   type RecipeDefinition,
   type WorldState,
 } from '@open-legend/domain';
-import type { RecipeDetailsView } from '@open-legend/protocol';
+import type { RecipeDetailsView, RecipeView } from '@open-legend/protocol';
+
+export function authoredRecipeView(
+  world: WorldState,
+  recipe: RecipeDefinition,
+  quantity: (definitionId: string) => number,
+): RecipeView {
+  return {
+    id: recipe.id,
+    ...recipeDetailsView(world, recipe, quantity),
+    origin: 'authored',
+    provenance: 'Known authored method; learned through an admitted disclosure.',
+  };
+}
 
 /** Exact method facts, without inventor identity, private history or dependency closure. */
 export function recipeDetailsView(

@@ -1,0 +1,514 @@
+//! Indexed SQL values retain JavaScript text too. Payload codecs remain the
+//! record owners; these finite values only travel to the existing SQL binder.
+use crate::host::retained_size::HeapBytes;
+use crate::text::JsText;
+use indexmap::IndexMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::{Value, value::RawValue};
+use std::sync::Arc;
+
+#[derive(Clone, Debug)]
+pub enum SqlCell {
+    Null,
+    Bool(bool),
+    Number(serde_json::Number),
+    Text(JsText),
+    Array(Vec<SqlCell>),
+    Object(IndexMap<String, SqlCell>),
+    ExactObject(ExactObject),
+}
+
+impl SqlCell {
+    /// Size the actual JSONB cell's decoder without constructing its nested
+    /// SQL value graph. The caller retains the input text independently.
+    pub fn json_decode_bound(source: &str) -> Option<usize> {
+        use crate::encoding::JsonAllocationShape;
+        use crate::host::retained_size::{heap_sum, map_storage};
+        use std::mem::size_of;
+
+        let shape = JsonAllocationShape::read(source).ok()?;
+        let member = map_storage::<String, Self>(1)?.max(map_storage::<JsText, Self>(1)?);
+        // Account separately for dense arrays, object carriers and the text
+        // decoder's temporary buffers. Text size alone misses dense numerics.
+        heap_sum([
+            shape.array_items.checked_mul(4 * size_of::<Self>())?,
+            shape.members.checked_mul(member)?,
+            shape
+                .strings
+                .checked_mul(8 * size_of::<u16>() + 2 * size_of::<usize>())?,
+            source.len().checked_mul(12)?,
+        ])
+    }
+}
+/// JavaScript permits isolated code units in property names too. Keep that
+/// uncommon finite transport case intact without changing every schema-keyed
+/// object's normal String lookup or inventing a lossy replacement name.
+#[derive(Clone, Debug)]
+pub struct ExactObject {
+    members: Vec<(JsText, SqlCell)>,
+    encoding: Arc<RawValue>,
+}
+impl ExactObject {
+    /// Borrow the actual ordered code-unit keys; consumers must not replace
+    /// them with lossy Unicode keys when validating a dynamic dictionary.
+    pub(crate) fn members(&self) -> &[(JsText, SqlCell)] {
+        &self.members
+    }
+    /// Consume the actual member storage at the output boundary. No code-unit
+    /// key is converted into a lossy UTF-8 property name.
+    pub fn into_members(self) -> impl Iterator<Item = (JsText, SqlCell)> {
+        self.members.into_iter()
+    }
+    fn decode(source: &str) -> Result<Self, serde_json::Error> {
+        Self::from_members(Self::decode_members(source, &[])?, source.len())
+    }
+    fn decode_members(
+        source: &str,
+        unique: &[&str],
+    ) -> Result<Vec<(JsText, SqlCell)>, serde_json::Error> {
+        let invalid = || {
+            serde_json::Error::io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid exact JavaScript JSON object.",
+            ))
+        };
+        let bytes = source.as_bytes();
+        if bytes.first() != Some(&b'{') {
+            return Err(invalid());
+        }
+        let mut at = 1usize;
+        let whitespace = |at: &mut usize| {
+            while bytes
+                .get(*at)
+                .is_some_and(|b| matches!(b, b' ' | b'\n' | b'\r' | b'\t'))
+            {
+                *at += 1;
+            }
+        };
+        let mut members: IndexMap<JsText, SqlCell> = IndexMap::new();
+        loop {
+            whitespace(&mut at);
+            if bytes.get(at) == Some(&b'}') {
+                at += 1;
+                break;
+            }
+            if bytes.get(at) != Some(&b'"') {
+                return Err(invalid());
+            }
+            let start = at;
+            at += 1;
+            let mut escaped = false;
+            loop {
+                let byte = *bytes.get(at).ok_or_else(invalid)?;
+                at += 1;
+                if escaped {
+                    escaped = false;
+                } else if byte == b'\\' {
+                    escaped = true;
+                } else if byte == b'"' {
+                    break;
+                }
+            }
+            let key: JsText = serde_json::from_str(&source[start..at])?;
+            whitespace(&mut at);
+            if bytes.get(at) != Some(&b':') {
+                return Err(invalid());
+            }
+            at += 1;
+            // RawValue is the existing syntax owner and yields one borrowed
+            // value without decoding an object's unknown property names. The
+            // small scan above only finds the exact quoted key bytes for JsText.
+            let mut stream =
+                serde_json::Deserializer::from_str(&source[at..]).into_iter::<&RawValue>();
+            let value = stream.next().ok_or_else(invalid)??;
+            at += stream.byte_offset();
+            let value = serde_json::from_str(value.get())?;
+            if let Some(prior) = members.get_mut(&key) {
+                if key.as_unicode().is_some_and(|key| unique.contains(&key)) {
+                    return Err(invalid());
+                }
+                *prior = value;
+            } else {
+                members.insert(key, value);
+            }
+            whitespace(&mut at);
+            match bytes.get(at) {
+                Some(b',') => {
+                    at += 1;
+                }
+                Some(b'}') => {
+                    at += 1;
+                    break;
+                }
+                _ => return Err(invalid()),
+            }
+        }
+        whitespace(&mut at);
+        if at != bytes.len() {
+            return Err(invalid());
+        }
+        Ok(members.into_iter().collect())
+    }
+    fn from_members(
+        mut members: Vec<(JsText, SqlCell)>,
+        capacity_hint: usize,
+    ) -> Result<Self, serde_json::Error> {
+        // Normalize once with the same scalar codec as ordinary cells. A map
+        // key serializer cannot represent an isolated unit, so emit its already
+        // validated quoted scalar directly into the immutable derived encoding.
+        members.sort_by(|(a, _), (b, _)| {
+            match (
+                a.as_unicode().and_then(crate::encoding::array_index),
+                b.as_unicode().and_then(crate::encoding::array_index),
+            ) {
+                (Some(a), Some(b)) => a.cmp(&b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            }
+        });
+        let mut json = String::with_capacity(capacity_hint);
+        json.push('{');
+        for (index, (key, value)) in members.iter().enumerate() {
+            if index != 0 {
+                json.push(',');
+            }
+            json.push_str(&crate::encoding::json_record(key)?);
+            json.push(':');
+            json.push_str(&crate::encoding::json_record(value)?);
+        }
+        json.push('}');
+        Ok(Self {
+            members,
+            encoding: Arc::from(RawValue::from_string(json)?),
+        })
+    }
+}
+impl PartialEq for SqlCell {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Null, Self::Null) => true,
+            (Self::Bool(a), Self::Bool(b)) => a == b,
+            (Self::Number(a), Self::Number(b)) => a.as_f64() == b.as_f64(),
+            (Self::Text(a), Self::Text(b)) => a == b,
+            (Self::Array(a), Self::Array(b)) => a == b,
+            (Self::Object(a), Self::Object(b)) => {
+                a.len() == b.len() && a.iter().all(|(key, value)| b.get(key) == Some(value))
+            }
+            (Self::ExactObject(a), Self::ExactObject(b)) => {
+                a.members.len() == b.members.len()
+                    && a.members.iter().all(|(key, value)| {
+                        b.members
+                            .iter()
+                            .find(|(other, _)| key == other)
+                            .is_some_and(|(_, other)| value == other)
+                    })
+            }
+            (Self::Object(a), Self::ExactObject(b)) | (Self::ExactObject(b), Self::Object(a)) => {
+                a.len() == b.members.len()
+                    && a.iter().all(|(key, value)| {
+                        b.members
+                            .iter()
+                            .find(|(other, _)| other.as_unicode() == Some(key.as_str()))
+                            .is_some_and(|(_, other)| value == other)
+                    })
+            }
+            _ => false,
+        }
+    }
+}
+impl SqlCell {
+    /// Reuse the exact-key scanner for a typed record that admits extra
+    /// properties but must retain duplicate rejection for its known fields.
+    /// Ordinary objects need no cached whole-object encoding at this boundary.
+    pub(crate) fn decode_object_members(
+        source: &str,
+        unique: &[&str],
+    ) -> Result<Vec<(JsText, Self)>, serde_json::Error> {
+        ExactObject::decode_members(source, unique)
+    }
+
+    /// Consume trusted unique members whose body, map and encoding workspace
+    /// the semantic caller has admitted. Preserve exact JavaScript keys without
+    /// building an otherwise unused encoding for an ordinary Unicode object.
+    pub(crate) fn from_text_members(
+        members: Vec<(JsText, Self)>,
+    ) -> Result<Self, serde_json::Error> {
+        if members.iter().all(|(key, _)| key.as_unicode().is_some()) {
+            let mut object = IndexMap::with_capacity(members.len());
+            for (key, value) in members {
+                let JsText::Unicode(key) = key else {
+                    unreachable!("Unicode membership was checked before consuming members");
+                };
+                object.insert(key, value);
+            }
+            Ok(Self::Object(object))
+        } else {
+            ExactObject::from_members(members, 0).map(Self::ExactObject)
+        }
+    }
+
+    /// An admitted copy must not grow an IndexMap's dense backing to its hidden
+    /// hash capacity, as the ordinary IndexMap Clone implementation can do.
+    /// Keep each copied backing within the original HeapBytes allowance.
+    pub(crate) fn clone_within_heap_bound(&self) -> Self {
+        match self {
+            Self::Array(values) => {
+                let mut copied = Vec::with_capacity(values.len());
+                copied.extend(values.iter().map(Self::clone_within_heap_bound));
+                Self::Array(copied)
+            }
+            Self::Object(values) => {
+                let mut copied = IndexMap::with_capacity(values.capacity());
+                for (key, value) in values {
+                    copied.insert(key.clone(), value.clone_within_heap_bound());
+                }
+                Self::Object(copied)
+            }
+            Self::ExactObject(value) => {
+                let mut members = Vec::with_capacity(value.members.len());
+                members.extend(
+                    value
+                        .members
+                        .iter()
+                        .map(|(key, value)| (key.clone(), value.clone_within_heap_bound())),
+                );
+                Self::ExactObject(ExactObject {
+                    members,
+                    encoding: Arc::clone(&value.encoding),
+                })
+            }
+            _ => self.clone(),
+        }
+    }
+    pub fn is_null(&self) -> bool {
+        matches!(self, Self::Null)
+    }
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Self::Text(text) => text.as_unicode(),
+            _ => None,
+        }
+    }
+    pub fn as_text(&self) -> Option<&JsText> {
+        match self {
+            Self::Text(text) => Some(text),
+            _ => None,
+        }
+    }
+    pub fn as_f64(&self) -> Option<f64> {
+        match self {
+            Self::Number(number) => number.as_f64(),
+            _ => None,
+        }
+    }
+    pub fn as_u64(&self) -> Option<u64> {
+        self.as_f64()
+            .filter(|value| {
+                value.is_finite()
+                    && value.fract() == 0.0
+                    && *value >= 0.0
+                    && *value < 18446744073709551616.0
+            })
+            .map(|value| value as u64)
+    }
+    pub fn as_i64(&self) -> Option<i64> {
+        self.as_f64()
+            .filter(|value| {
+                value.is_finite()
+                    && value.fract() == 0.0
+                    && *value >= -9223372036854775808.0
+                    && *value < 9223372036854775808.0
+            })
+            .map(|value| value as i64)
+    }
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Self::Bool(value) => Some(*value),
+            _ => None,
+        }
+    }
+    pub fn as_array(&self) -> Option<&[Self]> {
+        match self {
+            Self::Array(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn as_object(&self) -> Option<&IndexMap<String, Self>> {
+        match self {
+            Self::Object(value) => Some(value),
+            _ => None,
+        }
+    }
+    pub fn is_object(&self) -> bool {
+        matches!(self, Self::Object(_) | Self::ExactObject(_))
+    }
+    /// Preserve every actual property value, including objects with exact
+    /// code-unit keys. A read walk never normalizes or drops those members.
+    pub(crate) fn object_values(&self) -> impl Iterator<Item = &Self> {
+        let ordinary = self.as_object().into_iter().flat_map(IndexMap::values);
+        let exact = match self {
+            Self::ExactObject(value) => Some(&value.members),
+            _ => None,
+        };
+        ordinary.chain(
+            exact
+                .into_iter()
+                .flat_map(|members| members.iter().map(|(_, value)| value)),
+        )
+    }
+    pub fn object_len(&self) -> Option<usize> {
+        match self {
+            Self::Object(value) => Some(value.len()),
+            Self::ExactObject(value) => Some(value.members.len()),
+            _ => None,
+        }
+    }
+    pub fn get(&self, key: &str) -> Option<&Self> {
+        match self {
+            Self::Object(value) => value.get(key),
+            Self::ExactObject(value) => value
+                .members
+                .iter()
+                .find(|(name, _)| name.as_unicode() == Some(key))
+                .map(|(_, value)| value),
+            _ => None,
+        }
+    }
+    pub(crate) fn get_text(&self, key: &JsText) -> Option<&Self> {
+        match self {
+            Self::Object(value) => key.as_unicode().and_then(|key| value.get(key)),
+            Self::ExactObject(value) => value
+                .members
+                .iter()
+                .find(|(name, _)| name == key)
+                .map(|(_, value)| value),
+            _ => None,
+        }
+    }
+}
+impl From<Value> for SqlCell {
+    fn from(value: Value) -> Self {
+        match value {
+            Value::Null => Self::Null,
+            Value::Bool(value) => Self::Bool(value),
+            Value::Number(value) => Self::Number(value),
+            Value::String(value) => Self::Text(value.into()),
+            Value::Array(values) => Self::Array(values.into_iter().map(Into::into).collect()),
+            Value::Object(values) => Self::Object(
+                values
+                    .into_iter()
+                    .map(|(key, value)| (key, value.into()))
+                    .collect(),
+            ),
+        }
+    }
+}
+impl From<JsText> for SqlCell {
+    fn from(value: JsText) -> Self {
+        Self::Text(value)
+    }
+}
+impl From<String> for SqlCell {
+    fn from(value: String) -> Self {
+        Self::Text(value.into())
+    }
+}
+impl From<&str> for SqlCell {
+    fn from(value: &str) -> Self {
+        Self::Text(value.into())
+    }
+}
+impl From<bool> for SqlCell {
+    fn from(value: bool) -> Self {
+        Self::Bool(value)
+    }
+}
+impl From<u64> for SqlCell {
+    fn from(value: u64) -> Self {
+        Self::Number(value.into())
+    }
+}
+impl From<f64> for SqlCell {
+    fn from(value: f64) -> Self {
+        serde_json::Number::from_f64(value).map_or(Self::Null, Self::Number)
+    }
+}
+impl PartialEq<Value> for SqlCell {
+    fn eq(&self, value: &Value) -> bool {
+        match (self, value) {
+            (Self::Null, Value::Null) => true,
+            (Self::Bool(a), Value::Bool(b)) => a == b,
+            (Self::Number(a), Value::Number(b)) => a.as_f64() == b.as_f64(),
+            (Self::Text(a), Value::String(b)) => a.units().eq(b.encode_utf16()),
+            (Self::Array(a), Value::Array(b)) => a == b,
+            (Self::Object(a), Value::Object(b)) => {
+                a.len() == b.len()
+                    && a.iter()
+                        .all(|(key, value)| b.get(key).is_some_and(|other| value == other))
+            }
+            (Self::ExactObject(a), Value::Object(b)) => {
+                a.members.len() == b.len()
+                    && a.members.iter().all(|(key, value)| {
+                        key.as_unicode()
+                            .and_then(|key| b.get(key))
+                            .is_some_and(|other| value == other)
+                    })
+            }
+            _ => false,
+        }
+    }
+}
+impl Serialize for SqlCell {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Null => serializer.serialize_unit(),
+            Self::Bool(value) => serializer.serialize_bool(*value),
+            Self::Number(value) => serializer.serialize_f64(value.as_f64().ok_or_else(|| {
+                serde::ser::Error::custom("SQL number exceeds JavaScript range.")
+            })?),
+            Self::Text(value) => value.serialize(serializer),
+            Self::Array(value) => value.serialize(serializer),
+            Self::Object(value) => crate::encoding::serialize_js_map(value, serializer),
+            Self::ExactObject(value) => value.encoding.serialize(serializer),
+        }
+    }
+}
+impl<'de> Deserialize<'de> for SqlCell {
+    fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<RawValue>::deserialize(de)?;
+        let source = raw.get();
+        let parse = || -> Result<Self, serde_json::Error> {
+            Ok(match source.as_bytes().first() {
+                Some(b'n') => {
+                    let _: () = serde_json::from_str(source)?;
+                    Self::Null
+                }
+                Some(b't' | b'f') => Self::Bool(serde_json::from_str(source)?),
+                Some(b'"') => Self::Text(serde_json::from_str(source)?),
+                Some(b'[') => Self::Array(serde_json::from_str(source)?),
+                Some(b'{') => match serde_json::from_str(source) {
+                    Ok(value) => Self::Object(value),
+                    Err(_) => Self::ExactObject(ExactObject::decode(source)?),
+                },
+                _ => Self::Number(serde_json::from_str(source)?),
+            })
+        };
+        parse().map_err(serde::de::Error::custom)
+    }
+}
+impl HeapBytes for SqlCell {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Text(value) => value.heap_bytes(),
+            Self::Array(values) => values.heap_bytes(),
+            Self::Object(values) => values.heap_bytes(),
+            Self::ExactObject(value) => value
+                .members
+                .heap_bytes()?
+                .checked_add(value.encoding.get().len())?
+                .checked_add(2 * std::mem::size_of::<usize>()),
+            _ => Some(0),
+        }
+    }
+}

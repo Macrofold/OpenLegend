@@ -1,6 +1,6 @@
 # G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 S.T.A.L.K.E.R. 2 is especially valuable as a study of a hostile open world where **travel, equipment condition, environmental threat, faction politics and autonomous world activity all try to make the space between missions matter**. It is also a cautionary case in version-sensitive research: the launch implementation of its A-Life simulation was materially impaired, while 2025–2026 updates restored and expanded systems that current marketing can now describe more credibly. The useful reference is the history of that system, not a timeless claim that A-Life either “worked” or “did not work.”
 

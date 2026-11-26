@@ -1,4 +1,4 @@
-# OpenLegend documentation
+# Open Legend documentation
 
 Choose the owner for your question; these indexes are navigation, not required reading lists. Known owners can be opened directly. Current behavior, proposed scope and recorded evidence have different authority under the [documentation system](documentation-system.md).
 
@@ -14,3 +14,4 @@ Choose the owner for your question; these indexes are navigation, not required r
 | Runtime/model comparisons          | [Benchmarks](benchmarks/README.md)                                                                                                                    |
 | Constraints, UI and assets         | [Limits](limits/README.md), [UI/UX](ui-ux/README.md), [production/art workflows](production-workflows/README.md), [asset workflow](asset-workflow.md) |
 | Finished work and rationale        | [Completed projects](projects/completed/README.md), [decision history](documentation-changelog.md)                                                    |
+| Which term to use                  | [Project glossary](glossary/README.md)                                                             |

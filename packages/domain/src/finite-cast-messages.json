@@ -1,0 +1,6 @@
+{
+  "missingSource": "The selected source no longer supports this cast.",
+  "blockedLine": "The selected stance or line to the declared endpoint is blocked.",
+  "outOfReach": "The chosen stance is no longer within reach.",
+  "changedBinding": "The selected source, tool or catch definition changed."
+}

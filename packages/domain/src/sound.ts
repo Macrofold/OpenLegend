@@ -1,10 +1,11 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import { finitePoint } from '@open-legend/spatial';
 import { entityGet } from './entity-collection.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { hasMemory } from './living.js';
 import { worldPosition } from './spatial-state.js';
 import { soundPerception, type AcousticEmission } from './perception.js';
-import { unnamedSubject } from './worlds/base/knowledge.js';
+import { outwardBodyName } from './worlds/base/knowledge.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { ensurePerceptionEpisode } from './encounter-cache.js';
 import type { Awareness } from './experience.js';
@@ -15,6 +16,7 @@ export interface AcousticDirection {
   elevation: 'above' | 'level' | 'below';
 }
 export interface PerceivedSound {
+  kind?: 'voice-like';
   acquisition: 'self' | 'external';
   physicalLife: number;
   acquiredAt: number;
@@ -71,22 +73,26 @@ export function validAcousticDirection(value: unknown): value is AcousticDirecti
 }
 export function validatePerceivedSound(value: unknown): asserts value is PerceivedSound {
   if (
-    !hasRecordFields(value, [
-      'acquisition',
-      'physicalLife',
-      'acquiredAt',
-      'listenerPosition',
-      'receivedLevelDbSpl',
-      'clarityMarginDb',
-      'detectThresholdDb',
-      'direction',
-      'visibleSource',
-    ]) ||
-    Object.keys(value).length !== 9
+    !hasRecordFields(
+      value,
+      [
+        'acquisition',
+        'physicalLife',
+        'acquiredAt',
+        'listenerPosition',
+        'receivedLevelDbSpl',
+        'clarityMarginDb',
+        'detectThresholdDb',
+        'direction',
+        'visibleSource',
+      ],
+      ['kind'],
+    )
   )
     throw new Error('Invalid acquired sound fields.');
   const sound = value as unknown as PerceivedSound;
   if (
+    (sound.kind !== undefined && sound.kind !== 'voice-like') ||
     !['self', 'external'].includes(sound.acquisition) ||
     !Number.isSafeInteger(sound.physicalLife) ||
     sound.physicalLife < 0 ||
@@ -194,11 +200,11 @@ export function perceiveSound(
           entityId: source.id,
           physicalLife: source.actor?.physicalLife ?? 0,
           episodeId: ensurePerceptionEpisode(world, observer.id, source.id),
-          description: unnamedSubject(world, source.id),
+          description: outwardBodyName(world, source),
         }
       : null,
   };
-  const retentionClass = hasMemory(observer) ? 'memory' : 'sensory';
+  const retentionClass = 'sensory' as const;
   return {
     retentionClass,
     ...(retentionClass === 'sensory'
@@ -211,7 +217,7 @@ export function perceiveSound(
     eventType: event.type,
     sound,
     ...soundEvidenceProjection(observer.id, sound),
-    importance: 3,
-    urgency: event.urgency ?? 4,
+    importance: selectedOccurrenceRules(world).soundImportance,
+    urgency: event.urgency ?? selectedOccurrenceRules(world).receivedUrgency,
   };
 }

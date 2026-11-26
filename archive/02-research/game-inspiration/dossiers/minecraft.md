@@ -2,7 +2,7 @@
 
 **G20 · Complete research pass, September 26, 2026.** This dossier covers the shared vanilla design of modern Minecraft while distinguishing **Java Edition** and **Bedrock Edition** where their technical ecosystems/rules materially differ. Mods, plugins, data packs, Marketplace content and community servers are treated as extension layers rather than silently attributed to vanilla. The current reference point is **Java 26.3 / Wilderness Bound (September 15, 2026)**, but long-lived core mechanics matter more than a complete block catalogue. [Preserved overview](../games/minecraft.md) · [Granular mechanics study](../mechanics/minecraft-signals-authorship-and-meaningful-objects.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Minecraft is arguably the clearest precedent for OpenLegend's mechanics library because a relatively small vocabulary of **placeable stateful objects and reusable rules** creates an enormous number of activities without requiring a bespoke “secret door system,” “automatic farm system,” “castle system,” or “warehouse system.” Survival gives those creations purpose; Creative removes acquisition pressure so authorship itself can become the goal.
+Minecraft is arguably the clearest precedent for Open Legend's mechanics library because a relatively small vocabulary of **placeable stateful objects and reusable rules** creates an enormous number of activities without requiring a bespoke “secret door system,” “automatic farm system,” “castle system,” or “warehouse system.” Survival gives those creations purpose; Creative removes acquisition pressure so authorship itself can become the goal.
 
 ## 1. Identity and current scope
 
@@ -66,7 +66,7 @@ Spectator supports observation without ordinary physical participation.
 
 Hardcore applies a severe/permadeath-oriented survival contract rather than ordinary recovery.
 
-### Why this matters for OpenLegend
+### Why this matters for Open Legend
 
 One permission model should not try to satisfy:
 - survival;
@@ -77,7 +77,7 @@ One permission model should not try to satisfy:
 
 simultaneously.
 
-OpenLegend should similarly separate:
+Open Legend should similarly separate:
 - embodied player capability;
 - creator/world-agent authority;
 - moderator/admin authority;
@@ -138,7 +138,7 @@ The system is intentionally compact:
 
 There is no simulation of detailed organs/injuries.
 
-For OpenLegend, the lesson is to add physiological dimensions only when they create new decisions rather than because more bars sound “realistic.”
+For Open Legend, the lesson is to add physiological dimensions only when they create new decisions rather than because more bars sound “realistic.”
 
 ## 5. Mining and tool tiers: world transformation is progression
 
@@ -167,7 +167,7 @@ The important pattern is:
 
 > Progress is not only a larger stat. It changes which parts of the world can be productively manipulated.
 
-OpenLegend materials/skills should likewise unlock **new affordances**.
+Open Legend materials/skills should likewise unlock **new affordances**.
 
 ## 6. Crafting, furnaces and transformation chains
 
@@ -213,7 +213,7 @@ The player authors:
 - routing;
 - destination.
 
-This is a useful OpenLegend boundary between:
+This is a useful Open Legend boundary between:
 - **delegating execution**;
 - **delegating intention**.
 
@@ -253,7 +253,7 @@ Dropped items physically exist temporarily in the world and can:
 
 That physicality allows an industrial system to operate on the **same item ontology** the player carries.
 
-OpenLegend should avoid unnecessary duplication like:
+Open Legend should avoid unnecessary duplication like:
 - “inventory iron” versus “machine iron” versus “ground iron”
 
 unless semantics actually require it.
@@ -326,7 +326,7 @@ A crude first shelter can matter more than an auto-generated mansion because the
 - survived there;
 - later expanded it.
 
-OpenLegend's World Agent should help remove tedious expression while preserving:
+Open Legend's World Agent should help remove tedious expression while preserving:
 - goal;
 - siting;
 - tradeoff;
@@ -372,7 +372,7 @@ A comparator can read states such as:
 
 and transform/compare signal strength. [MC04](#mc04)
 
-This is exactly the type of primitive OpenLegend should favor:
+This is exactly the type of primitive Open Legend should favor:
 - **general operation**;
 - many semantic producers;
 - many semantic consumers.
@@ -387,7 +387,7 @@ A sense therefore becomes:
 - routable;
 - inspectable.
 
-For OpenLegend, perception can likewise be:
+For Open Legend, perception can likewise be:
 - biological;
 - magical;
 - technological;
@@ -443,7 +443,7 @@ Minecraft is **not** a universal physics simulator—most blocks float forever.
 The useful design principle is:
 > a block's rules are small, stable and combinable.
 
-OpenLegend does not need physically simulate every molecule; it needs meaningful shared laws where cross-system reuse is valuable.
+Open Legend does not need physically simulate every molecule; it needs meaningful shared laws where cross-system reuse is valuable.
 
 ## 12. Lighting, time and danger
 
@@ -498,7 +498,7 @@ This creates **renewable resource infrastructure**.
 
 Hoppers, water, pistons, observers, redstone and later Crafters can turn manual farming into production networks.
 
-OpenLegend should similarly let:
+Open Legend should similarly let:
 - repeated manual action;
 - tool;
 - machine;
@@ -530,7 +530,7 @@ Examples:
 
 The system excels at **recognizable rule-bound behavior**, not individual memory/personality.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A good AI character still needs native competence:
 - pathfind;
@@ -575,7 +575,7 @@ Villagers do not possess:
 
 Players may care about them, but the simulation usually treats them more as valuable functional actors.
 
-OpenLegend can combine Minecraft's clear profession/world interactions with genuine personal continuity.
+Open Legend can combine Minecraft's clear profession/world interactions with genuine personal continuity.
 
 ## 16. Exploration, structures and archaeology
 
@@ -615,7 +615,7 @@ The important evidence boundary:
 - the game provides suggestive archaeological objects;
 - it does not simulate a full factual ancient civilization provenance for every shard.
 
-OpenLegend can go further because its history system may actually know who made/broke/buried an object.
+Open Legend can go further because its history system may actually know who made/broke/buried an object.
 
 ## 17. Looting and personal/shared reward design
 
@@ -635,7 +635,7 @@ That asks a key persistent-world design question:
 
 > Is this resource shared, personally claimable, instanced, renewable or permanently consumed?
 
-OpenLegend should model that intentionally per resource rather than default every object to one scarcity rule.
+Open Legend should model that intentionally per resource rather than default every object to one scarcity rule.
 
 ## 18. Combat
 
@@ -663,7 +663,7 @@ Its strength is **integration with construction and environment**:
 - bring tamed creatures;
 - prepare potions/gear.
 
-OpenLegend combat should similarly consume the same:
+Open Legend combat should similarly consume the same:
 - terrain;
 - items;
 - relationships;
@@ -693,7 +693,7 @@ Potions combine:
 
 This makes “magic” more like **crafting chemistry** than character spellcasting.
 
-That is another good argument for OpenLegend's engine to avoid treating magic as the universal abstraction. A world's supernatural mechanics may be:
+That is another good argument for Open Legend's engine to avoid treating magic as the universal abstraction. A world's supernatural mechanics may be:
 - learned spells;
 - crafted reagents;
 - bodily traits;
@@ -761,7 +761,7 @@ The rule can be changed through game/server settings.
 
 Hardcore makes death far more final.
 
-OpenLegend can expose death as a world-specific contract:
+Open Legend can expose death as a world-specific contract:
 - respawn;
 - corpse recovery;
 - ghost;
@@ -800,7 +800,7 @@ Server rules and plugins can radically change:
 
 Those are **server extension** examples, not vanilla mechanics.
 
-OpenLegend can make world-specific law/permissions first-class rather than relying entirely on external plugins.
+Open Legend can make world-specific law/permissions first-class rather than relying entirely on external plugins.
 
 ## 23. Commands, data packs, mods and extension boundaries
 
@@ -838,7 +838,7 @@ Server plugins can add economies, claims, minigames, permissions and more.
 
 Bedrock uses add-on/behavior/resource pack and Marketplace-oriented creator routes rather than Java's mod ecosystem.
 
-**OpenLegend comparison:** Minecraft has multiple extension surfaces with different authority/trust levels. OpenLegend should also distinguish:
+**Open Legend comparison:** Minecraft has multiple extension surfaces with different authority/trust levels. Open Legend should also distinguish:
 - declarative safe invention;
 - trusted first-party/world package;
 - server/admin script;
@@ -868,9 +868,9 @@ The player's strongest stories are often:
 
 The world becomes a **memory palace of actions**.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
-OpenLegend can retain this player-authored history while adding inhabitants capable of remembering it.
+Open Legend can retain this player-authored history while adding inhabitants capable of remembering it.
 
 Instead of:
 > “I remember the house creeper blew up,”
@@ -899,7 +899,7 @@ Audio communicates danger:
 
 Game Informer explicitly praised the primitive-but-charming visual style and ambient/tension audio. [MC09](#mc09)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A systemic world benefits from **readability over detail density**.
 
@@ -913,7 +913,7 @@ If players and agents can alter everything, visual state changes need to remain 
 
 **Disliked / friction:** external/wiki learning burden and roughness were still present around the release era.
 
-The review's examples of collaborative construction remain especially relevant to OpenLegend because value comes from **visible shared artifacts**, not only synchronized combat. [MC06](#mc06)
+The review's examples of collaborative construction remain especially relevant to Open Legend because value comes from **visible shared artifacts**, not only synchronized combat. [MC06](#mc06)
 
 ### 2. GameSpot — Nathan Meunier, November 29, 2011
 
@@ -994,7 +994,7 @@ Across the reviewed accounts and modern community feedback, common friction cate
 
 The granular study preserves a concrete 2023 example where players objected to a timing change because it would break existing redstone machines. [MC14](#mc14)
 
-That matters for OpenLegend:
+That matters for Open Legend:
 > players build knowledge *about laws*; changing a law can invalidate their authored creations.
 
 ## 28. Production and distribution history
@@ -1013,7 +1013,7 @@ The public-development model allowed:
 - players to invent uses developers did not explicitly prescribe;
 - community education to compensate for weak in-game explanation.
 
-OpenLegend can use community learning, but should not assume a new product inherits a decade of external tutorials.
+Open Legend can use community learning, but should not assume a new product inherits a decade of external tutorials.
 
 ### Current update model
 
@@ -1033,7 +1033,7 @@ Minecraft objects can accumulate meaning for at least five different reasons:
 
 This is why an ugly first shelter may be more memorable than a beautiful generated house.
 
-### OpenLegend invention standard
+### Open Legend invention standard
 
 A generated invention should ideally gain at least one of:
 - chosen purpose;
@@ -1045,7 +1045,7 @@ A generated invention should ideally gain at least one of:
 
 “AI created an impressive object instantly” can reduce precisely the investment that makes an object matter.
 
-## 30. Transferable inspiration for OpenLegend
+## 30. Transferable inspiration for Open Legend
 
 ### A. Build the engine around shared verbs, not feature-specific endpoints
 
@@ -1063,7 +1063,7 @@ Minecraft's foundational verbs:
 
 The same verbs compose unrelated activities.
 
-OpenLegend primitives can be analogous:
+Open Legend primitives can be analogous:
 - perceive;
 - contain;
 - transfer;
@@ -1098,7 +1098,7 @@ That is the “block vocabulary” principle applied to a living world.
 
 Creative mode proves that authorship is cleaner when resource/health constraints can be removed explicitly.
 
-OpenLegend's World Agent should have **creator powers** that are never confused with an embodied player's lawful capabilities.
+Open Legend's World Agent should have **creator powers** that are never confused with an embodied player's lawful capabilities.
 
 ### D. Use environmental needs as onboarding
 
@@ -1109,7 +1109,7 @@ First night teaches:
 - building;
 - crafting.
 
-OpenLegend's first session should create a small real problem whose solution demonstrates the invention/world grammar.
+Open Legend's first session should create a small real problem whose solution demonstrates the invention/world grammar.
 
 ### E. Let automation repeat a chosen rule
 
@@ -1124,7 +1124,7 @@ rather than automatically deciding:
 
 Redstone communities depend on exact timing/behavior.
 
-OpenLegend invention packs need:
+Open Legend invention packs need:
 - explicit dependency versions;
 - compatibility checks;
 - migrations;
@@ -1136,7 +1136,7 @@ so a mechanic update does not silently destroy player work.
 
 Building, damage and repair create memory.
 
-OpenLegend can make this even stronger because actors can remember:
+Open Legend can make this even stronger because actors can remember:
 - who built;
 - who broke;
 - who repaired;
@@ -1152,13 +1152,13 @@ Minecraft succeeds partly because terrain changes:
 - structures;
 - danger.
 
-OpenLegend should ensure world generation changes **plans**, not only visuals/prose.
+Open Legend should ensure world generation changes **plans**, not only visuals/prose.
 
 ### I. Avoid assuming a blank sandbox onboards itself
 
 Minecraft's external cultural knowledge is now enormous.
 
-A new OpenLegend player needs:
+A new Open Legend player needs:
 - authored examples;
 - immediate opportunities;
 - legible affordances;

@@ -266,7 +266,7 @@ Five implications follow from the documented mechanisms and cases above. These a
 4. **Make failure informative across layers.** The player needs enough evidence to distinguish bad timing, insufficient resources, an incompatible effect and a poorly chosen tool. Hidden breadth without feedback becomes dependence on external explanation.
 5. **Treat readable action and numerical challenge as separate tuning controls.** Version 1.14 shows why visual clarity, recovery, stamina pressure and damage deserve distinct review. The reaction to one cannot be inferred from an aggregate “difficulty” label.
 
-The evidence also places limits on imitation. This chapter supports a design hypothesis that expressive preparation can coexist with demanding execution. It does not show that every game should organize its whole progression around compulsory boss mastery. OpenLegend's broader survival-adventure and life activities require their own treatment of failure cost, voluntary challenge and time spent away from combat. The dossier's synthesis should evaluate these mechanisms against that intended experience.
+The evidence also places limits on imitation. This chapter supports a design hypothesis that expressive preparation can coexist with demanding execution. It does not show that every game should organize its whole progression around compulsory boss mastery. Open Legend's broader survival-adventure and life activities require their own treatment of failure cost, voluntary challenge and time spent away from combat. The dossier's synthesis should evaluate these mechanisms against that intended experience.
 
 ## Sources and access
 

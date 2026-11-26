@@ -25,7 +25,7 @@
 
 ## Completion and evidence boundaries
 
-**All ten dossiers are complete.** The [cross-case synthesis](essays/mobile-success-failure-and-umamusume.md) answers the Umamusume question, compares dated commercial evidence and develops positive possibilities for OpenLegend.
+**All ten dossiers are complete.** The [cross-case synthesis](essays/mobile-success-failure-and-umamusume.md) answers the Umamusume question, compares dated commercial evidence and develops positive possibilities for Open Legend.
 
 Completion requires substantive R01–R14 coverage, the R15 applicability decision, amended economic/enjoyment/lore/creation analysis, five substantive independent written reviews where available (or a documented search/access limit), direct player testimony where accessible, source/internal-link review and a committed dossier. Publisher shutdown reasons stay separate from causal hypotheses.
 

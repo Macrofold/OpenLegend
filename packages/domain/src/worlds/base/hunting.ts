@@ -1,8 +1,11 @@
 import { BASE_LOCAL_AVOIDANCE } from './skilled-execution.js';
 import { entityGet } from '../../entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
-import { seesEntity } from '../../perception.js';
-import { projectAttributes } from '../../world-modules.js';
+import {
+  prepareCurrentBodyReadScope,
+  currentObservedFacetValues,
+} from '../../perception-evidence.js';
+import { projectAttributes, type AttributeView } from '../../world-modules.js';
 import type { WorldState } from '../../types.js';
 import type { RangedPolicy } from '../../ranged-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
@@ -52,6 +55,11 @@ export function huntingDescription(
 ): string | undefined {
   if (!species || !BASE_HUNTING.knownPrey.includes(species) || !BASE_HUNTING.methods[method])
     return;
+  return formatHuntingDescription(target, tool);
+}
+/** Wording for an already selected hunting interpretation. Eligibility stays
+ * with huntingDescription and the native selected-world discovery owner. */
+export function formatHuntingDescription(target: Named | string, tool?: Named | string): string {
   return `${BASE_HUNTING.label} ${namePhrase(target)} with ${tool ? namePhrase(tool) : BASE_HUNTING.unarmedTool} ${BASE_HUNTING.purpose}. ${BASE_HUNTING.scope}`;
 }
 
@@ -63,14 +71,26 @@ export function observedBodyHealth(
   observerId: string,
   targetId: string,
 ): string {
-  const target = entityGet(world.entities, targetId);
-  const observer = entityGet(world.entities, observerId);
-  if (!observer || !target?.actor || !seesEntity(world, observer, target)) return '';
-  const health = projectAttributes(
-    world,
-    target,
-    observer.id === target.id ? 'owner' : 'public',
-  ).find((attribute) => attribute.bodyHealth);
+  return formatObservedBodyHealth(observedBodyHealthValue(world, observerId, targetId));
+}
+export function observedBodyHealthValue(
+  world: WorldState,
+  observerId: string,
+  targetId: string,
+): AttributeView | undefined {
+  const own = observerId === targetId,
+    target = own ? entityGet(world.entities, targetId) : undefined;
+  if (own && !target?.actor) return undefined;
+  const reads = own ? undefined : prepareCurrentBodyReadScope(world, observerId);
+  if (!own && !reads?.nativeBody(targetId)) return undefined;
+  const attributes = own
+    ? projectAttributes(world, target!, 'owner')
+    : currentObservedFacetValues(world, observerId, targetId, ['public-attributes'], reads).flatMap(
+        (facet) => (facet.value.kind === 'public-attributes' ? facet.value.attributes : []),
+      );
+  return attributes.find((attribute) => attribute.bodyHealth);
+}
+export function formatObservedBodyHealth(health: AttributeView | undefined): string {
   if (!health || typeof health.value !== 'number') return '';
   const range =
     health.max === undefined

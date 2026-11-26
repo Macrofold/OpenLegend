@@ -5,24 +5,34 @@ import { namePhrase } from '@open-legend/language';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
 import { canStand, finitePoint } from '@open-legend/spatial';
-import { draftWorld } from './draft.js';
+import { draftWorld, readOnlyDraftView } from './draft.js';
 import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
-import { releaseInvocationResources } from './resource-claims.js';
-import { cancelPlan, discardSuspended } from './agency.js';
+import { cancelPlan, discardSuspended, finishPlanAction } from './agency.js';
 import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 import type { Entity } from './types.js';
 import { reconcileOutings } from './outings.js';
+import { endCurrentEvidence } from './perception-evidence.js';
+import { initializePerception } from './kernel.js';
+import { selectedOrdinaryActionRules } from './world-composition.js';
 export { activelyParticipates, type ParticipationState } from './participation-state.js';
 
 function interruptDepartureWork(world: WorldState, entity: Entity): void {
   const actor = entity.actor!;
-  if (actor.action) releaseInvocationResources(world, actor.action.id);
   cancelPlan(world, actor, entity.id);
   discardSuspended(world, actor, entity.id);
+  if (actor.action) {
+    const cancelled = selectedOrdinaryActionRules(world).cancelledByChoice;
+    finishPlanAction(
+      world,
+      entity.id,
+      actor.action.id,
+      outcome(false, cancelled.code, cancelled.message),
+    );
+  }
   actor.action = null;
   delete actor.encounters;
   actor.planGeneration++;
@@ -37,6 +47,7 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
     }
 }
 function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): void {
+  const words = selectedOrdinaryActionRules(world).participation;
   interruptDepartureWork(world, entity);
   const state = entity.actor!.participation!;
   const support = supportedPosition(entity);
@@ -48,14 +59,52 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
   delete entity.spatial.localPose;
   forgetProjectileBodyEncounters(world, entity.id, entity.actor!.physicalLife ?? 0);
   state.phase = 'inactive';
+  // Physical absence ends current access now, including when departure and
+  // return occur while paused. Old observations remain historical evidence.
+  delete entity.sensoryProgress;
+  const observers = new Set([
+    entity.id,
+    ...Object.keys(world.perceptionEvidence ?? {}),
+    ...Object.keys(world.perceptionEpisodes ?? {}),
+  ]);
+  for (const observerId of observers) {
+    endCurrentEvidence(
+      world,
+      observerId,
+      undefined,
+      0,
+      observerId === entity.id ? undefined : entity.id,
+    );
+    const episodes = world.perceptionEpisodes?.[observerId];
+    if (episodes) {
+      if (observerId === entity.id) {
+        for (const id of Object.keys(episodes)) delete episodes[id];
+      } else delete episodes[entity.id];
+    }
+    const observer = entityGet(readOnlyDraftView(world.entities), observerId);
+    if (observerId === entity.id) {
+      if (Object.keys(entity.actor!.contacts ?? {}).length) entity.actor!.contacts = {};
+    } else if (observer?.actor?.contacts?.[entity.id])
+      delete entityGet(world.entities, observerId)!.actor!.contacts![entity.id];
+  }
+  for (const table of [world.visiblePeople, world.visibleObjects])
+    if (table)
+      for (const [observerId, ids] of Object.entries(readOnlyDraftView(table))) {
+        if (observerId === entity.id) {
+          if (ids.length) table[observerId] = [];
+        } else if (ids.includes(entity.id))
+          table[observerId] = ids.filter((id) => id !== entity.id);
+      }
+  if (Object.keys(world.visiblePlaces?.[entity.id] ?? {}).length)
+    world.visiblePlaces![entity.id] = {};
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
   if (world.exitExposures) delete world.exitExposures[entity.id];
   emit(
     world,
     events,
-    'departed',
-    subjectNarration(entity, `left the active world.`),
+    words.departedEvent,
+    subjectNarration(entity, words.departedClause),
     entity,
     undefined,
     { significant: true },
@@ -92,42 +141,35 @@ export function changeParticipation(
 ): Transition {
   const source = entityGet(input.entities, actorId),
     previous = source?.actor?.participation;
-  const reject = (message: string): Transition => ({
+  const words = selectedOrdinaryActionRules(input).participation;
+  const result = (ok: boolean, message: { code: string; message: string }): Transition => ({
     world: input,
     events: [],
-    outcome: outcome(false, 'participation-unavailable', message),
+    outcome: outcome(ok, message.code, message.message),
   });
   if (
     !source?.actor ||
     (previous?.revision ?? 0) !== expectedRevision ||
     !Number.isSafeInteger(expectedRevision + 1)
   )
-    return reject('Participation changed. Refresh before continuing.');
+    return result(false, words.changedRefresh);
   if (operation.type !== 'return' && !isSafeRecordId(operation.attemptId))
-    return reject('Invalid exit attempt.');
+    return result(false, words.invalidAttempt);
   if (
     operation.type === 'depart' &&
     (previous?.phase !== 'exiting' || previous.exitAttemptId !== operation.attemptId)
   )
-    return reject('This exit attempt is no longer current.');
+    return result(false, words.staleAttempt);
   if (
     operation.type === 'begin-exit' &&
     previous?.phase !== undefined &&
     previous.phase !== 'active'
   )
     return previous.exitAttemptId === operation.attemptId
-      ? {
-          world: input,
-          events: [],
-          outcome: outcome(true, 'unchanged', 'Exit is already pending.'),
-        }
-      : reject('Participation changed.');
+      ? result(true, words.alreadyPending)
+      : result(false, words.changed);
   if (operation.type === 'return' && (!previous || previous.phase === 'active'))
-    return {
-      world: input,
-      events: [],
-      outcome: outcome(true, 'unchanged', 'Already participating.'),
-    };
+    return result(true, words.alreadyParticipating);
   const candidates = [
     previous?.returnAnchor ?? supportedPosition(source),
     input.participationPolicy?.safeReturnAnchor,
@@ -142,9 +184,7 @@ export function changeParticipation(
     !source.actor.pendingDeath &&
     !anchor
   )
-    return reject(
-      'The saved location and configured return location are unavailable. A safe return location must be restored.',
-    );
+    return result(false, words.unsafeReturn);
   const world = draftWorld(input);
   const entity = entityGet(world.entities, actorId)!,
     actor = entity.actor!,
@@ -171,32 +211,25 @@ export function changeParticipation(
     state.phase = 'active';
     delete state.exitAttemptId;
     if (world.exitExposures) delete world.exitExposures[actorId];
-    if (previous?.phase === 'inactive')
+    if (previous?.phase === 'inactive') {
+      delete entity.sensoryProgress;
       emit(
         world,
         events,
-        'returned',
-        subjectNarration(entity, `returned to the active world.`),
+        words.returnedEvent,
+        subjectNarration(entity, words.returnedClause),
         entity,
         undefined,
         { significant: true },
       );
+      // Re-entry is an actual bodily transition, not a view request or restore
+      // replay. Only this actor receives a fresh phase and restarts its clocks.
+      initializePerception(world, events, [actorId]);
+    }
   }
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
-  return finish(
-    world,
-    events,
-    outcome(
-      true,
-      state.phase,
-      state.phase === 'inactive'
-        ? 'You have left the active world. Your belongings and history are retained.'
-        : state.phase === 'exiting'
-          ? 'Departure is pending.'
-          : 'You have returned.',
-    ),
-  );
+  return finish(world, events, outcome(true, state.phase, words[state.phase].message));
 }
 
 export function validateParticipation(world: WorldState): void {

@@ -1,12 +1,22 @@
-import { HISTORY_TABLES, HistoryRepository } from './history.js';
-import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
+import { ReceivedValueOwnership } from './received-value-ownership.js';
+import { auditHistoryEventCount } from './history-writer.js';
+import { HISTORY_TABLES } from './history-storage-schema.js';
+import { MEMORY_HISTORY_TABLES } from './memory-storage-schema.js';
 import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
 import { assembleWorldRecords, WorldRecords } from './world-records.js';
-import type { SqlDatabase } from './store.js';
-import type { SavePayload } from './game-saves.js';
+import type { SqlDatabase } from './sql-database.js';
+import type { SavedWorld } from './saved-world.js';
 import { SaveFiles, type SaveFileMetadata } from './save-files.js';
 import { CHECKPOINT_ENCODING } from './checkpoint-format.js';
 import { tableRows } from './record-pages.js';
+type Rows = Record<string, unknown>[];
+export interface SavePayload {
+  format: string;
+  state: SavedWorld;
+  history: Record<(typeof HISTORY_TABLES)[number], Rows>;
+  memory?: Record<(typeof MEMORY_HISTORY_TABLES)[number], Rows>;
+}
+
 export const CHECKPOINT_TABLES = [
   ...RECORD_NODES.keys(),
   ...HISTORY_TABLES,
@@ -25,7 +35,6 @@ export async function writeCheckpoint(
     const head = await new WorldRecords(db).head();
     if (
       !head ||
-      head.appliedRevision !== head.revision ||
       head.worldId !== identity.worldId ||
       (options.expectedRevision !== undefined && head.revision !== options.expectedRevision)
     )
@@ -36,7 +45,8 @@ export async function writeCheckpoint(
     if (!settings) throw new Error('Checkpoint world settings missing.');
     const simTime = Number(JSON.parse(String(settings['payload'])).simTime);
     options.captured?.();
-    await new HistoryRepository(db).auditEventCount(head.worldId);
+    await auditHistoryEventCount(db, head.worldId);
+    await new ReceivedValueOwnership(db).validate(head.worldId, 'retained');
     await files.writeStream(
       { ...identity, createdAt: new Date().toISOString(), simTime, revision: head.revision },
       checkpointLines(db, head.worldId, identity.format, head.revision),
@@ -62,7 +72,7 @@ async function* checkpointLines(
     if (performance.now() - started > 120_000)
       throw new Error('Checkpoint capture exceeded two minutes; previous saves retained.');
     yield JSON.stringify({ table }) + '\n';
-    for await (const row of tableRows(db, table, worldId)) {
+    for await (const row of tableRows(db, table, worldId, 'retained')) {
       if (performance.now() - started > 120_000)
         throw new Error('Checkpoint capture exceeded two minutes; previous saves retained.');
       yield JSON.stringify({ table, row }) + '\n';
@@ -70,11 +80,14 @@ async function* checkpointLines(
   }
 }
 
-export async function readCheckpoint(
+/** Actual current-format checkpoint rows before any runtime representation is
+ * assembled. Both native restore and Source decoding consume this one manifest
+ * and record integrity boundary. */
+export async function readCheckpointRecords(
   lines: AsyncIterable<string>,
   worldId: string,
   format: string,
-): Promise<SavePayload> {
+) {
   const groups = new Map<string, Map<string, JsonRecord[]>>();
   const history = Object.fromEntries(
     HISTORY_TABLES.map((table) => [table, [] as JsonRecord[]]),
@@ -83,8 +96,10 @@ export async function readCheckpoint(
     MEMORY_HISTORY_TABLES.map((table) => [table, [] as JsonRecord[]]),
   ) as NonNullable<SavePayload['memory']>;
   let header = false,
-    index = -1;
+    index = -1,
+    revision = 0;
   let tables: string[] = [];
+  let canonicalColumns: ReadonlySet<string> | undefined;
   const identities = new Set<string>();
   for await (const line of lines) {
     const value = JSON.parse(line) as Record<string, unknown>;
@@ -94,6 +109,8 @@ export async function readCheckpoint(
         value['encoding'] !== CHECKPOINT_ENCODING ||
         value['worldId'] !== worldId ||
         value['format'] !== format ||
+        !Number.isSafeInteger(value['revision']) ||
+        Number(value['revision']) < 0 ||
         !Array.isArray(declared) ||
         declared.some((table) => typeof table !== 'string' || !CHECKPOINT_TABLES.includes(table)) ||
         new Set(declared).size !== declared.length ||
@@ -103,6 +120,7 @@ export async function readCheckpoint(
         throw new Error('Unsupported or incomplete checkpoint manifest.');
       header = true;
       tables = value['tables'] as string[];
+      revision = Number(value['revision']);
       continue;
     }
     const table = String(value['table']);
@@ -110,18 +128,38 @@ export async function readCheckpoint(
     if (!row) {
       if (tables[++index] !== table) throw new Error('Checkpoint table coverage mismatch.');
       identities.clear();
+      const node = RECORD_NODES.get(table);
+      canonicalColumns = node
+        ? new Set([
+            'world_id',
+            'id',
+            'parent_id',
+            'slot',
+            'position',
+            'revision',
+            'payload',
+            ...Object.keys(node.columns ?? {}),
+          ])
+        : undefined;
       continue;
     }
     if (tables[index] !== table || row['world_id'] !== worldId)
       throw new Error('Checkpoint row scope mismatch.');
     if (RECORD_NODES.has(table)) {
+      const fields = Object.keys(row);
       if (
+        !canonicalColumns ||
+        fields.length !== canonicalColumns.size ||
+        fields.some((field) => !canonicalColumns!.has(field)) ||
         typeof row['id'] !== 'string' ||
         typeof row['parent_id'] !== 'string' ||
         typeof row['slot'] !== 'string' ||
         typeof row['payload'] !== 'string' ||
         !Number.isSafeInteger(Number(row['position'])) ||
         Number(row['position']) < 0 ||
+        !Number.isSafeInteger(Number(row['revision'])) ||
+        Number(row['revision']) < 0 ||
+        Number(row['revision']) > revision ||
         identities.has(row['id'])
       )
         throw new Error('Invalid or repeated canonical checkpoint record.');
@@ -150,6 +188,17 @@ export async function readCheckpoint(
   const total = history.history_totals;
   if (total.length !== 1 || Number(total[0]!['event_count']) !== history.history_events.length)
     throw new Error('Checkpoint retained event coverage disagrees with its count.');
+  return { worldId, format, revision, groups, history, memory };
+}
+
+export type CanonicalCheckpoint = Awaited<ReturnType<typeof readCheckpointRecords>>;
+
+export async function readCheckpoint(
+  lines: AsyncIterable<string>,
+  worldId: string,
+  format: string,
+): Promise<SavePayload> {
+  const { groups, history, memory } = await readCheckpointRecords(lines, worldId, format);
   const events = new Map(history.history_events.map((row) => [row['id'], row['payload']]));
   for (const siblings of groups.get('world_hot_events')?.values() ?? [])
     for (const row of siblings) {

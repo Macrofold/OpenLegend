@@ -1,6 +1,8 @@
 # Cognition Lab retained storage verification
 
-Measured on October 24, 2026 against base `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086` plus the Cognition Lab implementation. The reusable runner is [cognition-lab-storage.ts](../../scripts/performance/cognition-lab-storage.ts). It creates and drops a disposable PostgreSQL database; it never reads or replaces the development game database.
+The measurements below use the earlier TypeScript host. The [signed Rust HTTP profile](../../scripts/performance/cognition-lab.mjs) runs on a disposable standard worker. Compare the same released world, inventory and history on both sides of an isolated change.
+
+Measured on October 24, 2026 against base `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086` plus the Cognition Lab implementation. The reusable runner is [cognition-lab-storage.ts](https://github.com/Macrofold/OpenLegend/blob/c962980424b2eacf9d58078139aab0e7ea02ed20/scripts/performance/cognition-lab-storage.ts). It creates and drops a disposable PostgreSQL database; it never reads or replaces the development game database.
 
 ## Question and workload
 

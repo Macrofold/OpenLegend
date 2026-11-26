@@ -1,12 +1,12 @@
-# A practical field guide to games relevant to OpenLegend
+# A practical field guide to games relevant to Open Legend
 
 **Research enrichment: September 23, 2026.** 22 game guides, 66 concrete examples, and 28 direct YouTube recommendations.
 
 ## How to use this field guide
 
-Each game has the same structure: **what you do; what the reviewed accounts value; what they resist; one or two YouTube starting points; three concrete situations; and an OpenLegend takeaway.** Factorio/Satisfactory and Noita/Qud have separate entries because their interactions and presentation differ substantially.
+Each game has the same structure: **what you do; what the reviewed accounts value; what they resist; one or two YouTube starting points; three concrete situations; and an Open Legend takeaway.** Factorio/Satisfactory and Noita/Qud have separate entries because their interactions and presentation differ substantially.
 
-“Canonical example” here means a recognizable, documented game interaction—not a mandatory event in every playthrough. **Documented mechanics** and **attributed player/reviewer incidents** are labeled separately. An anecdote is not independently replayed telemetry, and no story in this guide is presented as a play session I conducted. The OpenLegend conclusions are analysis, not claims that those games use OpenLegend's architecture.
+“Canonical example” here means a recognizable, documented game interaction—not a mandatory event in every playthrough. **Documented mechanics** and **attributed player/reviewer incidents** are labeled separately. An anecdote is not independently replayed telemetry, and no story in this guide is presented as a play session I conducted. The Open Legend conclusions are analysis, not claims that those games use Open Legend's architecture.
 
 **Reviews:** the positive and negative themes come from selected accessible criticism and player accounts, not a representative survey. “What people like/dislike” does not mean a numerical ranking of the entire audience. Strongly favorable reviews can contain useful objections; critical reviews can contain considerable affection. Historical version/platform/mod limitations are retained. Where a direct current player sample was unavailable, the guide identifies professional or historical testimony rather than fabricating player consensus.
 
@@ -16,7 +16,7 @@ Each game has the same structure: **what you do; what the reviewed accounts valu
 
 ## Suggested viewing/reading route
 
-This is a learning order for OpenLegend, not a ranking of game quality. Read the examples before opening a long video.
+This is a learning order for Open Legend, not a ranking of game quality. Read the examples before opening a long video.
 
 | Order | Game | Main question |
 |---|---|---|

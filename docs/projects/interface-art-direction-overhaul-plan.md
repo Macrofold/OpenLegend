@@ -74,7 +74,7 @@ Completion requires every current coverage-map surface, the archived 1920×1080 
 - Item, resource, creature and action art binds to world-authored semantic symbol keys through the trusted catalogue, never by guessing from names. Content without authored art keeps an immediate, readable fallback. Saved worlds carry their own item definitions, so newly authored keys reach new worlds; any change for existing worlds needs an explicit owner decision.
 - Item illustrations use the world's exact definition-to-art mapping and one shared renderer across admitted inventory, recipe, trade, equipment and quick-slot rows. The optional mapping is presentation data; it grants neither a capability nor permission to read an item. Existing semantic icons and readable sigils remain the fallback.
 - Theme-specific materials and fonts live in the existing theme layer (`apps/client/src/design-system/tokens/`, `components.css`, `layout.css`); one component owner per pattern.
-- Artwork files follow the repository's [external-storage contract](../asset-workflow.md#where-files-belong): payloads are published to the OpenLegend asset store and Git holds catalogues, exact locks, prompts and provenance (decided by Mike, 2026-10-19).
+- Artwork files follow the repository's [external-storage contract](../asset-workflow.md#where-files-belong): payloads are published to the Open Legend asset store and Git holds catalogues, exact locks, prompts and provenance (decided by Mike, 2026-10-19).
 
 ### Performance
 

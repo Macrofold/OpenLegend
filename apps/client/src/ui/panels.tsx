@@ -12,12 +12,15 @@ import { EventTime, GameDeadline } from './event-time';
 import './character-sheet.css';
 import { PersonKnowledge } from './diagnostics';
 import { Promises } from './promises';
+import { captionScope } from '../speech-captions';
 import { PerceivedEventText } from './perceived-event-text';
 import type { CommandDispatcher } from '../command-request';
 import { OutingStatus } from './outing-status';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
+import { sightDetailTime } from '@open-legend/protocol';
 import { UsageRemaining } from './usage-remaining';
+import type { PlayerAiUsage } from '../player-ai-usage';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
 import { memo, useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -93,7 +96,8 @@ export function Crafting({
   operations,
   resolutionRevision,
   connected,
-  invent,
+  inventionLabel,
+  openInventions,
   browseRecipe,
   visible = true,
 }: {
@@ -102,7 +106,8 @@ export function Crafting({
   resolutionRevision: number;
   connected: boolean;
   visible?: boolean;
-  invent(): void;
+  inventionLabel: string;
+  openInventions(): void;
   browseRecipe(recipeId: string, opener: Element): void;
 }) {
   const quantityId = useId();
@@ -356,8 +361,8 @@ export function Crafting({
             </select>
           </label>
         </details>
-        <Button variant="quiet" icon="action.invent" onPress={invent}>
-          Invention
+        <Button variant="quiet" icon="action.invent" onPress={openInventions}>
+          {inventionLabel}
         </Button>
       </aside>
       <section className="ol-crafting-list" aria-label="Known recipes">
@@ -400,7 +405,7 @@ export function Crafting({
           <EmptyState title={view.recipes.length ? 'No recipes match.' : 'No methods learned yet.'}>
             {view.recipes.length
               ? 'Change the filters or clear your search.'
-              : 'Learn from a recipe record or open Invention.'}
+              : 'Learn from a recipe record to see its requirements here.'}
           </EmptyState>
         )}
       </section>
@@ -614,17 +619,62 @@ export function EntityDetail({
   actionBrowser: ReactNode;
 }) {
   const [personTab, setPersonTab] = useState('overview');
-  const events = view.events.filter(
-    (event) =>
-      event.references?.some((reference) => reference.id === entity.id) ||
-      event.actorId === entity.id ||
-      event.targetId === entity.id,
+  const events = view.events.filter((event) =>
+    event.references?.some(
+      (reference) =>
+        reference.contactReference === entity.id ||
+        (entity.communicationReference !== undefined &&
+          reference.communicationReference === entity.communicationReference),
+    ),
   );
   const observations = events
     .filter((event) => !event.speech && event.presentation?.displayToPlayer !== false)
     .slice(-4);
+  const bodyMeasuredAt =
+    entity.observation.kind === 'current'
+      ? sightDetailTime(view, entity.observation.measurementAt)
+      : null;
+  const carriedMeasuredAt = entity.observedCarried
+    ? sightDetailTime(view, entity.observedCarried.measurementAt)
+    : null;
+  const observedDetails = (
+    <>
+      {entity.observation.kind === 'current' && (
+        <p className="ol-caption">
+          In sight.
+          {bodyMeasuredAt !== null && (
+            <>
+              {' '}
+              Details observed{' '}
+              {formatDisplayNumber(Math.max(0, view.evaluationCut - bodyMeasuredAt))} game seconds
+              ago.
+            </>
+          )}
+        </p>
+      )}
+      {entity.observedCarried && (
+        <p className="ol-caption">
+          Seen carrying:{' '}
+          {entity.observedCarried.items.length
+            ? entity.observedCarried.items.map((item) => item.itemKindAsObserved).join(', ')
+            : 'nothing discernible'}
+          .
+          {carriedMeasuredAt !== null && (
+            <>
+              {' '}
+              Observed {formatDisplayNumber(
+                Math.max(0, view.evaluationCut - carriedMeasuredAt),
+              )}{' '}
+              game seconds ago.
+            </>
+          )}
+        </p>
+      )}
+    </>
+  );
   const details = (
-    <div className="ol-person-overview" data-person={entity.kind === 'actor' || undefined}>
+    <div className="ol-person-overview">
+      {observedDetails}
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
       {entity.kind !== 'actor' && entity.contents && !entity.storage && (
         <ul>
@@ -675,6 +725,7 @@ export function EntityDetail({
           <div className="ol-person-column">
             <Section title="Doing now">
               <p>{entity.status}</p>
+              {observedDetails}
             </Section>
             {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
             {!!entity.statusEffects?.length && (
@@ -717,7 +768,8 @@ export function EntityDetail({
           <div className="ol-person-column">
             <Section title="Commitments">
               <Promises
-                personId={entity.id}
+                key={captionScope(view)}
+                personId={entity.communicationReference ?? entity.id}
                 visible={visible && personTab === 'overview'}
                 revision={view.historyRevision}
               />
@@ -1087,27 +1139,33 @@ type AiSettingsView = Pick<GameView, 'ai' | 'godMode'> & {
   entities: Array<Pick<EntityView, 'id' | 'name'>>;
 };
 export const AiSettings = memo(
-  function AiSettings({ view }: { view: AiSettingsView }) {
+  function AiSettings({ view, usage }: { view: AiSettingsView; usage: PlayerAiUsage }) {
     const ai = view.ai,
-      b = ai.budget;
-    const account = b.accounts?.[view.player.id];
+      b = usage.value?.budget;
+    const account = b?.accounts[view.player.id];
+    const retry = usage.unavailable && (
+      <Button size="sm" onPress={usage.retry}>
+        Reload allowance
+      </Button>
+    );
     if (!view.godMode)
       return (
         <>
           <Section title="Your allowance">
             <UsageRemaining
-              limit={b.limitUsd}
+              limit={ai.allowanceLimitUsd}
               spent={account?.spentUsd ?? 0}
               reserved={account?.reservedUsd ?? 0}
-              available={ai.llmConfigured && b.limitUsd > 0}
+              available={ai.llmConfigured && ai.allowanceLimitUsd > 0 && !!b}
             />
+            {retry}
             <p>
               Describing an action or proposing a new invention uses this character's allowance.
               Existing native actions remain available according to the world's rules.
             </p>
             <p className="ol-caption">
               Allowance includes work already in progress.{' '}
-              {b.period ? `Current period: ${b.period}.` : ''}
+              {b?.period ? `Current period: ${b.period}.` : ''}
             </p>
           </Section>
           <Section title="Intelligence availability">
@@ -1142,18 +1200,23 @@ export const AiSettings = memo(
         </Section>
         <Section title="Monthly agent allowances">
           <h3 className="ol-heading">
-            ${b.limitUsd.toFixed(2)} per agent · {b.period ?? 'current month'}
+            ${ai.allowanceLimitUsd.toFixed(2)} per agent · {b?.period ?? 'current month'}
           </h3>
-          <p>
-            Total spent ${b.spentUsd.toFixed(4)}
-            {b.estimated ? ' (estimated)' : ''}
-            <br />
-            Reserved ${b.reservedUsd.toFixed(4)}
-          </p>
-          {Object.entries(b.accounts ?? {}).map(([id, account]) => (
+          {b && (
+            <p>
+              Total spent ${b.spentUsd.toFixed(4)}
+              {b.estimated ? ' (estimated)' : ''}
+              <br />
+              Reserved ${b.reservedUsd.toFixed(4)}
+            </p>
+          )}
+          {retry}
+          {Object.entries(b?.accounts ?? {}).map(([id, account]) => (
             <p key={id}>
               {view.entities.find((e) => e.id === id)?.name ?? id}: $
-              {Math.max(0, b.limitUsd - account.spentUsd - account.reservedUsd).toFixed(2)}{' '}
+              {Math.max(0, ai.allowanceLimitUsd - account.spentUsd - account.reservedUsd).toFixed(
+                2,
+              )}{' '}
               remaining
             </p>
           ))}
@@ -1164,13 +1227,16 @@ export const AiSettings = memo(
         </Section>
         <details>
           <summary>Execution details</summary>
-          <p>
-            {ai.usage.llmCalls} language model calls · {ai.usage.jevCalls} Jev calls
-            <br />
-            {ai.usage.inputTokens} input / {ai.usage.outputTokens} output tokens
-            <br />
-            Last latency {(ai.usage.lastLatencyMs / 1000).toFixed(1)}s
-          </p>
+          {usage.value && (
+            <p>
+              {usage.value.usage.llmCalls} language model calls · {usage.value.usage.jevCalls} Jev
+              calls
+              <br />
+              {usage.value.usage.inputTokens} input / {usage.value.usage.outputTokens} output tokens
+              <br />
+              Last latency {(usage.value.usage.lastLatencyMs / 1000).toFixed(1)}s
+            </p>
+          )}
           {ai.jobs
             .filter((job) => job.status === 'failed')
             .map((job) => (
@@ -1182,7 +1248,9 @@ export const AiSettings = memo(
       </>
     );
   },
-  ({ view: previous }, { view: next }) =>
+  ({ view: previous, usage: previousUsage }, { view: next, usage: nextUsage }) =>
+    previousUsage.value === nextUsage.value &&
+    previousUsage.unavailable === nextUsage.unavailable &&
     previous.ai === next.ai &&
     previous.godMode === next.godMode &&
     previous.player.id === next.player.id &&

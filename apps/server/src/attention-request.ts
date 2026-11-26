@@ -1,10 +1,9 @@
 import {
   JUDGMENT_MAX_CHARACTERS,
   JUDGMENT_STATE_QUESTION_CHARACTERS,
-  validateJudgmentSize,
   type TypedQuestionMap,
 } from '@open-legend/ai';
-import { attentionQuestionPolicy, batchedAttentionQuestions } from './jev-questions.js';
+import { ACTION_EVIDENCE_POLICY, batchedAttentionQuestions } from './jev-questions.js';
 import type { WorldState } from '@open-legend/domain';
 
 /** Fit actual descriptions and question text, rather than silently imposing a question count.
@@ -15,31 +14,14 @@ export function attentionRequest(
   entries: [string, unknown][],
   purpose: 'context' | 'actions' | 'choose-action' = 'context',
   guidance?: WorldState['cognitionPolicy']['actionGuidance'],
-  fixedQuestions: TypedQuestionMap = {},
 ) {
-  const policy = attentionQuestionPolicy(purpose, guidance);
-  const sharedState = policy ? { ...state, actionQuestionPolicy: policy } : state;
   const candidates: Record<string, unknown> = {};
-  const questions: TypedQuestionMap = { ...fixedQuestions };
-  const fixedCount = Object.keys(fixedQuestions).length;
-  let stateCharacters = JSON.stringify({ ...sharedState, candidates }).length;
-  let requestCharacters = JSON.stringify({
-    state: { ...sharedState, candidates },
-    questions,
-  }).length;
-  let longestQuestion = Math.max(
-    0,
-    ...Object.values(fixedQuestions).map((question) => JSON.stringify(question).length),
-  );
-  if (
-    stateCharacters + longestQuestion > JUDGMENT_STATE_QUESTION_CHARACTERS ||
-    requestCharacters > JUDGMENT_MAX_CHARACTERS
-  )
-    validateJudgmentSize({ ...sharedState, candidates }, questions);
+  const questions: TypedQuestionMap = {};
+  let stateCharacters = JSON.stringify({ ...state, candidates }).length;
+  let requestCharacters = JSON.stringify({ state: { ...state, candidates }, questions }).length;
+  let longestQuestion = 0;
   let count = 0;
   for (const [id, text] of entries) {
-    if (Object.hasOwn(fixedQuestions, id))
-      throw new Error('A candidate question conflicts with an independently required question.');
     const label = purpose === 'context' ? id : `Option ${count + 1}`;
     const original = batchedAttentionQuestions([id], purpose, guidance)[id]!;
     const question = {
@@ -48,8 +30,7 @@ export function attentionRequest(
     };
     const questionCharacters = JSON.stringify(question).length;
     const candidateAddition = JSON.stringify({ [label]: text }).length - 2 + (count ? 1 : 0);
-    const questionAddition =
-      JSON.stringify({ [id]: question }).length - 2 + (fixedCount + count ? 1 : 0);
+    const questionAddition = JSON.stringify({ [id]: question }).length - 2 + (count ? 1 : 0);
     const longest = Math.max(longestQuestion, questionCharacters);
     if (
       stateCharacters + candidateAddition + longest > JUDGMENT_STATE_QUESTION_CHARACTERS ||
@@ -63,5 +44,28 @@ export function attentionRequest(
     requestCharacters += candidateAddition + questionAddition;
     longestQuestion = longest;
   }
-  return { state: { ...sharedState, candidates }, questions };
+  return { state: { ...state, candidates }, questions };
+}
+
+/** Both authority implementations ask the same relevance question over the
+ * selected actor's permitted context. Bindings remain with their own owner. */
+export function decisionActionAttentionRequest(
+  context: Record<string, unknown>,
+  actions: readonly { id: string; description: string }[],
+  purpose: 'actions' | 'choose-action',
+  guidance: WorldState['cognitionPolicy']['actionGuidance'],
+) {
+  return attentionRequest(
+    {
+      decisionContext: Object.fromEntries(
+        Object.entries(context).filter(
+          ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
+        ),
+      ),
+      attentionPolicy: `${guidance.reasons} ${ACTION_EVIDENCE_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
+    },
+    actions.map(({ id, description }) => [id, description]),
+    purpose,
+    guidance,
+  );
 }

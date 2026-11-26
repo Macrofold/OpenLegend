@@ -1,6 +1,6 @@
 # Jev provider research reference
 
-This file retains provider-specific facts needed by current routing evaluation: public API behavior, limitations, confidence semantics, cost assumptions, terms, privacy and operational questions. OpenLegend's current routing and cognition architecture belongs to [Architecture](../../docs/architecture.md) and [Memory architecture](../../docs/memory-architecture.md); active empirical questions belong to the [Research backlog](../05-project/research-backlog.md).
+This file retains provider-specific facts needed by current routing evaluation: public API behavior, limitations, confidence semantics, cost assumptions, terms, privacy and operational questions. Open Legend's current routing and cognition architecture belongs to [Architecture](../../docs/architecture.md) and [Memory architecture](../../docs/memory-architecture.md); active empirical questions belong to the [Research backlog](../05-project/research-backlog.md).
 
 ## What Jev actually offers
 

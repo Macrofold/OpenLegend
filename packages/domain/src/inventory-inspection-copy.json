@@ -1,0 +1,12 @@
+{
+  "carried": "in my carried possessions",
+  "inCarried": "in my carried {container}",
+  "equipped": ", equipped",
+  "inspect": "I inspected ",
+  "properties": "Properties: ",
+  "edible": "Edible now; restores {quantity} nourishment.",
+  "melee": "Can be equipped for close-range attacks.",
+  "written": " Written text: “{words}”",
+  "changed": "This item or its access changed. Refresh the contents before inspecting it.",
+  "inspected": "Accessible contents inspected."
+}

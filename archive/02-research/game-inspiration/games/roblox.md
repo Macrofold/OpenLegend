@@ -16,7 +16,7 @@
 
 **Why some people dislike it.** The inspected discussion contains disagreement over waiting, repetitive collection, monetization and whether scheduled events remain a positive community ritual. Neither a negative thread title nor a lower snapshot establishes that a game has died. These are signals about the quality of participation, not a demographic survey. [REV-GAG](../references/sources-03.md#source-rev-gag)
 
-**Design inference.** The crucial package is not horticultural realism. It is a readily understood project, recognizable possessions, accessible re-entry and a shared reason to appear at a particular time. But the same structure can feel like an obligation if missing an event means losing status or opportunity. OpenLegend should borrow comprehensible accumulation and shared occasions, not uncritically optimize fear of missing out.
+**Design inference.** The crucial package is not horticultural realism. It is a readily understood project, recognizable possessions, accessible re-entry and a shared reason to appear at a particular time. But the same structure can feel like an obligation if missing an event means losing status or opportunity. Open Legend should borrow comprehensible accumulation and shared occasions, not uncritically optimize fear of missing out.
 
 #### Steal a Brainrot — accumulation made vulnerable and theatrical
 
@@ -26,7 +26,7 @@
 
 **Design inference.** Theft creates an instantly comprehensible scene: somebody had a prized thing, somebody else took it, and a reaction followed. That is a powerful sharing unit. It is also potentially a poor fit for a game promising long-lived attachment unless consent, recovery and expectations are carefully designed. A funny short-round loss can be devastating when applied to a week of personal world-building.
 
-#### What OpenLegend should actually borrow
+#### What Open Legend should actually borrow
 
 **Make adoption layered.** A person should be able to play a world, try a working mechanic, specialize a construct, or author a new one. Do not require every consumer to become a technical creator. Give reusable mechanics an example scene and a plain-English account of their tradeoffs.
 

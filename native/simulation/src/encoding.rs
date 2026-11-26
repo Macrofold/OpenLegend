@@ -1,0 +1,486 @@
+//! Current JavaScript-compatible JSON and source labels.
+//!
+//! Number spelling, UTF-8 bytes and property order participate in existing
+//! quotas/source revisions. This is not `events.ts::canonicalJson`: that owner
+//! sorts keys with localeCompare and needs its own exact collation contract.
+
+use indexmap::IndexMap;
+use serde::ser::{SerializeMap, SerializeSeq};
+use serde::{Serialize, Serializer};
+use serde_json::Value;
+use std::io;
+
+mod fields;
+mod json_shape;
+pub(crate) use fields::RawFields;
+pub(crate) use json_shape::{JsonAllocationShape, JsonShapeError};
+
+/// Source `<`/`>` string ordering compares UTF-16 code units, including keys
+/// containing supplementary characters. It is distinct from localeCompare.
+pub fn js_string_cmp(left: &str, right: &str) -> std::cmp::Ordering {
+    left.encode_utf16().cmp(right.encode_utf16())
+}
+/// Object.keys orders array-index properties numerically and keeps every other
+/// key in insertion order. Use this comparator only with a stable sort.
+pub(crate) fn js_property_cmp(left: &str, right: &str) -> std::cmp::Ordering {
+    match (array_index(left), array_index(right)) {
+        (Some(a), Some(b)) => a.cmp(&b),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => std::cmp::Ordering::Equal,
+    }
+}
+
+/// ECMAScript whitespace differs from Rust's Unicode White_Space property.
+/// Validation reads the trimmed slice; it never rewrites authored content.
+pub fn js_trim(value: &str) -> &str {
+    let (part, content_end) = js_trim_part(value, false);
+    &part[..content_end]
+}
+
+/// Keep leading whitespace after an earlier content part. The returned end
+/// excludes trailing whitespace until a later part makes it internal.
+pub(crate) fn js_trim_part(value: &str, follows_content: bool) -> (&str, usize) {
+    let part = if follows_content {
+        value
+    } else {
+        value.trim_start_matches(is_js_whitespace)
+    };
+    (part, part.trim_end_matches(is_js_whitespace).len())
+}
+
+pub fn is_js_whitespace(character: char) -> bool {
+    matches!(character,
+            '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}'
+            | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}'
+            | '\u{205f}' | '\u{3000}' | '\u{feff}'
+    )
+}
+
+#[derive(Default)]
+struct JsFormatter {
+    number: ryu_js::Buffer,
+}
+
+impl serde_json::ser::Formatter for JsFormatter {
+    fn write_f64<W: ?Sized + io::Write>(&mut self, writer: &mut W, value: f64) -> io::Result<()> {
+        writer.write_all(self.number.format(value).as_bytes())
+    }
+
+    fn write_f32<W: ?Sized + io::Write>(&mut self, writer: &mut W, value: f32) -> io::Result<()> {
+        // JavaScript receives the provider's f32 as a Number before stringifying.
+        self.write_f64(writer, f64::from(value))
+    }
+}
+
+/// Serialize an owned schema record in its declared source property order.
+/// Dictionary fields with arbitrary keys must use `serialize_js_map`; immutable
+/// Value bodies use `json_value` so integer-property enumeration stays exact.
+pub fn json_record<T: Serialize + ?Sized>(record: &T) -> Result<String, serde_json::Error> {
+    let mut bytes = Vec::new();
+    write_json_record(record, &mut bytes)?;
+    // serde_json only emits UTF-8. Avoid a second parse or payload re-encoding.
+    Ok(String::from_utf8(bytes).expect("JSON serializer emitted non-UTF-8 data"))
+}
+
+/// Emit a selected current-format record into the caller's admitted sink.
+/// The sink owns its bytes and can enforce its own output capacity.
+pub fn write_json_record<T: Serialize + ?Sized>(
+    record: &T,
+    sink: impl io::Write,
+) -> Result<(), serde_json::Error> {
+    let mut serializer = serde_json::Serializer::with_formatter(sink, JsFormatter::default());
+    record.serialize(&mut serializer)
+}
+
+pub fn json_value(value: &Value) -> Result<String, serde_json::Error> {
+    json_record(&JsValue(value))
+}
+
+/// Fund an independent present-format `serde_json::Value` decode before
+/// allocation. Count from existing JSON bytes without storing a second tree.
+/// Actual syntax and selected contract validation still belong to the decoder.
+pub fn json_tree_allocation_bound(text: &str) -> Option<usize> {
+    let shape = JsonAllocationShape::read(text).ok()?;
+    text.len()
+        .checked_mul(2)?
+        .checked_add(256)?
+        .checked_add(shape.array_items.checked_mul(96)?)?
+        .checked_add(shape.members.checked_mul(192)?)?
+        .checked_add(shape.strings.checked_mul(64)?)?
+        .checked_add(shape.containers.checked_mul(128)?)
+}
+
+/// Count the actual emitted UTF-8 bytes without retaining a second encoded
+/// payload when a work/quota consumer needs only its size.
+pub fn json_record_len<T: Serialize + ?Sized>(record: &T) -> Result<usize, serde_json::Error> {
+    struct Count(usize);
+    impl io::Write for Count {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| io::Error::other("Native JSON byte count exceeds its range."))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut count = Count(0);
+    record.serialize(&mut serde_json::Serializer::with_formatter(
+        &mut count,
+        JsFormatter::default(),
+    ))?;
+    Ok(count.0)
+}
+
+/// Compare one typed factory encoding without retaining a second JSON body.
+/// Callers comparing semantic records serialize both through the same factory;
+/// this does not equate arbitrary imported payload member order.
+pub(crate) fn json_record_eq<T: Serialize + ?Sized>(
+    record: &T,
+    encoded: &str,
+) -> Result<bool, serde_json::Error> {
+    struct Equal<'a> {
+        expected: &'a [u8],
+        at: usize,
+        same: bool,
+    }
+    impl io::Write for Equal<'_> {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            let end = self
+                .at
+                .checked_add(bytes.len())
+                .ok_or_else(|| io::Error::other("Native JSON byte count exceeds its range."))?;
+            self.same &= self.expected.get(self.at..end) == Some(bytes);
+            self.at = end;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut output = Equal {
+        expected: encoded.as_bytes(),
+        at: 0,
+        same: true,
+    };
+    let mut serializer =
+        serde_json::Serializer::with_formatter(&mut output, JsFormatter::default());
+    record.serialize(&mut serializer)?;
+    Ok(output.same && output.at == output.expected.len())
+}
+
+pub fn serialize_js_value<S: Serializer>(value: &Value, serializer: S) -> Result<S::Ok, S::Error> {
+    JsValue(value).serialize(serializer)
+}
+
+pub fn serialize_optional_js_value<S: Serializer>(
+    value: &Option<Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    match value {
+        Some(value) => serializer.serialize_some(&JsValue(value)),
+        None => serializer.serialize_none(),
+    }
+}
+
+pub fn serialize_js_object<S: Serializer>(
+    value: &serde_json::Map<String, Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serialize_value_entries(value.len(), value.iter(), serializer)
+}
+
+pub fn serialize_optional_js_object<S: Serializer>(
+    value: &Option<serde_json::Map<String, Value>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    match value {
+        Some(value) => serialize_js_object(value, serializer),
+        None => serializer.serialize_none(),
+    }
+}
+
+pub fn serialize_js_values<S: Serializer>(
+    value: &IndexMap<String, Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serialize_value_entries(value.len(), value.iter(), serializer)
+}
+
+pub fn serialize_optional_js_values<S: Serializer>(
+    value: &Option<IndexMap<String, Value>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    match value {
+        Some(value) => serialize_js_values(value, serializer),
+        None => serializer.serialize_none(),
+    }
+}
+
+fn serialize_value_entries<'a, S: Serializer>(
+    length: usize,
+    entries: impl Iterator<Item = (&'a String, &'a Value)> + Clone,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let mut output = serializer.serialize_map(Some(length))?;
+    let mut indexed: Vec<_> = entries
+        .clone()
+        .filter_map(|(key, value)| array_index(key).map(|index| (index, key, value)))
+        .collect();
+    indexed.sort_unstable_by_key(|(index, _, _)| *index);
+    for (_, key, value) in indexed {
+        output.serialize_entry(key, &JsValue(value))?;
+    }
+    for (key, value) in entries {
+        if array_index(key).is_none() {
+            output.serialize_entry(key, &JsValue(value))?;
+        }
+    }
+    output.end()
+}
+
+/// JSON.stringify enumerates canonical array-index properties numerically,
+/// followed by all other string keys in their actual insertion order.
+pub(crate) fn array_index(key: &str) -> Option<u32> {
+    if key.is_empty() || (key.len() > 1 && key.starts_with('0')) {
+        return None;
+    }
+    if !key.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    key.parse::<u32>().ok().filter(|value| *value != u32::MAX)
+}
+
+pub fn serialize_js_map<S, T>(map: &IndexMap<String, T>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: Serialize,
+{
+    let mut output = serializer.serialize_map(Some(map.len()))?;
+    let mut indexed: Vec<_> = map
+        .iter()
+        .filter_map(|(key, value)| array_index(key).map(|index| (index, key, value)))
+        .collect();
+    indexed.sort_unstable_by_key(|(index, _, _)| *index);
+    for (_, key, value) in indexed {
+        output.serialize_entry(key, value)?;
+    }
+    for (key, value) in map {
+        if array_index(key).is_none() {
+            output.serialize_entry(key, value)?;
+        }
+    }
+    output.end()
+}
+
+pub fn serialize_optional_js_map<S, T>(
+    map: &Option<IndexMap<String, T>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: Serialize,
+{
+    match map {
+        Some(map) => serialize_js_map(map, serializer),
+        None => serializer.serialize_none(),
+    }
+}
+
+struct JsValue<'a>(&'a Value);
+impl Serialize for JsValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self.0 {
+            Value::Null => serializer.serialize_unit(),
+            Value::Bool(value) => serializer.serialize_bool(*value),
+            Value::Number(value) => {
+                // Value may store an integral token as u64. JavaScript parses
+                // every JSON number to f64 before it can become current state.
+                serializer.serialize_f64(value.as_f64().ok_or_else(|| {
+                    serde::ser::Error::custom("JSON number is outside the JavaScript number range")
+                })?)
+            }
+            Value::String(value) => serializer.serialize_str(value),
+            Value::Array(values) => {
+                let mut output = serializer.serialize_seq(Some(values.len()))?;
+                for value in values {
+                    output.serialize_element(&JsValue(value))?;
+                }
+                output.end()
+            }
+            Value::Object(values) => serialize_js_object(values, serializer),
+        }
+    }
+}
+
+/// Existing non-security labels hash UTF-16 code units, rather than UTF-8 bytes.
+/// Admission/dedup still compares the complete canonical body at its owner.
+pub fn content_hash(value: &str) -> u32 {
+    let mut hash = 2_166_136_261_u32;
+    for unit in value.encode_utf16() {
+        hash = (hash ^ u32::from(unit)).wrapping_mul(16_777_619);
+    }
+    hash
+}
+
+pub fn content_label(value: &str) -> String {
+    let mut remaining = content_hash(value);
+    let mut digits = [0_u8; 7];
+    let mut from = digits.len();
+    loop {
+        from -= 1;
+        let digit = (remaining % 36) as u8;
+        digits[from] = if digit < 10 {
+            b'0' + digit
+        } else {
+            b'a' + digit - 10
+        };
+        remaining /= 36;
+        if remaining == 0 {
+            break;
+        }
+    }
+    String::from_utf8(digits[from..].to_vec()).expect("base36 digits must be UTF-8")
+}
+
+/// JavaScript Number(string), for the trusted scalar event-data coercion used
+/// by the selected injury law. Radix integers round once at the IEEE boundary;
+/// repeatedly multiplying an f64 loses the original integer's sticky bits.
+pub(crate) fn js_number(value: &str) -> f64 {
+    let value = js_trim(value);
+    if value.is_empty() {
+        return 0.0;
+    }
+    if matches!(value, "Infinity" | "+Infinity") {
+        return f64::INFINITY;
+    }
+    if value == "-Infinity" {
+        return f64::NEG_INFINITY;
+    }
+    let bytes = value.as_bytes();
+    if bytes.len() > 2 && bytes[0] == b'0' {
+        let bits = match bytes[1] {
+            b'x' | b'X' => 4,
+            b'o' | b'O' => 3,
+            b'b' | b'B' => 1,
+            _ => 0,
+        };
+        if bits != 0 {
+            let mut significant = 0usize;
+            let mut top = 0u64;
+            let mut kept = 0usize;
+            let mut sticky = false;
+            for digit in value[2..].bytes() {
+                let digit = match digit {
+                    b'0'..=b'9' => digit - b'0',
+                    b'a'..=b'f' => digit - b'a' + 10,
+                    b'A'..=b'F' => digit - b'A' + 10,
+                    _ => return f64::NAN,
+                };
+                if digit >= (1 << bits) {
+                    return f64::NAN;
+                }
+                for at in (0..bits).rev() {
+                    let bit = (digit >> at) & 1;
+                    if significant == 0 && bit == 0 {
+                        continue;
+                    }
+                    significant = significant.saturating_add(1);
+                    if kept < 54 {
+                        top = (top << 1) | u64::from(bit);
+                        kept += 1
+                    } else {
+                        sticky |= bit != 0
+                    }
+                }
+            }
+            if significant <= 53 {
+                return top as f64;
+            }
+            if significant > 1024 {
+                return f64::INFINITY;
+            }
+            let mut mantissa = top >> 1;
+            if top & 1 != 0 && (sticky || mantissa & 1 != 0) {
+                mantissa += 1
+            }
+            return (mantissa as f64) * 2.0f64.powi(significant as i32 - 53);
+        }
+    }
+    let mut at = usize::from(matches!(bytes[0], b'+' | b'-'));
+    let mut digits = 0usize;
+    while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+        at += 1;
+        digits += 1
+    }
+    if bytes.get(at) == Some(&b'.') {
+        at += 1;
+        while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+            at += 1;
+            digits += 1
+        }
+    }
+    if digits == 0 {
+        return f64::NAN;
+    }
+    if matches!(bytes.get(at), Some(b'e' | b'E')) {
+        at += 1;
+        if matches!(bytes.get(at), Some(b'+' | b'-')) {
+            at += 1
+        }
+        let begin = at;
+        while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+            at += 1
+        }
+        if at == begin {
+            return f64::NAN;
+        }
+    }
+    if at != bytes.len() {
+        return f64::NAN;
+    }
+    value.parse().unwrap_or(f64::NAN)
+}
+
+/// Exact personal-source revision over already encoded current-format bytes.
+/// Callers must not substitute the smaller non-security content label.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    hex_bytes(&Sha256::digest(bytes))
+}
+
+/// Hash the canonical wire encoding in one pass. Callers retaining just the
+/// digest need no second allocation proportional to the input's text.
+pub fn json_record_digest<T: Serialize + ?Sized>(record: &T) -> Result<String, serde_json::Error> {
+    use sha2::{Digest, Sha256};
+    struct Sink(Sha256);
+    impl io::Write for Sink {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0.update(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut sink = Sink(Sha256::new());
+    write_json_record(record, &mut sink)?;
+    Ok(hex_bytes(&sink.0.finalize()))
+}
+
+pub fn hex_bytes(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(2 * bytes.len());
+    append_hex(&mut output, bytes);
+    output
+}
+
+pub fn append_hex(output: &mut String, bytes: &[u8]) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    for byte in bytes {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 0xf) as usize] as char);
+    }
+}

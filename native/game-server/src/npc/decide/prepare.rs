@@ -1,0 +1,1466 @@
+use super::{Work, ensure_running};
+use crate::{
+    boot::CurrentServer,
+    decision_dispatch::CallFailure,
+    decision_render::{BoundSchema, OfferedAction, PreparedPrompt, ResponseReferences},
+    world::WorldError,
+};
+use openlegend_simulation::{
+    activity::{RuntimeActivityDecisionPage, inspection_event},
+    capture::{
+        NpcActionOrdinal, NpcAliasOrdinal, NpcBindingPurpose as ProjectionPurpose,
+        NpcCatalogueSource, NpcEntityAlias, NpcEntityOrdinal, NpcPersonalEvidence,
+    },
+    encoding::{json_record, sha256_hex},
+    experience::{LiteralReference, PersonalSourceKind, PersonalSourceRef},
+    host::{ByteBudget, ByteReservation, CapacityError},
+    narration::{NameArticle, name_phrase, native_text},
+    reception::{
+        AttributeDisplay, AttributeKnowledge, KnowledgeDocument, KnowledgeOrigin, ObserverSubject,
+    },
+    records::SqlCell,
+    runtime::{
+        NpcActivityFacts, RuntimeError, RuntimeNpcBindingInput, RuntimeNpcConsumer,
+        RuntimeNpcFeelings, RuntimeNpcGuardThreat, RuntimeNpcObservedBody,
+        RuntimeNpcPersonalSource as PersonalSource, RuntimeNpcPersonalSources as PersonalSources,
+        RuntimeNpcRead, RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
+    },
+    state::Goal,
+    text::JsText,
+    values::AttributeValue,
+};
+use serde::Serialize;
+use serde_json::{Value, json};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, hash_map::Entry},
+    fmt::Write as _,
+    sync::Arc,
+};
+
+mod appraisal;
+mod identity;
+mod recall;
+mod thought;
+pub(in crate::npc) mod reflection;
+pub(super) type ReceivedFrame = Arc<openlegend_simulation::runtime::RuntimeNpcDecisionFrame>;
+pub(super) use recall::{Collected, RecallReview, collect};
+
+pub(super) struct Prepared {
+    pub(super) through: u64,
+    pub(super) addressed: bool,
+    pub(super) speech_trigger: bool,
+    pub(super) route: PreparedPrompt,
+    pub(super) context: Projection,
+    pub(super) ticket: Arc<RuntimeNpcResponseTicket>,
+    pub(super) frame: ReceivedFrame,
+    _projection: ByteReservation,
+}
+
+pub(super) struct Projection {
+    lab_fields: Option<Arc<crate::lab::fields::Context>>,
+    pub(super) fields: Value,
+    pub(super) offers: Vec<NativeOffer>,
+    reference_key: String,
+    refs: Vec<String>,
+    thought_references: Vec<Value>,
+    physical: Vec<String>,
+    knowledge: Vec<String>,
+    names: Vec<String>,
+    attention: Vec<String>,
+    appraisal_schema: Option<Value>,
+    speaks: bool,
+    expressions: bool,
+    pub(super) preview_player: Option<String>,
+}
+
+pub(super) struct NativeOffer {
+    pub(super) id: String,
+    pub(super) caption: String,
+    pub(super) no_intervention: bool,
+    pub(super) transition: &'static str,
+}
+
+impl Projection {
+    pub(super) fn reference_scope(&self) -> &str {
+        &self.reference_key
+    }
+
+    /// This optional proof covers the entire direct addressed reply request.
+    /// The rendered prompt and the strict/guided schema use the same aliases.
+    /// The host calls this only for `generate`, after choosing its actual offers.
+    pub(super) fn direct_stage_witness(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+        offered: &[OfferedAction<'_>],
+        budget: &ByteBudget,
+    ) -> Option<(openlegend_simulation::runtime::RuntimeNpcStageWitness, ByteReservation)> {
+        // A future projection field must prove its owner before saved capture
+        // can include it. Other provider and normal gameplay paths stay open.
+        const FIELDS: &[&str] = &[
+            "identity", "aboutMe", "body", "feelings", "capabilities", "commitments",
+            "stimulus", "triggerFacts", "conversation", "agency", "currentSupport",
+            "publicSurfaces", "now", "simTime", "recall", "experience", "surroundings",
+            "receivedSituation", "activityRequests", "possessions", "notepad", "knowledge",
+            "references", "situationQueries", "appraisals", "naming",
+        ];
+        if !offered.is_empty()
+            || self.fields["triggerFacts"]["observerRelationship"] != "addressed_speech"
+            || self.fields.as_object()?.keys().any(|key| !FIELDS.contains(&key.as_str()))
+        {
+            return None;
+        }
+        let has_items = |value: &Value| value.as_array().is_some_and(|items| !items.is_empty());
+        let agency = &self.fields["agency"];
+        // The activity menu only names authored options, own hands/supplies
+        // and the same permitted bodies. Ongoing work can contain other
+        // evidence. An authored starting goal is part of the opening.
+        if !agency["plan"].is_null() || !agency["paused"].is_null()
+            || has_items(&agency["attempts"])
+            || agency["goals"].as_array()?.iter().any(|goal| {
+                goal["author"] != "creator" || goal["sourceId"] != "creation"
+                    || goal["revision"].as_u64() != Some(0)
+            })
+            // The listening service's appraisal content serial cannot validate
+            // saved interpreted records after a restart. New appraisal choices
+            // based on the admitted personal evidence carry no such records.
+            || !self.fields["feelings"].as_str()?.is_empty()
+            || has_items(&self.fields["appraisals"]["feelings"])
+        {
+            return None;
+        }
+        ticket.stage_witness(budget).ok().flatten()
+    }
+
+    pub(super) fn offers_remembered_places(&self, game: &CurrentServer) -> bool {
+        game.cognition.can_offer_remembered_places(self.speaks, self.expressions)
+    }
+
+    pub(super) fn render_response(
+        &self,
+        game: &CurrentServer,
+        offered: &[OfferedAction<'_>],
+        include_actions: bool,
+        expansion: Option<&super::query::Answers<'_>>,
+        remembered: Option<&RuntimeNpcResponseTicket>,
+    ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
+        let budget = game.host.budget();
+        let aliases = offered
+            .iter()
+            .map(|offer| offer.id.to_owned())
+            .collect::<Vec<_>>();
+        let fields = self.fields.as_object().ok_or(CallFailure::Invalid)?;
+        let queries = fields
+            .get("situationQueries")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let mut prompt = game
+            .cognition
+            .generation_prompt(fields, offered, include_actions, queries, budget)
+            .map_err(super::generation_failure)
+            .map_err(|error| error.at("generation-prompt"))?;
+        if let Some(fields)=&self.lab_fields {prompt.append_lab_fields(fields).map_err(super::generation_failure)?;}
+        let extended = expansion
+            .filter(|answers| answers.added_references().next().is_some())
+            .map(|answers| answers.extend_references(&self.refs, &self.physical, budget))
+            .transpose()?;
+        let (entity, physical) = extended.as_ref().map_or(
+            (self.refs.as_slice(), self.physical.as_slice()),
+            |([entity, physical], _)| (entity.as_slice(), physical.as_slice()),
+        );
+        let history = expansion
+            .map(|answers| answers.retainable_history(budget))
+            .transpose()?
+            .flatten();
+        let retention = history
+            .as_ref()
+            .map_or(&[][..], |(aliases, _)| aliases.as_slice());
+        let place_count = remembered.map_or(0, |ticket| ticket.remembered_move_choices().len());
+        let _place_rows = if place_count == 0 {
+            None
+        } else {
+            Some(budget.reserve(
+                place_count.checked_mul(std::mem::size_of::<(&str, &JsText)>() + std::mem::size_of::<&str>())
+                    .ok_or_else(|| capacity(CapacityError))?,
+            ).map_err(capacity)?)
+        };
+        let mut places = Vec::with_capacity(place_count);
+        if let Some(ticket) = remembered {
+            places.extend(ticket.remembered_move_choices());
+        }
+        let remembered_places = if prompt.append_remembered_places(&places).map_err(super::generation_failure)? {
+            places.iter().map(|(id, _)| *id).collect()
+        } else {
+            Vec::new()
+        };
+        if let Some(answers) = expansion {
+            prompt
+                .append_received_evidence(answers)
+                .map_err(super::generation_failure)?;
+        }
+        let thought = prompt
+            .append_thought_references(&self.thought_references)
+            .map_err(super::generation_failure)?;
+        let schema = game
+            .cognition
+            .response_schema(
+                self.speaks,
+                self.expressions,
+                queries,
+                &ResponseReferences {
+                    entity,
+                    action: &aliases,
+                    knowledge: &self.knowledge,
+                    identity: &self.names,
+                    thought: &thought,
+                    physical,
+                    attention: &self.attention,
+                    retention,
+                    appraisal: self.appraisal_schema.as_ref(),
+                    remembered_places: &remembered_places,
+                },
+                budget,
+            )
+            .map_err(super::generation_failure)
+            .map_err(|error| error.at("generation-schema"))?;
+        Ok((prompt, schema))
+    }
+}
+
+/// Own the large native preparation future once. The timeout/select wrappers
+/// only move its pointer; a debug worker otherwise exhausts its normal stack
+/// while entering the activity and trade offer capture. Release its exact
+/// heap reservation at completion or cancellation.
+pub(super) fn finish<'a>(
+    game: &'a Arc<CurrentServer>,
+    work: &'a Work,
+    collected: Collected,
+) -> Result<impl std::future::Future<Output = Result<Prepared, CallFailure>> + 'a, CallFailure> {
+    let operation = finish_prepared(game, work, collected, None);
+    let custody = game.host.budget().reserve(std::mem::size_of_val(&operation)).map_err(capacity)?;
+    let pending = Box::pin(operation);
+    Ok(async move {
+        let _custody = custody;
+        pending.await
+    })
+}
+
+struct Reconsideration<'a> {
+    remaining: &'a [String],
+    decision_id: &'a str,
+}
+
+pub(super) async fn reconsider_choice(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    previous: Prepared,
+    alias: (String, ByteReservation),
+    refusal: &str,
+    decision_id: &str,
+) -> Result<Prepared, CallFailure> {
+    let Prepared { ticket, frame, .. } = previous;
+    let ticket = Arc::try_unwrap(ticket).map_err(|_| CallFailure::Invalid)?;
+    let refusal_copy = game
+        .host
+        .budget()
+        .reserve(refusal.len())
+        .map_err(capacity)?;
+    let refusal = refusal.to_owned();
+    let recovered = game
+        .world
+        .capture(move |session| {
+            let (alias, _alias_custody) = alias;
+            let _refusal_custody = refusal_copy;
+            session.reopen_refused_npc_choice(ticket, &alias, &refusal)
+        })
+        .await
+        .map_err(binding_failure)?;
+    let openlegend_simulation::runtime::NpcChoiceRecovery {
+        original,
+        request,
+        remaining,
+        _custody,
+    } = *recovered;
+    let collected = Collected::from_refused_choice(original, &request, frame, game.host.budget())?;
+    drop(request);
+    finish_prepared(
+        game,
+        work,
+        collected,
+        Some(Reconsideration {
+            remaining: &remaining,
+            decision_id,
+        }),
+    )
+    .await
+}
+
+async fn finish_prepared(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    mut collected: Collected,
+    reconsideration: Option<Reconsideration<'_>>,
+) -> Result<Prepared, CallFailure> {
+    ensure_running(work)?;
+    let budget = game.host.budget();
+    let mut inspection = if let Some(trigger) = work.automatic.as_ref().and_then(|work| work.evidence.as_deref())
+        && collected.sources.as_ref().is_some_and(|selected| {
+            collected.required.iter().any(|&row| {
+                selected.personal.get(row).is_some_and(|source| {
+                    source.value.event_type.as_deref() == Some(inspection_event())
+                        && (source.reference.id == trigger || source.value.event_id.as_deref() == Some(trigger))
+                })
+            })
+        })
+    {
+        let (page, read) = game
+            .world
+            .decision_activity_inspection(&work.actor, trigger)
+            .await
+            .map_err(|error| CallFailure::World(error).at("activity-inspection"))?
+            .ok_or(CallFailure::Stale("native-response-activity-inspection"))?;
+        collected
+            .original
+            .as_mut()
+            .ok_or(CallFailure::Invalid)?
+            .retain_activity_inspection(read);
+        Some(page)
+    } else {
+        None
+    };
+    let guard_threat = if let Some(sources) = &collected.sources {
+        sources
+            .guard_threat(&collected.required, budget)
+            .map_err(capacity)?
+    } else {
+        None
+    };
+    let stage_capture = reconsideration.is_none()
+        && collected.original.as_ref().is_some_and(RuntimeNpcRead::stage_capture_enabled);
+    let current = capture_offers(
+        game,
+        work,
+        consumer(work).as_str(),
+        inspection
+            .as_mut()
+            .and_then(RuntimeActivityDecisionPage::take_navigation),
+        guard_threat,
+        stage_capture,
+        "current-offers",
+    ).await?;
+    let through = collected.through.max(current.accepted_cut());
+    // The projection has separate custody from the captured evidence it renders.
+    let mut projection =
+        collected.projection_custody(&current, ProjectionPurpose::Decision, budget)?;
+    if let Some(page) = &inspection {
+        projection.resize(
+            page.admitted_bytes()
+                .checked_mul(8)
+                .and_then(|bytes| bytes.checked_add(projection.bytes() + 1024))
+                .ok_or_else(|| capacity(CapacityError))?,
+        ).map_err(capacity)?;
+    }
+    let (mut binding, mut context, addressed, speech_trigger) = project(
+        game,
+        work,
+        &current,
+        &collected.attention.ordinals,
+        collected.sources.as_ref(),
+        &collected.required,
+        ProjectionPurpose::Decision,
+        Some((collected.original.as_ref().ok_or(CallFailure::Invalid)?, &mut projection)),
+        reconsideration.as_ref().map(|input| input.remaining),
+    )?;
+    if let Some(input) = reconsideration {
+        if !context.offers.iter().any(|option| !option.no_intervention) {
+            return Err(CallFailure::Stale("native-choice-no-safe-alternative"));
+        }
+        projection
+            .resize(
+                projection
+                    .bytes()
+                    .checked_add(input.decision_id.len())
+                    .ok_or_else(|| capacity(CapacityError))?,
+            )
+            .map_err(capacity)?;
+        binding.decision_id = input.decision_id.into();
+    }
+    if let Some(page) = inspection {
+        finish_activity_fields(&mut context, page);
+    }
+    drop(collected.sources.take());
+    drop(collected.attention);
+    let mut route = game
+        .cognition
+        .prompt(
+            context.fields.as_object().ok_or(CallFailure::Invalid)?,
+            &[],
+            false,
+            budget,
+        )
+        .map_err(super::generation_failure)
+        .map_err(|error| error.at("routing-prompt"))?;
+    ensure_running(work)?;
+    if let Some(fields)=&work.lab_fields { route.append_lab_fields(fields).map_err(super::generation_failure)?; }
+    let request = binding.fund(&mut projection).map_err(packet_failure)?;
+    let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
+    let ticket = game
+        .world
+        .bind_npc(
+            collected.original.take().ok_or(CallFailure::Invalid)?,
+            current,
+            request,
+            origin,
+        )
+        .await
+        .map_err(binding_failure)?;
+    Ok(Prepared {
+        through,
+        addressed,
+        speech_trigger,
+        route,
+        context,
+        ticket,
+        frame: collected.frame,
+        _projection: projection,
+    })
+}
+
+fn finish_activity_fields(context: &mut Projection, page: RuntimeActivityDecisionPage) {
+    context.fields["inspectedActions"] = json!(
+        page.action_texts().map(prompt_text).collect::<Vec<_>>()
+    );
+    context.fields["inspectedMethods"] = json!(
+        page.method_texts()
+            .map(|(text, status)| format!("{}. {status}", prompt_text(text)))
+            .collect::<Vec<_>>()
+    );
+}
+
+pub(super) fn binding_failure(error: WorldError) -> CallFailure {
+    if let WorldError::Simulation(inner) = &error
+        && let Some(reason) = inner.stale_reason()
+    {
+        return CallFailure::Stale(reason).at("response-binding");
+    }
+    CallFailure::World(error).at("response-binding")
+}
+
+fn consumer(work: &Work) -> RuntimeNpcConsumer {
+    if work.job.job.request.composer.as_ref().map_or(work.permit.is_some(),|c|c.addressed) {
+        RuntimeNpcConsumer::Chat
+    } else {
+        RuntimeNpcConsumer::Thought
+    }
+}
+
+async fn capture_offers(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    consumer: &'static str,
+    inspection: Option<openlegend_simulation::activity::ActivityInspectionNavigation>,
+    guard_threat: Option<RuntimeNpcGuardThreat>,
+    stage_capture: bool,
+    stage: &'static str,
+) -> Result<RuntimeNpcRead, CallFailure> {
+    game.world
+        .capture_npc_offers(
+            game.clone(),
+            &work.actor,
+            consumer,
+            inspection,
+            guard_threat,
+            stage_capture,
+        )
+        .await
+        .map_err(|error| CallFailure::World(error).at(stage))
+}
+
+/// Keep the original accepted perception and personal source lineage. This
+/// path binds its executable choices and response prototypes from a later cut.
+async fn capture_origin(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    consumer: &'static str,
+    stage_capture: bool,
+) -> Result<RuntimeNpcRead, CallFailure> {
+    game.world
+        .capture_npc_read(&work.actor, consumer, stage_capture)
+        .await
+        .map_err(|error| CallFailure::World(error).at("original-read"))
+}
+
+fn project(
+    game: &CurrentServer,
+    work: &Work,
+    read: &RuntimeNpcRead,
+    original_attention: &[usize],
+    selected: Option<&PersonalSources>,
+    rows: &[usize],
+    purpose: ProjectionPurpose,
+    mut original_read: Option<(&RuntimeNpcRead, &mut ByteReservation)>,
+    remaining_offers: Option<&[String]>,
+) -> Result<(RuntimeNpcBindingInput, Projection, bool, bool), CallFailure> {
+    let consumer = consumer(work);
+    let decision = matches!(purpose, ProjectionPurpose::Decision);
+    let self_facts = read.current_self().map_err(packet_failure)?;
+    let own = self_facts.prompt().ok_or(CallFailure::Invalid)?;
+    let origin = read.decision_origin();
+    let own_name = name_phrase(&own.observer_name, NameArticle::None, false);
+    let own_name = prompt_text(&own_name);
+    let reference_key = uuid::Uuid::new_v4().simple().to_string();
+    let self_reference = alias(&reference_key, "myself", 0);
+    let mut refs = vec![self_reference.clone()];
+    let mut canonical = HashMap::from([(work.actor.as_str(), self_reference.clone())]);
+    let mut physical = Vec::new();
+    let mut entities = vec![NpcEntityAlias {
+        alias: self_reference.clone(),
+        source: NpcEntityOrdinal::Myself,
+    }];
+    let mut descriptions = Vec::new();
+    let mut thought =
+        thought::Offers::new(original_read.as_mut().map(|(_, custody)| &mut **custody));
+    if decision {
+        descriptions.push(format!("Myself: {own_name} (ID:{self_reference})"));
+    }
+    let mut surroundings = Vec::new();
+    let mut scene = Vec::new();
+    let mut attention = Vec::new();
+    let mut attention_aliases = Vec::new();
+    let mut presented = Vec::new();
+    for &ordinal in original_attention {
+        let id = alias(&reference_key, "attention", ordinal);
+        attention_aliases.push(id.clone());
+        attention.push(NpcAliasOrdinal { alias: id, ordinal });
+        presented.push(ordinal);
+    }
+    for &ordinal in read.selected_body_ordinals().map_err(packet_failure)? {
+        let body = read.presented_body(ordinal).ok_or(CallFailure::Invalid)?;
+        let key = alias(&reference_key, "body", ordinal);
+        canonical.insert(body.source_id, key.clone());
+        refs.push(key.clone());
+        entities.push(NpcEntityAlias {
+            alias: key.clone(),
+            source: NpcEntityOrdinal::Body { ordinal },
+        });
+        if decision {
+            let name = name_phrase(body.name, NameArticle::Definite, false);
+            let name = prompt_text(&name);
+            physical.push(key.clone());
+            descriptions.push(format!("{name} (ID:{key})"));
+            let observed = body.observed.ok_or(CallFailure::Invalid)?;
+            let (line, body) = received_body(self_facts, observed, &name, &key);
+            surroundings.push(line);
+            scene.push(body);
+        }
+    }
+    let mut source_entries = Vec::with_capacity(rows.len());
+    if let Some(selected) = selected {
+        for &row in rows {
+            let source = selected.personal.get(row).ok_or(CallFailure::Invalid)?;
+            source_entries.push((row, source));
+        }
+    }
+    source_entries.sort_by(|(_, a), (_, b)| {
+        personal_time(a)
+            .total_cmp(&personal_time(b))
+            .then_with(|| a.value.sequence.cmp(&b.value.sequence))
+    });
+    let target_event = work.stimulus_event().or_else(|| {
+        work.automatic
+            .as_ref()
+            .and_then(|trigger| trigger.evidence.as_deref())
+    });
+    let trigger_index = target_event.and_then(|event| {
+        source_entries.iter().position(|(_, row)| {
+            row.reference.id == event || row.value.event_id.as_deref() == Some(event)
+        })
+    });
+    let trigger = trigger_index.map(|index| source_entries[index].1);
+    if target_event.is_some() && trigger.is_none() {
+        return Err(CallFailure::Stale("decision-heard-source"));
+    }
+    let addressed =
+        trigger.is_some_and(|row| row.value.trigger_kind.as_deref() == Some("addressed_speech"));
+    let speech = trigger.is_some_and(|row| row.value.event_type.as_deref() == Some("speech"));
+    let speech_trigger = decision
+        && work
+            .automatic
+            .as_ref()
+            .is_none_or(|trigger| trigger.causes.is_empty())
+        && speech_only(&work.source, &source_entries);
+    if consumer == RuntimeNpcConsumer::Chat && !addressed {
+        return Err(CallFailure::Stale("decision-heard-addressing"));
+    }
+    let world = &game.view_policy().world;
+    let now = origin.at;
+    let display_time = |seconds| game_time(seconds, world.offset_hours, world.day_label.as_deref());
+    let mut experience = Vec::new();
+    let mut conversation = Vec::new();
+    let mut recall = Vec::new();
+    let mut rendered_trigger = None;
+    let mut historical_subjects = HashMap::<&ObserverSubject, String>::new();
+    let mut historical_reference_count = 0;
+    let mut heard_sources = None;
+    if decision && let Some(index) = trigger_index {
+        let (ordinal, trigger) = source_entries[index];
+        thought.personal(
+            read,
+            &reference_key,
+            selected.ok_or(CallFailure::Invalid)?.ordinal,
+            ordinal,
+            trigger,
+        );
+    }
+    for (index, &(ordinal, entry)) in source_entries.iter().enumerate() {
+        let value = &entry.value;
+        let (display, at) = personal_description(entry)?;
+        let event_time = display_time(at);
+        let mut fact = experience_fact(entry, &display, at, &event_time);
+        let inventory = selected.ok_or(CallFailure::Invalid)?.ordinal;
+        if let Some(references) = &value.literal_references {
+            let literal = match entry.reference.kind {
+                PersonalSourceKind::Memory => value.summary.as_ref(),
+                _ => match &value.text {
+                    Some(openlegend_simulation::narration::NativeText::Literal(text)) => Some(text),
+                    _ => None,
+                },
+            }
+            .ok_or(CallFailure::Invalid)?;
+            let mut bindings = Vec::with_capacity(references.bindings.len());
+            let mut account_aliases = vec![None; references.references.len()];
+            let mut issue = || {
+                let id = alias(&reference_key, "past-reference", historical_reference_count);
+                historical_reference_count += 1;
+                id
+            };
+            for binding in &references.bindings {
+                let reference = references
+                    .references
+                    .get(binding.reference)
+                    .ok_or(CallFailure::Invalid)?;
+                // Proof for withdrawal does not give the NPC another claim
+                // to cite. The quote-bearing form below displays its words.
+                if matches!(reference, LiteralReference::Source { quote: None, .. }) {
+                    continue;
+                }
+                let (id, first) = match reference {
+                    LiteralReference::Subject {
+                        subject: ObserverSubject::Entity { entity_id },
+                    } if entity_id == &work.actor => (self_reference.as_str(), false),
+                    LiteralReference::Subject { subject } => {
+                        // Established person identity can tie separate accounts
+                        // together without granting a current action target.
+                        match historical_subjects.entry(subject) {
+                            Entry::Occupied(entry) => (entry.into_mut().as_str(), false),
+                            Entry::Vacant(entry) => (entry.insert(issue()).as_str(), true),
+                        }
+                    }
+                    _ => {
+                        // The same place or interval in two accounts can have
+                        // separate proof and withdrawal dependencies.
+                        let slot = &mut account_aliases[binding.reference];
+                        let first = slot.is_none();
+                        (slot.get_or_insert_with(&mut issue).as_str(), first)
+                    }
+                };
+                let range = binding.range;
+                let rendered = thought::display(
+                    id,
+                    reference,
+                    &literal.slice(range.start..range.end),
+                    range.start,
+                );
+                if decision && first {
+                    let attribution = match reference {
+                        LiteralReference::Source {
+                            source,
+                            quote: Some(_),
+                        } => heard_sources
+                            .get_or_insert_with(|| thought.heard_sources(&source_entries))
+                            .get(source)
+                            .copied(),
+                        _ => None,
+                    };
+                    thought.inherited(
+                        id,
+                        inventory,
+                        ordinal,
+                        binding.reference,
+                        &rendered,
+                        attribution,
+                    );
+                }
+                bindings.push(rendered);
+            }
+            if !bindings.is_empty() {
+                fact["personalReferences"] = Value::Array(bindings);
+            }
+        }
+        let line = format!("{display} ({event_time})");
+        if value.event_type.as_deref() == Some("speech") {
+            conversation.push(line);
+        } else {
+            recall.push(line);
+        }
+        experience.push(fact);
+        if Some(index) == trigger_index {
+            rendered_trigger = Some((entry, display, at, event_time));
+        }
+        if decision && Some(index) != trigger_index {
+            thought.personal(read, &reference_key, inventory, ordinal, entry);
+        }
+    }
+    if decision {
+        thought.next_day(read, &reference_key, now, None);
+        for &ordinal in read.selected_body_ordinals().map_err(packet_failure)? {
+            thought.body(read, &reference_key, ordinal);
+        }
+    }
+    let (stimulus, trigger_facts) = if let Some((trigger, display, at, event_time)) =
+        rendered_trigger
+    {
+        let value = &trigger.value;
+        let speaker_visible = value
+            .source_body
+            .as_ref()
+            .is_some_and(|source| read.source_body_is_current(source));
+        let speaker = value
+            .speech
+            .as_ref()
+            .and_then(|speech| speech.speaker.as_ref());
+        let addressee = value
+            .speech
+            .as_ref()
+            .and_then(|speech| speech.addressee.as_ref());
+        (
+            format!(
+                "{}: {} ({event_time})",
+                if addressed {
+                    "Addressed speech (to me)"
+                } else if speech {
+                    "Nearby speech"
+                } else {
+                    "World change"
+                },
+                display
+            ),
+            json!({"experience":{"text":display,"at":at,"acquisition":value.modality},"eventTime":event_time,"ageGameSeconds":(now-at).max(0.0),"observerRelationship":value.trigger_kind,"speaker":speaker.map(|name| prompt_text(&name.name_at_time)).unwrap_or(Cow::Borrowed("Unknown speaker")),"addressing":value.speech.as_ref().and_then(|speech| speech.addressing),"intendedRecipient":addressee.map(|name| prompt_text(&name.name_at_time)).unwrap_or(Cow::Borrowed("Unknown; no recipient identity perceived")),"sourceCurrentlyVisible":speaker_visible}),
+        )
+    } else {
+        (
+            if work.automatic.is_some() {
+                prompt_text(&work.job.job.request.text).into_owned()
+            } else {
+                "Situation change: Current perceived activity.".to_owned()
+            },
+            json!({}),
+        )
+    };
+    let mut actions = Vec::new();
+    let mut offers = Vec::new();
+    let identity = identity(own, &own_name, &self_reference);
+    let body = body_text(own)?;
+    let work_facts = agency(own, read)?;
+    let notepad = own
+        .notepad
+        .as_ref()
+        .map(|document| {
+            prompt_record(document, &document.text, |text| KnowledgeDocument {
+                text,
+                ..document.clone()
+            })
+        })
+        .transpose()?;
+    let mut knowledge = Vec::new();
+    let mut knowledge_aliases = Vec::new();
+    let mut knowledge_text = Vec::new();
+    for note in read.required_notes() {
+        let id = alias(&reference_key, "notepad", note.ordinal);
+        let provenance = match note.origin {
+            KnowledgeOrigin::AuthoredStarting => "authored starting understanding",
+            KnowledgeOrigin::ActorEdit => "actor-edited understanding",
+        };
+        let mut caption = format!("Notepad {id} about {}", prompt_text(note.label));
+        if let Some(reference) = note
+            .recognized_entity
+            .and_then(|entity| canonical.get(entity))
+        {
+            // The current body already has its own permission and alias.
+            // An existing note's edit token never issues physical authority.
+            write!(caption, " (ID:{reference})").map_err(invalid)?;
+        }
+        write!(
+            caption,
+            "; revision {}; {provenance}. {}/{} characters.\n{}",
+            note.revision,
+            note.text.character_count(),
+            note.maximum,
+            prompt_text(note.text),
+        )
+        .map_err(invalid)?;
+        knowledge_text.push(caption);
+        if decision {
+            knowledge_aliases.push(id.clone());
+        }
+        knowledge.push(NpcAliasOrdinal {
+            alias: id,
+            ordinal: note.ordinal,
+        });
+    }
+    let (thought_references, thought_selectors) = thought.into_parts();
+    let (appraisal, naming) = if let Some((original, custody)) = original_read {
+        let appraisal = appraisal::prepare(
+            &game.cognition,
+            appraisal::Input {
+                current: read, original, sources: selected, rows: &source_entries,
+                trigger: trigger_index, canonical: &canonical, refs: &refs, key: &reference_key,
+            },
+            &mut experience, custody,
+        )?;
+        let naming = identity::prepare(
+            read, original, &canonical,
+            selected.map(|selection| (selection.ordinal, source_entries.as_slice())),
+            &reference_key, custody,
+        )?;
+        (appraisal, naming)
+    } else {
+        (None, identity::Naming::default())
+    };
+    let (mut fields, speaks, expressions, preview_player) = if decision {
+        for (ordinal, offer) in read.decision_offers().map_err(packet_failure)?.enumerate() {
+            if remaining_offers
+                .is_some_and(|remaining| !remaining.iter().any(|id| id == offer.native_id))
+            {
+                continue;
+            }
+            let id = format!("a{ordinal}");
+            let caption = prompt_text(offer.description.ok_or(CallFailure::Invalid)?);
+            actions.push(NpcActionOrdinal {
+                alias: id.clone(),
+                ordinal,
+                source: NpcCatalogueSource::Current,
+            });
+            offers.push(NativeOffer {
+                id,
+                caption: caption.into_owned(),
+                no_intervention: offer.no_intervention,
+                transition: offer.transition,
+            });
+        }
+        let speaks = own.speech;
+        let expressions = own.expressions;
+        let preview_player = work
+            .permit
+            .as_ref()
+            .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
+        let fields = json!({
+            "identity":identity,"aboutMe":about_me(game, own)?,"body":body,"feelings":feelings(read.feelings().map_err(packet_failure)?)?,
+            "capabilities":{"speech":speaks,"expressions":expressions},"commitments":[],
+            "stimulus":stimulus,"triggerFacts":trigger_facts,"conversation":conversation,
+            "agency":work_facts,"currentSupport":self_facts.support,"publicSurfaces":[],
+            "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
+            "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
+            "activityRequests":activity_requests(game,read.activity_facts().map_err(packet_failure)?,&canonical)?,
+            "possessions":[],"notepad":null,
+            "knowledge":knowledge_text,"references":descriptions,"situationQueries":true,
+        });
+        (fields, speaks, expressions, preview_player)
+    } else {
+        let goal = work_facts["goals"]
+            .as_array()
+            .and_then(|goals| goals.first())
+            .and_then(|goal| goal["objective"].as_str())
+            .unwrap_or_default();
+        let mut fields = json!({
+            "stimulus":stimulus,"goal":goal,
+            "includedContext":{
+                "identity":identity,"notepad":null,
+                "triggerFacts":trigger_facts,"now":display_time(now),"body":body,
+                "agency":work_facts,"conversation":conversation,"recall":recall,
+                "experience":experience,
+            },
+        });
+        if !knowledge_text.is_empty() {
+            fields["includedContext"]["knowledge"] = json!(knowledge_text);
+        }
+        (fields, false, false, None)
+    };
+    if let Some(notepad) = notepad {
+        if decision {
+            fields["notepad"] = notepad;
+        } else {
+            fields["includedContext"]["notepad"] = notepad;
+        }
+    }
+    let (appraisal_schema, appraisals) = match appraisal {
+        Some(offering) => {
+            fields["appraisals"] = offering.context;
+            (Some(offering.schema), Some(offering.selection))
+        }
+        None => (None, None),
+    };
+    if !naming.description.is_empty() {
+        fields["naming"] = Value::Array(naming.description);
+    }
+    project_markers(&mut fields, &canonical, &refs);
+    let evidence = if decision {
+        personal_evidence(selected, rows.iter().copied())?
+    } else {
+        Vec::new()
+    };
+    let binding = RuntimeNpcBindingInput {
+        decision_id: work.job.job.id.clone(),
+        consumer,
+        purpose,
+        actions,
+        semantic_causes: work
+            .automatic
+            .as_ref()
+            .map_or_else(Vec::new, |trigger| trigger.causes.clone()),
+        evidence,
+        thought_references: thought_selectors,
+        entities,
+        identities: naming.bindings,
+        knowledge,
+        attention,
+        presented,
+        appraisals,
+    };
+    Ok((
+        binding,
+        Projection {
+            lab_fields: work.lab_fields.clone(),
+            fields,
+            offers,
+            reference_key,
+            refs,
+            thought_references,
+            physical,
+            knowledge: knowledge_aliases,
+            names: naming.aliases,
+            attention: attention_aliases,
+            appraisal_schema,
+            speaks,
+            expressions,
+            preview_player,
+        },
+        addressed,
+        speech_trigger,
+    ))
+}
+
+/// Only the exact causes of this decision determine the conversational
+/// shortcut. Recalled context can contain unrelated physical events.
+/// See docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence.
+fn speech_only(causes: &[PersonalSourceRef], entries: &[(usize, &PersonalSource)]) -> bool {
+    let mut heard = false;
+    for cause in causes {
+        if cause.kind != PersonalSourceKind::Awareness {
+            return false;
+        }
+        let Some((_, row)) = entries.iter().find(|(_, row)| &row.reference == cause) else {
+            return false;
+        };
+        let value = &row.value;
+        if value.speech.is_none() {
+            return false;
+        }
+        heard |= value.event_type.as_deref() == Some("speech")
+            && value.modality.as_deref() != Some("observed");
+    }
+    heard
+}
+
+fn personal_evidence(
+    sources: Option<&PersonalSources>,
+    rows: impl Iterator<Item = usize>,
+) -> Result<Vec<NpcPersonalEvidence>, CallFailure> {
+    rows.map(|ordinal| {
+        Ok(NpcPersonalEvidence {
+            inventory: sources.ok_or(CallFailure::Invalid)?.ordinal,
+            ordinal,
+        })
+    })
+    .collect()
+}
+
+fn describe_experience(
+    game: &CurrentServer,
+    entry: &PersonalSource,
+    description: &str,
+) -> Result<Value, CallFailure> {
+    let at = personal_time(entry);
+    if !at.is_finite() {
+        return Err(CallFailure::Invalid);
+    }
+    let world = &game.view_policy().world;
+    let event_time = game_time(at, world.offset_hours, world.day_label.as_deref());
+    Ok(experience_fact(entry, description, at, &event_time))
+}
+
+fn experience_fact(entry: &PersonalSource, description: &str, at: f64, event_time: &str) -> Value {
+    let value = &entry.value;
+    json!({"text":description,"at":at,"eventType":value.event_type,
+        "acquisition":value.modality,"observerRelationship":value.trigger_kind,"eventTime":event_time})
+}
+
+fn personal_time(entry: &PersonalSource) -> f64 {
+    let at = if entry.reference.kind == PersonalSourceKind::Summary {
+        entry.value.to
+    } else {
+        entry.value.at
+    };
+    at.unwrap_or(f64::NAN)
+}
+
+pub(super) fn alias(key: &str, kind: &str, index: usize) -> String {
+    // The per-request key stays private even if a caller repeats its own
+    // command ID. An unseen native body cannot be guessed from an ordinal.
+    let digest = sha256_hex(format!("{key}:{kind}:{index}").as_bytes());
+    digest[..24].to_owned()
+}
+
+fn invalid(_: impl std::fmt::Display) -> CallFailure {
+    CallFailure::Invalid
+}
+
+fn capacity(error: CapacityError) -> CallFailure {
+    packet_failure(error.into())
+}
+
+pub(super) fn packet_failure(error: RuntimeError) -> CallFailure {
+    CallFailure::World(WorldError::Simulation(error)).at("context-preparation")
+}
+
+/// Prompts use UTF-8. Escape isolated UTF-16 units visibly, and distinguish
+/// literal backslashes within that passage from these display escapes. The
+/// original observation, evidence reference and authority stay in native.
+pub(super) fn prompt_text(value: &JsText) -> Cow<'_, str> {
+    if let Some(text) = value.as_unicode() {
+        return Cow::Borrowed(text);
+    }
+    let mut rendered = String::new();
+    for unit in char::decode_utf16(value.units()) {
+        match unit {
+            Ok('\\') => rendered.push_str("\\\\"),
+            Ok(character) => rendered.push(character),
+            Err(unit) => write!(rendered, "\\u{:04x}", unit.unpaired_surrogate())
+                .expect("writing to String is infallible"),
+        }
+    }
+    Cow::Owned(rendered)
+}
+
+/// Embed an existing record's prompt-safe prose without changing the schema
+/// or the exact text retained by the native capture.
+fn prompt_record<T: Serialize>(
+    record: &T,
+    text: &JsText,
+    render: impl FnOnce(JsText) -> T,
+) -> Result<Value, CallFailure> {
+    match prompt_text(text) {
+        Cow::Borrowed(_) => serde_json::to_value(record),
+        Cow::Owned(display) => serde_json::to_value(render(display.into())),
+    }
+    .map_err(invalid)
+}
+
+fn personal_description(entry: &PersonalSource) -> Result<(String, f64), CallFailure> {
+    let value = &entry.value;
+    let date = personal_time(entry);
+    if !date.is_finite() {
+        return Err(CallFailure::Invalid);
+    }
+    let description = match entry.reference.kind {
+        PersonalSourceKind::Awareness => {
+            let source = value
+                .content
+                .as_ref()
+                .or(value.text.as_ref())
+                .ok_or(CallFailure::Invalid)?;
+            prompt_text(&native_text(source)).into_owned()
+        }
+        PersonalSourceKind::Memory => {
+            prompt_text(value.summary.as_ref().ok_or(CallFailure::Invalid)?).into_owned()
+        }
+        PersonalSourceKind::Summary => format!(
+            "Summary of remembered experience: {}",
+            prompt_text(&native_text(
+                value.text.as_ref().ok_or(CallFailure::Invalid)?
+            ))
+        ),
+    };
+    Ok((description, date))
+}
+
+fn identity(identity: &RuntimeNpcSelfPrompt, label: &str, token: &str) -> String {
+    let species = identity.species.as_deref().unwrap_or("unknown");
+    let mut formatted = format!("I am {label} (ID:{token}). Species: {species}.");
+    if !identity.traits.is_empty() {
+        formatted.push_str(" My traits: ");
+        for (index, entry) in identity.traits.iter().enumerate() {
+            if index > 0 {
+                formatted.push_str("; ");
+            }
+            formatted.push_str(&prompt_text(&entry.name));
+            formatted.push_str(": ");
+            formatted.push_str(&prompt_text(&entry.description));
+        }
+        formatted.push('.');
+    }
+    formatted
+}
+
+fn about_me(game: &CurrentServer, own: &RuntimeNpcSelfPrompt) -> Result<String, CallFailure> {
+    let documents = &own.documents;
+    let titles = documents
+        .iter()
+        .map(|doc| JsText::from(format!("{}.md", doc.id)))
+        .collect::<Vec<_>>();
+    let order = if titles.len() > 1 {
+        game.language()
+            .ok_or(CallFailure::Invalid)?
+            .collate(&titles)
+            .map_err(invalid)?
+            .0
+    } else {
+        (0..titles.len() as u32).collect()
+    };
+    let mut result = String::new();
+    for (index, ordinal) in order.into_iter().enumerate() {
+        let doc = documents
+            .get(ordinal as usize)
+            .ok_or(CallFailure::Invalid)?;
+        if index > 0 {
+            result.push_str("\n\n");
+        }
+        result.push_str("# ");
+        result.push_str(&doc.id);
+        result.push_str(".md\n");
+        result.push_str(&prompt_text(&doc.text));
+    }
+    Ok(result)
+}
+
+fn body_text(own: &RuntimeNpcSelfPrompt) -> Result<String, CallFailure> {
+    let mut parts = Vec::new();
+    for attribute in &own.attributes {
+        let name = &attribute.name;
+        let measurement = match attribute.status {
+            AttributeKnowledge::Unknown => format!("{name}: unknown."),
+            AttributeKnowledge::Known => {
+                let value = match attribute.value.as_ref() {
+                    Some(AttributeValue::Category(category)) => Cow::Borrowed(category.as_str()),
+                    Some(AttributeValue::Number(number)) => {
+                        Cow::Owned(json_record(&number).map_err(invalid)?)
+                    }
+                    None => Cow::Borrowed("null"),
+                };
+                match attribute.display {
+                    AttributeDisplay::Meter => {
+                        let unit = attribute
+                            .unit
+                            .as_ref()
+                            .map(|unit| format!(" {unit}"))
+                            .unwrap_or_default();
+                        let min = json_record(&attribute.min).map_err(invalid)?;
+                        let max = json_record(&attribute.max).map_err(invalid)?;
+                        format!("{name}: {value}{unit} (range {min}–{max}{unit}).")
+                    }
+                    AttributeDisplay::Category => format!("{name}: {value}."),
+                }
+            }
+        };
+        parts.push(measurement);
+        if let Some(condition) = attribute.concern.as_ref() {
+            parts.push(prompt_text(condition).into_owned());
+        }
+        if let Some(meaning) = &attribute.meaning {
+            parts.push(meaning.clone());
+        }
+    }
+    for status in &own.action_status_labels {
+        parts.push(format!("I am {}.", status.to_lowercase()));
+    }
+    parts.push(format!(
+        "Current activity: {}.",
+        own.action.as_deref().unwrap_or("idle")
+    ));
+    Ok(parts.join(" "))
+}
+
+fn agency(own: &RuntimeNpcSelfPrompt, read: &RuntimeNpcRead) -> Result<Value, CallFailure> {
+    let remaining =
+        |paused| {
+            Ok::<_, CallFailure>(read.remaining_plan(paused).map_err(packet_failure)?.map(
+                |views| {
+                    let mut summary = String::new();
+                    for (index, activity) in views.iter().enumerate() {
+                        if index != 0 {
+                            summary.push_str("; ");
+                        }
+                        summary.push_str(&prompt_text(&activity.name));
+                    }
+                    summary
+                },
+            ))
+        };
+    let goals = own
+        .goals
+        .iter()
+        .map(|goal| {
+            prompt_record(goal, &goal.objective, |objective| Goal {
+                objective,
+                ..goal.clone()
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(
+        json!({"goals":goals,"plan":remaining(false)?,"paused":remaining(true)?,
+        "planRevision":own.plan_revision,"attempts":pending_intentions(own)?}),
+    )
+}
+
+/// Apply the permitted display conversion only to the outbound provider
+/// fields. The captured intention still holds its exact text and binding.
+fn pending_intentions(own: &RuntimeNpcSelfPrompt) -> Result<Vec<Value>, CallFailure> {
+    own.intentions()
+        .map(|intent| {
+            let mut value = serde_json::Map::from_iter([
+                ("id".into(), json!(intent.id)),
+                ("description".into(), json!(prompt_text(intent.description))),
+                ("normalized".into(), json!(prompt_text(intent.normalized))),
+                ("targetEntityId".into(), json!(intent.target_entity_id)),
+            ]);
+            if let Some(slots) = intent.slots {
+                value.insert("slots".into(), intention_prompt_value(slots)?);
+            }
+            value.insert("mode".into(), json!(intent.mode));
+            value.insert("manifestRevision".into(), json!(intent.manifest_revision));
+            value.insert("status".into(), json!(intent.status));
+            if let Some(resolution) = intent.resolution {
+                value.insert("resolution".into(), intention_prompt_value(resolution)?);
+            }
+            Ok(Value::Object(value))
+        })
+        .collect()
+}
+
+fn intention_prompt_value(value: &SqlCell) -> Result<Value, CallFailure> {
+    Ok(match value {
+        SqlCell::Null => Value::Null,
+        SqlCell::Bool(value) => Value::Bool(*value),
+        SqlCell::Number(value) => Value::Number(value.clone()),
+        SqlCell::Text(value) => Value::String(prompt_text(value).into_owned()),
+        SqlCell::Array(items) => Value::Array(
+            items
+                .iter()
+                .map(intention_prompt_value)
+                .collect::<Result<_, _>>()?,
+        ),
+        SqlCell::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| intention_prompt_value(value).map(|value| (key.clone(), value)))
+                .collect::<Result<_, _>>()?,
+        ),
+        // Admitted pending intentions and their slots/resolution use closed
+        // field names. A prose conversion must never change a member identity.
+        SqlCell::ExactObject(_) => return Err(CallFailure::Invalid),
+    })
+}
+
+#[derive(Serialize)]
+pub(super) struct RelativeBody {
+    right: f64,
+    above: f64,
+    forward: f64,
+}
+
+pub(super) fn relative_body(
+    origin: openlegend_simulation::state::Point,
+    heading: f64,
+    point: openlegend_simulation::state::Point,
+) -> RelativeBody {
+    let x = point.x - origin.x;
+    let z = point.z - origin.z;
+    let (sin, cos) = heading.sin_cos();
+    RelativeBody {
+        right: -cos * x + sin * z,
+        above: point.y - origin.y,
+        forward: sin * x + cos * z,
+    }
+}
+
+fn received_body(
+    own: &RuntimeNpcSelf,
+    facet: RuntimeNpcObservedBody<'_>,
+    name: &str,
+    alias: &str,
+) -> (String, Value) {
+    let body = facet.body;
+    let relative = relative_body(own.position(), own.heading, body.position);
+    let mut line = format!(
+        "I can see {name} (ID:{alias}). Physical form: measured at simulation second {}; received at {}.",
+        facet.value_measured_from, facet.value_acquired_at,
+    );
+    if let Some(detail) = &body.description {
+        line.push_str(" Observed description: ");
+        line.push_str(&prompt_text(detail));
+    }
+    for detail in &body.outward {
+        line.push(' ');
+        line.push_str(detail);
+    }
+    (
+        line,
+        json!({"reference": alias, "label": name, "relative": relative,
+            "valueMeasuredFrom":facet.value_measured_from,"valueMeasuredThrough":facet.value_measured_through,
+            "valueAcquiredAt":facet.value_acquired_at,"confirmedThrough":facet.confirmed_through,
+        }),
+    )
+}
+
+fn activity_requests(
+    game: &CurrentServer,
+    read: NpcActivityFacts<'_>,
+    canonical: &HashMap<&str, String>,
+) -> Result<Value, CallFailure> {
+    let mut permitted = Vec::with_capacity(read.choices.len());
+    for choice in read.choices {
+        let (key, reference) = match choice.kind {
+            "entity" => {
+                let Some(alias) = canonical.get(choice.id.as_str()) else {
+                    continue;
+                };
+                ("entityId", alias.as_str())
+            }
+            "definition" => ("definitionId", choice.id.as_str()),
+            _ => return Err(CallFailure::Invalid),
+        };
+        let mut formatted = serde_json::Map::from_iter([
+            ("label".into(), json!(prompt_text(&choice.label))),
+            ("kind".into(), json!(choice.kind)),
+            ("roles".into(), json!(choice.roles)),
+            ("requestIds".into(), json!(choice.request_ids)),
+        ]);
+        if let Some(distance) = choice.distance {
+            formatted.insert("distance".into(), json!(distance));
+        }
+        formatted.insert("accessible".into(), json!(choice.accessible));
+        formatted.insert(key.to_owned(), json!(reference));
+        permitted.push(Value::Object(formatted));
+    }
+    let warnings: Vec<_> = read.warnings.iter().map(prompt_text).collect();
+    Ok(json!({"requests":game.cognition.requests,"choices":permitted,"warnings":warnings}))
+}
+
+fn feelings(read: &RuntimeNpcFeelings) -> Result<String, CallFailure> {
+    let mut summary = String::new();
+    for feeling in &read.values {
+        if !summary.is_empty() {
+            summary.push(' ');
+        }
+        write!(summary, "I feel {}", feeling.feeling).map_err(invalid)?;
+        if let Some(index) = feeling.concerning {
+            let target = read.targets.get(index).ok_or(CallFailure::Invalid)?;
+            summary.push_str(" concerning ");
+            if target.myself {
+                summary.push_str("myself");
+            } else {
+                let phrase = name_phrase(&target.name, NameArticle::Definite, false);
+                summary.push_str(&prompt_text(&phrase));
+            }
+        }
+        if let Some((value, min, max)) = feeling.intensity {
+            let number = |value| serde_json::Number::from_f64(value).ok_or(CallFailure::Invalid);
+            write!(
+                summary,
+                "; current intensity {} on the installed {}–{} scale",
+                number(value)?,
+                number(min)?,
+                number(max)?
+            )
+            .map_err(invalid)?;
+        }
+        write!(summary, ". Source: {}; lifetime: ", feeling.coverage).map_err(invalid)?;
+        if let Some(decay) = feeling.decay_per_hour {
+            write!(
+                summary,
+                "decays by {decay} per game hour without a new interpretation"
+            )
+            .map_err(invalid)?;
+        } else {
+            summary.push_str(feeling.lifetime);
+        }
+        summary.push('.');
+    }
+    Ok(summary)
+}
+
+fn project_markers(value: &mut Value, canonical: &HashMap<&str, String>, issued: &[String]) {
+    match value {
+        Value::String(value) if value.contains("(ID:") => {
+            let mut result = String::new();
+            let mut rest = value.as_str();
+            while let Some((prefix, tail)) = rest.split_once("(ID:") {
+                let Some((id, next)) = tail.split_once(')') else {
+                    break;
+                };
+                result.push_str(prefix);
+                if id.is_empty() || id.contains('(') || id.chars().any(char::is_whitespace) {
+                    result.push_str("(ID:");
+                    result.push_str(id);
+                    result.push(')');
+                } else if let Some(reference) = canonical
+                    .get(id)
+                    .map(String::as_str)
+                    .or_else(|| issued.iter().any(|reference| reference == id).then_some(id))
+                {
+                    result.push_str("(ID:");
+                    result.push_str(reference);
+                    result.push(')');
+                } else {
+                    result.push_str("(unrecognized identity)");
+                }
+                rest = next;
+            }
+            result.push_str(rest);
+            *value = result;
+        }
+        Value::Object(fields) => {
+            for (key, value) in fields {
+                // These fields carry personal literal text, including quotation
+                // and user-authored notes. Their routing handles are separate.
+                if !matches!(
+                    key.as_str(),
+                    "experience"
+                        | "recall"
+                        | "conversation"
+                        | "stimulus"
+                        | "triggerFacts"
+                        | "notepad"
+                        | "knowledge"
+                ) {
+                    project_markers(value, canonical, issued);
+                }
+            }
+        }
+        Value::Array(items) => items
+            .iter_mut()
+            .for_each(|value| project_markers(value, canonical, issued)),
+        _ => {}
+    }
+}
+
+pub(in crate::npc) fn game_time(at: f64, offset: f64, day: Option<&str>) -> String {
+    let minutes = (at / 60.0 + offset * 60.0).floor() as i64;
+    let clock = minutes.rem_euclid(24 * 60);
+    let wall = format!("{:02}:{:02}", clock / 60, clock % 60);
+    let day_number = minutes.div_euclid(24 * 60) + 1;
+    day.map_or_else(
+        || format!("{day_number}, {wall}"),
+        |label| format!("{label} {day_number}, {wall}"),
+    )
+}

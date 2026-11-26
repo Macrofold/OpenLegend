@@ -2,7 +2,7 @@
 
 **Status: accepted product direction and proposed execution design, October 2, 2026. Documentation only; this suite does not claim implementation, capacity qualification, or authorization to implement.**
 
-OpenLegend should let very large populations belong to places with lasting histories, form particular relationships, and change the world without requiring every resident of every unattended world to deliberate continuously. The promise is **persistent identities, committed consequences, and adaptable detail**. We simulate continuous lives, not continuous maximum intelligence.
+Open Legend should let very large populations belong to places with lasting histories, form particular relationships, and change the world without requiring every resident of every unattended world to deliberate continuously. The promise is **persistent identities, committed consequences, and adaptable detail**. We simulate continuous lives, not continuous maximum intelligence.
 
 This is the strategic product-scalability owner: what belonging, absence, attention, participation, and shared consequences mean. Server fleets, protocols, replication, database tuning, backups, disaster recovery, and deployment remain with their existing technical owners. A million people across the platform is not a promise of a million unrestricted participants in one physical encounter.
 

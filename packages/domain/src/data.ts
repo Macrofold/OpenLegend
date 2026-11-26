@@ -1,3 +1,4 @@
+import { recordIdentityAllocation } from './identity-allocation.js';
 import { entityHas } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import type { WorldState } from './types.js';
@@ -39,7 +40,10 @@ export function nextId(world: WorldState, prefix: string): string {
     world.nextId >= Number.MAX_SAFE_INTEGER
   )
     throw new Error('World identity sequence is exhausted or invalid.');
-  return `${prefix}-${world.nextId++}`;
+  const sequence = world.nextId++;
+  const id = `${prefix}-${sequence}`;
+  recordIdentityAllocation(world, id, sequence);
+  return id;
 }
 /** Fresh authored objects may already use a number from the world's shared sequence.
  * Entity producers reserve their actual dictionary key without scanning history or

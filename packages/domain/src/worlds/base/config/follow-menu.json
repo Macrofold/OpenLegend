@@ -1,0 +1,6 @@
+{
+  "labelPrefix": "Follow ",
+  "description": "Follow this person while you can see them. Following stops when you lose sight of them.",
+  "category": "Movement",
+  "keywords": ["follow", "accompany"]
+}

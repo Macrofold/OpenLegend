@@ -1,3 +1,4 @@
+import hearthMessages from './hearth-placement-messages.json' with { type: 'json' };
 import { constructionPermissionCurrent } from './construction-contributions.js';
 import {
   cylinderIntersects,
@@ -232,11 +233,7 @@ export function hearthSiteProblem(
     2 * definition.radiusMetres * Math.hypot(surface.slopeX, surface.slopeZ) >
       definition.maximumHeightDifferenceMetres + SPATIAL_LIMITS.epsilon
   )
-    return outcome(
-      false,
-      'unsupported-placement',
-      'The complete footprint needs compatible, sufficiently level support.',
-    );
+    return outcome(false, 'unsupported-placement', hearthMessages.support.message);
   const bounds = hearthBounds(definition, site, definition.clearanceHeightMetres);
   for (const hit of physicalIntersections(map, { bounds })) {
     chargeWork({ tests: 1 });
@@ -245,11 +242,7 @@ export function hearthSiteProblem(
     if (hit.kind === 'surface' && hit.id === surface.id) continue;
     const solid = hit.kind === 'surface' ? { ...hit, surface: surfaceById(map, hit.id) } : hit;
     if (cylinderIntersects(solid, site, definition.radiusMetres, definition.clearanceHeightMetres))
-      return outcome(
-        false,
-        'blocked-placement',
-        'The footprint or required space above it is occupied.',
-      );
+      return outcome(false, 'blocked-placement', hearthMessages.blocked.message);
   }
   for (const entity of nearbyBodyEntities(world, site, definition.radiusMetres)) {
     if (entity.assembly) continue; // Actual attached solids were checked above.
@@ -262,7 +255,7 @@ export function hearthSiteProblem(
         definition.clearanceHeightMetres,
       )
     )
-      return outcome(false, 'occupied-placement', 'Another body or object occupies this place.');
+      return outcome(false, 'occupied-placement', hearthMessages.occupied.message);
   }
 }
 export function hearthWorkCandidates(
@@ -326,6 +319,10 @@ export function validHearthCommand(
     isSafeRecordId(command.destination.surfaceId)
   );
 }
+
+export const hearthConstructionPermissionMessage = hearthMessages.missingGrant;
+export const hearthPreviewAvailable = hearthMessages.available;
+export const hearthPreviewUnavailable = hearthMessages.unavailableDefinition;
 
 const hearthHoldId = (actionId: string, index: number) => `${actionId}:hearth-input:${index}`;
 function siteCovered(
@@ -398,17 +395,9 @@ export function prepareHearthAction(
     !material ||
     !sameDefinitionPin(definitionPin(material), definition.input.definition)
   )
-    return outcome(
-      false,
-      'unavailable-placement',
-      'The selected construction definition or material is unavailable.',
-    );
+    return outcome(false, 'unavailable-placement', hearthMessages.unavailable.message);
   if (!pointVisionQuery(world, actor)(site))
-    return outcome(
-      false,
-      'not-visible',
-      'Move where you can see the selected ground before choosing this work.',
-    );
+    return outcome(false, 'not-visible', hearthMessages.notVisible.message);
   const problem = hearthSiteProblem(world, definition, site);
   if (problem) return problem;
   let selected: { permission: ConstructionPermission; stones: HearthWork['stones'] } | undefined;
@@ -430,17 +419,9 @@ export function prepareHearthAction(
     incomplete ||= material.status === 'incomplete';
   }
   if (!selected && incomplete)
-    return outcome(
-      false,
-      'preparation-incomplete',
-      'The bounded material check is incomplete. Choose a smaller accessible stock arrangement before starting.',
-    );
+    return outcome(false, 'preparation-incomplete', hearthMessages.scanIncomplete.message);
   if (!selected)
-    return outcome(
-      false,
-      'construction-permission',
-      'The complete placement needs current site permission and enough available permitted material.',
-    );
+    return outcome(false, 'construction-permission', hearthMessages.permission.message);
   // Availability alone cannot authorize retiring an active object. Preview the
   // exact completion debit through the same quantity owner before reserving/travel.
   const debitProblem = resourceGroupProblem(
@@ -463,8 +444,7 @@ export function prepareHearthAction(
       'The selected material cannot currently be spent on this placement.',
     );
   const approach = hearthApproach(world, actorId, definition, site);
-  if (!approach)
-    return outcome(false, 'blocked-stance', 'No supported clear working stance is available.');
+  if (!approach) return outcome(false, 'blocked-stance', hearthMessages.stance.message);
   const destination = approach.candidate.stance;
   const here = worldPosition(actor),
     atStance =
@@ -543,11 +523,7 @@ export function hearthWorkProblem(
     work.physicalLife !== (actor.actor.physicalLife ?? 0) ||
     !siteCovered(grant, definition, work.site)
   )
-    return outcome(
-      false,
-      'construction-permission',
-      'The selected placement, body or current permission changed.',
-    );
+    return outcome(false, 'construction-permission', hearthMessages.changed.message);
   const material = getOwn(world.itemDefinitions, definition.input.definition.id);
   if (
     !material ||
@@ -565,11 +541,7 @@ export function hearthWorkProblem(
       );
     })
   )
-    return outcome(
-      false,
-      'changed-material',
-      'The exact held construction materials are no longer available.',
-    );
+    return outcome(false, 'changed-material', hearthMessages.changedMaterial.message);
   const siteProblem = hearthSiteProblem(world, definition, work.site);
   if (siteProblem) return siteProblem;
   if (
@@ -587,7 +559,7 @@ export function hearthWorkProblem(
         worldPosition(actor),
       ))
   )
-    return outcome(false, 'blocked-stance', 'The actual working stance or physical reach changed.');
+    return outcome(false, 'blocked-stance', hearthMessages.changedStance.message);
 }
 export function completeHearth(
   world: WorldState,

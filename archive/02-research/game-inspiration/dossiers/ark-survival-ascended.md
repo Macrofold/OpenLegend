@@ -1,6 +1,6 @@
 # G134 — ARK: Survival Ascended
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 ARK: Survival Ascended is not merely ARK: Survival Evolved with a newer renderer. It deliberately keeps the same creature-taming, tribe, building, breeding and boss-progression skeleton, but it has become a distinct live product through **Unreal Engine 5 world simulation, rebuilt construction and utility networks, cross-platform modding, wild babies, creature Traits, paid creature/content layers, official-partner maps, Lost Colony's survivor/Thrall progression, and 2026 ship progression**. Its history is also a warning about researching roadmaps as though they were delivered features: multiple major maps moved months from their announced dates, and the September 2026 game differs substantially from the January 2025 schedule.
 
@@ -673,7 +673,7 @@ These are self-selected player reports. Claims about "pay to win," cheating prev
 
 The interesting tension is that ASA improved many **interaction-level** frictions while preserving or adding **platform-level** frictions around performance, monetization and content operations.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research hypotheses, not accepted requirements.
 
@@ -723,7 +723,7 @@ Astraeos demonstrates modder → sponsored/official-partner DLC → official clu
 
 ASA's 2025–26 schedule drift proves why design/research docs should never flatten "planned" and "delivered."
 
-**OpenLegend implication:** future/mechanic proposals need explicit lifecycle state.
+**Open Legend implication:** future/mechanic proposals need explicit lifecycle state.
 
 ### 8. Cross-platform mods need dependency transparency
 
@@ -736,7 +736,7 @@ A server is only joinable if client/platform/entitlements/mod versions line up.
 
 Lost Colony adds skill systems without requiring the entire franchise to adopt one universal survivor tree.
 
-**Lesson:** OpenLegend worlds could add progression modules locally.  
+**Lesson:** Open Legend worlds could add progression modules locally.  
 **Limit:** cross-world portability becomes harder if extensions mutate the meaning of a character.
 
 ### 10. Live technical migration and content cadence compete for capacity

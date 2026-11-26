@@ -54,7 +54,7 @@ An accepted commission supplies a reason the maker may act, not a queued order i
 
 ## 5. Separate lives, return and actual delivery
 
-The accepted commission survives closing the panel, saving and a normal later session. It does not create activity during stopped world time, simulate an absent human or buy unattended resident thinking. If the world actually continues under its chosen offer, actions and deadlines follow that real game clock. Otherwise, no manufactured work or lateness occurs.
+The accepted commission survives closing the panel, saving and a normal later session. It does not create activity during stopped world time, simulate an absent human or buy unattended NPC thinking. If the world actually continues under its chosen offer, actions and deadlines follow that real game clock. Otherwise, no manufactured work or lateness occurs.
 
 The participant's Journal extends the existing Promises area with **Agreements**, rather than a business-management launcher. A compact row answers what the person agreed to provide, what they expect, the known due state and how to inspect terms. Current obligations stay separate from drafts and historical results.
 

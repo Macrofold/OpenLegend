@@ -1,6 +1,6 @@
 # Adult content: U.S. law, ratings and distribution
 
-**Research reviewed: 2026-10-16.** This is a U.S.-focused research record, not legal advice, a fifty-state survey, a rating assignment or a distribution approval. Requirements change; obtain a launch-specific legal and vendor review. The accepted OpenLegend policy is maintained in [Agent content and companion safety](../../../docs/agent-content-and-companion-safety.md); this research is supporting evidence, not a second policy owner. Companion laws and player moderation are covered in [the companion research](ai-companions-and-player-moderation.md).
+**Research reviewed: 2026-10-16.** This is a U.S.-focused research record, not legal advice, a fifty-state survey, a rating assignment or a distribution approval. Requirements change; obtain a launch-specific legal and vendor review. The accepted Open Legend policy is maintained in [Agent content and companion safety](../../../docs/agent-content-and-companion-safety.md); this research is supporting evidence, not a second policy owner. Companion laws and player moderation are covered in [the companion research](ai-companions-and-player-moderation.md).
 
 ## Finding and product interpretation
 
@@ -22,7 +22,7 @@ PEGI uses 3, 7, 12, 16 and 18. Its descriptors and national enforcement are sepa
 
 ## U.S. legal boundaries
 
-| Area | Supported conclusion | OpenLegend consequence |
+| Area | Supported conclusion | Open Legend consequence |
 | --- | --- | --- |
 | Obscenity | The Miller test considers prurient appeal, patently offensive depiction of legally defined sexual conduct and lack of serious literary, artistic, political or scientific value, with the applicable standards and work-as-a-whole analysis. Federal obscenity law can cover writing as well as images. Sexual or offensive material is not automatically obscene. [L2] | Text-only is not a universal exemption. Do not promise that a surrounding game narrative makes every generated exchange lawful. |
 | Material harmful to minors | On June 27, 2025, the Supreme Court upheld Texas's age-verification law for covered commercial websites distributing sexual material harmful to minors. Statutory definitions and coverage thresholds matter. [L3] | This does not mean every mature game must collect IDs, but a checkbox is not universally sufficient. Determine launch-state coverage and required assurance before release. |
@@ -35,7 +35,7 @@ This review does not determine state privacy-law coverage, mandatory reporting i
 
 | Channel | Source-backed constraint | Interpretation and review gate |
 | --- | --- | --- |
-| Steam | The Content Survey FAQ explicitly says Valve does not currently ship games using live-generated AI for Adult Only Sexual Content. The survey also requires mature/AI-content disclosure and safeguards against illegal live-generated content; onboarding adds its own content and payment-processor restrictions. [D1, D2] | This restriction is narrower than a ban on all mature themes or all AI NPC dialogue, and is distinct from ESRB AO. It does directly undermine a proposed live erotic-chat offering on Steam. The earlier capture missed the FAQ; this review corrects a retrieval error, not a reported policy change. OpenLegend retains its non-graphic boundary independently of Valve approval. |
+| Steam | The Content Survey FAQ explicitly says Valve does not currently ship games using live-generated AI for Adult Only Sexual Content. The survey also requires mature/AI-content disclosure and safeguards against illegal live-generated content; onboarding adds its own content and payment-processor restrictions. [D1, D2] | This restriction is narrower than a ban on all mature themes or all AI NPC dialogue, and is distinct from ESRB AO. It does directly undermine a proposed live erotic-chat offering on Steam. The earlier capture missed the FAQ; this review corrects a retrieval error, not a reported policy change. Open Legend retains its non-graphic boundary independently of Valve approval. |
 | Apple App Store | Guideline 1.1.4 prohibits overt sexual/pornographic content and expressly includes explicit descriptions intended for erotic stimulation. Guideline 1.2 requires safeguards for user-generated content, including reporting, blocking and responses. [D3] | Text is not a loophole; an adult age rating does not override content restrictions. The incidental mature-UGC exception is not blanket permission to build an erotic chatbot. |
 | Google Play | Its inappropriate-content rules prohibit pornography and content intended for sexual gratification. The AI-generated-content policy makes developers responsible for prohibited AI output and requires in-app reporting or flagging. [D4, D5] | Review the actual feature and generated output, not merely its store description or model's default refusals. |
 | Xbox / console reach | Microsoft's rating guidance explicitly states that it does not support AO titles. Individual platform approval is separate from the rating itself. [D6] | AO is a concrete Xbox distribution barrier, not merely an older-player label. Do not generalize this page to every console, country and release date. |

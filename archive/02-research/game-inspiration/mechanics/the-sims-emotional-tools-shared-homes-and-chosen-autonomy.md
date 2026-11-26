@@ -1,6 +1,6 @@
 # The Sims: emotional tools, shared homes, and chosen autonomy
 
-**Gameplay inspiration; researched September 25, 2026.** This extends [The Sims chapter](../games/the-sims.md). Most concrete rules below concern The Sims 4; the original game's creator interview is explicitly historical. Expansion features, mods, and player-imposed rules are distinguished from the base game. No gameplay session or source-code test was performed. This is reference material, not a task list or an approved OpenLegend psychology model.
+**Gameplay inspiration; researched September 25, 2026.** This extends [The Sims chapter](../games/the-sims.md). Most concrete rules below concern The Sims 4; the original game's creator interview is explicitly historical. Expansion features, mods, and player-imposed rules are distinguished from the base game. No gameplay session or source-code test was performed. This is reference material, not a task list or an approved Open Legend psychology model.
 
 ## 1. A familiar place lets players notice small differences
 
@@ -92,7 +92,7 @@ No current sales, demographics, or channel-attributed growth are inferred from t
 
 Can conversation coexist with ordinary work without becoming physically implausible? Does an emotional state change useful behavior or merely add another optimization step? Can a room be both a practical resource and a personal expression? Which offscreen changes make a world feel alive, and which violate a player's intended story? Can an ordinary player adopt a small creation without becoming a technical author?
 
-These are inspiration questions. They do not require OpenLegend to copy a particular needs model, relationship counter, household structure, or autonomy policy.
+These are inspiration questions. They do not require Open Legend to copy a particular needs model, relationship counter, household structure, or autonomy policy.
 
 ## Sources
 

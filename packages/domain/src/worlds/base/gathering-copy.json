@@ -1,0 +1,23 @@
+{
+  "name": "Gather",
+  "fallbackPrefix": "Gather ",
+  "menuDescription": "Collect material for your inventory. You’ll move close enough first and use an available tool.",
+  "menuEmpty": "There is nothing left to gather here.",
+  "menuKeyword": "collect",
+  "menuYieldName": "Yields",
+  "menuTimeName": "Time",
+  "menuTimeSeconds": "{time} seconds of game time, plus travel",
+  "menuTimeMinutes": "{time} minutes of game time, plus travel",
+  "started": "started gather.",
+  "gatheredEvent": "gathered",
+  "gathered": "gathered {quantity} {material}.",
+  "depleted": "the resource is depleted.",
+  "unavailable": "the resource is no longer available.",
+  "completed": "gather completed.",
+  "outOfReach": "the target moved out of reach.",
+  "approachName": "approach",
+  "approach": "Move to within {reach} m; the route length is not known",
+  "workName": "work",
+  "sameNamedToolSuffix": ", item {ordinal} among my same-named items",
+  "work": "{seconds} game seconds; {quantity} {material} remains here; actual yield depends on available material and tools"
+}

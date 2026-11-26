@@ -13,6 +13,6 @@
 
 The dossier distinguishes launch-era rules from later changes and assesses six independent written reviews, contrasting player reports and creator explanations. Reception samples are qualitative, not prevalence estimates. R15 modding adoption is **uncertain**: external modifications exist, but a sustained popular ecosystem was not established.
 
-The ten image files have verified dimensions and SHA-256 values in the manifest. The unchanged originals and provenance are retained in the Open Legend Library as `Sea-of-Stars-reference-screenshots.zip` (SHA-256 `f79b0dd925504f20ce0dfeb9f159da5833ad7cdeedeb1c25c20563ba40237b9d`). They are reference images, not licensed OpenLegend production assets.
+The ten image files have verified dimensions and SHA-256 values in the manifest. The unchanged originals and provenance are retained in the Open Legend Library as `Sea-of-Stars-reference-screenshots.zip` (SHA-256 `f79b0dd925504f20ce0dfeb9f159da5833ad7cdeedeb1c25c20563ba40237b9d`). They are reference images, not licensed Open Legend production assets.
 
 No firsthand gameplay, animation/motion qualification, hidden renderer reconstruction or representative player study is claimed. Exact proprietary rendering details, final costs and receipts, representative retention, and certain current coefficients and save-inheritance rules remain unknown. Existing art acceptance and implementation tasks retain their own status.

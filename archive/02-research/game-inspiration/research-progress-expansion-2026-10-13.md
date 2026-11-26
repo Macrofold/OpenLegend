@@ -49,7 +49,7 @@ Songs of Syx lore draws on source-qualified community transcriptions and older d
 
 The new standard is adopted, but a 149-subject retrospective revenue model or full enjoyment/lore/tooling audit is **not part of this task and has not been performed**. Earlier research may already contain relevant material; do not label it absent without inspecting its owner. Subsequent authorized full passes or audits must apply the amendment and update their own coverage evidence. Unknown revenue, private costs, unavailable telemetry and undocumented lore remain evidence limitations after a real search, not fabricated cells or automatic failure verdicts.
 
-The G04/G149 supplements are scoped additions, not new complete R01–R14 reviews or proof that every source in their original dossiers was freshly verified. New research stays reference-only: no OpenLegend runtime, engine policy, user-code execution architecture, monetization scheme or gameplay feature is approved by it.
+The G04/G149 supplements are scoped additions, not new complete R01–R14 reviews or proof that every source in their original dossiers was freshly verified. New research stays reference-only: no Open Legend runtime, engine policy, user-code execution architecture, monetization scheme or gameplay feature is approved by it.
 
 ## Resume boundary
 

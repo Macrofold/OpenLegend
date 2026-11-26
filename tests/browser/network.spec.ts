@@ -6,27 +6,18 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { clientViteConfiguration } from '../../apps/client/vite.config.js';
-import { createGameServer } from '../../apps/server/src/http.js';
-import { testRepository, closeTestDatabases, readConfig } from '../fixtures/database.js';
 import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
-import type {
-  GameView,
-  InviteView,
-  OperationsView,
-  WorldAgentSessionStatus,
-} from '@open-legend/protocol';
+import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
+import type { AiUsageView, GameView, InviteView, OperationsView } from '@open-legend/protocol';
 
 interface NetworkProbe {
   holdState: boolean;
   stateRequests: number;
   eventRequests: number;
-  privateRequests: number;
-  privateOpened: number;
-  privateClosed: number;
   heartbeats: number;
   eventMode: 'native' | 'incomplete' | 'forbidden';
-  privateMode: 'native' | 'forbidden';
-  releaseState?: () => Promise<void>;
+  releaseState?: () => Promise<number>;
+  stateSignal?: AbortSignal;
 }
 declare global {
   interface Window {
@@ -49,12 +40,8 @@ async function controlledBrowser(page: Page, holdState = false) {
       holdState: hold,
       stateRequests: 0,
       eventRequests: 0,
-      privateRequests: 0,
-      privateOpened: 0,
-      privateClosed: 0,
       heartbeats: 0,
       eventMode: 'native',
-      privateMode: 'native',
     });
     window.fetch = async (input, init) => {
       const path = new URL(
@@ -65,20 +52,18 @@ async function controlledBrowser(page: Page, holdState = false) {
         probe.stateRequests++;
         if (probe.holdState)
           return new Promise<Response>((resolve) => {
+            probe.stateSignal = init?.signal ?? undefined;
             probe.releaseState = async () => {
               // Ignore the original cancelled signal, then deliver its late
               // native read. It must never replace the expired entry result.
-              resolve(await original(input, { ...init, signal: undefined }));
+              const response = await original(input, { ...init, signal: undefined });
+              resolve(response);
+              return response.status;
             };
           });
       }
-      const privateProgress = path === '/api/world-agent/session/progress';
-      if (privateProgress) probe.privateRequests++;
       if (path === '/api/events') probe.eventRequests++;
-      if (
-        (path === '/api/events' && probe.eventMode === 'forbidden') ||
-        (privateProgress && probe.privateMode === 'forbidden')
-      )
+      if (path === '/api/events' && probe.eventMode === 'forbidden')
         return Response.json({ ok: false }, { status: 403 });
       if (path === '/api/events' && probe.eventMode === 'incomplete') {
         let timer = 0;
@@ -101,9 +86,7 @@ async function controlledBrowser(page: Page, holdState = false) {
         );
       }
       const response = await original(input, init);
-      if ((path !== '/api/events' && !privateProgress) || !response.body || response.status !== 200)
-        return response;
-      if (privateProgress) probe.privateOpened++;
+      if (path !== '/api/events' || !response.body || response.status !== 200) return response;
       // Observe the same native stream, without a clone/second reader. This
       // fixture records complete real server heartbeat comments for N17.
       const reader = response.body.getReader();
@@ -120,11 +103,9 @@ async function controlledBrowser(page: Page, holdState = false) {
                 controller.close();
                 return;
               }
-              if (!privateProgress) {
-                const text = tail + decoder.decode(item.value, { stream: true });
-                probe.heartbeats += (text.match(/: heartbeat\n\n/g) ?? []).length;
-                tail = text.slice(-12);
-              }
+              const text = tail + decoder.decode(item.value, { stream: true });
+              probe.heartbeats += (text.match(/: heartbeat\n\n/g) ?? []).length;
+              tail = text.slice(-12);
               controller.enqueue(item.value);
             } catch (error) {
               if (!cancelled) controller.error(error);
@@ -132,7 +113,6 @@ async function controlledBrowser(page: Page, holdState = false) {
           },
           cancel(reason) {
             cancelled = true;
-            if (privateProgress) probe.privateClosed++;
             return reader.cancel(reason);
           },
         }),
@@ -142,46 +122,35 @@ async function controlledBrowser(page: Page, holdState = false) {
   }, holdState);
 }
 
-async function gameFixture(godMode = false) {
-  const game = await createGameServer({
-    config: readConfig({
-      AI_BUDGET_USD: '0',
-      OPEN_LEGEND_WORLD_PRESET: 'solo',
-      OPEN_LEGEND_GOD_MODE: String(godMode),
-    }),
-    store: await testRepository(),
-    production: true,
-    tick: false,
-  });
-  await new Promise<void>((resolve, reject) => {
-    game.server.once('error', reject);
-    game.server.listen(0, '127.0.0.1', resolve);
-  });
-  const address = game.server.address();
-  if (!address || typeof address === 'string') throw new Error('Missing listener');
-  return { game, base: `http://127.0.0.1:${address.port}` };
-}
-
 test('resumed entry expires an ignored request before delayed timers or a late reply, then explicit retry enters the actual game', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const { base, close } = await rustBrowserGame();
   try {
     await controlledBrowser(page, true);
-    await page.goto(base);
+    await page.goto(base + '/auth/login');
     await expect.poll(() => page.evaluate(() => window.__networkProbe.stateRequests)).toBe(1);
+    await page.bringToFront();
+    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
     // Move only wall time: unlike fastForward, this does not execute the
     // deadline timer. The application's visible-document resume check must
     // expire the request before it can consume a queued native response.
     const resumedAt = await page.evaluate(() => Date.now() + 15_001);
     await page.clock.setSystemTime(resumedAt);
-    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    const expired = await page.evaluate(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      return { wallTime: Date.now(), cancelled: window.__networkProbe.stateSignal?.aborted };
+    });
+    expect(expired.wallTime).toBeGreaterThanOrEqual(resumedAt);
+    expect(expired.cancelled, 'Resuming a visible document cancels the expired state read').toBe(
+      true,
+    );
     await expect(
       page.getByRole('heading', { name: 'We couldn’t connect to your world' }),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retry connection', exact: true })).toBeEnabled();
     await page.screenshot({ path: info.outputPath('bounded-initial-entry.png') });
-    await page.evaluate(() => window.__networkProbe.releaseState!());
+    expect(await page.evaluate(() => window.__networkProbe.releaseState!())).toBe(200);
     await expect(
       page.getByRole('heading', { name: 'We couldn’t connect to your world' }),
     ).toBeVisible();
@@ -190,11 +159,25 @@ test('resumed entry expires an ignored request before delayed timers or a late r
     });
     await page.getByRole('button', { name: 'Retry connection', exact: true }).click();
     await enterGame(page);
-    await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
-    expect(await game.service.store.recentJobs()).toEqual([]);
+    await expect(page.getByRole('button', { name: 'Character (C)', exact: true })).toBeEnabled();
+    const usage = await page.request.get(base + '/api/ai/usage', {
+      headers: await browserTabHeaders(page),
+    });
+    try {
+      expect(usage.ok()).toBe(true);
+      expect(((await usage.json()) as AiUsageView).usage).toMatchObject({
+        jevCalls: 0,
+        llmCalls: 0,
+      });
+    } finally {
+      await usage.dispose();
+    }
   } finally {
-    await page.close();
-    await game.close();
+    try {
+      await page.close();
+    } finally {
+      await close();
+    }
   }
 });
 
@@ -202,13 +185,30 @@ test('quiet main streams heartbeat, partial trickles expire, and forbidden recon
   page,
 }, info) => {
   test.setTimeout(120_000);
-  const { game, base } = await gameFixture();
+  const { base, close } = await rustBrowserGame();
   try {
     await controlledBrowser(page);
     await page.goto(base);
     await enterGame(page);
-    await page.getByRole('button', { name: 'Pause world', exact: true }).click();
-    await expect.poll(() => game.service.pauseReason).toBe('manual');
+    const headers = await browserTabHeaders(page);
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+    const pause = page.getByRole('button', { name: 'Pause world', exact: true });
+    await expect(
+      pause.or(page.getByRole('button', { name: 'Resume world', exact: true })),
+    ).toBeVisible();
+    if (await pause.isVisible()) await pause.click();
+    await page.getByRole('button', { name: 'Back to the world', exact: true }).click();
+    await expect
+      .poll(async () => {
+        const reply = await page.request.get(base + '/api/state', { headers });
+        try {
+          expect(reply.ok()).toBe(true);
+          return (await reply.json()) as GameView;
+        } finally {
+          await reply.dispose();
+        }
+      })
+      .toMatchObject({ clock: { paused: true, pauseReason: 'manual' } });
     const connections = await page.evaluate(() => window.__networkProbe.eventRequests);
     // More than one complete liveness window, under the real server's cadence.
     await expect
@@ -245,94 +245,19 @@ test('quiet main streams heartbeat, partial trickles expire, and forbidden recon
       rejected,
     );
   } finally {
-    await page.close();
-    await game.close();
-  }
-});
-
-test('private progress closes on hiding, retains drafts, and stops forbidden reconnect until explicit refresh', async ({
-  page,
-}, info) => {
-  const { game, base } = await gameFixture(true);
-  try {
-    await controlledBrowser(page);
-    const paid: string[] = [];
-    page.on('request', (request) => {
-      if (/\/api\/(?:world-agent\/messages|chat|ai\/cancel)$/.test(new URL(request.url()).pathname))
-        paid.push(request.url());
-    });
-    await page.route('**/api/world-agent/session/status', async (route) => {
-      const native = await route.fetch();
-      const status = (await native.json()) as WorldAgentSessionStatus & { ok: boolean };
-      if (status.ok && status.data?.available)
-        status.availability = {
-          ...status.availability,
-          configured: true,
-          reason: 'Controlled availability; no provider call.',
-        };
-      await route.fulfill({ response: native, json: status });
-    });
-    await page.goto(base);
-    await enterGame(page);
-    await page.getByRole('button', { name: 'Game', exact: true }).click();
-    await page.getByRole('button', { name: 'World editor', exact: true }).click();
-    await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
-    const input = page.getByRole('textbox', { name: 'Message to World Agent', exact: true });
-    await expect(input).toBeVisible();
-    await input.fill('An unsent private draft');
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateOpened))
-      .toBeGreaterThanOrEqual(1);
-    await page.evaluate(() => {
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateClosed))
-      .toBeGreaterThanOrEqual(1);
-    const before = await page.evaluate(() => window.__networkProbe.privateRequests);
-    await page.evaluate(() => {
-      window.__networkProbe.privateMode = 'forbidden';
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
-      document.dispatchEvent(new Event('visibilitychange'));
-      window.dispatchEvent(new Event('focus'));
-    });
-    await enterGame(page);
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateRequests))
-      .toBeGreaterThan(before);
-    await expect(
-      page.getByText('Access changed. Reopen the conversation with current access.', {
-        exact: true,
-      }),
-    ).toBeVisible();
-    const forbidden = await page.evaluate(() => window.__networkProbe.privateRequests);
-    await page.clock.fastForward(20_000);
-    expect(await page.evaluate(() => window.__networkProbe.privateRequests)).toBe(forbidden);
-    await page.screenshot({ path: info.outputPath('bounded-private-progress.png') });
-    await page.evaluate(() => {
-      window.__networkProbe.privateMode = 'native';
-    });
-    await page
-      .locator('#world-editorPanel')
-      .getByRole('button', { name: 'Options', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Refresh this session', exact: true }).click();
-    await expect
-      .poll(() => page.evaluate(() => window.__networkProbe.privateRequests))
-      .toBeGreaterThan(forbidden);
-    await expect(input).toHaveValue('An unsent private draft');
-    expect(paid).toEqual([]);
-  } finally {
-    await page.close();
-    await game.close();
+    try {
+      await page.close();
+    } finally {
+      await close();
+    }
   }
 });
 
 test('the actual browser helper consumes a large complete game projection and releases its request slot', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const game = await rustBrowserGame();
+  const { base } = game;
   try {
     await blockExternalBrowserRequests(page);
     await page.goto(base);
@@ -413,7 +338,8 @@ test('the actual browser helper consumes a large complete game projection and re
 test('operations retains the original uncertain invitation and recovers a failed refresh without resending it', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture(true);
+  const game = await rustBrowserGame({ godMode: true });
+  const { base } = game;
   try {
     await controlledBrowser(page);
     await page.addInitScript(() => {
@@ -455,7 +381,11 @@ test('operations retains the original uncertain invitation and recovers a failed
             ? {}
             : {
                 scope: `${view.scope}:${audience}`,
-                clock: { ...view.clock, day: audience === 'renewed' ? 77 : 78 },
+                clock: {
+                  ...view.clock,
+                  day: audience === 'renewed' ? 77 : 78,
+                  seconds: view.clock.seconds + (audience === 'renewed' ? 76 : 77) * 86_400,
+                },
               }),
           ...(audience === 'replacement'
             ? { worldId: 'replacement-world', accountId: 'replacement-account' }
@@ -466,7 +396,11 @@ test('operations retains the original uncertain invitation and recovers a failed
     });
     // Establish the local fixture's normal native session. The operations UI
     // has no character-presence owner and does not create sessions on a read.
-    const session = await page.request.get(base + '/api/state');
+    await page.goto(base);
+    await enterGame(page);
+    const session = await page.request.get(base + '/api/state', {
+      headers: await browserTabHeaders(page),
+    });
     expect(session.ok()).toBe(true);
     await session.dispose();
     await page.goto(base + '/?view=operations');
@@ -587,7 +521,8 @@ function triangleGlb(): Buffer {
 test('optional icon failure leaves the game usable and real renderer resources survive late-owner replacement', async ({
   page,
 }, info) => {
-  const { game, base } = await gameFixture();
+  const game = await rustBrowserGame({ godMode: true });
+  const { base } = game;
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-renderer-network-'));
   try {
     const bytes = triangleGlb();
@@ -642,11 +577,12 @@ test('optional icon failure leaves the game usable and real renderer resources s
     const installed = JSON.parse(
       await readFile(new URL('../../assets/locks/development.json', import.meta.url), 'utf8'),
     ) as { files: Record<string, { sha256: string }> };
-    const iconsSha256 = installed.files['apps/client/src/design-system/icons/icons.json']!.sha256;
+    const iconPath = 'apps/client/src/design-system/gildmoss/icons/runtime-catalog.json';
+    const iconsSha256 = installed.files[iconPath]!.sha256;
     let iconFailures = 0;
     await page.route('**/*', async (route) => {
       const url = decodeURIComponent(route.request().url());
-      if (url.includes(iconsSha256) || url.includes('/design-system/icons/icons.json')) {
+      if (url.includes(iconsSha256) || url.includes(iconPath)) {
         iconFailures++;
         return route.abort('failed');
       }
@@ -658,11 +594,17 @@ test('optional icon failure leaves the game usable and real renderer resources s
       if (!output || output.type !== 'chunk') return route.abort('failed');
       return route.fulfill({ status: 200, contentType: 'text/javascript', body: output.code });
     });
+    // Establish the real local session without first booting an anonymous
+    // document, so one app entry means one catalog request.
+    const login = await page.request.get(base + '/auth/login');
+    expect(login.ok()).toBe(true);
+    await login.dispose();
     await page.goto(base);
     await enterGame(page);
     expect(iconFailures).toBe(1);
     await expect(page.locator('.ol-sigil').first()).toBeVisible();
-    await page.getByRole('button', { name: 'Time settings', exact: true }).click();
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+    await page.getByRole('button', { name: 'Time', exact: true }).click();
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeVisible();
     const evidence = await page.evaluate(
       async (contents) => {
@@ -704,7 +646,7 @@ test('optional icon failure leaves the game usable and real renderer resources s
       indicesReleased: true,
       registryReleased: true,
     });
-    await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeEnabled();
     await info.attach('renderer-network-retirement.json', {
       body: JSON.stringify(evidence, null, 2),
       contentType: 'application/json',
@@ -717,5 +659,3 @@ test('optional icon failure leaves the game usable and real renderer resources s
     await rm(directory, { recursive: true, force: true });
   }
 });
-
-test.afterAll(closeTestDatabases);

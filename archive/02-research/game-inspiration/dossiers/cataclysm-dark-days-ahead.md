@@ -1,6 +1,6 @@
 # G122 — Cataclysm: Dark Days Ahead
 
-**Full R01–R14 research pass.** Research date: September 26, 2026. [Roster](../research-roster.md) · [R01–R14 requirements](../research-requirements.md) · [Progress and completion commit](../research-progress.md). Reference research only, not an accepted OpenLegend design or implementation proposal. **Spoilers:** broad setting, faction and character-transformation examples, without a detailed laboratory or mission solution.
+**Full R01–R14 research pass.** Research date: September 26, 2026. [Roster](../research-roster.md) · [R01–R14 requirements](../research-requirements.md) · [Progress and completion commit](../research-progress.md). Reference research only, not an accepted Open Legend design or implementation proposal. **Spoilers:** broad setting, faction and character-transformation examples, without a detailed laboratory or mission solution.
 
 ## R01 — Identity, scope and the player's changing promise
 
@@ -222,7 +222,7 @@ These samples distinguish dislike of the purchase proposition from dislike of th
 
 ## R13 — Transferable inspiration and limits
 
-The following are **research interpretations**, not accepted OpenLegend requirements.
+The following are **research interpretations**, not accepted Open Legend requirements.
 
 **Make ordinary objects useful in several compatible ways.** A container, garment, tool or vehicle component becomes interesting when its properties participate in multiple decisions. The condition is consistency and discoverability. The failure mode is an enormous catalog whose distinctions are mostly bookkeeping. A smaller set of strongly differentiated objects can offer similar expressive value.
 

@@ -172,7 +172,7 @@ The earlier helpful-all-time capture preserved **Endd, June 22, 2023**, recommen
 
 Negative-only Community routes and the review API repeatedly failed retrieval; an attempted direct public fetch also failed DNS resolution. **No negative-rated Steam body is claimed.** The substantive GameCritics dissent, the Reduced Frights discussion and the preserved patientgamers account provide contrasting perspectives without pretending to meet that missing sampling step. The source-access limitation is retained for future audit rather than silently converted to positive consensus. [S3] [R2]
 
-## 10. OpenLegend patterns and limits — interpretation, not requirements
+## 10. Open Legend patterns and limits — interpretation, not requirements
 
 **Knowledge as capability.** Remembered timing, motives or a material relationship could enable a new action without granting a stat. The useful test is whether the information changes a decision; a large lore archive alone does not establish that.
 

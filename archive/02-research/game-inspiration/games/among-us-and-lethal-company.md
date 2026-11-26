@@ -8,9 +8,9 @@
 
 **Sharing mechanism.** A viewer can often understand a betrayal, failed rescue, panicked retreat, or sudden absence with little background. This makes the design clip-friendly. It does not establish a quantified causal account of their marketing or sales.
 
-**Transfer.** OpenLegend should test one clear shared predicament with partial knowledge. An AI character can add value by having a relevant observation, a conflicting priority, or a remembered reason to trust someone—not by providing more dialogue in a situation where everyone already knows everything.
+**Transfer.** Open Legend should test one clear shared predicament with partial knowledge. An AI character can add value by having a relevant observation, a conflicting priority, or a remembered reason to trust someone—not by providing more dialogue in a situation where everyone already knows everything.
 
-**Pitfall.** Funny chaos and long-term world care need different pacing. A moment that is amusing in a short round may be intolerable when it destroys a week’s creative work. Also, a social game may feel far weaker without the right group; OpenLegend should explicitly test solo value rather than assuming players will supply the missing entertainment.
+**Pitfall.** Funny chaos and long-term world care need different pacing. A moment that is amusing in a short round may be intolerable when it destroys a week’s creative work. Also, a social game may feel far weaker without the right group; Open Legend should explicitly test solo value rather than assuming players will supply the missing entertainment.
 
 
 ---
@@ -41,7 +41,7 @@
 
 3. **A tempting noisy object is not neutral cargo.** *Documented world interaction.* The developer description warns about taking conspicuous or noisy risks. A recovered object can matter because of how it changes behavior and danger while carried—not only its sale value. The game makes transport part of the encounter rather than treating loot as instantly safe once clicked. [FG-LC-O](../references/sources-04.md#source-fg-lc-o)
 
-**What to borrow for OpenLegend.** Give OpenLegend one understandable cooperative predicament with partial evidence and different priorities. AI inhabitants could add value as imperfect partners, not as narrators of an already resolved event. Keep viral chaos distinct from acceptable long-term loss and from the problem of finding a good group.
+**What to borrow for Open Legend.** Give Open Legend one understandable cooperative predicament with partial evidence and different priorities. AI inhabitants could add value as imperfect partners, not as narrators of an already resolved event. Keep viral chaos distinct from acceptable long-term loss and from the problem of finding a good group.
 
 *Scope/evidence note:* Base-game mechanics only. Popular voice-mimicry or other modded clips must not be presented as native AI behavior; human voice communication is not an LLM character system.
 <!-- END FIELDGUIDE ADDITION -->

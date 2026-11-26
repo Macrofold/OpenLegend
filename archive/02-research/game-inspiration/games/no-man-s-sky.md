@@ -6,6 +6,6 @@
 
 **What the recovery teaches.** Expanding meaningful activities can strengthen a generated world. It would be misleading to conclude that unlimited post-launch updates are a viable strategy for every studio, or that launch disappointment is harmless. Recovery requires resources, persistence, and a reason for players to reconsider the product.
 
-**OpenLegend implication.** Measure variation in decisions and relationships, not just variation in generated assets, names, prose, or geography. Two worlds can look different while presenting the same optimal behavior. One small world can feel different tomorrow because a promise, injury, invention, or discovery changed the situation.
+**Open Legend implication.** Measure variation in decisions and relationships, not just variation in generated assets, names, prose, or geography. Two worlds can look different while presenting the same optimal behavior. One small world can feel different tomorrow because a promise, injury, invention, or discovery changed the situation.
 
 **Marketing caution.** Show the experience that reliably exists. Do not invite players to extrapolate from one exceptional generated interaction to a promise that every imaginable interaction works equally well.

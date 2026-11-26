@@ -4,7 +4,7 @@
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Spirit and separate mental statuses are selected; Spirit's rule and its first status are now specified, and Determined remains undecided. | 2026-10-27   |
 
-This records the naming decision and design direction for OpenLegend's bundled world, not a complete implementation specification or a universal engine rule. No gameplay changes are authorized by this note.
+This records the naming decision and design direction for Open Legend's bundled world, not a complete implementation specification or a universal engine rule. No gameplay changes are authorized by this note.
 
 ## Selected direction
 
@@ -17,7 +17,7 @@ Specific mental statuses can coexist with Spirit and have their own behavioral o
 1. **Start with current condition, not lifetime happiness.** Mike wanted an alternative to Morale or Sanity for how a character is doing mentally now.
 2. **Compare Composure and Spirit.** The assistant initially favored Composure for immediate steadiness under pressure. Mike preferred Spirit, using grief as the example. That moved the discussion beyond calmness or control toward broader emotional well-being. Mood was also considered as a literal label, but was not selected.
 3. **Challenge the ambiguity.** At Mike's request, the assistant questioned whether Spirit confused emotional well-being with motivation or resilience. A grieving but determined character exposed the problem with expecting one number to describe everything. These were concerns raised for consideration, not requirements Mike accepted.
-4. **Revisit Morale in light of the game's purpose.** Morale was considered for confidence and willingness to continue. Mike clarified that OpenLegend should not primarily be about fighting: players should be able to improve their skills, make an honest living, and explore, in the spirit of Stardew Valley. Spirit became the preferred fit for that broader life, rather than framing mental condition mainly around performance or adversity. This does not mean Morale can only describe combat.
+4. **Revisit Morale in light of the game's purpose.** Morale was considered for confidence and willingness to continue. Mike clarified that Open Legend should not primarily be about fighting: players should be able to improve their skills, make an honest living, and explore, in the spirit of Stardew Valley. Spirit became the preferred fit for that broader life, rather than framing mental condition mainly around performance or adversity. This does not mean Morale can only describe combat.
 5. **Choose Spirit plus separate statuses.** Mike selected Spirit and proposed that a grieving character could have very low Spirit alongside Determined. The status can provide its own benefit without making the character emotionally well.
 
 ## Grieving but determined

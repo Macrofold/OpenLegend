@@ -1,6 +1,6 @@
 # G144 — Green Hell
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Green Hell is most useful as a study of **survival as diagnosis**. Instead of collapsing health into a single hunger bar, it repeatedly asks the player to identify *what is wrong*, *where it is wrong*, and *which exact intervention solves it*: inspect a limb, distinguish leeches from a worm or infected wound, balance protein/fat/carbohydrate/hydration, treat venom, restore sanity, and decide whether the next expedition is worth the physiological risk. Its best loop is knowledge gained through costly mistakes.
 
@@ -570,13 +570,13 @@ One detailed recent Steam account changed from a negative Steam Deck/control imp
 
 **Dense environment versus orientation.** The jungle feels convincing partly because it is visually repetitive/occluding enough to get lost in.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Replace generic status bars with diagnosable state
 
 Green Hell's most transferable lesson is the question: **what exactly is wrong?** A character can be hungry in the wrong nutrient dimension, bleeding on one limb, poisoned and losing sanity for a separate reason.
 
-OpenLegend can use this without copying medical simulation wholesale:
+Open Legend can use this without copying medical simulation wholesale:
 - observable symptoms;
 - local causes;
 - specific interventions;
@@ -596,7 +596,7 @@ Leeches matter because they affect sanity; unsafe sleep matters because it creat
 
 ### 4. Make preparation about likely contingencies
 
-Backpack limits force the player to choose which future problems to be ready for. OpenLegend inventories can be meaningful if objects preserve *specific future options*, not if every expedition carries a universal solution stack.
+Backpack limits force the player to choose which future problems to be ready for. Open Legend inventories can be meaningful if objects preserve *specific future options*, not if every expedition carries a universal solution stack.
 
 ### 5. Navigation can be a cognitive skill
 
@@ -606,7 +606,7 @@ The map/compass/landmark model produces genuine spatial memory. Avoid relying on
 
 ### 6. Difficulty can change system presence, not just numbers
 
-Green Hell supports players who want intense bodily simulation and players who mostly want exploration/building by allowing threats to be disabled/adjusted. OpenLegend can expose world-rule presets rather than only enemy-health sliders.
+Green Hell supports players who want intense bodily simulation and players who mostly want exploration/building by allowing threats to be disabled/adjusted. Open Legend can expose world-rule presets rather than only enemy-health sliders.
 
 ### 7. Content completeness is a valid product state
 
@@ -614,7 +614,7 @@ Creepy Jar explicitly stopped expanding content in 2024 while continuing technic
 
 ### 8. Hardware/version boundaries should be explicit
 
-The current-gen port could not preserve last-gen saves/cross-generation multiplayer. OpenLegend should treat persistence/migration/network compatibility as product contracts that must be made visible before platform transitions.
+The current-gen port could not preserve last-gen saves/cross-generation multiplayer. Open Legend should treat persistence/migration/network compatibility as product contracts that must be made visible before platform transitions.
 
 ### What not to copy automatically
 

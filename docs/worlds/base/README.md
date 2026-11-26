@@ -82,4 +82,4 @@ Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecyc
 - [Action family facts](actions.md) — what engine code reads about the bundled families (item outputs, tool fields, pausing, cooking).
 - [Time](time.md) — clock fidelity and the named stopping times (dawn, dusk).
 
-[Routine attention experiment](attention.md) records a tested, unretained busy-witness rule; it is not a current world law.
+[Attention and recording](attention.md) describes which subjects a character follows in detail. The [earlier trial that skipped observations during routine work](attention.md#busy-worker-attention-experiment--not-retained) was rejected.

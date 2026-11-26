@@ -61,6 +61,7 @@ interface EncounterWatch {
 export interface AttackObservationReceipt {
   life: number;
   episode: string | null;
+  occurrenceId: string;
 }
 export interface PersonalEncounter {
   otherLife: number;
@@ -71,7 +72,7 @@ export interface PersonalEncounter {
   movement?: 'closing' | 'withdrawing' | 'lateral';
   lastCause?: { id: string; at: number; kind: 'preparation' | 'release' | 'attempt' | 'contact' };
   incomingUntil?: number;
-  active: Record<string, { kind: 'action' | 'projectile'; id: string }>;
+  active: Record<string, { kind: 'action' | 'projectile'; id: string; occurrenceId: string }>;
   lastObserved?: {
     point: Position;
     surfaceId: string | null;
@@ -646,7 +647,7 @@ function hostile(
  * Raw IDs bind integrity after source/subject disclosure, never establish recognition. */
 export function acquireCombatObservation(
   world: WorldState,
-  observation: Awareness,
+  observation: Pick<Awareness, 'actorId' | 'sourceId' | 'targetId' | 'eventType' | 'sequence'>,
   event: Readonly<WorldEvent>,
 ): void {
   const observer = entityGet(world.entities, observation.actorId);
@@ -693,7 +694,11 @@ export function acquireCombatObservation(
   hostile(world, pair, { id: event.id, at: event.at, kind }, event.order ?? observation.sequence);
   if (kind === 'release' && typeof event.data?.['projectileId'] === 'string') {
     const id = event.data['projectileId'];
-    pair.active[JSON.stringify(['projectile', id])] = { kind: 'projectile', id };
+    pair.active[JSON.stringify(['projectile', id])] = {
+      kind: 'projectile',
+      id,
+      occurrenceId: event.id,
+    };
   }
   pair.lastObserved = {
     point: { ...worldPosition(source) },
@@ -806,13 +811,10 @@ export function reconcileCombatSight(
     const known =
       old?.life === life(observer) &&
       subjectReferenceCurrent(world, observer.id, source.id, old.episode);
-    if (!known) {
-      (action.attackObservers ??= {})[observer.id] = {
-        life: life(observer),
-        episode: world.perceptionEpisodes?.[observer.id]?.[source.id] ?? null,
-      };
+    let receipt = known ? old : undefined;
+    if (!receipt) {
       // The ordinary event owner retains precise personally exposed cause and target.
-      emitPrivateObservation(
+      const cue = emitPrivateObservation(
         world,
         events,
         'attack-cue',
@@ -832,11 +834,23 @@ export function reconcileCombatSight(
           ...bodyPolicy(world)?.combat?.impactAttention,
         },
       );
+      receipt = {
+        life: life(observer),
+        episode: world.perceptionEpisodes?.[observer.id]?.[source.id] ?? null,
+        occurrenceId: cue.id,
+      };
+      (action.attackObservers ??= {})[observer.id] = receipt;
     }
     if (target.id === observer.id) {
       const pair = pairFor(world, observer, source);
       const token = JSON.stringify(['action', action.id]);
-      if (pair && !pair.active[token]) pair.active[token] = { kind: 'action', id: action.id };
+      if (
+        pair &&
+        !pair.active[token] &&
+        !world.experience?.forgotten[observer.id]?.includes(receipt.occurrenceId) &&
+        !world.experience?.corrections?.[observer.id]?.[receipt.occurrenceId]
+      )
+        pair.active[token] = { kind: 'action', id: action.id, occurrenceId: receipt.occurrenceId };
     }
   }
   const selected = selectedSubjects(world, observer);
@@ -979,14 +993,21 @@ export function revokeCombatEvidence(
 ): void {
   const state = entityGet(world.entities, observerId)?.actor?.encounters;
   if (!state) return;
-  for (const pair of Object.values(state.pairs))
+  for (const pair of Object.values(state.pairs)) {
+    let changed = false;
+    for (const [token, active] of Object.entries(pair.active))
+      if (affected.has(active.occurrenceId)) {
+        delete pair.active[token];
+        changed = true;
+      }
     if (pair.lastCause && affected.has(pair.lastCause.id)) {
-      advanceEncounterPreference(pair);
+      changed = true;
       delete pair.lastCause;
       delete pair.incomingUntil;
-      pair.active = {};
       delete pair.speak;
     }
+    if (changed) advanceEncounterPreference(pair);
+  }
   for (const id of affected) delete state.unknown[id];
   reschedule(world, state);
 }
@@ -1029,7 +1050,8 @@ export function validateCombatEncounters(world: WorldState): void {
       for (const [id, receipt] of Object.entries(receipts))
         if (
           !isSafeRecordId(id) ||
-          !hasRecordFields(receipt, ['life', 'episode']) ||
+          !hasRecordFields(receipt, ['life', 'episode', 'occurrenceId']) ||
+          !isSafeRecordId(receipt.occurrenceId) ||
           !Number.isSafeInteger(receipt.life) ||
           receipt.life < 0 ||
           (receipt.episode !== null && (typeof receipt.episode !== 'string' || !receipt.episode))
@@ -1109,9 +1131,10 @@ export function validateCombatEncounters(world: WorldState): void {
         throw new Error('Invalid personal encounter observation watch.');
       for (const [token, active] of Object.entries(pair.active))
         if (
-          !hasRecordFields(active, ['kind', 'id']) ||
+          !hasRecordFields(active, ['kind', 'id', 'occurrenceId']) ||
           !['action', 'projectile'].includes(active.kind) ||
           !isSafeRecordId(active.id) ||
+          !isSafeRecordId(active.occurrenceId) ||
           token !== JSON.stringify([active.kind, active.id])
         )
           throw new Error('Invalid observed attack binding.');

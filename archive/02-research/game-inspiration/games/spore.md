@@ -6,6 +6,6 @@
 
 **Key versus optional.** Visual expressiveness and surprising creations can generate attention. But players seeking functional experimentation need morphology or design choices to affect behavior in understandable ways. A cosmetic difference may be enough for a playful art toy and inadequate for an advertised living-system simulator.
 
-**OpenLegend implication.** Be explicit about the promise of each mode. Creator mode may legitimately reward expressive experimentation. Embodied play should make the created mechanic change decisions. A touch-only organism should not behave like an ordinary sighted NPC with different flavor text. A “new school of magic” should have discernible constraints and interactions, not only different names.
+**Open Legend implication.** Be explicit about the promise of each mode. Creator mode may legitimately reward expressive experimentation. Embodied play should make the created mechanic change decisions. A touch-only organism should not behave like an ordinary sighted NPC with different flavor text. A “new school of magic” should have discernible constraints and interactions, not only different names.
 
 **Failure classification.** This case is a mixed-expectation and design-tension example. The brief does not establish that Spore was an unqualified commercial failure, nor that its enthusiastic players were mistaken.

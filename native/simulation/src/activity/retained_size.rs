@@ -1,0 +1,301 @@
+//! Allocation bounds for one changed action record. History collections are
+//! never cloned: the journal retains only a changed record's mutable subtrees.
+
+use super::*;
+use crate::commands::{ActivityOutput, CooperationBinding, NativeCommand, Outcome, PurposeBinding};
+use crate::host::retained_size::{heap_record, heap_sum, HeapBytes};
+
+heap_record!(ActivityItemSource {
+    actor_id,
+    occurrence_id,
+    port
+});
+
+impl HeapBytes for ActivityScalar {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::String(v) => v.heap_bytes(),
+            _ => Some(0),
+        }
+    }
+}
+impl HeapBytes for ActivityDetail {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Scalar(v) => v.heap_bytes(),
+            Self::List(v) => v.heap_bytes(),
+            Self::Fields(v) => v.heap_bytes(),
+        }
+    }
+}
+heap_record!(ActivityFact {
+    name,
+    value,
+    critical,
+    sentence
+});
+heap_record!(ActivityView {
+    name,
+    actor,
+    target,
+    tool,
+    facts,
+    children,
+    result
+});
+heap_record!(ActivityOutput {
+    port,
+    item_id,
+    definition_id,
+    quantity
+});
+heap_record!(Outcome {
+    spent,
+    outputs,
+    ok,
+    code,
+    message,
+    recipe_id,
+    item_id,
+    entity_id,
+    goal_id,
+    plan_id,
+    action_id
+});
+heap_record!(ActivityEffect {
+    id,
+    subject_id,
+    label,
+    property,
+    unit,
+    before,
+    after
+});
+impl HeapBytes for ActivityConnection {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([self.from.heap_bytes()?, self.port.heap_bytes()?])
+    }
+}
+impl HeapBytes for ResultEvidence {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Account { id, .. } => id.heap_bytes(),
+            Self::Recent { subject, receipt } => heap_sum([
+                subject.heap_bytes()?,
+                receipt.actor_id.heap_bytes()?,
+                receipt.epoch.heap_bytes()?,
+            ]),
+        }
+    }
+}
+heap_record!(LearningInspection {
+    event_id,
+    after,
+    method_after
+});
+heap_record!(LearningCursor {
+    inspection,
+    after,
+    position,
+    examined,
+    pending,
+    assessed
+});
+heap_record!(ActivityReference {
+    actor_id,
+    occurrence_id
+});
+heap_record!(ActivityObject {
+    kind,
+    definition_id,
+    definition_version,
+    definition_digest
+});
+heap_record!(CooperationBinding { id, revision });
+heap_record!(PurposeBinding {
+    definition,
+    id,
+    description,
+    roles,
+    source_ids
+});
+
+impl HeapBytes for NativeCommand {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Outing {
+                envelope,
+                parameters,
+            } => heap_sum([envelope.heap_bytes()?, parameters.heap_bytes()?]),
+            Self::OperateGate { envelope, intent } => heap_sum([
+                envelope.heap_bytes()?, intent.heap_bytes()?,
+            ]),
+            Self::PlaceHearth { envelope, definition, site } => heap_sum([
+                envelope.heap_bytes()?, definition.heap_bytes()?, site.heap_bytes()?,
+            ]),
+            Self::Handover { envelope, target_id, gift } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, gift.retained_text_bytes()]),
+            Self::Move {
+                envelope,
+                destination,
+            }
+            | Self::Evade {
+                envelope,
+                destination,
+            } => heap_sum([envelope.heap_bytes()?, destination.heap_bytes()?]),
+            Self::DescriptiveAct { envelope, predicate, target } =>
+                heap_sum([envelope.heap_bytes()?, predicate.heap_bytes()?, target.heap_bytes()?]),
+            Self::Say {
+                envelope,
+                text,
+                target_id,
+                self_introduction,
+                public_appeal,
+                volume,
+                ..
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                text.heap_bytes()?,
+                target_id.heap_bytes()?,
+                self_introduction.heap_bytes()?,
+                public_appeal.heap_bytes()?,
+                volume.heap_bytes()?,
+            ]),
+            Self::StatusEffect {
+                envelope,
+                target_id,
+                definition_id,
+                resting_place_id,
+                ..
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                definition_id.heap_bytes()?,
+                resting_place_id.heap_bytes()?,
+            ]),
+            Self::Respawn { envelope } => envelope.heap_bytes(),
+            Self::Cancel {
+                envelope,
+                expected_action_id,
+                ..
+            } => heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
+            Self::WithdrawAttempt {
+                envelope,
+                attempt_id,
+            } => heap_sum([envelope.heap_bytes()?, attempt_id.heap_bytes()?]),
+            Self::Feed {
+                envelope,
+                target_id,
+                item_id,
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                item_id.heap_bytes()?,
+            ]),
+            Self::Follow {
+                envelope,
+                target_id,
+                ..
+            } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?]),
+            Self::Eat { envelope, item_id } | Self::Equipment { envelope, item_id, .. } =>
+                heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?]),
+            Self::Drop { envelope, item_id, group, .. } =>
+                heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?, group.heap_bytes()?]),
+            Self::Harvest{envelope,target_id}=>heap_sum([envelope.heap_bytes()?,target_id.heap_bytes()?]),
+            Self::Express {envelope,verb,target}=>heap_sum([envelope.heap_bytes()?,verb.heap_bytes()?,target.heap_bytes()?]),
+            Self::TransferStock { envelope, request } => heap_sum([envelope.heap_bytes()?,request.source.heap_bytes()?,request.destination.heap_bytes()?,request.definition.heap_bytes()?]),
+            Self::TransferItem { envelope, selection, group } => heap_sum([
+                envelope.heap_bytes()?, selection.item_id.heap_bytes()?, selection.target_id.heap_bytes()?,
+                group.heap_bytes()?,
+            ]),
+            Self::Gather {
+                envelope,
+                target_id,
+                tool,
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                tool.heap_bytes()?,
+            ]),
+            Self::Craft { envelope, recipe_id, tools } =>
+                heap_sum([envelope.heap_bytes()?, recipe_id.heap_bytes()?, tools.heap_bytes()?]),
+            Self::TreatScar { envelope, target_id, scar_id } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, scar_id.heap_bytes()?]),
+            Self::TendFire { envelope, target_id, item_id, .. } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
+            Self::Cook { envelope, heat_id, definition, inputs } =>
+                heap_sum([envelope.heap_bytes()?, heat_id.heap_bytes()?, definition.heap_bytes()?, inputs.heap_bytes()?]),
+            Self::Fish { envelope, target_id, item_id } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
+            Self::Pickup { envelope, target_id, item_id, .. } =>
+                heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?, item_id.heap_bytes()?]),
+            Self::Strike {
+                envelope,
+                target_id,
+                definition_id,
+                weapon_item_id,
+                ..
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                definition_id.heap_bytes()?,
+                weapon_item_id.heap_bytes()?,
+            ]),
+            Self::Guard { envelope, item_id, facing, .. } =>
+                heap_sum([envelope.heap_bytes()?, item_id.heap_bytes()?, facing.heap_bytes()?]),
+            Self::ReleaseStrike { envelope, expected_action_id } =>
+                heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
+            Self::Ranged { envelope, intent } =>
+                envelope.heap_bytes()?.checked_add(intent.heap_bytes()?),
+            Self::Coaching{envelope,selection}=>heap_sum([envelope.heap_bytes()?,selection.attribute_id.heap_bytes()?,selection.target_id.heap_bytes()?,selection.episode_id.heap_bytes()?]),
+            Self::PracticeShot { envelope, target_id, weapon_item_id, ammo_item_id } => heap_sum([
+                envelope.heap_bytes()?, target_id.heap_bytes()?, weapon_item_id.heap_bytes()?, ammo_item_id.heap_bytes()?,
+            ]),
+            Self::InspectInventory { envelope, selected, world } => heap_sum([
+                envelope.heap_bytes()?,
+                selected.as_ref().map_or(Some(0), |item| {
+                    item.item_id.heap_bytes()?.checked_add(item.container_id.heap_bytes()?)
+                })?,
+                world.as_ref().map_or(Some(0), |page| heap_sum([
+                    page.root.heap_bytes()?, page.after.heap_bytes()?, page.expected_scope.heap_bytes()?,
+                ]))?,
+            ]),
+            Self::LearnRecord { envelope, record } => heap_sum([
+                envelope.heap_bytes()?, record.item_id.heap_bytes()?, record.record_pin.heap_bytes()?,
+            ]),
+            Self::Teach { envelope, target_id, recipe_id, .. } => heap_sum([
+                envelope.heap_bytes()?, target_id.heap_bytes()?, recipe_id.heap_bytes()?,
+            ]),
+            Self::InspectActivities { envelope, .. } => envelope.heap_bytes(),
+            Self::EncounterPreference { envelope, binding, .. } => heap_sum([
+                envelope.heap_bytes()?, size_of::<crate::capture::EncounterPreference>(),
+                binding.target_id.heap_bytes()?, binding.episode.heap_bytes()?,
+            ]),
+        }
+    }
+}
+impl ActivityOccurrence {
+    pub(super) fn live_heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.stock_resolution.heap_bytes()?,
+            self.cooperation.heap_bytes()?,
+            self.attack_execution.heap_bytes()?,
+            self.release.heap_bytes()?,
+            self.id.heap_bytes()?,
+            self.actor_id.heap_bytes()?,
+            self.command_id.heap_bytes()?,
+            self.action_id.heap_bytes()?,
+            self.parent_id.heap_bytes()?,
+            self.parent_name.heap_bytes()?,
+            self.method_id.heap_bytes()?,
+            self.command.heap_bytes()?,
+            self.objects.heap_bytes()?,
+            self.view.heap_bytes()?,
+            self.outputs.heap_bytes()?,
+            self.connections.heap_bytes()?,
+            self.outcome.heap_bytes()?,
+            self.evidence_ids.heap_bytes()?,
+            self.result_evidence.heap_bytes()?,
+            self.effects.heap_bytes()?,
+        ])
+    }
+}

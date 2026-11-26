@@ -2,7 +2,7 @@
 
 **Status:** research and architectural recommendation, not an accepted product change or implementation result.
 
-**Repository evidence:** `Macrofold/OpenLegend` at commit `03ae5fb7a5ac25bcda39e6dbde274be1c9a942bd`. Public engine documentation was reviewed alongside that snapshot. Code inspection establishes control flow and potential scaling costs; this research did not execute OpenLegend, run a new benchmark, or verify live model behavior. Engine descriptions below concern the cited interfaces, not every game made with an engine.
+**Repository evidence:** `Macrofold/OpenLegend` at commit `03ae5fb7a5ac25bcda39e6dbde274be1c9a942bd`. Public engine documentation was reviewed alongside that snapshot. Code inspection establishes control flow and potential scaling costs; this research did not execute Open Legend, run a new benchmark, or verify live model behavior. Engine descriptions below concern the cited interfaces, not every game made with an engine.
 
 **Reading map:** this document owns external research and the repository audit. [Events, perception, and reactions](../../docs/events-perception-and-reactions.md) owns the proposed contract; the [EPR tracker](../../docs/maintainers/events-perception-and-reactions.md) owns proposed implementation work. Current implementation and measurements remain in the existing Architecture and Verification documents.
 
@@ -28,17 +28,17 @@ The `UAISense_Sight` API itself calls sight queries an n-squared problem and des
 
 Unreal's Significance Manager evaluates registered objects relative to viewpoints, then lets game code use the resulting importance. Epic explicitly notes that the manager alone does not improve performance. Its resource-allocation significance should not be confused with an individual character recognizing a legendary object or finding it emotionally meaningful. [UE4]
 
-MassEntity adds a different tool: data-only fragments, archetype-based storage, batched processors, and deferred structural changes. It illustrates that high-volume simulation is also a data-layout and bulk-processing problem. It does not imply that OpenLegend should migrate to Unreal or replace its current domain with a new ECS. [UE5]
+MassEntity adds a different tool: data-only fragments, archetype-based storage, batched processors, and deferred structural changes. It illustrates that high-volume simulation is also a data-layout and bulk-processing problem. It does not imply that Open Legend should migrate to Unreal or replace its current domain with a new ECS. [UE5]
 
-StateTree combines hierarchical state-machine structure with behavior-tree selection. It is an alternative for organizing behavior once relevant state is available, not a replacement for spatial detection, authoritative facts, or paid-work admission. OpenLegend does not need a new behavior-tree editor to improve its trigger infrastructure. [UE6]
+StateTree combines hierarchical state-machine structure with behavior-tree selection. It is an alternative for organizing behavior once relevant state is available, not a replacement for spatial detection, authoritative facts, or paid-work admission. Open Legend does not need a new behavior-tree editor to improve its trigger infrastructure. [UE6]
 
 ### Unity: shared candidate data, change filters, and batched work
 
-CullingGroup accepts shared bounding-sphere data and reports visibility/distance-band changes. This resembles the proposed enter/exit/distance-tier notifications. Important limits: a group uses one camera/reference point; visibility uses camera frustum and static occlusion rather than arbitrary NPC senses or dynamic occluders; results update during camera culling. Share common source data, but retain independent viewpoints and know which snapshot the result describes. Rendering visibility is not a sufficient server-authoritative knowledge rule for OpenLegend. [UN1]
+CullingGroup accepts shared bounding-sphere data and reports visibility/distance-band changes. This resembles the proposed enter/exit/distance-tier notifications. Important limits: a group uses one camera/reference point; visibility uses camera frustum and static occlusion rather than arbitrary NPC senses or dynamic occluders; results update during camera culling. Share common source data, but retain independent viewpoints and know which snapshot the result describes. Rendering visibility is not a sufficient server-authoritative knowledge rule for Open Legend. [UN1]
 
-Unity Physics accelerates collision queries with a broad-phase bounding-volume hierarchy. Broad phase finds candidates; precise tests determine hits. Its documentation also describes when the query world's broad phase is updated and the additional synchronization option. OpenLegend should apply the same separation: cheap spatial candidates, exact sense rules, and an explicit temporal boundary. Do not use an old spatial snapshot to decide who heard a short-lived event. [UN2]
+Unity Physics accelerates collision queries with a broad-phase bounding-volume hierarchy. Broad phase finds candidates; precise tests determine hits. Its documentation also describes when the query world's broad phase is updated and the additional synchronization option. Open Legend should apply the same separation: cheap spatial candidates, exact sense rules, and an explicit temporal boundary. Do not use an old spatial snapshot to decide who heard a short-lived event. [UN2]
 
-Unity Entities change filters operate at chunk granularity. A chunk can be considered changed because a system obtained write access, even if individual values did not change. Such filters reduce work but are not semantic events like “health crossed a critical threshold.” This is relevant to OpenLegend's immutable-object identity checks: a broad container changing can invalidate much more than the particular sensory or cognitive fact that matters. [UN3]
+Unity Entities change filters operate at chunk granularity. A chunk can be considered changed because a system obtained write access, even if individual values did not change. Such filters reduce work but are not semantic events like “health crossed a critical threshold.” This is relevant to Open Legend's immutable-object identity checks: a broad container changing can invalidate much more than the particular sensory or cognitive fact that matters. [UN3]
 
 Entity command buffers record structural operations for later playback. They solve safe mutation timing, not observation or historical awareness. Keep requests for mutation separate from notifications that an accepted mutation happened. [UN4]
 
@@ -52,7 +52,7 @@ Bevy 0.17 explicitly separated `Event`/observers from buffered `Message` readers
 
 ### O3DE: a real example of engine-wide pub/sub
 
-O3DE documents both EBus and `AZ::Event`. EBus decouples many sources and listeners through buses; `AZ::Event` is tied to particular component instances. This validates that shared messaging infrastructure is a legitimate engine pattern. It does not establish that routing all data through a global bus is the fastest option, or that bus subscribers should automatically receive private simulation facts. For OpenLegend, explicit world/actor addressing and typed consumers are more important than a global singleton. [O3D1]
+O3DE documents both EBus and `AZ::Event`. EBus decouples many sources and listeners through buses; `AZ::Event` is tied to particular component instances. This validates that shared messaging infrastructure is a legitimate engine pattern. It does not establish that routing all data through a global bus is the fastest option, or that bus subscribers should automatically receive private simulation facts. For Open Legend, explicit world/actor addressing and typed consumers are more important than a global singleton. [O3D1]
 
 ### Flecs: an important counterexample to “reactive is always faster”
 
@@ -60,15 +60,15 @@ Flecs, an ECS library rather than a full game engine, distinguishes periodically
 
 ### Factorio: change the work representation, not just the dispatch mechanism
 
-Wube's historical belt optimization grouped transport lines and represented item spacing rather than updating every absolute item position individually. Its historical pathfinding work first measured excessive short requests, reduced unnecessary requests, and only then considered more sophisticated algorithms. These examples support reducing repeated work and using domain-specific invariants; they are not demonstrations that a universal event bus produces simulation scale. The reported game-specific improvements must not be reused as OpenLegend speedup estimates. [FA1] [FA2]
+Wube's historical belt optimization grouped transport lines and represented item spacing rather than updating every absolute item position individually. Its historical pathfinding work first measured excessive short requests, reduced unnecessary requests, and only then considered more sophisticated algorithms. These examples support reducing repeated work and using domain-specific invariants; they are not demonstrations that a universal event bus produces simulation scale. The reported game-specific improvements must not be reused as Open Legend speedup estimates. [FA1] [FA2]
 
 ### PlayCanvas: useful presentation events, not the missing authority layer
 
-PlayCanvas exposes an `EventHandler` interface for registering, firing, and removing listeners. OpenLegend already uses PlayCanvas for rendering. Its event utility does not supply actor-private evidence, deterministic world transactions, or durable cognition admission. Keep engine UI/render notifications outside the pure simulation authority rather than importing the renderer as a domain dependency. [PC1]
+PlayCanvas exposes an `EventHandler` interface for registering, firing, and removing listeners. Open Legend already uses PlayCanvas for rendering. Its event utility does not supply actor-private evidence, deterministic world transactions, or durable cognition admission. Keep engine UI/render notifications outside the pure simulation authority rather than importing the renderer as a domain dependency. [PC1]
 
 ## 3. Architectural options and when they fit
 
-This comparison is a synthesis of the preceding sources and OpenLegend's requirements, not a benchmark ranking.
+This comparison is a synthesis of the preceding sources and Open Legend's requirements, not a benchmark ranking.
 
 | Approach | Useful for | Main limitation | Recommendation |
 |---|---|---|---|
@@ -81,7 +81,7 @@ This comparison is a synthesis of the preceding sources and OpenLegend's require
 | Behavior tree / state machine / utility policy | Select actions from current beliefs and facts | Does not discover those facts or make LLM work free | Retain current decision machinery initially |
 | Dormancy / analytic advancement / simulation LOD | Distant or inactive populations at large scale | Can change outcomes, RNG, deadlines, and what witnesses perceive | Defer behind explicit equivalence/product gates |
 
-## 4. Current OpenLegend: what already exists
+## 4. Current Open Legend: what already exists
 
 The inspected main branch is substantially beyond the earlier prototype. The current status document records unified living actors, durable conversations and Narrator delivery, selective story admission, indexed/cold history, dirty/deadline work tickets, bounded native batches, frozen snapshots, and manual current-format saves. These are foundations to preserve, not implementation work to schedule again. [R1]
 

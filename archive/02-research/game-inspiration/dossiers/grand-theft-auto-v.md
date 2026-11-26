@@ -2,7 +2,7 @@
 
 **G67 · Complete research pass, September 26, 2026.** This dossier separates **Grand Theft Auto V Story Mode** from **Grand Theft Auto Online**, which share Los Santos/San Andreas and core movement/driving/shooting technology but have materially different characters, progression, economies, failure states, update history, monetization, and social structure. Current PC reference includes **Grand Theft Auto V Enhanced**, released March 4, 2025; the original/Legacy PC branch is not silently treated as identical. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-For OpenLegend, GTA V is most useful not as a crime fantasy but as a study of **world density and activity composition**. A coherent place supports driving, flying, swimming, shopping, sports, police pursuit, scripted missions, random encounters and self-authored chaos using one persistent spatial substrate. Its three-protagonist design is also a rare example of switching between autonomous lives without making the world feel reset each time.
+For Open Legend, GTA V is most useful not as a crime fantasy but as a study of **world density and activity composition**. A coherent place supports driving, flying, swimming, shopping, sports, police pursuit, scripted missions, random encounters and self-authored chaos using one persistent spatial substrate. Its three-protagonist design is also a rare example of switching between autonomous lives without making the world feel reset each time.
 
 ## 1. Identity and edition boundaries
 
@@ -89,12 +89,12 @@ Switching may drop into the new protagonist:
 
 Dan Houser said the idea grew partly from GTA IV's episodic stories crossing over: instead of separate expansions, GTA V could make multiple protagonists part of one campaign. [GV04](#gv04)
 
-### OpenLegend relevance
+### Open Legend relevance
 
 This is a valuable approximation of **offscreen autonomy**:
 > when the player is not controlling a person, that person appears to keep living.
 
-OpenLegend can make this systemic rather than a library of authored switch-in vignettes.
+Open Legend can make this systemic rather than a library of authored switch-in vignettes.
 
 ## 4. Character-specific abilities and role distinction
 
@@ -107,7 +107,7 @@ They also begin with different practical strengths and social access.
 
 This reinforces character identity through action without locking each person into a totally separate game.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Named characters can share universal world verbs while differing through:
 - expertise;
@@ -148,7 +148,7 @@ GTA Online deepens:
 - specialized weaponized/service vehicles;
 - businesses tied to vehicle storage/use.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A vehicle is compelling when it is not “fast travel”:
 - it occupies space;
@@ -181,7 +181,7 @@ The law system is deliberately gamey:
 - disguises/evidence/social identity are shallow;
 - police response can be unrealistically immediate.
 
-OpenLegend can build richer law from:
+Open Legend can build richer law from:
 - observers;
 - communication;
 - jurisdiction;
@@ -209,7 +209,7 @@ Mission failure typically offers:
 
 This separates cinematic stakes from punishing repetition.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Story stakes do not require mechanically permanent death for every protagonist.
 
@@ -238,7 +238,7 @@ A cheaper inexperienced crew member can fail but may improve if kept alive acros
 This is a compact model of:
 > person + role + competence + compensation + persistent history.
 
-OpenLegend could support generated teams where prior work changes:
+Open Legend could support generated teams where prior work changes:
 - trust;
 - skill;
 - wage expectations;
@@ -255,7 +255,7 @@ The player switches perspective while AI controls the others.
 
 This creates cinematic scale without requiring co-op.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 A player can inhabit/direct multiple allied actors while the others retain:
 - goals;
@@ -290,7 +290,7 @@ The **Stealth** stat is not just a menu number. GTA V has an explicit stealth-mo
 
 That qualifies the dossier's earlier “skills/use progression” statement: stealth exists as a reusable locomotion/detection verb, but it is nowhere near a systemic immersive-sim model. Mission scripting, simplified witness/police rules and limited disguise/evidence logic constrain it. This is a useful comparison to the Wanted system: one mechanic models **how visibly/noisily the actor moves**, while the other models an institutional response once the game has recognized crime.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 Some abilities should grow through repeated embodied practice rather than abstract XP allocation.
 
@@ -340,7 +340,7 @@ These differ in depth.
 Their larger contribution is **place plausibility**:
 Los Santos feels like a place people could inhabit, not a mission corridor.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Small low-stakes activities can make a world feel socially complete even if they do not advance the central plot.
 
@@ -366,11 +366,11 @@ They are not deep persistent agents:
 - memory is short;
 - schedules/lives are largely illusion.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 GTA shows how powerful ambient density is.
 
-OpenLegend can add what GTA generally lacks:
+Open Legend can add what GTA generally lacks:
 - persistent identity;
 - memory;
 - relationships;
@@ -481,11 +481,11 @@ The production challenge included:
 - licensed audio;
 - GTA Online infrastructure.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 GTA's content density is extremely expensive when authored manually.
 
-OpenLegend's opportunity is not to copy GTA's content budget; it is to build reusable world laws so authored/generative content can share behavior.
+Open Legend's opportunity is not to copy GTA's content budget; it is to build reusable world laws so authored/generative content can share behavior.
 
 ## 18. Story Mode versus Online
 
@@ -543,7 +543,7 @@ Sessions mix:
 - griefing;
 - ambient coexistence.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A shared world requires explicit choices about:
 - authority;
@@ -604,7 +604,7 @@ Strong moments arise when:
 - vehicles/escape routes matter;
 - communication creates recovery.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 Multi-agent tasks should have:
 - separable responsibilities;
@@ -626,7 +626,7 @@ These are **not equivalent**:
 
 Rockstar's modding policy continues to evolve, and current 2026 reporting notes stricter guidelines around certain derivative content. [GV10](#gv10)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Creator authority tiers should be explicit:
 - safe user content;
@@ -757,7 +757,7 @@ This reinforces the need to separate:
 
 **Result:** one authored operation feels multi-perspectival without co-op.
 
-**OpenLegend lesson:** retain actor autonomy while allowing temporary possession/direct control.
+**Open Legend lesson:** retain actor autonomy while allowing temporary possession/direct control.
 
 ### B. A small traffic collision becomes a systemic chase
 
@@ -797,9 +797,9 @@ This reinforces the need to separate:
 
 **Result:** geography becomes part of social/law state.
 
-**OpenLegend extension:** witnesses and identity could make this much richer.
+**Open Legend extension:** witnesses and identity could make this much richer.
 
-## 28. Transferable inspiration for OpenLegend
+## 28. Transferable inspiration for Open Legend
 
 ### A. One spatial substrate should host many activities
 
@@ -813,7 +813,7 @@ unless necessary.
 
 ### B. Offscreen characters should continue to exist
 
-The protagonist-switch vignettes are authored illusions of this; OpenLegend can actually simulate it.
+The protagonist-switch vignettes are authored illusions of this; Open Legend can actually simulate it.
 
 ### C. Use escalating institutional responses
 
@@ -837,7 +837,7 @@ Online creator/roleplay ecosystems demonstrate massive demand for players author
 
 Many GTA activities are shallow.
 
-OpenLegend should prioritize interactions that feed shared state.
+Open Legend should prioritize interactions that feed shared state.
 
 ### Ambient NPC density is not personhood
 
@@ -847,7 +847,7 @@ A crowd can make a city alive visually while nobody remembers you.
 
 Rockstar missions sometimes fail players for leaving narrow scripted bounds despite a broad open world.
 
-OpenLegend should prefer goal validation over invisible choreography.
+Open Legend should prefer goal validation over invisible choreography.
 
 ### Live economy rebalancing can destroy trust
 

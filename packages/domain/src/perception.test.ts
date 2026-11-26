@@ -2,7 +2,16 @@ import { entityGet } from './entity-collection.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { expect, it } from 'vitest';
-import { canSee, createWorld, executeCommand, experienceEntry, observeActor } from './index.js';
+import {
+  canSee,
+  createWorld,
+  executeCommand,
+  experienceEntry,
+  observeActor,
+  initializePerception,
+  advanceWorld,
+} from './index.js';
+import { captureEvidenceCut, currentReceivedObservations } from './perception-evidence.js';
 
 it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
@@ -18,6 +27,7 @@ it('sees distant objects without extending speech exposure', () => {
     { y: 0, x: 22, z: 2 },
     worldSupport(entityGet(world.entities, NPC_ID)!),
   );
+  initializePerception(world, []);
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(true);
@@ -69,7 +79,59 @@ it('keeps an authoritative outer sight boundary even though the renderer can rem
     { y: 0, x: 27, z: 23 },
     worldSupport(entityGet(world.entities, NPC_ID)!),
   );
+  initializePerception(world, []);
   expect(
     observeActor(world, PLAYER_ID)!.visibleEntities.some((entity) => entity.id === NPC_ID),
   ).toBe(false);
+});
+
+it("ends a memoryless listener's transient sound at the next later native perception phase", () => {
+  const world = createWorld();
+  const player = entityGet(world.entities, PLAYER_ID)!,
+    npc = entityGet(world.entities, NPC_ID)!;
+  player.actor!.capabilities = {
+    cognition: true,
+    innerWorld: true,
+    speech: true,
+    memory: false,
+    language: false,
+  };
+  setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
+  setSpatialPosition(world, npc, { x: 2, y: 0, z: 2 }, worldSupport(npc));
+  initializePerception(world, []);
+  expect(captureEvidenceCut(world, PLAYER_ID).current).toHaveLength(0);
+  const spoken = executeCommand(world, {
+    id: 'transient-sound',
+    actorId: NPC_ID,
+    type: 'say',
+    targetId: PLAYER_ID,
+    text: 'Actually spoken words.',
+  });
+  expect(spoken.outcome.ok).toBe(true);
+  const heard = currentReceivedObservations(spoken.world, PLAYER_ID).observations;
+  expect(
+    heard.some((observation) => observation.facets.some((facet) => facet.value.kind === 'sound')),
+  ).toBe(true);
+  expect(
+    heard.some((observation) => observation.facets.some((facet) => facet.value.kind === 'speech')),
+  ).toBe(false);
+  const later = advanceWorld(spoken.world, 0.01).world;
+  expect(
+    currentReceivedObservations(later, PLAYER_ID).observations.some((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'sound'),
+    ),
+  ).toBe(false);
+  const again = executeCommand(later, {
+    id: 'new-transient-sound',
+    actorId: NPC_ID,
+    type: 'say',
+    targetId: PLAYER_ID,
+    text: 'A new actual sound.',
+  });
+  expect(again.outcome.ok).toBe(true);
+  expect(
+    currentReceivedObservations(again.world, PLAYER_ID).observations.some((observation) =>
+      observation.facets.some((facet) => facet.value.kind === 'sound'),
+    ),
+  ).toBe(true);
 });

@@ -1,6 +1,6 @@
 # Server coordination
 
-Use the existing [WorldService](src/world-service.ts) and repositories for admission, serialized mutations and commit ownership. HTTP/Zod validates untrusted input; domain operations validate current mechanical state. Context and [public projection](src/view.ts) disclose only permitted facts, withholding inspection-gated details (`inscription`, uninspected nested contents) from container/item list views until deliberate `inspect-inventory`.
+The [Rust server](../../native/game-server/src/launch.rs) coordinates admission, world changes and commits. The TypeScript files here support release preparation and other offline tools. HTTP validates untrusted input. The Rust simulation checks whether the action is possible now. Context and player views disclose only permitted facts. For example, an item list withholds inscriptions and uninspected nested contents until deliberate inspection.
 
 Trace request identity, authority/restore generation, reservation, completion, commit and invalidation when changing asynchronous work. Revalidate at commit after waits; stale or cancelled work must not regain authority. For background character maintenance scheduling or its database bookkeeping, read [maintenance storage failures](../../docs/memory-architecture.md#maintenance-storage-failures), even when no provider code changes. Save restoration must not rewind external billing, current privacy protection or command fencing.
 

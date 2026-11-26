@@ -25,3 +25,21 @@ At 360×640, a wrapped speech draft stayed within the viewport: bar bounds were 
 Scoped Prettier, TypeScript checking of the current workspace and the separately staged task source versions, production TypeScript compilation, configuration checking, and a Vite production build passed. Existing PlayCanvas browser-externalization and large-bundle warnings remain warnings. Full repository tests, full-scene PlayCanvas play, native IME/assistive-device qualification and live nano wording quality were not claimed by these focused checks. The reused conversation input retains its existing composition guard; no new model-quality or population-scale acceptance follows from fixture outputs.
 
 Additional Jev/provider cost for this scope: **$0**. Cumulative implementation verification provider cost: **$0**. Fixture receipts are synthetic zero-cost evidence, not provider invoices. The accepted feature and boundaries are owned by [the narration contract](../narration-and-conversations.md#player-speak-and-descriptive-act); broader expression acceptance remains [NC03](../maintainers/narration-and-conversations.md).
+
+## November 22, 2026 — Descriptive Act runtime callers
+
+### TypeScript control
+
+A signed-in player submitted descriptions through `POST /api/expression` in a disposable PostgreSQL world with the ordinary clock and saves. Controlled HTTPS captured only the intent and whether the player selected a target. Three descriptions were saved from six calls. The player completed a walk during a held request, then recovered the original result without another attempt. Invalid wording, cancellation and dropping a selected item while a reply was pending produced no event. Forged contacts and another player's private item were refused. The owner received the permitted item description, while the other player could neither read it nor recover its job. Cold reopening retained the completed receipt and the three events.
+
+The original Source run reached its durability wait inside mutation. After moving the already-admitted task outside that turn, ordinary movement still advanced the general private-evidence fence before the wording call could start. The admitted text and target flag now use their actor and target checks without a private-evidence capture. The failed runs are retained separately from the completed journey.
+
+Evidence uses base `e7deaee6f` and the frozen Source patch `1baa3be9805c7108f69c26f3445e83a3a0185312b296e73921fe637dca377b90` in `nsc04-descriptive-act-20261122`. TypeScript, scoped formatting and network checks passed. No live provider calls were made. Additional and cumulative provider cost for these checks were **$0**.
+
+### Stand-alone Rust
+
+The Rust-only warm and cold processes used the same opening, inputs and controlled HTTPS. The authenticated endpoints reproduced the Source control's three saved expressions and six requests, including the walk during a held reply. Both views agreed on owner access and the other player's lack of the private description and job. The separate Chrome run submitted the actual Act form, cleared its acknowledged draft, saved its description and recovered the same exact receipt after reopening. The event contains ordinary structured participants and descriptive markers. Reusing the request ID adds neither a call nor another event.
+
+The installed occurrence and its completion receipt are staged together with the ordinary save. An initial Rust run correctly received its answer but refused the internal operation at the public command decoder. The qualified binding keeps that operation private and sends its event through normal receiving. The failed application, controlled transport setup failures and successful runs remain available in `nsc04-descriptive-act-20261122`.
+
+Qualified native patch `54be4ef9f78da6560b9885073f4dd92cd349742d2aa429ab179e41e38b28db2c` over `e7deaee6f` and the shared wording policy. Executable SHA-256 `02b1e02d787390bc20babd350b36101cb27f79ddba39951521ebbfe71aa96724`. Locked build and scoped Rust formatting passed. The disposable databases were removed and all four qualified Rust shutdowns reported zero live transient, resident and pending-save bytes. No performance or live model quality comparison was made. Additional and cumulative provider cost for these checks were **$0**.

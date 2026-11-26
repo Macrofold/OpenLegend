@@ -28,7 +28,7 @@ const safeCount = (value: number) => Number.isSafeInteger(value) && value >= 0;
  *
  * beforeNext claims capacity for its exact requestId when it returns waitMs=0
  * without blockedReason; observe releases that claim without treating its byte
- * estimate as tokens actually spent. At most sixteen claims may be in flight.
+ * estimate as tokens actually spent. The caller bounds the number of live claims.
  * Call it only for a prospective dispatch, never for passive status. Waiting checks
  * do not claim. The caller owns durable spending, task identity, abortable waiting
  * and actual dispatch. The map, scalar deadlines and two windows per counter bound retention;
@@ -46,7 +46,12 @@ export class OpenAiRateGate {
     return this.blockedReason;
   }
 
-  constructor(history: readonly AiReceipt[] = []) {
+  constructor(
+    history: readonly AiReceipt[] = [],
+    private readonly claimLimit = 16,
+  ) {
+    if (!Number.isSafeInteger(claimLimit) || claimLimit < 1)
+      throw new Error('OpenAI rate claim limit must be a positive safe integer.');
     // Reopening a journal must preserve a quota stop and the original arrival
     // clocks; treating old cooldowns as new would extend them on every resume.
     for (const receipt of history) {
@@ -255,7 +260,8 @@ export class OpenAiRateGate {
     if (this.blockedReason) return { waitMs: 0, blockedReason: this.blockedReason };
     if (this.claims.has(requestId))
       return { waitMs: 0, blockedReason: 'openai_duplicate_rate_claim' };
-    if (this.claims.size >= 16) return { waitMs: 0, blockedReason: 'openai_rate_claim_limit' };
+    if (this.claims.size >= this.claimLimit)
+      return { waitMs: 0, blockedReason: 'openai_rate_claim_limit' };
     this.requests = this.current(this.requests, now);
     this.tokens = this.current(this.tokens, now);
     const waitUntil = Math.max(
@@ -269,7 +275,7 @@ export class OpenAiRateGate {
     const waitMs = Math.max(0, waitUntil - now);
     if (waitMs > 0) return { waitMs };
     // JavaScript callers share this synchronous claim before they await dispatch.
-    // BigInt adds at most sixteen safe byte bounds without losing precision.
+    // BigInt adds the outstanding safe byte bounds without losing precision.
     this.claims.set(requestId, inputByteUpperBound);
     this.claimedTokens += BigInt(inputByteUpperBound);
     return { waitMs: 0 };

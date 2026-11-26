@@ -21,7 +21,7 @@ Record both `first useful action` and `first useful audible phrase`. Saying “h
 | [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) | 600M-parameter speech recognition, extending v2's English coverage to 25 European languages | Transcription is not speaker authorization or guaranteed incremental streaming. Verify the serving wrapper and proper-noun accuracy. Kevin's documented artifact is v2 int8, not this v3 checkpoint. |
 | [Moshi / Moshiko](https://huggingface.co/kyutai/moshiko-pytorch-bf16) | Full-duplex speech-text framework with parallel user/agent audio streams | An important research alternative to STT→LLM→TTS, not a drop-in replacement for committed-text evidence, tool admission or controlled multi-character output. |
 
-The current Breeze card publishes very low warmed H100 first-audio latency and separate eager/accelerated memory requirements. Those are vendor-specific measurements, not our end-to-end results. The repository uses cached reference conditioning; such reusable preparation is worth comparing independently of voice quality. The license distinction is a material blocker to assuming the downloadable model can power a commercial OpenLegend deployment. [Breeze license section](https://huggingface.co/BreezeBlue/Breeze-TTS-2#license-and-responsible-use)
+The current Breeze card publishes very low warmed H100 first-audio latency and separate eager/accelerated memory requirements. Those are vendor-specific measurements, not our end-to-end results. The repository uses cached reference conditioning; such reusable preparation is worth comparing independently of voice quality. The license distinction is a material blocker to assuming the downloadable model can power a commercial Open Legend deployment. [Breeze license section](https://huggingface.co/BreezeBlue/Breeze-TTS-2#license-and-responsible-use)
 
 Pocket's card describes approximately 200 ms to first audio and faster-than-real-time CPU operation on a specified MacBook Air setup. These are author reports, not a guarantee across browsers or hardware. Its ability to cache a prepared voice state is a useful serving mechanism. Kokoro's small size makes it a useful baseline even if it does not win expressive preference testing; cost and intelligibility deserve measurement too.
 
@@ -59,7 +59,7 @@ Separate stopping playback from cancelling generation and from undoing an alread
 
 An interrupted suffix must not later reappear in captions, memory or a reconnect queue as though it was spoken. Already heard words cannot be erased by cancellation. Multi-character voice scheduling needs fair, bounded playback and stale-content handling, not a growing backlog that eventually voices obsolete combat callouts.
 
-## 7. OpenLegend's existing boundaries are stricter than these demos
+## 7. Open Legend's existing boundaries are stricter than these demos
 
 The selected [NST design](../../../docs/maintainers/npc-speech-streaming.md) concerns **shared growing public text**, durable accepted prefixes, a fixed initial audience and terminal semantic intake. It does not select physical speaking duration or audio. The [HE07 voice work](../../../docs/maintainers/hearing-and-speech.md#he07--optional-speech-media-and-selected-hearing-extensions) owns optional media, microphone composition and later timed/raw voice. This research closes no runtime checkbox.
 
@@ -83,4 +83,4 @@ The first useful test is a small actual exchange with typed and audio participan
 
 Retain a versioned corpus of permitted character lines covering quiet speech, urgency, dry humor, disagreement, names, numbers and ambiguity, plus actual live episodes. Use lawful reference voices and document provenance. Compare neutral baseline, expressive generation and native full-duplex only where each route is permitted.
 
-Report first useful audio p50/p95/p99, time to full line, underruns, interruption delay, lexical error, intelligibility, perceived character consistency, expression appropriateness, GPU/CPU contention and complete spend. Blind voice preference alone cannot establish better cognition. A screenshot of a waveform or a vendor leaderboard cannot establish practical quality in OpenLegend.
+Report first useful audio p50/p95/p99, time to full line, underruns, interruption delay, lexical error, intelligibility, perceived character consistency, expression appropriateness, GPU/CPU contention and complete spend. Blind voice preference alone cannot establish better cognition. A screenshot of a waveform or a vendor leaderboard cannot establish practical quality in Open Legend.

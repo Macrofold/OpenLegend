@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir, stat, rm, readdir } from 'node:fs/promises';
-import { join, resolve, dirname, basename } from 'node:path';
+import { writeFile, mkdir, stat, readdir } from 'node:fs/promises';
+import { basename, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -28,6 +29,7 @@ import { pack, packInputs, snapshot } from './source.mjs';
 import { upload, download, getJson, stageArchive } from './artifacts.mjs';
 import { jobRunId, campaignEstimate, campaignSummary } from './campaigns.mjs';
 import { preflight } from './preflight.mjs';
+import { campaignHardware } from './hardware.mjs';
 import { mapBounded } from './parallel.mjs';
 import { executionRequest, executionUrl, executionCapability } from './execution.mjs';
 import {
@@ -173,10 +175,24 @@ async function collect(config, runId, destination, deadline = Date.now() + defau
   } while (acknowledgement.pending);
   return { destination: resolve(destination), files: entries.length };
 }
-async function verifyCapacity(config, concurrency, deadlineSeconds = 3600) {
+async function verifyCapacity(
+  config,
+  concurrency,
+  deadlineSeconds = 3600,
+  environment,
+  affinity,
+  requireRetainedWorkers = false,
+) {
   const remote = await invoke(config, { action: 'health', includeSlots: true });
+  if (remote.config.machineSelection !== 'selected-hardware')
+    throw new Error('Deploy the current machine-selection controller before campaign admission.');
+  if (affinity && remote.config.workerAffinity !== 'registered-instance')
+    throw new Error('Deploy the current registered-instance affinity controller before admission.');
+  if (requireRetainedWorkers && remote.config.retainedWorkerSelection !== true)
+    throw new Error('Deploy retained-worker placement support before admission.');
   if (
     remote.config.capacity !== config.capacity ||
+    remote.config.warmSlots !== config.warmSlots ||
     remote.config.imageId !== config.imageId ||
     remote.config.subnetId !== config.subnetId
   )
@@ -184,7 +200,15 @@ async function verifyCapacity(config, concurrency, deadlineSeconds = 3600) {
       'Local pool configuration differs from the deployed controller; deploy/reconcile it before admission.',
     );
   if (remote.admissionClosed) throw new Error('Pool deployment has closed new admission.');
-  return preflight(config, concurrency, remote.availableSlots, deadlineSeconds);
+  return preflight(
+    config,
+    concurrency,
+    remote.availableSlots,
+    deadlineSeconds,
+    environment,
+    affinity,
+    requireRetainedWorkers,
+  );
 }
 async function run(config, path) {
   const plan = validatePlan(await json(path)),
@@ -241,7 +265,14 @@ async function run(config, path) {
     }
   }
   const checks = await phase('capacity-preflight', () =>
-    verifyCapacity(config, plan.concurrency, plan.deadlineSeconds),
+    verifyCapacity(
+      config,
+      plan.concurrency,
+      plan.deadlineSeconds,
+      plan.jobs[0].environment,
+      plan.workerAffinity,
+      plan.requireRetainedWorkers,
+    ),
   );
   await json(join(directory, 'preflight.json'), checks);
   const sources = new Map(),
@@ -456,7 +487,14 @@ async function resumeCampaign(config, campaignId) {
       : undefined;
   try {
     if (!status.campaign)
-      await verifyCapacity(config, saved.plan.concurrency, saved.plan.deadlineSeconds);
+      await verifyCapacity(
+        config,
+        saved.plan.concurrency,
+        saved.plan.deadlineSeconds,
+        saved.plan.jobs[0].environment,
+        saved.plan.workerAffinity,
+        saved.plan.requireRetainedWorkers,
+      );
     if (!status.campaign || status.campaign.phase === 'uploading') {
       if (saved.plan.jobs.some((job) => job.paid) && !config.execution)
         throw new Error('Original shared execution configuration is required to resume uploads.');
@@ -662,15 +700,25 @@ async function browserSession(config, run, capability, directory, device) {
     !currentCase ||
     run.ready.runId !== run.runId ||
     run.ready.generation !== run.generation ||
-    run.ready.sourceProvenance?.ready?.head !== currentCase.source
+    run.ready.sourceProvenance?.ready?.head !== currentCase.source ||
+    run.ready.sourceProvenance?.ready?.archiveSha256 !== currentCase.sourceHash
   )
     throw new Error('Remote readiness does not match the admitted run, case and source.');
+  const endpoint = new URL(run.ready.url);
+  if (
+    endpoint.hostname !== '127.0.0.1' ||
+    endpoint.protocol !== 'http:' ||
+    endpoint.href !== endpoint.origin + '/' ||
+    !endpoint.port ||
+    Number(endpoint.port) < 1024
+  )
+    throw new Error('The browser fixture must publish a loopback HTTP listener.');
   const server = createServer();
   // Keep the exact Host/Origin checks. A transparent TCP tunnel must use the
   // fixture's registered port locally too; do not relax game authentication.
   await new Promise((r, reject) => {
     server.once('error', reject);
-    server.listen(Number(new URL(run.ready.url).port), '127.0.0.1', r);
+    server.listen(Number(endpoint.port), '127.0.0.1', r);
   });
   const port = server.address().port;
   await new Promise((r) => server.close(r));
@@ -680,7 +728,7 @@ async function browserSession(config, run, capability, directory, device) {
     Target: worker.instanceId,
     DocumentName: 'AWS-StartPortForwardingSession',
     Parameters: {
-      portNumber: [String(new URL(run.ready.url).port)],
+      portNumber: [endpoint.port],
       localPortNumber: [String(port)],
     },
   });
@@ -954,6 +1002,11 @@ async function main() {
     throw new Error('Use device status or device release OWNER_ID [--confirmed-closed].');
   }
   if (action === 'deploy') {
+    if (rest[0] === '--controller-only') {
+      if (rest.length !== 2) throw new Error('Use deploy --controller-only CONFIG.json.');
+      const { deployControllerOnly } = await import('./deploy-controller.mjs');
+      return console.log(JSON.stringify(await deployControllerOnly(rest[1]), null, 2));
+    }
     const { deploy } = await import('./deploy.mjs');
     return deploy(home, rest);
   }
@@ -987,7 +1040,8 @@ async function main() {
           reservation: campaignEstimate(campaignSummary(value), config),
           configuredCapacity: config.capacity ?? defaults.slots,
           requiredCapacityChange: value.concurrency > (config.capacity ?? defaults.slots),
-          vcpus: value.concurrency * 4,
+          hardware: campaignHardware(value, config),
+          vcpus: value.concurrency * campaignHardware(value, config).vcpus,
           capacityVerified: false,
           reservationScope:
             'One campaign hold; captured bytes join the estimate after packaging. Usage remains estimated until shutdown/reuse is confirmed.',
@@ -1032,13 +1086,17 @@ async function main() {
   if (action === 'execution') {
     if (rest[0] === 'configure') {
       const value = await json(resolve(rest[1]));
+      const endpoint = typeof value?.url === 'string' ? executionUrl(value.url) : undefined;
       if (
-        !value.url?.startsWith('https://') ||
-        typeof value.adminToken !== 'string' ||
+        endpoint?.protocol !== 'https:' ||
+        typeof value?.adminToken !== 'string' ||
         value.adminToken.length < 32
       )
         throw new Error('Provide HTTPS execution URL and a control credential.');
-      await json(join(home, 'execution.json'), { url: value.url, adminToken: value.adminToken });
+      await json(join(home, 'execution.json'), {
+        url: endpoint.origin,
+        adminToken: value.adminToken,
+      });
       console.log('Shared execution endpoint configured; no provider credential copied.');
       return;
     }
@@ -1087,7 +1145,42 @@ async function main() {
       }),
     );
   }
-  if (action === 'retire') return console.log(await invoke(config, { action, workerId: rest[0] }));
+  if (action === 'retire') {
+    const workerId = id(rest[0]);
+    if (rest.length === 1) return console.log(await invoke(config, { action, workerId }));
+    if (rest.length !== 3 || rest[1] !== '--quarantine')
+      throw new Error('Use retire SLOT or retire SLOT --quarantine VERIFIED_RECEIPT.json.');
+    const source = resolve(rest[2]);
+    const receipt = await json(source);
+    if (receipt.workerId !== workerId) throw new Error('Receipt names a different worker.');
+    const campaignId = id(receipt.campaignId);
+    const { secret } = await campaignState(campaignId);
+    const evidenceSha256 = digest(receipt);
+    const key = `control/quarantine-closeout/${evidenceSha256}.json`;
+    try {
+      await upload(config.bucket, key, source, false, true);
+    } catch (error) {
+      if (error.name !== 'PreconditionFailed') throw error;
+    }
+    if (digest(await getJson(config.bucket, key, 64 * 1024)) !== evidenceSha256)
+      throw new Error('The stored quarantine evidence differs from the verified receipt.');
+    return console.log(
+      JSON.stringify(
+        await invoke(config, {
+          action: 'quarantine-retire',
+          workerId,
+          campaignId,
+          runId: receipt.runId,
+          instanceId: receipt.instanceId,
+          generation: receipt.generation,
+          evidenceSha256,
+          secret,
+        }),
+        null,
+        2,
+      ),
+    );
+  }
   if (action === 'recover') {
     const until = Date.now() + 600000;
     do {
@@ -1105,7 +1198,7 @@ async function main() {
     'Use plan, deploy, allocate, snapshot, run, status, cancel, collect, resume, image, execution, device, retire or recover.',
   );
 }
-if (import.meta.main)
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url)
   await main().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;

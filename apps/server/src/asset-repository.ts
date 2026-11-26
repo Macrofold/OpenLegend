@@ -16,7 +16,7 @@ import {
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import { createHash } from 'node:crypto';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 
 /** Operational records never enter gameplay rewind. Register this complete catalog in
@@ -46,6 +46,20 @@ export const ASSET_TABLES = [
   'asset_withdrawal_items',
   'asset_removal_receipts',
 ] as const;
+const RUST_ARTWORK_RESTORE = 'integration:rust-operational-artwork-restore';
+
+export interface RestoredWorldArtwork {
+  worldId: string;
+  generation: string;
+  revision: number;
+  artwork: {
+    packageId: string;
+    principal: string;
+    release: AssetRevisionReference | null;
+  };
+}
+
+type StagedWorldArtwork = RestoredWorldArtwork & { status: 'pending' | 'complete' };
 export type AssetPermission = 'read' | 'publish' | 'manage' | 'offline';
 export type AssetUse =
   | 'source'
@@ -642,7 +656,10 @@ export class AssetRepository {
     };
   }
   async initialize(): Promise<void> {
-    await this.db.exec(`
+    await AssetRepository.initializeSchema(this.db);
+  }
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`
       CREATE TABLE IF NOT EXISTS asset_domains (
         boundary TEXT NOT NULL, access_domain TEXT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(boundary,access_domain));
@@ -2346,6 +2363,100 @@ export class AssetRepository {
     snapshot: AssetAuthoritySnapshot,
     verifiedCurrentGeneration: number,
   ): Promise<void> {
+    await this.applyRecoveredAuthority(snapshot, verifiedCurrentGeneration);
+  }
+
+  async requireCompletedWorldArtworkRestore(): Promise<void> {
+    const staged = await this.stagedWorldArtwork();
+    if (staged?.status === 'pending')
+      throw new AssetAccessError(
+        'unavailable',
+        'Resume the exact interrupted world restore before opening artwork access.',
+      );
+  }
+
+  /** The stopped Rust writer already installed exact gameplay and pinned files
+   * under quarantine. Verify that receipt and head before making the existing
+   * catalogue authority visible. This transaction never writes gameplay. */
+  async activateRestoredWorldArtwork(
+    report: RestoredWorldArtwork,
+    snapshot: AssetAuthoritySnapshot,
+    principal: AssetPrincipal,
+  ): Promise<void> {
+    await this.db.transaction(async () => {
+      const staged = await this.stagedWorldArtwork();
+      if (
+        !staged ||
+        staged.worldId !== report.worldId ||
+        staged.generation !== report.generation ||
+        staged.revision !== report.revision ||
+        staged.artwork.packageId !== report.artwork.packageId ||
+        staged.artwork.principal !== principal.accountId ||
+        staged.artwork.principal !== report.artwork.principal ||
+        (staged.artwork.release === null
+          ? report.artwork.release !== null
+          : !sameAssetRevision(staged.artwork.release, report.artwork.release ?? undefined))
+      ) {
+        throw new AssetAccessError('conflict', 'The exact staged world restore is unavailable.');
+      }
+      if (staged.status === 'complete') return;
+      const head = await this.db
+        .prepare('SELECT world_id,generation,revision FROM world_head WHERE id=1')
+        .get();
+      if (
+        head?.['world_id'] !== staged.worldId ||
+        head?.['generation'] !== staged.generation ||
+        Number(head?.['revision']) !== staged.revision
+      ) {
+        throw new AssetAccessError(
+          'conflict',
+          'The staged world changed before artwork activation.',
+        );
+      }
+      await this.applyRecoveredAuthority(snapshot, snapshot.generation, staged.artwork.packageId);
+      await this.assertRecoveryOperator(principal);
+      if (staged.artwork.release) {
+        const status = await this.worldReleaseStatus(staged.worldId, staged.artwork.release);
+        if (!status.available)
+          throw new AssetAccessError('unavailable', 'The saved artwork is no longer available.');
+      }
+      await this.db
+        .prepare('UPDATE meta SET value=? WHERE key=?')
+        .run(JSON.stringify({ ...staged, status: 'complete' }), RUST_ARTWORK_RESTORE);
+    });
+  }
+
+  private async stagedWorldArtwork(): Promise<StagedWorldArtwork | undefined> {
+    const schema = await this.db
+      .prepare("SELECT to_regclass('open_legend.meta') AS installed")
+      .get();
+    if (!schema?.['installed']) return undefined;
+    const row = await this.db
+      .prepare(
+        'SELECT CASE WHEN octet_length(value)<=4096 THEN value END AS value FROM meta WHERE key=?',
+      )
+      .get(RUST_ARTWORK_RESTORE);
+    if (!row) return undefined;
+    const staged = parse<StagedWorldArtwork>(row, 'value');
+    if (
+      !staged ||
+      !['pending', 'complete'].includes(staged.status) ||
+      !staged.worldId ||
+      !staged.generation ||
+      !Number.isSafeInteger(staged.revision) ||
+      !/^[a-f0-9]{64}$/.test(staged.artwork?.packageId) ||
+      !staged.artwork.principal
+    )
+      throw new AssetAccessError('integrity', 'The artwork restore closure is damaged.');
+    if (staged.artwork.release !== null) assertAssetRevisionReference(staged.artwork.release);
+    return staged;
+  }
+
+  private async applyRecoveredAuthority(
+    snapshot: AssetAuthoritySnapshot,
+    verifiedCurrentGeneration: number,
+    pendingWorldPackage?: string,
+  ): Promise<void> {
     if (
       !Number.isSafeInteger(snapshot.generation) ||
       snapshot.generation < 0 ||
@@ -2518,6 +2629,7 @@ export class AssetRepository {
       JSON.parse(row['payload']);
     }
     await this.db.transaction(async () => {
+      if (pendingWorldPackage === undefined) await this.requireCompletedWorldArtworkRestore();
       const existing = await this.db
         .prepare("SELECT generation FROM asset_authority WHERE id='current'")
         .get();

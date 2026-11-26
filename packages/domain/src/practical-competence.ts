@@ -153,8 +153,12 @@ export function competenceValue(
   actor: ActorComponent,
   definition: AttributeDefinition,
 ): 0 | 1 | undefined {
-  const progress = actor.practice?.[definition.id],
-    profile = definition.practice;
+  return practiceValue(actor.practice?.[definition.id], definition.practice);
+}
+export function practiceValue(
+  progress: PracticeProgress | undefined,
+  profile: PracticeProfile | undefined,
+): 0 | 1 | undefined {
   if (!progress || !profile) return;
   return progress.starting === 1 || hasEarnedPractice(progress, profile) ? 1 : 0;
 }
@@ -230,9 +234,17 @@ export function handlingAccuracy(
 }
 export function practiceStatus(world: WorldState, actor: Entity): PracticeStatus[] {
   if (!actor.actor) return [];
-  return world.moduleManifest.definitions.flatMap((definition) => {
-    const value = competenceValue(actor.actor!, definition),
-      p = actor.actor!.practice?.[definition.id],
+  return practiceStatusFrom(world.moduleManifest.definitions, actor.actor.practice);
+}
+/** Installed definitions and the actor's own captured progress suffice. No
+ * physical entity or unrelated person's knowledge enters this formatter. */
+export function practiceStatusFrom(
+  definitions: readonly AttributeDefinition[],
+  progress: Readonly<Record<string, PracticeProgress>> | undefined,
+): PracticeStatus[] {
+  return definitions.flatMap((definition) => {
+    const p = progress?.[definition.id],
+      value = practiceValue(p, definition.practice),
       profile = definition.practice;
     return value === undefined || !p || !profile
       ? []
@@ -264,15 +276,29 @@ export function practiceStatus(world: WorldState, actor: Entity): PracticeStatus
   });
 }
 export function ownPractice(world: WorldState, actor: Entity): PracticeView[] {
-  return practiceStatus(world, actor).map((status) => ({
+  return ownPracticeFrom(
+    world.moduleManifest.definitions,
+    actor.actor?.practice,
+    (id) => occurrenceFor(world, actor.id, id)?.view,
+  );
+}
+export function ownPracticeFrom(
+  definitions: readonly AttributeDefinition[],
+  progress: Readonly<Record<string, PracticeProgress>> | undefined,
+  occurrenceView: (
+    occurrenceId: string,
+  ) => import('./action-experience.js').ActivityView | undefined,
+): PracticeView[] {
+  return practiceStatusFrom(definitions, progress).map((status) => ({
     ...status,
-    evidence: actor.actor!.practice![status.id]!.releases.map((support) => {
-      const recorded = occurrenceFor(world, actor.id, support.occurrenceId);
+    evidence: progress![status.id]!.releases.map((support) => {
+      const recorded = occurrenceView(support.occurrenceId);
       return {
         ...support,
         description: recorded
-          ? renderActivity(recorded.view, 'What happened')
-          : practiceDefinition(world, status.id)!.practice!.presentation.evidenceFallback,
+          ? renderActivity(recorded, 'What happened')
+          : definitions.find((definition) => definition.id === status.id)!.practice!.presentation
+              .evidenceFallback,
       };
     }),
   }));

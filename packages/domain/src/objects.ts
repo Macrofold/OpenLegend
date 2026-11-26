@@ -1,3 +1,5 @@
+import itemMoveCopy from './worlds/base/item-move-copy.json' with { type: 'json' };
+import { boundActionItemIds } from './action-item-references.js';
 import { CONSTRUCTION_PERMISSION_LIMITS } from './construction-permissions.js';
 import {
   materialContainerAllowed,
@@ -43,6 +45,7 @@ import {
 import type { Entity, ItemInstance, RecipeDefinition, WorldState } from './types.js';
 import { isAssemblyPlacement } from './spatial-state.js';
 import { equipmentAppearanceFits, equipmentConflicts, equipmentProblem } from './equipment.js';
+import objectStorage from './object-storage.json' with { type: 'json' };
 
 /** Container capacity is authored by its exact current item definition. */
 export function itemContainerCapacity(world: WorldState, entity: Entity): number | undefined {
@@ -97,12 +100,10 @@ export interface ObjectLineage {
   quantity: number;
   unitPin: DefinitionPin;
 }
-export const ITEM_COUNT_PIN: Readonly<DefinitionPin> = Object.freeze({
-  id: 'native-item-count',
-  version: 1,
-  digest: 'positive-safe-integer-units-v1',
-});
-export const MAX_CONTAINMENT_DEPTH = 16;
+export const ITEM_COUNT_PIN: Readonly<DefinitionPin> = Object.freeze(objectStorage.countPin);
+export const MAX_CONTAINMENT_DEPTH = objectStorage.maximumDepth;
+export const OWNED_ITEM_VIEW_LIMIT = objectStorage.ordinaryViewEntries;
+export const OWNED_ITEM_SHORTCUT_LIMIT = objectStorage.shortcutEntries;
 type Children = ObjectIndexNode<number> | undefined;
 type ChildIndex = ObjectIndexNode<Children> | undefined;
 interface MaterialMembership {
@@ -495,11 +496,14 @@ export function itemFor(world: WorldState, id: string): ItemInstance | undefined
     ...(entity.container ? { container: { ...entity.container } } : {}),
   };
 }
-export function itemsForOwner(world: WorldState, ownerId: string): readonly ItemInstance[] {
-  return [...directChildIds(world, ownerId)].flatMap((id) => {
+export function* iterateOwnerItems(world: WorldState, ownerId: string): Generator<ItemInstance> {
+  for (const id of directChildIds(world, ownerId)) {
     const item = itemFor(world, id);
-    return item ? [item] : [];
-  });
+    if (item) yield item;
+  }
+}
+export function itemsForOwner(world: WorldState, ownerId: string): readonly ItemInstance[] {
+  return [...iterateOwnerItems(world, ownerId)];
 }
 /** Legacy creator type totals are a read projection, never an instance replacement. */
 export function inventoryTotals(
@@ -584,7 +588,7 @@ function ancestorDeltas(
     if (!parent) continue;
     for (const ancestor of objectAncestors(world, parent.id)) {
       if (!ancestor.container) continue;
-      if (load === undefined) throw new Error('This item has no admitted packing load for a bag.');
+      if (load === undefined) throw new Error(itemMoveCopy.noPackingLoad);
       deltas.set(ancestor.id, (deltas.get(ancestor.id) ?? 0) + sign * load);
     }
   }
@@ -603,7 +607,7 @@ function ancestorDeltas(
         'packing load',
       );
       if (next > itemContainerCapacity(world, entityGet(world.entities, id)!)!)
-        throw new Error('The bag does not have enough packing capacity.');
+        throw new Error(itemMoveCopy.packing);
     }
     bump(container.subtreeRevision);
   }
@@ -748,13 +752,7 @@ function homogeneousMaterialState(world: WorldState, entity: Entity): string | u
 function identityBound(world: WorldState, id: string): boolean {
   const action = entityGet(world.entities, custodian(world, id))?.actor?.action;
   return (
-    (!!action &&
-      [
-        action.itemId,
-        action.weaponItemId,
-        action.ammoItemId,
-        ...Object.values(action.foodPreparation?.inputs ?? {}),
-      ].includes(id)) ||
+    boundActionItemIds(action).includes(id) ||
     Object.values(entityGet(world.entities, id)?.statusEffects ?? {}).some((state) => state.active)
   );
 }
@@ -927,7 +925,7 @@ function quantityPlan(
       checked(container.load + delta) >
         itemContainerCapacity(world, entityGet(world.entities, id)!)!
     )
-      throw new Error('The bag does not have enough packing capacity.');
+      throw new Error(itemMoveCopy.packing);
     bump(container.subtreeRevision);
   }
   return { deltas, parents: [...parents] };
@@ -1127,12 +1125,10 @@ function itemMovePlan(
         child.item &&
         exposedContentsMaterial(world, world.itemDefinitions[child.item.definitionPin.id]!)
       )
-        throw new Error(
-          'Keep an open basket with exposed materials directly carried or on supported ground.',
-        );
+        throw new Error(itemMoveCopy.filledOpenBag);
     }
   if (quantity <= 0 || checked(quantity) > availableItemQuantity(world, id))
-    throw new Error('That quantity is unavailable or reserved.');
+    throw new Error(itemMoveCopy.quantity);
   if (sourceId === destinationId)
     return { entity, lot, sourceId, deltas: new Map<string, number>() };
   if (quantity === lot.quantity && identityBound(world, id))
@@ -1142,7 +1138,7 @@ function itemMovePlan(
     ancestors.some((value) => value.id === id) ||
     ancestors.length + (entity.container?.height ?? 0) > MAX_CONTAINMENT_DEPTH
   )
-    throw new Error('A bag cannot contain itself or exceed the nesting limit.');
+    throw new Error(itemMoveCopy.depth);
   if (quantity !== lot.quantity && (entity.container || lot.individuality === 'individual'))
     throw new Error('An individual object cannot be divided.');
   if (quantity !== lot.quantity) splitAdmission(world, id, quantity);
@@ -1247,7 +1243,7 @@ function jointItemMovePlan(world: WorldState, moves: readonly JointItemMove[]) {
     const container = entityGet(world.entities, id)!.container!;
     const capacity = itemContainerCapacity(world, entityGet(world.entities, id)!)!;
     if (checked(container.load + delta, 'packing load') > capacity)
-      throw new Error('The bag does not have enough packing capacity.');
+      throw new Error(itemMoveCopy.packing);
   }
   return { plans, deltas };
 }
@@ -1512,6 +1508,11 @@ export function validateObjects(world: WorldState): void {
       !placement ||
       !Number.isSafeInteger(placement.revision) ||
       placement.revision < 0 ||
+      (placement.mode === 'world' &&
+        placement.motionContinuityRevision !== undefined &&
+        (!Number.isSafeInteger(placement.motionContinuityRevision) ||
+          placement.motionContinuityRevision < 0 ||
+          placement.motionContinuityRevision > placement.revision)) ||
       !['world', 'contained', 'attached'].includes(placement.mode)
     )
       throw new Error('Invalid physical placement.');
@@ -1529,6 +1530,7 @@ export function validateObjects(world: WorldState): void {
               ...(placement.portId === 'assembly' ? ['local', 'slot'] : []),
             ]
           : ['mode', 'parentEntityId', 'revision'],
+      placement.mode === 'world' ? ['motionContinuityRevision'] : [],
     );
     if (!placementFieldsValid) throw new Error('Conflicting physical placement fields.');
     if (placement.mode !== 'world') {
@@ -1631,7 +1633,7 @@ export function validateObjects(world: WorldState): void {
         entity.container.access &&
         (!hasRecordFields(entity.container.access, ['actors']) ||
           !Array.isArray(entity.container.access.actors) ||
-          entity.container.access.actors.length > 100 ||
+          entity.container.access.actors.length > objectStorage.maximumContainerGrantees ||
           entity.container.access.actors.some(
             (id) => !isSafeRecordId(id) || !entityGet(world.entities, id)?.actor,
           ))
@@ -1867,7 +1869,7 @@ export function mergeLots(
     parentOf(source) !== parentOf(target) ||
     !mergeCompatible(world, sourceId, targetId)
   )
-    throw new Error('These lots are not equivalent free objects in the same container.');
+    throw new Error(itemMoveCopy.mergeMismatch);
   const quantity = source.item.quantity,
     total = checked(target.item.quantity + quantity);
   bump(target.item.revision);

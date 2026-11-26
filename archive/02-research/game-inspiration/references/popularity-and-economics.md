@@ -75,6 +75,6 @@ The model labels are analytical groupings, not a claim that each example uses on
 
 ## 5. What data would materially improve the decision
 
-For OpenLegend, the missing high-value evidence is: target-audience first-session completion, voluntary return cohorts, actual costs per meaningful interaction, friend-invitation conversion, successful pack reuse, and whether the preferred camera prevents or helps comprehension. Public competitor peaks cannot supply those answers.
+For Open Legend, the missing high-value evidence is: target-audience first-session completion, voluntary return cohorts, actual costs per meaningful interaction, friend-invitation conversion, successful pack reuse, and whether the preferred camera prevents or helps comprehension. Public competitor peaks cannot supply those answers.
 
 Use commercial research as a constraint on the hypothesis, not a substitute for playing and observing the product. None of these data selects a pricing model or authorizes spending by itself.

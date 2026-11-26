@@ -129,7 +129,6 @@ export function createReservoirDemo(
       activityHostPin(BASE_CAMP_ACTIVITY_HOST),
     ],
     null,
-    world.moduleManifest.socialPerception,
   );
   world.statusEffectPolicy = { revision: 1, clockOffsetHours: 0, namedTimes: {}, definitions: [] };
   world.cognitionPolicy = { ...world.cognitionPolicy, dream: null };
@@ -138,6 +137,9 @@ export function createReservoirDemo(
     if (!actor) continue;
     // This is new-world composition, not conversion of an existing saved world.
     actor.attributes = {};
+    // This authored world does not install an individual-recognition attribute.
+    // Keeping the human family's binding would require a removed world rule.
+    delete actor.individualRecognition;
     delete actor.conditions;
     delete entity.statusEffects;
     if (actor.action?.type === 'status-effect') actor.action = null;
@@ -186,7 +188,6 @@ export function createTouchDemo(
     manifest.recipeFamilies,
     manifest.activityHosts,
     manifest.rangedPolicy,
-    manifest.socialPerception,
   );
   const resident = entityGet(world.entities, defaultResidentEntityId(world))!;
   resident.actor!.senses = [COARSE_TOUCH.id];

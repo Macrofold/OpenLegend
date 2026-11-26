@@ -2,9 +2,9 @@
 
 **G14 · Complete research pass, September 26, 2026.** Project Spark is treated as the released Xbox One / Windows 8.1 creation platform, not the cancelled Xbox 360 version and not as a generic name for Kodu. This pass separates its launch-era free-to-play economy from the October 2015 all-content-free transition and from the August 2016 online-service shutdown. [Preserved paired chapter](../games/dreams-and-project-spark.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Project Spark is especially relevant to OpenLegend because it exposed a compact **behavior grammar** to ordinary players: attach a brain to an object, describe **WHEN** a condition is true and **DO** an action, then compose those rules into enemies, companions, quests, cameras, UI, vehicles, progression and entirely different game genres. Its history is equally useful because the creation grammar, discovery system, monetization model and service lifetime were all separate product problems.
+Project Spark is especially relevant to Open Legend because it exposed a compact **behavior grammar** to ordinary players: attach a brain to an object, describe **WHEN** a condition is true and **DO** an action, then compose those rules into enemies, companions, quests, cameras, UI, vehicles, progression and entirely different game genres. Its history is equally useful because the creation grammar, discovery system, monetization model and service lifetime were all separate product problems.
 
-Project Spark's 2014 launch, October 2015 transition to completely free content and August 2016 online closure are different product states. Historical instructions below do not imply a new user can download the original service today. Named characters and assets are reference examples, not OpenLegend assets proposed for copying.
+Project Spark's 2014 launch, October 2015 transition to completely free content and August 2016 online closure are different product states. Historical instructions below do not imply a new user can download the original service today. Named characters and assets are reference examples, not Open Legend assets proposed for copying.
 
 **The player promise:** make a small adventure while playing **Crossroads**, follow the authored **Champions Quest**, try community creations, or shape a world and its behavior directly. The first session need not begin with programming. A player's later purpose might be mastering a Champion, making an amusing toy, finishing a game or learning how someone else's creation works. [PS04](#ps04) [PS08](#ps08)
 
@@ -56,7 +56,7 @@ This creates an important difference between **world appearance** and **world la
 
 **Crossroads** was a guided adventure generator intended to prevent the empty-canvas problem. The player made choices while moving through an emerging adventure—terrain theme, paths, encounters, objectives and other elements—then could open the result in the editor and continue refining it. Team Dakota explicitly described it as letting newcomers “play as they create.” [PS33](#ps33) [PS36](#ps36)
 
-This is a particularly strong precedent for OpenLegend's world agent: creation does not have to start with a schema editor. A player can express decisions inside an immediately playable context and only later inspect the underlying construction.
+This is a particularly strong precedent for Open Legend's world agent: creation does not have to start with a schema editor. A player can express decisions inside an immediately playable context and only later inspect the underlying construction.
 
 **Limitation:** scaffolding can also narrow imagination. Reviewers noted that many early creations looked or played similarly because creators naturally began from the same fantasy assets, cameras and action-game templates. [PS37](#ps37) [PS38](#ps38)
 
@@ -106,7 +106,7 @@ That example contains several important composition principles:
 4. **Faction/team rule:** specify whom the actor treats as an ally/enemy.
 5. **Immediate test:** watch the resulting behavior and revise.
 
-For OpenLegend, that is a good model for an invention family. “Healer” should not require one hard-coded NPC class; it can be a reusable policy plus world-valid capabilities and parameters.
+For Open Legend, that is a good model for an invention family. “Healer” should not require one hard-coded NPC class; it can be a reusable policy plus world-valid capabilities and parameters.
 
 <a id="1-objects-acquire-behavior-through-a-readable-conditional-vocabulary"></a>
 <a id="study-1"></a>
@@ -139,7 +139,7 @@ Examples supported by the toolset and contemporary demonstrations include:
 - custom cameras and controls enabling first-person, side-scrolling or top-down play;
 - Kinect-recorded animations firing as consequences of game state. [PS36](#ps36) [PS40](#ps40) [PS41](#ps41)
 
-### Constructed OpenLegend-relevant example
+### Constructed Open Legend-relevant example
 
 A wooden barricade could have:
 - WHEN struck by fire-tagged damage → DO increase burn counter;
@@ -148,7 +148,7 @@ A wooden barricade could have:
 
 A different creator could make visually similar wood inert. Project Spark therefore demonstrates **composable interaction**, not globally consistent material law.
 
-OpenLegend's opportunity is to preserve the composability while making world-level material or status semantics reusable across inventions so that “wood burns” need not be re-authored independently in every scene.
+Open Legend's opportunity is to preserve the composability while making world-level material or status semantics reusable across inventions so that “wood burns” need not be re-authored independently in every scene.
 
 <a id="8-terrain-objects-and-control-can-become-an-invented-capability"></a>
 <a id="study-8"></a>
@@ -247,7 +247,7 @@ A creator was not forced into one skill-tree UI or one stat formula.
 
 The original free-to-play model also gated some creation assets behind player level, credits or paid tokens. That was not a fictional skill tree; it was a platform economy layered on the editor. Some player reviews strongly disliked having the currency to buy an asset while still being blocked by a creator-level requirement. [PS44](#ps44)
 
-**OpenLegend lesson:** never confuse *learning progression* with *capability entitlement*. A player becoming better at using an invention system can be satisfying; withholding the basic grammar needed to express an idea can feel arbitrary.
+**Open Legend lesson:** never confuse *learning progression* with *capability entitlement*. A player becoming better at using an invention system can be satisfying; withholding the basic grammar needed to express an idea can feel arbitrary.
 
 ## 7. Items, weapons, armor and equipment
 
@@ -290,7 +290,7 @@ Likewise, there was no global spell system. A creator could build a spell from:
 
 Champions offered examples of packaged powers, such as Avalon's druidic abilities or Haakon's supernatural companion/spear attacks, but these were authored content built on the broader creation system rather than the only allowed magic ontology. [PS43](#ps43)
 
-This is directly relevant to OpenLegend's invention philosophy: the engine can define safe primitives and world-valid effect families while individual worlds define “spell,” “technology,” “psionics,” or “ritual.”
+This is directly relevant to Open Legend's invention philosophy: the engine can define safe primitives and world-valid effect families while individual worlds define “spell,” “technology,” “psionics,” or “ritual.”
 
 ## 9. Combat system
 
@@ -334,7 +334,7 @@ The GameSpot healer example is useful because the companion's “intelligence”
 
 A Guardian review described the system as allowing creators to set enemy intelligence levels and configure interactions through menus, sliders and brains. [PS47](#ps47)
 
-**OpenLegend distinction:** Project Spark shows the benefit of inspectable behavioral programs, but OpenLegend's living actors aim to have persistent identity, memory, plans and bounded autonomous cognition. A WHEN/DO policy can still be valuable as a **native capability/policy layer** underneath that cognition.
+**Open Legend distinction:** Project Spark shows the benefit of inspectable behavioral programs, but Open Legend's living actors aim to have persistent identity, memory, plans and bounded autonomous cognition. A WHEN/DO policy can still be valuable as a **native capability/policy layer** underneath that cognition.
 
 <a id="9-a-helpers-policy-and-performance-are-separate-creative-choices"></a>
 <a id="study-9"></a>
@@ -408,7 +408,7 @@ Shared creations could be downloaded and remixed. Project Spark tracked contribu
 
 This makes provenance a gameplay-platform primitive rather than a legal footnote.
 
-**OpenLegend lesson:** if an invention imports another invention's mechanic, provenance should remain inspectable through composition. Otherwise debugging, compatibility, permissions and creator recognition all become harder.
+**Open Legend lesson:** if an invention imports another invention's mechanic, provenance should remain inspectable through composition. Otherwise debugging, compatibility, permissions and creator recognition all become harder.
 
 <a id="10-human-cooperation-and-sharing-require-precise-boundaries"></a>
 <a id="study-10"></a>
@@ -453,7 +453,7 @@ Because the toolset was general, player activities included:
 
 Project Spark also became a medium for nontraditional projects: Linkin Park used it for an interactive music-video experience whose project could be downloaded and modified. [PS51](#ps51)
 
-That matters for OpenLegend because an invention platform may produce **tools, demonstrations, stories, social spaces or simulations**, not only conventional quest content.
+That matters for Open Legend because an invention platform may produce **tools, demonstrations, stories, social spaces or simulations**, not only conventional quest content.
 
 ## 14. Art, audio, interface and feel
 
@@ -534,7 +534,7 @@ Yet several reviews found **discovery weaker than authoring**:
 - the Irish Independent saw some gems among a large amount of unfinished work;
 - WorthPlaying saw real genre variety, but explicitly warned that people who only wanted polished experiences were getting community-made work with variable quality. [PS37](#ps37) [PS38](#ps38) [PS52](#ps52)
 
-This is a central OpenLegend warning. If it becomes dramatically easier to create a mechanic/world, supply grows faster than curation. **Creation abundance makes discovery quality more important, not less.**
+This is a central Open Legend warning. If it becomes dramatically easier to create a mechanic/world, supply grows faster than curation. **Creation abundance makes discovery quality more important, not less.**
 
 ## 17. Development, production and lifecycle
 
@@ -708,13 +708,13 @@ The same announcement reported **over 200,000 creators**, tens of millions of sh
 
 **Interpretation:** a large amount of production can coexist with a fragile operating model. An upload count does not reveal how many people played the work, returned to it or valued the response they received. The inspected evidence does not supply a title budget, profit or creator-income distribution.
 
-## 21. Transferable inspiration for OpenLegend
+## 21. Transferable inspiration for Open Legend
 
 ### A. WHEN/DO is a powerful mental model for extensibility
 
-A user can understand “when X, do Y” without losing causality. OpenLegend inventions could expose declarative trigger/condition/effect constructs for many deterministic mechanics while reserving LLM cognition for ambiguity, planning and authored interpretation.
+A user can understand “when X, do Y” without losing causality. Open Legend inventions could expose declarative trigger/condition/effect constructs for many deterministic mechanics while reserving LLM cognition for ambiguity, planning and authored interpretation.
 
-**Do not copy:** unrestricted arbitrary script authority. OpenLegend's engine needs validated effect families, permissions and bounded resource use.
+**Do not copy:** unrestricted arbitrary script authority. Open Legend's engine needs validated effect families, permissions and bounded resource use.
 
 ### B. Start from working behavior, then specialize
 
@@ -722,15 +722,15 @@ Follower-healer is a better first object than an empty brain. Crossroads is a be
 
 ### C. Remixability is much more useful when internals remain inspectable
 
-Download → inspect → modify was a real learning loop. OpenLegend invention packs should make dependencies and rules understandable enough that users can adapt them rather than only regenerate variants through prompts.
+Download → inspect → modify was a real learning loop. Open Legend invention packs should make dependencies and rules understandable enough that users can adapt them rather than only regenerate variants through prompts.
 
 ### D. Put provenance in the object graph
 
-Project Spark's lineage system is an early precedent for recognizing mixed authorship. OpenLegend will need even stronger provenance because one invention may depend on another pack's schemas, effects and permissions.
+Project Spark's lineage system is an early precedent for recognizing mixed authorship. Open Legend will need even stronger provenance because one invention may depend on another pack's schemas, effects and permissions.
 
 ### E. Do not sell pieces of the creative grammar one by one
 
-Project Spark's launch economy created tension between “make whatever you imagine” and asset/level entitlements. OpenLegend can monetize service value, compute, hosting or premium content without making core expressive primitives feel like arbitrary toll booths.
+Project Spark's launch economy created tension between “make whatever you imagine” and asset/level entitlements. Open Legend can monetize service value, compute, hosting or premium content without making core expressive primitives feel like arbitrary toll booths.
 
 ### F. UGC discovery needs quality state, not just quantity
 
@@ -746,18 +746,18 @@ Project Spark's reviews repeatedly show the cost of treating all shared creation
 
 ### G. A creator platform is an ongoing service obligation
 
-The 2016 closure made online UGC unavailable. OpenLegend should design for exportability, durable ownership and graceful degradation where practical. A user's world or invention should not silently become inaccessible merely because a discovery service changes.
+The 2016 closure made online UGC unavailable. Open Legend should design for exportability, durable ownership and graceful degradation where practical. A user's world or invention should not silently become inaccessible merely because a discovery service changes.
 
 ### H. First-party content should prove the same public system
 
-Conker's Big Reunion and Team Dakota's own games were built inside Project Spark. That creates trust that the authoring system is not a toy subset. OpenLegend should similarly resist maintaining a secret first-party-only mechanics path for its flagship world.
+Conker's Big Reunion and Team Dakota's own games were built inside Project Spark. That creates trust that the authoring system is not a toy subset. Open Legend should similarly resist maintaining a secret first-party-only mechanics path for its flagship world.
 
 <a id="15-transferable-inspiration-and-limits"></a>
 <a id="study-15"></a>
 
 ### Detailed study 15: Transferable inspiration and limits
 
-**A narrow beginning can lead to deeper authorship.** Crossroads offers choices with an immediate playable consequence. OpenLegend can similarly provide a meaningful first situation without requiring every player to understand authoring internals.
+**A narrow beginning can lead to deeper authorship.** Crossroads offers choices with an immediate playable consequence. Open Legend can similarly provide a meaningful first situation without requiring every player to understand authoring internals.
 
 **A declared effect needs a complete lifecycle.** A transformation needs an ending; an objective needs a reachable condition; a terrain power needs bounds; a pickup needs a stored result and readable feedback. More impressive beginnings do not repair missing continuations.
 
@@ -769,7 +769,7 @@ Conker's Big Reunion and Team Dakota's own games were built inside Project Spark
 
 **Choose a continuity promise that can be supported.** Local saves protected some Project Spark work while remote discovery and sharing ended. A persistent-world product should make the difference between preserving an artifact and sustaining its social setting explicit.
 
-These are research interpretations, not accepted OpenLegend implementation requirements. The paired chapter's warning against single-feature explanations of platform viability remains unchanged.
+These are research interpretations, not accepted Open Legend implementation requirements. The paired chapter's warning against single-feature explanations of platform viability remains unchanged.
 
 ## 22. Requirement and preservation check
 
@@ -820,7 +820,7 @@ Start with the Crossroads hands-on account, then the original manual's Champion 
 
 Useful viewing routes include the written **Game Informer Test Chamber** entry and the official **Guilty All the Same** video linked by the artist's label. The latter is a musical/promotion artifact, not an ordinary unedited onboarding session. The Conker announcement also links a gameplay/community montage; its adult tone differs from the default fantasy palette. These links establish identity and purpose, **not full footage watched or invented timestamps**. [PS15](#ps15) [PS20](#ps20) [PS24](#ps24)
 
-**Per-game preservation:** the complete paired chapter and the supplied master's §5.1 were compared. The August 12, 2016 shutdown fact, distinct Dreams live-support outcome, creator-versus-player viability argument, absent-feature counterfactual caution and OpenLegend product questions remain intact. Original source, review, economic and viewing registers were not overwritten. No separate earlier Project Spark mechanics study was replaced. This dossier adds the previously missing whole-game dimensions; the seven-file packet-wide audit is a separate pending gate.
+**Per-game preservation:** the complete paired chapter and the supplied master's §5.1 were compared. The August 12, 2016 shutdown fact, distinct Dreams live-support outcome, creator-versus-player viability argument, absent-feature counterfactual caution and Open Legend product questions remain intact. Original source, review, economic and viewing registers were not overwritten. No separate earlier Project Spark mechanics study was replaced. This dossier adds the previously missing whole-game dimensions; the seven-file packet-wide audit is a separate pending gate.
 
 **Evidence limits:** no personal play, installation/restoration test, complete-video analysis, proprietary code/budget access or representative review survey. The original game manual has missing button images in extracted text, so exact unrendered button mappings are not guessed. Some original reviews/tutorials were accessible only as substantive indexed text. Retired network-session details were not fully reconstructable; corroborated local play, reported creation cooperation, PC limits and current official-service closure are distinguished rather than merged into an invented multiplayer specification.
 

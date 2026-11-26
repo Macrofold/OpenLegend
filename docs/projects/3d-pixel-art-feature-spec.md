@@ -48,7 +48,7 @@ Normal camera scale, sampling/filtering, light thresholds, outline treatment, an
 
 The later [mercenary pilot](completed/mercenary-scene-pilot.md) is delivered: a separate default NPC uses idle/walk animation, cloth and fixed-resolution character color/depth rendering. Its [scoped evidence](../verification/mercenary-default.md) and [A3D15 limits](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot) supersede the original sprite-only baseline, not the broader proposed family, publication or generation work. Reuse the delivered camera, lighting and character-resource owners; do not implement the pilot again.
 
-OpenLegend already uses a 3D spatial scene, simple meshes, camera-facing artwork, continuous orbit/pitch, support-aware motion, dynamic projected shadows, and lit sprites. Arbitrary generated-model loading, generalized rigs, and safe complete representation replacement are not delivered capabilities merely because the renderer is 3D. See the [current presentation specification](../world-presentation.md) and [SW18](../maintainers/spatial-world.md#sw18--world-presentation-delivery).
+Open Legend already uses a 3D spatial scene, simple meshes, camera-facing artwork, continuous orbit/pitch, support-aware motion, dynamic projected shadows, and lit sprites. Arbitrary generated-model loading, generalized rigs, and safe complete representation replacement are not delivered capabilities merely because the renderer is 3D. See the [current presentation specification](../world-presentation.md) and [SW18](../maintainers/spatial-world.md#sw18--world-presentation-delivery).
 
 The [accepted procedural-art direction](../../archive/03-design-proposals/procedural-art-and-animation.md) includes reusable 2D rigs and composition. This proposal retains those options; it recommends evaluating real 3D for suitable families rather than silently declaring the earlier direction obsolete. Existing lighting, camera, knowledge, invention, accounting, and save policies continue to control. A later acceptance decision must reconcile the persistent owners; this proposal does not rewrite current behavior.
 
@@ -135,7 +135,7 @@ Detailed pixel shading need not be physically photorealistic. Evaluate controlle
 
 ### Readability and access
 
-Captions, names, menus, selection, and controls remain sharp and independent of world pixel resolution. Preserve existing reveal and observer-permission rules. An occluded but authorized target may receive the existing read-through; an unknown actor may not. Reduced motion, reduced flashing, readable low-light presets, and non-canvas interaction paths remain usable. Cosmetic quality settings do not change knowledge or mechanical advantage.
+Captions, names, menus, selection, and controls remain sharp and independent of world pixel resolution. Preserve existing reveal and observer-permission rules. An occluded but authorized target may receive the existing see-through reveal; an unknown actor may not. Reduced motion, reduced flashing, readable low-light presets, and non-canvas interaction paths remain usable. Cosmetic quality settings do not change knowledge or mechanical advantage.
 
 ## 7. Variation without a combinatorial asset library
 
@@ -202,7 +202,7 @@ It does not ship reference artwork merely because that artwork appears in the ar
 
 ### Environmental hierarchy and identity acceptance
 
-For the bundled world, evaluate representative scenes against the [Sea of Stars-derived scene criteria](../../art-direction/research/sea-of-stars/README.md#principles-to-carry-into-openlegend-scene-review) together with the existing references. At normal play scale, a reviewer should be able to identify the main landform/route and the people or important activity before relying on fine texture. Material/color variation should follow light, moisture, growth, wear or use; dominant light should have an intelligible source and affect neighboring surfaces coherently. Preserve quiet regions where they improve reading.
+For the bundled world, evaluate representative scenes against the [Sea of Stars-derived scene criteria](../../art-direction/research/sea-of-stars/README.md#principles-to-carry-into-open-legend-scene-review) together with the existing references. At normal play scale, a reviewer should be able to identify the main landform/route and the people or important activity before relying on fine texture. Material/color variation should follow light, moisture, growth, wear or use; dominant light should have an intelligible source and affect neighboring surfaces coherently. Preserve quiet regions where they improve reading.
 
 Turning the camera or changing a pose must preserve asymmetric physical identity—scar side, handed equipment, clothing closures, missing parts and attachments—unless the mechanical/source owner actually changes that fact. A mirrored or simplified depiction may be a valid separate art style in another world, but it is not an acceptable shortcut for this world's persistent physical identity.
 

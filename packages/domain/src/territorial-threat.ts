@@ -24,6 +24,7 @@ export interface TerritorialPolicy {
   refuge: SurfacePoint;
   entryRadius: number;
   territoryRadius: number;
+  arrivalRadius: number;
   pursuitSeconds: number;
   reentryAfterTimeout: boolean;
   searchSeconds: number;
@@ -169,6 +170,14 @@ export function territorialReviewDue(world: WorldState, entity: Entity): boolean
         world.simTime >= threat.searchUntil))
   );
 }
+function awaitingActivation(entity: Entity): boolean {
+  return (
+    !!entity.threat?.policy.activation &&
+    entity.threat.mode === 'idle' &&
+    !(entity.actor?.action?.type === 'feed' && entity.actor.action.stage === 'working') &&
+    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
+  );
+}
 /** A due review can be a private wake-up when its sole change is scheduling the next
  * look. Any possible entrant or retained pursuit/action uses the full existing owner.
  * No pending linear body rate affects this guard: it reads only current life/health,
@@ -182,7 +191,18 @@ export function renewQuietTerritorialReview(world: WorldState, entity: Entity): 
     actor.controller !== 'native' ||
     actor.incapacitated ||
     !activelyParticipates(entity) ||
-    !territorialReviewDue(world, entity) ||
+    !territorialReviewDue(world, entity)
+  )
+    return false;
+  // The ordinary intention owner only renews its private review while the
+  // authored activation condition is absent. It cannot alter any body's rates,
+  // action or target, so keep the existing mechanical forecast intact.
+  if (awaitingActivation(entity)) {
+    threat.reviewAt = world.simTime + threat.policy.reviewSeconds;
+    countDomainWork('nativeTerritorialDeadlineReuses');
+    return true;
+  }
+  if (
     threat.mode !== 'idle' ||
     threat.relinquished ||
     actor.action ||
@@ -246,12 +266,7 @@ export function territorialIntention(
   )
     return null;
   const policy = threat.policy;
-  if (
-    policy.activation &&
-    threat.mode === 'idle' &&
-    !(entity.actor?.action?.type === 'feed' && entity.actor.action.stage === 'working') &&
-    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
-  ) {
+  if (awaitingActivation(entity)) {
     threat.reviewAt = world.simTime + policy.reviewSeconds;
     return null;
   }
@@ -368,7 +383,10 @@ export function territorialIntention(
         ? threat.lastSeen
         : undefined;
   if (!destination) return null;
-  if (threat.mode === 'return' && distance3D(worldPosition(entity), destination) <= 0.15) {
+  if (
+    threat.mode === 'return' &&
+    distance3D(worldPosition(entity), destination) <= policy.arrivalRadius
+  ) {
     stopAction(world, entity);
     threat.mode = 'idle';
     delete threat.episodeUntil;
@@ -405,20 +423,23 @@ export function territorialIntention(
       return null;
     stopAction(world, entity);
   }
-  if (distance3D(worldPosition(entity), destination) <= 0.15) return null;
+  if (distance3D(worldPosition(entity), destination) <= policy.arrivalRadius) return null;
   threat.repathAt = world.simTime + policy.refreshSeconds;
   return { ...envelope, type: 'move', destination: { ...destination } };
 }
 /** Only expensive detours spend the shared episode allowance. Returning gets one terminal
  * attempt; failure leaves the animal at its actual supported stop, never a teleport. */
-export function admitTerritorialDetour(entity: Entity): boolean {
+export function territorialDetourAvailable(entity: Entity): boolean {
   const threat = entity.threat;
   // Ordinary travel outside an episode must not spend (or be blocked by) the
   // finite pursuit allowance retained from earlier territorial work.
   if (!threat || threat.mode === 'idle') return true;
   const limit = threat.policy.detours + (threat.mode === 'return' ? 1 : 0);
-  if (threat.detoursSpent >= limit) return false;
-  threat.detoursSpent++;
+  return threat.detoursSpent < limit;
+}
+export function admitTerritorialDetour(entity: Entity): boolean {
+  if (!territorialDetourAvailable(entity)) return false;
+  if (entity.threat && entity.threat.mode !== 'idle') entity.threat.detoursSpent++;
   return true;
 }
 export function territorialRefusal(world: WorldState, entity: Entity, events: WorldEvent[]): void {
@@ -458,6 +479,7 @@ export function validateTerritorialThreats(world: WorldState): void {
       ![
         p.entryRadius,
         p.territoryRadius,
+        p.arrivalRadius,
         p.pursuitSeconds,
         p.searchSeconds,
         p.reviewSeconds,
@@ -536,5 +558,6 @@ export function updateTerritorialPlace(world: WorldState, entity: Entity): void 
   if (distance3D(threat.policy.home, point) > 0) {
     threat.policy.home = { ...point };
     threat.policy.refuge = { ...point };
+    recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
   }
 }

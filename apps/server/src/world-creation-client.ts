@@ -5,9 +5,9 @@ import {
   type CreationActivationRequest,
   type CreationCheckRequest,
   type CreationReceiptRequest,
+  type CreationSourceConfig,
 } from './creation-target-contracts.js';
 import { digest } from './content-digest.js';
-import type { AppConfig } from './config.js';
 import type { WorldCreationTargetView } from '@open-legend/protocol';
 import { createNetworkOwner, NetworkError, requestText } from '@open-legend/network';
 
@@ -27,7 +27,7 @@ export class CreationTransportError extends Error {
  * docs/projects/parallel-batch-07-playable-world-creation-tech-design.md#one-destination-commit-recoverable-source-status
  */
 export class WorldCreationClient {
-  constructor(private readonly configuration: AppConfig['creation']) {}
+  constructor(private readonly configuration: CreationSourceConfig) {}
 
   target(id: string, accountId: string): ConfiguredCreationTarget {
     const target = this.configuration.targets.find((entry) => entry.id === id);

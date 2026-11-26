@@ -4,7 +4,7 @@
 
 **Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
-Research completed October 14, 2026. This collection answers Mike's supplied references and records a proposed technical route for OpenLegend. It updates the art brief; it does **not** select a production renderer, approve the mercenary's appearance, or implement the broader art pipeline.
+Research completed October 14, 2026. This collection answers Mike's supplied references and records a proposed technical route for Open Legend. It updates the art brief; it does **not** select a production renderer, approve the mercenary's appearance, or implement the broader art pipeline.
 
 ## The direction
 
@@ -67,7 +67,7 @@ Delivery checks verified all 34 image hashes/file sizes, decoded image formats, 
 
 Some requested sites limited access: Kickstarter and Sketchfab did not expose useful technical content, several Reddit media downloads returned 403, and an additional browser capture was rejected by automatic approval. Creator statements and official media supplied the alternatives. No unavailable video is claimed to have been watched. The original source links remain in the research ledger, including references with text-only coverage.
 
-**Rights:** reference/research use only. Creators retain their artwork rights. These files are not licensed OpenLegend game assets and do not inherit the repository's software license. Their presence does not authorize tracing, redistribution as an asset pack, model training, or upload to a generation service. Keep production inputs separate and verify their rights.
+**Rights:** reference/research use only. Creators retain their artwork rights. These files are not licensed Open Legend game assets and do not inherit the repository's software license. Their presence does not authorize tracing, redistribution as an asset pack, model training, or upload to a generation service. Keep production inputs separate and verify their rights.
 
 ## Scope and completion
 

@@ -1,6 +1,6 @@
 # Bounded live playtest protocol
 
-## Bounded live playtest protocol
+Use this procedure to run a focused check in the real game. Mike plans any separate sessions with human participants under the [human playtest boundary](../../AGENTS.md#completion-and-handoff--every-task).
 
 Use a backed-up or isolated current-format save and an explicit nonzero cap. Select checks relevant to the assigned behavior and world. Full bundled-world gameplay qualification includes a real conversation and later permitted recall, one resident decision, a generated sling that is crafted and used, finite harvest/cooking/eating, reuse without regeneration, and a separately compatible bow/arrow path. Exercise applicable pause, restart, idempotent resubmission, stale work and uncertain accounting paths. A timeout cannot authorize further resource consumption or silently repeat paid work; retain uncertain commitments. Record receipts and keep the relevant gate open when a model misroutes, leaks, refuses or produces an invalid definition.
 

@@ -1,6 +1,6 @@
 # G138 — Sons of the Forest
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Sons of the Forest is a useful reference because it takes the original Forest's compact horror-survival model and asks what happens when **building becomes more physically direct, travel becomes much faster, the map becomes much larger, and NPC companions can perform mundane work for the player**. The result is simultaneously more expressive and less tightly coupled. The sequel's best systems—free-form log construction, Kelvin, Virginia, seasonal changes, cave-gated tools and late-game Artifact functions—support a very rich sandbox, while several reviewers argue that the expanded map, rapid vehicles and loosely connected story/base loops dilute the original's pressure.
 
@@ -927,7 +927,7 @@ Kelvin is explicit task delegation; Virginia is autonomous support.
 
 Shacknews' main criticism is that the player can ignore either half.
 
-**OpenLegend relevance:** authored-reality systems become more coherent when progress in one domain creates opportunities/needs in another.
+**Open Legend relevance:** authored-reality systems become more coherent when progress in one domain creates opportunities/needs in another.
 
 ## R14 — sources, preservation, reading route and requirement map
 

@@ -1,0 +1,44 @@
+//! Stand-alone game-server application owners. They link the same simulation
+//! and worker admission as the addon and never depend on the Node bridge.
+pub mod access_http;
+pub mod authority;
+pub mod boot;
+pub mod command_epoch;
+mod control_format;
+pub(crate) mod creation;
+mod decision_dispatch;
+mod decision_render;
+mod embodiment;
+pub mod game_clock;
+mod history_text;
+pub mod language;
+pub mod launch;
+mod lab;
+mod lexical_maintenance;
+pub mod live_save;
+mod mcp_http;
+mod network;
+mod npc;
+mod narrator;
+pub mod oidc;
+mod operation_format;
+mod operator_maintenance;
+mod player_command;
+pub mod player_events;
+mod player_http;
+pub mod player_references;
+pub mod player_scene;
+mod player_stream;
+mod player_view;
+mod presence;
+mod privacy_edit;
+mod recall_maintenance;
+#[cfg(feature = "profile-campaign")]
+mod profile;
+mod provider_transport;
+mod socket;
+pub mod spatial;
+pub mod store;
+mod wire;
+pub mod world;
+mod world_input;

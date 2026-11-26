@@ -1,8 +1,8 @@
 # Stealth, awareness and surprise — feature specification
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Integrated design is complete; runtime delivery and play qualification remain open. SA-D01 selects authored player psychology. | 2026-10-25   |
+| Status      | Current progress                                                                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Existing-channel personal-evidence foundation delivered; other runtime modules and integrated qualification remain open. SA-D01 selects authored player psychology. | 2026-10-27   |
 
 ## Purpose and selected scope
 

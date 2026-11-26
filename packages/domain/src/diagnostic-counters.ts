@@ -1,3 +1,32 @@
+import type { WorldState } from './types.js';
+import type { NativeDeadlineReason } from './temporal-boundaries.js';
+
+export type NativeMechanicsDiscard =
+  | 'coupled'
+  | 'reactive'
+  | 'unknown'
+  | 'membership'
+  | 'observation-materialization'
+  | 'observation-effects'
+  | 'contribution'
+  | 'expired'
+  | 'territorial'
+  | 'command'
+  | 'follow'
+  | 'allocation'
+  | 'flight'
+  | 'status'
+  | 'foraging-review'
+  | 'foraging-command'
+  | 'response'
+  | 'response-flight'
+  | 'response-move'
+  | 'projectile'
+  | 'endpoint'
+  | 'activity'
+  | 'teaching'
+  | 'publication';
+
 /** Process-local tallies for native profiling. They are never saved, projected or read by
  * simulation logic, so enabling them cannot change outcomes, RNG draws or audiences. With no
  * sink installed each call is one undefined check.
@@ -27,6 +56,17 @@ export const DOMAIN_COUNTERS = [
   'animalWanderDecisions',
   'animalWanderQueueEntriesVisited',
   'animalWanderEligibilityChecks',
+  'sightBroadOpportunities',
+  'sightDetailOpportunities',
+  'sightRecognitionOpportunities',
+  'sightGeometryOpportunities',
+  'sightDetailTargetsRequested',
+  'receivedHistoryBuilders',
+  'receivedRecordingCohortsPrepared',
+  'receivedRecordingCohortsSkipped',
+  'receivedReceiverFrameHeaders',
+  'receivedReceiverFrameHeaderBytes',
+  'currentReceivingPrefixes',
   'nativeForagingSightCandidates',
   'nativeForagingSightExclusions',
   'nativeWalkingForecastReuses',
@@ -49,6 +89,8 @@ export const DOMAIN_COUNTERS = [
   'nativeStatusParticipantsPrepared',
   'nativeStatusParticipantsReused',
   'nativeStatusReconciliationsAvoided',
+  'nativeStatusSignatureBuilds',
+  'nativeStatusIrrelevantNoticesSkipped',
   'nativeStatusIntegrationReuses',
   'nativeLocalBodyChanges',
   'nativeLocalStatusChanges',
@@ -78,6 +120,16 @@ export const DOMAIN_COUNTERS = [
   'nativePublications',
   'nativePreparationCheckpoints',
   'nativeContinuationsReused',
+  'nativeReceivedPreparationCalls',
+  'nativeReceivedPreparationUnchanged',
+  'nativeReceivedPreparationMutable',
+  'nativeReceivedPreparationMissing',
+  'nativeReceivedPreparationRootsChanged',
+  'nativeReceivedPreparationIntervalChanged',
+  'nativeReceivedPreparationSourceRejected',
+  'nativeReceivedPreparationPreserved',
+  'nativeMovementDraftReuses',
+  'nativeMovementIsolated',
   'outingIndexed',
   'outingChecked',
   'itemOffersChecked',
@@ -112,6 +164,8 @@ export const DOMAIN_COUNTERS = [
   'sensoryOverflowRebuilds',
   'sensoryPolicyRebuilds',
   'sensoryObserversSelected',
+  'sensoryObserverGeometryPrepared',
+  'sensoryObserverCaptures',
   'sensoryPairReuseObservers',
   'sensoryPairsRetested',
   /** Entries installed in rebuilt or incrementally maintained spatial bins. */
@@ -135,6 +189,8 @@ export const DOMAIN_COUNTERS = [
   'observersSkipped',
   /** External-event receiver enumerations and the receivers they considered. */
   'audienceScans',
+  'audienceReceiverUpdates',
+  'sightPriorContactsSelected',
   'audienceCandidates',
   /** Recorded occurrences and awareness entries written for them. */
   'eventsRecorded',
@@ -143,6 +199,62 @@ export const DOMAIN_COUNTERS = [
   'exposureEntries',
   'exposureExits',
   'exposureDetails',
+  /** Common outward values prepared once or reused across receivers in one actual sight phase. */
+  'visualSourcePreparations',
+  'visualSourcePreparationReuses',
+  'currentFacetMapCopies',
+  'currentReadScopes',
+  'currentReadSubjectLookups',
+  'currentReadNativeSelections',
+  'currentReadProofPreparations',
+  'currentGeometryBodiesCatalogued',
+  'currentGeometryBodiesPrepared',
+  'perceptionContactPreparations',
+  'perceptionContactInvalidations',
+  'attentionWorkingPreparations',
+  'attentionCatalogueEntries',
+  'attentionPartDescriptionReuses',
+  'viewAppearanceReads',
+  'viewAppearancePreparations',
+  'viewNameReads',
+  'viewNamePreparations',
+  /** Installed received-batch flush boundaries, including tentative transitions. */
+  'temporalOperationsAppended',
+  'receivedActualSampleTokens',
+  'receivedBatchesAppended',
+  'receivedBaselineEntries',
+  'receivedSampleEntries',
+  'receivedBoundaryEntries',
+  'receivedOccurrenceEntries',
+  'receivedLogicalMembersAdmitted',
+  'receivedLogicalMembersRejected',
+  'receivedBatchEncodedBytes',
+  'receivedBindingBytes',
+  'receivedSeedBytes',
+  /** Logical covered fields for quota accounting, not the number of field visits. */
+  'temporalFieldsAppended',
+  'temporalGroupsVisited',
+  'temporalCaptureFieldsExpanded',
+  'temporalMembershipFieldsPacked',
+  'temporalMembershipDeclarationsReused',
+  'currentFacetWrites',
+  'attentionCandidatesChanged',
+  'attentionCandidatesUnchanged',
+  'attentionSelectionsRanked',
+  'attentionSelectionsReused',
+  'receivedValueIndexBuilds',
+  'receivedValueValuesIndexed',
+  'receivedValueAppends',
+  'receivedValueVectorCopies',
+  'attentionDescriptionPreparations',
+  'attentionDescriptionReuses',
+  'receivedReferenceRootsReused',
+  'receivedReferenceOwnersRebuilt',
+  'receivedReferenceReceiptsVisited',
+  'receivedReferenceCurrentVisited',
+  'receivedReferenceOriginalsVisited',
+  'nativeEvidenceOwnersSealed',
+  'nativeEvidenceSnapshotsReused',
   /** Sighting-identity assignments (including redundant baseline writes), additions/removals. */
   'episodeBindingsAssigned',
   'episodeBindingsInserted',
@@ -167,7 +279,11 @@ export const DOMAIN_COUNTERS = [
   'crossingTrackPeak',
   'crossingOutcomePeak',
 ] as const;
-export type DomainCounter = (typeof DOMAIN_COUNTERS)[number];
+export type DomainCounter =
+  | (typeof DOMAIN_COUNTERS)[number]
+  | `nativeDeadline:${NativeDeadlineReason}`
+  | `nativeMechanicsDiscard:${NativeMechanicsDiscard}`
+  | `nativeReceivedPreparationRoot:${keyof WorldState}`;
 export type DomainCounters = Partial<Record<DomainCounter, number>>;
 
 let sink: DomainCounters | undefined;

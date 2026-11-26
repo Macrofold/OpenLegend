@@ -1,6 +1,9 @@
+import { currentFacetValues } from './perception-current.js';
+import { currentFacetGrant } from './perception-current.js';
 import { createDraft, finishDraft } from 'immer';
 import { describe, expect, it } from 'vitest';
 import { cloneValue, readOnlyDraftView } from './draft.js';
+import { currentFacetOriginal, currentFacetTimes } from './perception-evidence.js';
 
 // Protect the shared copy contract without depending on world content or event wording.
 describe('independent domain data copies', () => {
@@ -69,4 +72,76 @@ describe('independent domain data copies', () => {
     expect(published.records[0]!.amount).toBe(4);
     expect(source.records[0]!.amount).toBe(2);
   });
+});
+
+import { createWorld, PLAYER_ID, NPC_ID } from './data.js';
+import { entityGet } from './entity-collection.js';
+import { freezeWorld, updateWorld, draftWorld, finishWorld } from './draft.js';
+import { initializePerception } from './kernel.js';
+import { setSpatialPosition, worldSupport } from './spatial-state.js';
+it('seals recent observations before nested native preparation and isolates both continuations', () => {
+  const initial = createWorld(74);
+  initializePerception(initial, []);
+  freezeWorld(initial);
+  const before = JSON.stringify(initial.experience!.temporal);
+  const outer = draftWorld(initial);
+  outer.simTime = 1;
+  const npc = entityGet(outer.entities, NPC_ID)!;
+  setSpatialPosition(outer, npc, { x: 14, y: 0, z: 15 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
+  initializePerception(outer, []);
+  const nested = draftWorld(outer);
+  const sealed = readOnlyDraftView(nested.experience!.temporal!);
+  expect(Object.isFrozen(sealed)).toBe(true);
+  expect(Object.isFrozen(readOnlyDraftView(outer.experience!.temporal!))).toBe(false);
+  const captured = JSON.stringify(sealed);
+  nested.simTime = 2;
+  setSpatialPosition(
+    nested,
+    entityGet(nested.entities, NPC_ID)!,
+    { x: 15, y: 0, z: 15 },
+    worldSupport(npc),
+    { continuity: 'physical' },
+  );
+  initializePerception(nested, []);
+  finishWorld(nested);
+  // The parent continues the same real native turn after preparing its preview.
+  // Its original observation owners must remain writable and isolated.
+  outer.simTime = 3;
+  setSpatialPosition(outer, npc, { x: 13, y: 0, z: 15 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
+  initializePerception(outer, []);
+  expect(JSON.stringify(sealed)).toBe(captured);
+  expect(JSON.stringify(initial.experience!.temporal)).toBe(before);
+  expect(JSON.stringify(finishWorld(outer).experience!.temporal)).not.toBe(captured);
+});
+it('seals shared received evidence once while preserving earlier immutable snapshots', () => {
+  const initial = createWorld(73);
+  initializePerception(initial, []);
+  freezeWorld(initial);
+  const before = JSON.stringify(initial.perceptionEvidence);
+  const changed = updateWorld(initial, (world) => {
+    const owner = world.perceptionEvidence![PLAYER_ID]!;
+    const lease = currentFacetValues(owner).find(
+      (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
+    )!;
+    lease.confirmedThrough = currentFacetTimes(owner, lease).confirmedThrough + 1;
+  });
+  expect(JSON.stringify(initial.perceptionEvidence)).toBe(before);
+  expect(changed.perceptionEvidence).not.toBe(initial.perceptionEvidence);
+  const owner = changed.perceptionEvidence![PLAYER_ID]!;
+  expect(Object.isFrozen(owner)).toBe(true);
+  const leases = currentFacetValues(owner).filter(
+    (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
+  );
+  expect(leases.length).toBeGreaterThan(1);
+  expect(currentFacetGrant(owner, leases[0]!).original).toBe(
+    currentFacetGrant(owner, leases[1]!).original,
+  );
+  expect(currentFacetOriginal(owner, leases[0]!)).toBe(currentFacetOriginal(owner, leases[1]!));
+  const nested = draftWorld(changed);
+  entityGet(nested.entities, PLAYER_ID)!.actor!.agency.revision++;
+  expect(finishWorld(nested).perceptionEvidence).toBe(changed.perceptionEvidence);
 });

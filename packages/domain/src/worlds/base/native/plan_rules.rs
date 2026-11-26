@@ -1,0 +1,102 @@
+//! The same selected ordinary-plan words consumed by Source agency. Generic
+//! frontier transitions stay in the engine; authored reports stay in this law.
+use super::ActionMessage;
+use crate::text::{JsText, TextRef};
+use serde::{Deserialize, Serialize};
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PlanRules {
+    pub requested_movement_family: String,
+    pub invalid_identity: ActionMessage,
+    pub stale_plan: ActionMessage,
+    pub invalid_goal: ActionMessage,
+    pub step_limit: ActionMessage,
+    pub unsupported_capability: ActionMessage,
+    pub invalid_command: ActionMessage,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub watch: Option<WatchRules>,
+    pub chosen_activity_active: ActionMessage,
+    pub invalid_outputs: ActionMessage,
+    pub plan_blocked: ActionMessage,
+    pub frontier_full: ActionMessage,
+    pub queued: ActionMessage,
+    pub actor_unavailable: ActionMessage,
+    pub not_chosen_plan: ActionMessage,
+    pub already_paused: ActionMessage,
+    pub pause_too_often: ActionMessage,
+    pub pause_state: String,
+    pub pause_attack: String,
+    pub pause_materials: String,
+    pub paused_step: ActionMessage,
+    pub paused_restart: ActionMessage,
+    pub inactive_goal_reason: String,
+    pub changed_target_reason: String,
+    pub missing_object_reason: String,
+    pub stale_paused: ActionMessage,
+    pub resume_refused_prefix: String,
+    pub returned_from_intervention: ActionMessage,
+    pub paused_work_name: String,
+    pub resume_blocked: String,
+    pub resumed: String,
+    pub stopped_summary: String,
+    pub discarded_paused: ActionMessage,
+    pub cancelled_step: ActionMessage,
+    pub interrupted_step: ActionMessage,
+    pub stale_encounter: ActionMessage,
+    pub missing_output: ActionMessage,
+    pub fallback_result_summary: String,
+    pub completed_result: String,
+    pub refused_result: String,
+    pub result_importance: f64,
+    pub control_importance: f64,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct WatchRules {
+    pub default_seconds: f64,
+    pub maximum_seconds: f64,
+    pub unavailable: ActionMessage,
+    pub expired: ActionMessage,
+    pub withdrawn: ActionMessage,
+    pub waiting: ActionMessage,
+}
+
+impl WatchRules {
+    pub(crate) fn valid(&self) -> bool {
+        self.default_seconds.is_finite()
+            && self.maximum_seconds.is_finite()
+            && self.default_seconds > 0.0
+            && self.default_seconds <= self.maximum_seconds
+    }
+}
+impl PlanRules {
+    /// Select the compiled requested-movement branch using the same authored
+    /// fact installed with Source's ordinary-plan rules, never an engine list.
+    pub(crate) fn supports_requested_movement(&self, family: &str) -> bool {
+        family == self.requested_movement_family
+    }
+
+    /// Base's selected quantity form, matching Source validateActivityQuantity.
+    /// Repetition/frontier arithmetic is generic; these action families are not.
+    pub(crate) fn supports_activity_quantity_command(&self, command: &str) -> bool {
+        matches!(command, "eat" | "gather" | "craft")
+    }
+
+    /// One pass substitutes only authored marker locations; words inserted by
+    /// a person are never interpreted as another marker.
+    pub(crate) fn text(&self, template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {
+        crate::text::substitute_fields(template, fields)
+    }
+    pub(crate) fn text_bound(
+        &self,
+        template: &str,
+        fields: &[(&str, TextRef<'_>)],
+    ) -> Option<usize> {
+        crate::text::substituted_fields_bound(template, fields)
+    }
+}

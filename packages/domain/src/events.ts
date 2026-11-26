@@ -1,17 +1,37 @@
-import { acquireNativeResponseEvent, acquireNativeSound } from './native-response-controller.js';
+import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
+import {
+  acquireNativeResponseEvent,
+  acquireNativeSound,
+  nativeResponseNeedsEventReception,
+} from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
-import { observeEvent } from './event-observation.js';
+import { AUTOMATIC_ENCOUNTER_BATCH_ENTRIES } from './event-batch-limits.js';
+import { prepareEventObservation } from './event-observation.js';
+import {
+  acquireAwarenessObservation,
+  attendedEventParticipants,
+  acquireOrdinaryWarning,
+  deferAwarenessObservation,
+} from './perception-evidence.js';
 import { reconcileCoaching } from './coaching.js';
-import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
+import {
+  renderNarration,
+  subjectNarration,
+  personalText,
+  capturedNarration,
+  type Narration,
+  type CapturedNarration,
+} from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
-import { activeActivity } from './action-experience.js';
+import { activeActivity, activityRecordingContext } from './action-experience.js';
+import { accountResultEvidence } from './result-evidence.js';
 import { chargeWork } from './work-budget.js';
 import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
 import { current, isDraft } from 'immer';
 import {
-  observerDescription,
+  observerName,
   recognizesSubject,
   learnSpeechIntroduction,
 } from './worlds/base/knowledge.js';
@@ -19,16 +39,28 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { perceiveSpeech, prepareSpeechWords } from './speech.js';
 import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
-import { soundOrigin, speechObservers, seesEntity, pointVisionQuery } from './perception.js';
+import { soundOrigin, speechObservers, seesEntity } from './perception.js';
 import { appraiseEvent } from './worlds/base/appraisals.js';
-import { mutateExperience, acquireEventAwareness, type ExperienceMutation } from './experience.js';
+import {
+  admitAutomaticExperience,
+  acquireEventAwareness,
+  type ExperienceMutation,
+} from './experience.js';
 import { hasMemory } from './living.js';
 import { finishTransitionWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
-import { selectedEventDisclosure } from './world-composition.js';
+import {
+  selectedEventDisclosure,
+  selectedSightingNarration,
+  selectedRecordingReason,
+  selectedAccountAfterRelease,
+  selectedEventSalience,
+  selectedOccurrenceRules,
+  selectedObservationRules,
+} from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
 import type {
@@ -64,6 +96,7 @@ export function appendMemory(
   world: WorldState,
   actorId: string,
   memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at' | 'summary'> & { summary: string | Narration },
+  activity?: import('./attention.js').ActivityRecordingContext,
 ): string | undefined {
   if (!hasMemory(entityGet(world.entities, actorId))) return;
   const summary = personalText(world, actorId, memory.summary);
@@ -85,14 +118,14 @@ export function appendMemory(
     entityIds: [...memory.entityIds],
     importance: Math.max(0, Math.min(10, memory.importance)),
   };
-  if (
-    mutateExperience(world, actorId, {
-      operation: 'add',
-      entry: { source: 'memory', value: record },
-    }) === null
-  )
-    throw new Error('Personal experience could not be recorded.');
-  return record.id;
+  const admission = admitAutomaticExperience(
+    world,
+    actorId,
+    { source: 'memory', value: record },
+    activity,
+  );
+  if (admission === null) throw new Error('Personal experience could not be recorded.');
+  return admission.retainedIds.includes(record.id) ? record.id : undefined;
 }
 export function emit(
   world: WorldState,
@@ -118,7 +151,6 @@ export function emit(
           source,
           scope,
           data?.['targetMustBeVisible'] === true ? targetId : undefined,
-          data?.['effectMustBeVisible'] === true ? origin : undefined,
         ),
     source,
     targetId,
@@ -155,6 +187,7 @@ export function emitObservedOccurrence(
     'external',
     undefined,
     undefined,
+    origin,
     origin,
   );
 }
@@ -200,7 +233,6 @@ function eventAudience(
   source: Entity | undefined,
   scope: EventScope,
   visibleTargetId?: string,
-  visibleEffect?: WorldEvent['origin'],
 ): string[] {
   // A control notice has no perceiver, not even its subject.
   if (scope === 'system') return [];
@@ -213,10 +245,6 @@ function eventAudience(
       ? audience.filter((id) => seesEntity(world, entityGet(world.entities, id)!, target))
       : [];
   }
-  if (visibleEffect)
-    audience = audience.filter((id) =>
-      pointVisionQuery(world, entityGet(world.entities, id)!)(visibleEffect),
-    );
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   return audience;
 }
@@ -243,7 +271,7 @@ export function acquireExposure(
       ? exposure.reportedBy
         ? `I read directions to ${exposure.label}, reported by ${exposure.reportedBy}. ${exposure.description}`
         : `I reached ${exposure.label}. ${exposure.description}`
-      : `I inspected ${exposure.label}${locationSuffix}. ${exposure.description}`;
+      : `${inspectionCopy.inspect}${exposure.label}${locationSuffix}. ${exposure.description}`;
   return recordEvent(
     world,
     events,
@@ -268,8 +296,15 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
   let owner: string | undefined;
   let pending: ExperienceMutation[] = [];
   const flush = () => {
-    if (owner && pending.length && mutateExperience(world, owner, pending) === null)
-      throw new Error('Private perception evidence could not be admitted.');
+    if (owner && pending.length) {
+      const entries = pending.map((operation) => {
+        if (operation.operation !== 'add')
+          throw new Error('Automatic evidence must be an acquisition.');
+        return operation.entry;
+      });
+      if (admitAutomaticExperience(world, owner, entries) === null)
+        throw new Error('Private perception evidence could not be admitted.');
+    }
     pending = [];
   };
   const acquire = (
@@ -284,22 +319,18 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       owner = source.id;
     }
     // Describe a departing subject before its episode ends, so recognition is event-time.
-    const subject = observerDescription(
-      world,
-      source.id,
-      targetId,
-      departed || detail ? 'definite' : 'indefinite',
+    const wording = capturedNarration(
+      selectedSightingNarration(world, source.id, targetId, detail, departed),
+      new Map([
+        [source.id, source],
+        [targetId, observerName(world, source.id, targetId)],
+      ]),
     );
-    const observed = departed
-      ? `lost sight of ${subject}.`
-      : detail
-        ? `noticed ${subject}: ${detail}.`
-        : `saw ${subject}.`;
     const event = recordEvent(
       world,
       events,
-      'encounter',
-      subjectNarration(source, observed),
+      selectedObservationRules(world).sighting.eventType,
+      wording,
       [source.id],
       source,
       targetId,
@@ -315,7 +346,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       pending,
     );
     // Bound temporary memory independently of the number of visible objects.
-    if (pending.length >= 128) flush();
+    if (pending.length >= AUTOMATIC_ENCOUNTER_BATCH_ENTRIES) flush();
     return event;
   };
   return Object.assign(acquire, { flush });
@@ -325,7 +356,7 @@ function recordEvent(
   world: WorldState,
   events: WorldEvent[],
   type: string,
-  narration: string | Narration,
+  narration: string | Narration | CapturedNarration,
   audience: string[],
   source: Entity | undefined,
   targetId: string | undefined,
@@ -334,37 +365,20 @@ function recordEvent(
   awarenessBatch?: ExperienceMutation[],
   exposure?: import('./places.js').EncounterExposure,
   origin?: WorldEvent['origin'],
+  receivedPoint?: WorldEvent['origin'],
 ): WorldEvent {
-  const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
+  const text =
+    typeof narration === 'string' || 'kind' in narration
+      ? narration
+      : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
       ? Math.max(0, Math.min(10, value))
       : fallback;
-  const importance = boundedMetric(
-    data?.['importance'],
-    data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
-      ? 9
-      : type === 'speech'
-        ? 7
-        : data?.['semanticTrigger'] === true ||
-            [
-              'crafted',
-              'declaration-admitted',
-              'shot-released',
-              'projectile-contact',
-              'struck',
-              'fire-out',
-              'fire-lit',
-              'fire-extinguished',
-              'rested',
-            ].includes(type)
-          ? 6
-          : 3,
-  );
-  const urgency = boundedMetric(
-    data?.['urgency'],
-    ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
-  );
+  const salience = selectedEventSalience(world, type, data);
+  const occurrenceRules = selectedOccurrenceRules(world);
+  const importance = boundedMetric(data?.['importance'], salience.importance);
+  const urgency = boundedMetric(data?.['urgency'], salience.urgency);
   const event: WorldEvent = {
     ...(exposure ? { exposure: cloneValue(exposure) } : {}),
     ...(origin
@@ -385,7 +399,7 @@ function recordEvent(
     at: world.simTime,
     type,
     text,
-    ...(typeof narration !== 'string' ? { narration } : {}),
+    ...(typeof narration !== 'string' && !('kind' in narration) ? { narration } : {}),
     audience: [...audience],
     importance,
     urgency,
@@ -394,19 +408,45 @@ function recordEvent(
   if (targetId) event.targetId = targetId;
   event.data = {
     ...cloneValue(data),
-    importancePolicy: 'native-v1',
-    importanceReason: data?.['significant'] ? 'significant' : type,
+    importancePolicy: occurrenceRules.importancePolicy,
+    importanceReason: data?.['significant'] ? occurrenceRules.significantReason : type,
   };
+  // Resolve this already admitted occurrence once, before receiver callbacks or
+  // a deferred awareness batch can finish/replace it. Its private eligibility is
+  // used only by the actor's own account, never by public event data or witnesses.
+  const tracksActivity = occurrenceRules.activityEvents.includes(type);
+  const cause = tracksActivity
+    ? (data?.['actionId'] ??
+      data?.['effectId'] ??
+      (source && world.actionExperience.current[source.id]))
+    : undefined;
+  const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
+  const activityContext = experience && activityRecordingContext(experience);
   const feltTargetId = selectedEventDisclosure(world).feltTarget(event);
   const feltTarget = feltTargetId && entityGet(world.entities, feltTargetId);
   if (
     scope === 'external' &&
     feltTarget &&
-    hasMemory(feltTarget) &&
+    (hasMemory(feltTarget) || feltTarget.actor?.controller === 'native') &&
     activelyParticipates(feltTarget) &&
     !audience.includes(feltTarget.id)
   ) {
     audience.push(feltTarget.id);
+    event.audience = [...audience];
+  }
+  const nativeTarget = targetId ? entityGet(world.entities, targetId) : undefined;
+  if (
+    nativeTarget?.actor?.controller === 'native' &&
+    nativeTarget.actor.alive &&
+    activelyParticipates(nativeTarget) &&
+    !audience.includes(nativeTarget.id) &&
+    occurrenceRules.nativeTargetEvents.includes(type) &&
+    (feltTargetId === nativeTarget.id ||
+      type === occurrenceRules.projectileContactEvent ||
+      type === occurrenceRules.projectilePassageEvent ||
+      (source && seesEntity(world, nativeTarget, source)))
+  ) {
+    audience.push(nativeTarget.id);
     event.audience = [...audience];
   }
   const speechAwareness = new Map<string, Awareness>();
@@ -426,63 +466,130 @@ function recordEvent(
     }
     event.audience = [...audience];
   }
-  chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
-  countDomainWork('eventsRecorded');
-  events.push(event);
-  if (
-    [
-      'action-started',
-      'speech',
-      'ate',
-      'equipped',
-      'gathered',
-      'prepared',
-      'crafted',
-      'harvested',
-      'cooked',
-      'fire-lit',
-      'fire-fueled',
-      'fire-extinguished',
-      'struck',
-      'guarded',
-      'shot-released',
-      'shot-ended',
-      'body-effect',
-      'moved',
-      'action-stopped',
-    ].includes(type)
-  ) {
-    const cause =
-      data?.['actionId'] ??
-      data?.['effectId'] ??
-      (source && world.actionExperience.current[source.id]);
-    const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
-    if (
-      experience &&
-      audience.includes(experience.actorId) &&
-      experience.evidenceIds.length < 64 &&
-      !experience.evidenceIds.includes(event.id)
-    )
-      experience.evidenceIds.push(event.id);
-    // Speech already has a complete listener-specific account, including exact words.
-    // Reuse it as the speaker's result rather than narrating the utterance twice.
-    if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
-      experience.resultMemoryId = event.id;
-  }
-  let nativeSounds: Awareness[] = [];
-  if (world.experience) {
-    countDomainWork('awarenessWritten', audience.length);
-    const acquired: Awareness[] = [];
-    for (const actorId of audience) {
+  // Being an occurrence's subject is not a sensory grant. Native lifecycle/effect
+  // owners may emit after removing that body's ability to receive. An explicitly
+  // granted internal result still needs no physical channel; it cannot revive a body.
+  // docs/events-perception-and-reactions.md#7-internal-triggers-and-native-survival
+  const receivers = audience.flatMap((actorId) => {
+    const observer = entityGet(world.entities, actorId);
+    if (!observer?.actor?.alive || !activelyParticipates(observer)) return [];
+    const nativeContact =
+      actorId === nativeTarget?.id && type === occurrenceRules.projectileContactEvent;
+    const modality: Awareness['modality'] =
+      speechAwareness.get(actorId)?.modality ??
+      (feltTargetId === actorId || nativeContact
+        ? 'felt'
+        : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
+          ? type === 'contact'
+            ? 'felt'
+            : type === 'encounter'
+              ? 'observed'
+              : 'internal'
+          : type === 'speech'
+            ? 'heard'
+            : 'observed');
+    return modality !== 'internal' && capabilityBlocked(world, observer, 'perception')
+      ? []
+      : [{ actorId, modality, nativeContact }];
+  });
+  audience = receivers.map((receiver) => receiver.actorId);
+  event.audience = [...audience];
+  const acquired: Awareness[] = [];
+  if (world.experience || audience.length) {
+    for (const { actorId, modality, nativeContact } of receivers) {
+      const triggerKind: Awareness['triggerKind'] =
+        data?.['acquisition'] === true
+          ? 'observed_event'
+          : source?.id === actorId
+            ? 'self_event'
+            : targetId === actorId
+              ? 'directed_action'
+              : 'observed_event';
+      // This notice is the already-applied native reception, not another sight/contact
+      // sample. Its required receiver effects still consume the exact event below;
+      // a declined personal account needs no labels, clones or reconstructed proof.
+      // docs/projects/perspective-perception-runtime-design.md#5-attention-recording-and-cognition-context
+      if (
+        data?.['acquisition'] === true &&
+        scope === 'private' &&
+        source?.id === actorId &&
+        selectedRecordingReason(world, {
+          source: 'awareness',
+          eventType: type,
+          modality,
+          triggerKind,
+          own: true,
+          hasExposure: !!event.exposure,
+          ...(event.exposure ? { exposureKind: event.exposure.kind } : {}),
+          consequence: false,
+        }) === 'none'
+      ) {
+        acquireCombatObservation(
+          world,
+          {
+            actorId,
+            sourceId: source.id,
+            targetId,
+            eventType: type,
+            sequence: event.order ?? event.sequence,
+          },
+          event,
+        );
+        continue;
+      }
       const speech = speechAwareness.get(actorId);
       if (speech) {
+        if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
+        speech.observation = acquireAwarenessObservation(world, event, speech);
+        const warning = acquireOrdinaryWarning(world, event, speech);
+        if (warning) speech.observations = [warning];
         acquired.push(speech);
         continue;
       }
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const perceived = observeEvent(world, event, actorId);
+      const prepared = prepareEventObservation(
+        world,
+        event,
+        actorId,
+        nativeContact ? { feltImpact: true } : undefined,
+      );
+      const recording = selectedRecordingReason(world, {
+        source: 'awareness',
+        eventType: prepared.eventType,
+        modality,
+        triggerKind,
+        own: prepared.sourceId === actorId || triggerKind === 'self_event',
+        hasExposure: !!event.exposure,
+        ...(event.exposure ? { exposureKind: event.exposure.kind } : {}),
+        consequence: triggerKind === 'self_event' || triggerKind === 'directed_action',
+      });
+      if (
+        recording === 'none' &&
+        !nativeResponseNeedsEventReception(world, event, actorId) &&
+        !attendedEventParticipants(
+          world,
+          actorId,
+          prepared.references.map((reference) => reference.id),
+          event.at,
+        )
+      ) {
+        acquireCombatObservation(
+          world,
+          {
+            actorId,
+            sourceId: prepared.sourceId,
+            targetId: prepared.targetId,
+            eventType: prepared.eventType,
+            sequence: event.order ?? event.sequence,
+          },
+          event,
+        );
+        continue;
+      }
+      if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
+      const perceived = prepared.materialize();
       const perceivedText = perceived.text;
       const awareness: Awareness = {
         retentionClass: 'memory',
@@ -491,19 +598,8 @@ function recordEvent(
         actorId,
         text: perceivedText,
         at: event.at,
-        sequence: world.nextId,
-        modality:
-          feltTargetId === actorId
-            ? 'felt'
-            : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
-              ? type === 'contact'
-                ? 'felt'
-                : type === 'encounter'
-                  ? 'observed'
-                  : 'internal'
-              : type === 'speech'
-                ? 'heard'
-                : 'observed',
+        sequence: event.order ?? event.sequence,
+        modality,
         entityEpisodes: Object.fromEntries(
           [...new Set(perceived.references.map((reference) => reference.id))].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
@@ -523,14 +619,21 @@ function recordEvent(
         references: perceived.references,
         ...(perceived.sourceId ? { sourceId: perceived.sourceId } : {}),
         ...(perceived.targetId ? { targetId: perceived.targetId } : {}),
-        triggerKind:
-          data?.['acquisition'] === true
-            ? 'observed_event'
-            : source?.id === actorId
-              ? 'self_event'
-              : targetId === actorId
-                ? 'directed_action'
-                : 'observed_event',
+        triggerKind,
+        ...(recording !== 'none'
+          ? {
+              retention: {
+                reason: event.exposure ? ('deliberate' as const) : ('consequence' as const),
+                afterRelease: selectedAccountAfterRelease(world, {
+                  source: 'awareness',
+                  own: prepared.sourceId === actorId || triggerKind === 'self_event',
+                  eventType: prepared.eventType,
+                  ...(experience?.actorId === actorId ? { activity: activityContext } : {}),
+                }),
+                ...(recording === 'required' ? { required: true } : {}),
+              },
+            }
+          : {}),
         content:
           typeof perceived.eventData['text'] === 'string'
             ? perceived.eventData['text']
@@ -540,21 +643,43 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
-      acquireCombatObservation(world, awareness, event);
-      if (awarenessBatch)
-        awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
-      else acquired.push(awareness);
+      if (!awarenessBatch || !deferAwarenessObservation(world, event, awareness))
+        awareness.observation = acquireAwarenessObservation(world, event, awareness, receivedPoint);
+      acquired.push(awareness);
     }
-    nativeSounds = acquireEventAwareness(world, acquired);
   }
-  learnSpeechIntroduction(world, event);
+  chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
+  countDomainWork('eventsRecorded');
+  events.push(event);
+  if (tracksActivity) {
+    if (
+      experience &&
+      audience.includes(experience.actorId) &&
+      experience.evidenceIds.length < 64 &&
+      !experience.evidenceIds.includes(event.id)
+    )
+      experience.evidenceIds.push(event.id);
+    // Speech already has a complete listener-specific account, including exact words.
+    // Reuse it as the speaker's result rather than narrating the utterance twice.
+    if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
+      experience.resultEvidence = accountResultEvidence(event.id, 'awareness');
+  }
+  // Native callbacks consumed the same compact acquisition above. Retention is a
+  // later placement decision, never another observation or an ordering clock.
+  for (const awareness of acquired) {
+    if (!awareness.speech) acquireCombatObservation(world, awareness, event);
+    if (awarenessBatch && hasMemory(entityGet(world.entities, awareness.actorId)))
+      awarenessBatch.push({ operation: 'add', entry: { source: 'awareness', value: awareness } });
+  }
+  if (!awarenessBatch) acquireEventAwareness(world, acquired);
+  learnSpeechIntroduction(world, event, acquired);
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)
     appendEvents(world, [cloneValue(event)]);
-  // Finish the cause and every observer's record before an outward reaction emits
-  // another occurrence. Nested intake must not reverse a bystander's chronology.
+  // Complete each receiver's original record before a native outward reaction
+  // emits its next occurrence. Receipt and retained-history order stay causal.
   acquireNativeResponseEvent(world, event, events);
-  for (const cue of nativeSounds) acquireNativeSound(world, cue, events);
+  for (const cue of acquired) if (cue.sound) acquireNativeSound(world, cue, events);
   // Control notices are not occurrences characters can appraise, promise on or fulfil.
   if (scope !== 'system') {
     appraiseEvent(world, event);
@@ -563,34 +688,36 @@ function recordEvent(
   }
   return event;
 }
-export function finish(
-  world: WorldState,
-  events: WorldEvent[],
-  result: Outcome,
-  beforePublication?: () => void,
-): Transition {
-  const transition = finishInDraft(world, events, result, beforePublication);
-  transition.world = finishTransitionWorld(world);
-  return transition;
+/** Reconcile consequences before another operation in the same owned transaction.
+ * Compound native work can retain this ordering without publishing an intermediate world. */
+export function reconcileTransition(world: WorldState, events: WorldEvent[]): void {
+  reconcileCoaching(world, events);
+  advanceCommitments(world, events);
 }
-
-/** Complete an ordered operation inside an owned batch. The batch must publish through
- * finishWorld before returning; per-operation reconciliation and sequence remain exact.
- */
+/** Complete one admitted command's semantic/event boundary. Publication is separate
+ * so a private native command can remain in its owning advance's working draft. */
 export function finishInDraft(
   world: WorldState,
   events: WorldEvent[],
   result: Outcome,
   beforePublication?: () => void,
 ): Transition {
-  reconcileCoaching(world, events);
-  advanceCommitments(world, events);
+  reconcileTransition(world, events);
   // Native preparation observes the exact final owner writes before publication
   // clears private revision counters; this callback grants no gameplay authority.
   beforePublication?.();
   world.sequence++;
   const committedEvents = cloneValue(events);
   return { world, events: committedEvents, outcome: result };
+}
+export function finish(
+  world: WorldState,
+  events: WorldEvent[],
+  result: Outcome,
+  beforePublication?: () => void,
+): Transition {
+  const completed = finishInDraft(world, events, result, beforePublication);
+  return { ...completed, world: finishTransitionWorld(world) };
 }
 
 /** Observed conversation events may be native state narration, not an actor reply. */

@@ -47,9 +47,11 @@ type Attempt = {
   key: string;
   intent: WorldIntent;
   directReply: boolean;
+  publicAppeal?: string;
   retryOf?: string;
   timeline: string;
   commandEpoch: string | undefined;
+  repeat?: { runId: string; loadId: string };
 };
 
 type WorldComposerProps = {
@@ -57,24 +59,32 @@ type WorldComposerProps = {
   connected: boolean;
   intent: WorldIntent | null;
   portalTarget?: HTMLElement;
-  negotiationPerson?: { id: string; name: string };
+  negotiationPerson?: { id: string; name: string; communicationReference?: string };
   visible: boolean;
+  repeat?: { runId: string; loadId: string };
+  onAcceptedJob?(id: string, terminal: boolean): void;
   preferenceNotice?: string;
   notice?: string;
   clearRecipient(): void;
   chooseTarget?(id: string): void;
   close(): void;
   setup(): void;
+  changeAddressee(targetId: string | undefined, label: string | undefined): void;
 };
 
 /** Remains mounted when hidden; private ownership, not transport, owns its drafts. */
 export function WorldComposer(props: WorldComposerProps) {
-  const intent = props.negotiationPerson
-    ? {
-        mode: 'speak' as const,
-        targetId: props.negotiationPerson.id,
-        label: props.negotiationPerson.name,
-      }
+  const negotiating = props.negotiationPerson;
+  const negotiationTarget = negotiating
+    ? (negotiating.communicationReference ??
+      props.view.entities.find((entity) => entity.id === negotiating.id)?.id)
+    : undefined;
+  // A retained trade is not a remembered communication grant. Keep its draft
+  // mounted, but withdraw a contact-only composer when that body leaves view.
+  const intent = negotiating
+    ? negotiationTarget
+      ? { mode: 'speak' as const, targetId: negotiationTarget, label: negotiating.name }
+      : null
     : props.intent;
   return <ScopedWorldComposer key={composerDraftScope(props.view)} {...props} intent={intent} />;
 }
@@ -84,13 +94,16 @@ function ScopedWorldComposer({
   connected,
   intent,
   visible,
+  repeat,
   preferenceNotice,
   notice,
   clearRecipient,
   chooseTarget,
   close,
   setup,
+  changeAddressee,
   portalTarget,
+  onAcceptedJob,
 }: WorldComposerProps) {
   const [drafts, setDrafts] = useState<Record<string, ComposerDraft>>({});
   const latestDrafts = useRef(drafts);
@@ -164,7 +177,10 @@ function ScopedWorldComposer({
     view.entities.some((e) => e.id === intent.targetId) ||
     view.player.inventory.some((item) => item.id === intent.targetId);
   const recipient = intent?.targetId
-    ? view.entities.find((entity) => entity.id === intent.targetId)
+    ? view.entities.find(
+        (entity) =>
+          entity.id === intent.targetId || entity.communicationReference === intent.targetId,
+      )
     : undefined;
   const [availabilityRefresh, setAvailabilityRefresh] = useState(0);
   const availabilityKey = JSON.stringify([
@@ -183,11 +199,7 @@ function ScopedWorldComposer({
     recipient?.talkUnavailableReason,
     view.ai.jevConfigured,
     view.ai.llmConfigured,
-    view.ai.budget.limitUsd,
-    view.ai.budget.spentUsd,
-    view.ai.budget.reservedUsd,
-    view.ai.budget.period,
-    intent?.targetId ? view.ai.budget.accounts?.[intent.targetId] : undefined,
+    view.ai.allowanceLimitUsd,
     view.ai.jobs.map((job) => [job.id, job.status]),
     availabilityRefresh,
   ]);
@@ -240,19 +252,28 @@ function ScopedWorldComposer({
   const directReply = available?.reply ?? (!!recipient && recipient.talkRequiresAi !== false);
   const spokenText = `${intent?.mode === 'speak' && mentionedItem ? `About ${mentionedItem.name}: ` : ''}${text.trim()}`;
   const needsAi = available?.code === 'ai-unavailable';
-  const blocked = !connected
-    ? 'Reconnect to the world to send.'
-    : !targetAvailable
-      ? 'The selected object is no longer available.'
-      : !available
-        ? null
-        : !available.available
-          ? available.reason
-          : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
-            ? 'Shorten these words before sending.'
-            : null;
+  const blocked =
+    repeat && (!directReply || !intent?.targetId)
+      ? 'Select the original conversation recipient to repeat this run.'
+      : !connected
+        ? 'Reconnect to the world to send.'
+        : !targetAvailable
+          ? 'The selected object is no longer available.'
+          : !available
+            ? null
+            : !available.available
+              ? available.reason
+              : draft.publicAppeal &&
+                  !available.publicAppeals?.some(
+                    (appeal) => appeal.id === draft.publicAppeal && appeal.text === spokenText,
+                  )
+                ? 'This request changed. Edit the words to speak normally, or choose the request again.'
+                : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
+                  ? 'Shorten these words before sending.'
+                  : null;
   const currentSubmission = submitted[key];
-  const failedReply = failedReplies[key];
+  const canRetryReply = view.access?.canRetryNpcReplies === true;
+  const failedReply = canRetryReply ? failedReplies[key] : undefined;
   const waitingForAct = !!currentSubmission;
   function finishSubmission(attempt: Attempt, job: Pick<AiJobView, 'id' | 'status' | 'message'>) {
     if (job.status === 'completed') return;
@@ -307,6 +328,7 @@ function ScopedWorldComposer({
   async function send(reconcile?: Attempt, recovery = false) {
     if (
       pendingRequest.current?.scope === scope ||
+      (!recovery && !!reconcile?.retryOf && !canRetryReply) ||
       (!recovery && !available?.available) ||
       (!reconcile && (blocked || !text.trim() || !intent || waitingForAct || uncertain))
     )
@@ -316,7 +338,8 @@ function ScopedWorldComposer({
       const draft = latestDrafts.current[key];
       if (!draft || !intent) return;
       attempt = {
-        id: crypto.randomUUID(),
+        id: repeat?.loadId ?? crypto.randomUUID(),
+        repeat,
         text: spokenText,
         draftText: draft.text,
         revision: draft.revision,
@@ -329,6 +352,7 @@ function ScopedWorldComposer({
           item: mentionedItem ? { id: mentionedItem.itemId, name: mentionedItem.name } : undefined,
         },
         directReply,
+        publicAppeal: draft.publicAppeal,
         timeline: view.saveTimeline ?? '',
         commandEpoch: view.commandEpoch,
       };
@@ -348,6 +372,7 @@ function ScopedWorldComposer({
         type: 'say' as const,
         text: attempt.text,
         volume: attempt.volume,
+        ...(attempt.publicAppeal ? { publicAppeal: attempt.publicAppeal } : {}),
         ...(attempt.intent.targetId ? { targetId: attempt.intent.targetId } : {}),
       };
       let result: ApiResult;
@@ -390,7 +415,12 @@ function ScopedWorldComposer({
           attempt.retryOf
             ? '/api/chat/retry'
             : attempt.directReply
-              ? '/api/chat'
+              ? attempt.repeat
+                ? '/api/cognition-lab/runs/' +
+                  attempt.repeat.runId +
+                  '/replay/' +
+                  attempt.repeat.loadId
+                : '/api/chat'
               : attempt.intent.mode === 'speak'
                 ? '/api/command'
                 : '/api/expression',
@@ -451,7 +481,10 @@ function ScopedWorldComposer({
       });
       const jobId = result.jobId;
       if (jobId) {
-        if (result.jobStatus && !['queued', 'judging', 'generating'].includes(result.jobStatus)) {
+        const terminal =
+          !!result.jobStatus && !['queued', 'judging', 'generating'].includes(result.jobStatus);
+        onAcceptedJob?.(jobId, terminal);
+        if (terminal && result.jobStatus) {
           finishSubmission(attempt, {
             id: jobId,
             status: result.jobStatus,
@@ -520,12 +553,27 @@ function ScopedWorldComposer({
                 toggleLabel={intent?.mode === 'speak' ? 'Choose addressee' : 'Choose target'}
                 placeholder={intent?.mode === 'speak' ? 'Choose a listener…' : 'Choose a target…'}
                 value={intent?.targetId ?? ''}
-                onChange={chooseTarget}
+                onChange={(reference) => {
+                  if (intent?.mode === 'speak')
+                    changeAddressee(
+                      reference || undefined,
+                      view.communicationReferences.find((person) => person.id === reference)?.label,
+                    );
+                  else chooseTarget(reference);
+                }}
                 options={[
                   { id: '', label: intent?.mode === 'speak' ? 'Anyone who can hear' : 'No target' },
-                  ...view.entities
-                    .filter((entity) => intent?.mode !== 'speak' || entity.canTalk)
-                    .map((entity) => ({ id: entity.id, label: entity.name })),
+                  ...(intent?.mode === 'speak'
+                    ? [
+                        ...(intent.targetId &&
+                        !view.communicationReferences.some(
+                          (person) => person.id === intent.targetId,
+                        )
+                          ? [{ id: intent.targetId, label: recipientLabel }]
+                          : []),
+                        ...view.communicationReferences,
+                      ]
+                    : view.entities.map((entity) => ({ id: entity.id, label: entity.name }))),
                 ]}
               />
             ) : (
@@ -570,6 +618,27 @@ function ScopedWorldComposer({
               />
             </div>
           )}
+          {!mentionedItem &&
+            !text &&
+            !uncertain &&
+            available?.publicAppeals?.map((appeal) => (
+              <Button
+                key={appeal.id}
+                size="sm"
+                variant="secondary"
+                isDisabled={sending}
+                onPress={() => {
+                  writeDraft(key, {
+                    text: appeal.text,
+                    publicAppeal: appeal.id,
+                    revision: crypto.randomUUID(),
+                  });
+                  input.current?.focus();
+                }}
+              >
+                {appeal.label}
+              </Button>
+            ))}
           <div className="ol-world-composer-input">
             <WorldIntentIcon mode={intent?.mode ?? 'act'} />
             <ConversationComposer
@@ -581,7 +650,12 @@ function ScopedWorldComposer({
               maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
               value={text}
               onChange={(value) =>
-                writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
+                writeDraft(key, {
+                  ...draft,
+                  text: value,
+                  publicAppeal: undefined,
+                  revision: crypto.randomUUID(),
+                })
               }
               onSubmit={() => send()}
               inputDisabled={!!uncertain}

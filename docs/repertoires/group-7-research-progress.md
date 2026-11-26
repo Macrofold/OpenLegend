@@ -108,7 +108,7 @@ This section preserves the **preceding reading continuation's** individual compl
 
 ## Essays and interaction navigation — complete
 
-All **twelve files in essays/** were read in full at the main-library revision. The earlier continuation completed How to Interpret the Evidence, Comparative Map and What Actually Makes These Worlds Fun. The reading continuation recorded above completed Contents, Introduction, Executive Judgment, Camera/Audience/Non-FPS, Virality and Discovery, Production and Platform Pitfalls, Implications for OpenLegend, A Practical Validation Program and Prioritized Study Itinerary.
+All **twelve files in essays/** were read in full at the main-library revision. The earlier continuation completed How to Interpret the Evidence, Comparative Map and What Actually Makes These Worlds Fun. The reading continuation recorded above completed Contents, Introduction, Executive Judgment, Camera/Audience/Non-FPS, Virality and Discovery, Production and Platform Pitfalls, Implications for Open Legend, A Practical Validation Program and Prioritized Study Itinerary.
 
 - [x] [Essay collection](../../archive/02-research/game-inspiration/essays/contents.md) — preserve distinct play, relationship and authoring roles; judge originality by changed possibilities rather than renamed content. Readability can preserve complexity. Quiet expression, voluntary return and ambitious strangeness can coexist with practical usefulness. The validation suggestions were read as reference material, not adopted as runtime tasks.
 - [x] [Granular index](../../archive/02-research/game-inspiration/mechanics/README.md) — the complete 25-study plus four-operational-supplement map and evidence boundaries were read.
@@ -130,7 +130,7 @@ The research library's original-conversation-packet reconciliation is still a se
 
 ## Catalogue processing outcomes
 
-The following are traceable applications or retained coverage, **not claims that the source contains the proposed OpenLegend entry**. They close the pending synthesis notes above. Stable IDs refer to the three linked catalogues; broader unrelated game systems were deliberately not imported.
+The following are traceable applications or retained coverage, **not claims that the source contains the proposed Open Legend entry**. They close the pending synthesis notes above. Stable IDs refer to the three linked catalogues; broader unrelated game systems were deliberately not imported.
 
 | Read subject | Committed processing outcome                                                                                                                                        |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

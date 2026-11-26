@@ -10,8 +10,8 @@ export function godCharacterAvailability(entity: EntityView) {
   };
 }
 export interface GodCharacterControls {
-  revive(entity: EntityView): Promise<void>;
-  enableCognition(entity: EntityView): Promise<void>;
+  revive?(entity: EntityView): Promise<void>;
+  enableCognition?(entity: EntityView): Promise<void>;
   editPerson?(opener: HTMLElement): void;
   inspectMind?(): void;
   editFamily?(): void;
@@ -28,14 +28,10 @@ export function GodCharacterActions({
 }) {
   const [busy, setBusy] = useState(false);
   const available = godCharacterAvailability(entity);
-  if (
-    !available.revive &&
-    !available.enableCognition &&
-    !controls.editPerson &&
-    !controls.editFamily &&
-    !controls.inspectMind
-  )
-    return null;
+  const revive = available.revive ? controls.revive : undefined;
+  const enableCognition = available.enableCognition ? controls.enableCognition : undefined;
+  const hasEdits = revive || enableCognition || controls.editPerson || controls.editFamily;
+  if (!hasEdits && !controls.inspectMind) return null;
   const run = async (action: (entity: EntityView) => Promise<void>) => {
     setBusy(true);
     try {
@@ -46,30 +42,28 @@ export function GodCharacterActions({
   };
   return (
     <Section title="God mode">
-      <p className="ol-caption">
-        Creator tools for {entity.name}. Direct changes here are separate from your character’s
-        actions and knowledge.
-      </p>
+      {hasEdits && (
+        <p className="ol-caption">
+          Creator tools for {entity.name}. Direct changes here are separate from your character’s
+          actions and knowledge.
+        </p>
+      )}
       {!connected && (
         <p className="ol-caption" role="status">
           Reconnect to use these creator tools.
         </p>
       )}
       <div className="ol-actions">
-        {available.revive && (
-          <Button
-            icon="ui.star"
-            disabled={!connected || busy}
-            onPress={() => void run(controls.revive)}
-          >
+        {revive && (
+          <Button icon="ui.star" disabled={!connected || busy} onPress={() => void run(revive)}>
             Revive
           </Button>
         )}
-        {available.enableCognition && (
+        {enableCognition && (
           <Button
             icon="ui.star"
             disabled={!connected || busy}
-            onPress={() => void run(controls.enableCognition)}
+            onPress={() => void run(enableCognition)}
           >
             Grant cognition and speech
           </Button>

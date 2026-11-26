@@ -1,7 +1,7 @@
 import { TIME_EPSILON } from './simulation-time.js';
 import {
   bodySurfaceDistance,
-  resolveSupport,
+  relativeSurfacePoint,
   SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
@@ -19,9 +19,11 @@ import { nativeResponseProfile } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { weaponStrikeWording } from './worlds/base/strikes.js';
+import { selectedNaturalStrikeBodyPlans } from './world-composition.js';
 import { itemFor } from './objects.js';
 import { equippedItems } from './equipment.js';
 import type { Action, Entity, WorldState } from './types.js';
+import attackDescription from './attack-description.json' with { type: 'json' };
 /** Trusted targeted-strike definitions; data selects only this finite native family.
  * docs/targeted-actions.md#targeted-strikes
  */
@@ -63,7 +65,7 @@ export function describeAttack(
     'damage' | 'range' | 'workSeconds' | 'recoverySeconds' | 'accuracy'
   >,
 ): string {
-  return `${profile.damage} injury per hit; ${profile.workSeconds + (profile.recoverySeconds ?? 0)} game seconds plus approach; reach ${profile.range} m; ${Math.round((profile.accuracy ?? 1) * 100)}% base hit chance in reach.`;
+  return `${profile.damage}${attackDescription.injury}${profile.workSeconds + (profile.recoverySeconds ?? 0)}${attackDescription.time}${profile.range}${attackDescription.reach}${Math.round((profile.accuracy ?? 1) * 100)}${attackDescription.chance}`;
 }
 export function validMelee(profile: MeleeProfile): boolean {
   return (
@@ -122,23 +124,42 @@ export function availableStrikes(
 ): StrikeDefinition[] {
   const melee = equippedItems(world, actorId, 'melee').flatMap((item) => {
     const definition = strikeDefinition(item.definitionId, world, item.id, target);
-    return definition && supportsStrike(entityGet(world.entities, actorId), definition)
+    return definition && supportsStrike(entityGet(world.entities, actorId), definition, world)
       ? [definition]
       : [];
   });
   const native = Object.values(world.nativeStrikes ?? {})
-    .filter((definition) => supportsStrike(entityGet(world.entities, actorId), definition))
+    .filter((definition) => supportsStrike(entityGet(world.entities, actorId), definition, world))
     .map((definition) =>
       target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
     );
   return [...native, ...melee];
 }
 /** The same anatomical/capability requirement governs discovery, admission and impact. */
-export function supportsStrike(actor: Entity | undefined, definition: StrikeDefinition): boolean {
+export function supportsStrike(
+  actor: Entity | undefined,
+  definition: StrikeDefinition,
+  world: Pick<WorldState, 'profile'>,
+): boolean {
+  return supportsStrikeBody(
+    actor?.actor?.body?.plan,
+    actor?.actor?.naturalStrikeIds,
+    definition,
+    selectedNaturalStrikeBodyPlans(world),
+  );
+}
+/** An owned body and its installed natural capabilities suffice for discovery.
+ * No current target or physical world is needed to describe that source. */
+export function supportsStrikeBody(
+  bodyPlan: string | undefined,
+  naturalStrikeIds: readonly string[] | undefined,
+  definition: StrikeDefinition,
+  unrestrictedBodyPlans: readonly string[],
+): boolean {
   return (
-    !!actor?.actor?.body &&
-    (!definition.requiredBodyPlan || definition.requiredBodyPlan === actor.actor.body.plan) &&
-    (actor.actor.body.plan === 'biped' || !!actor.actor.naturalStrikeIds?.includes(definition.id))
+    bodyPlan !== undefined &&
+    (!definition.requiredBodyPlan || definition.requiredBodyPlan === bodyPlan) &&
+    (unrestrictedBodyPlans.includes(bodyPlan) || !!naturalStrikeIds?.includes(definition.id))
   );
 }
 export function validateNativeStrikes(world: WorldState): void {
@@ -283,23 +304,14 @@ export function movingStrikeStance(
   const from = supportedPosition(actor),
     targetPoint = supportedPosition(target);
   if (!from || !targetPoint) return;
-  const dx = from.x - targetPoint.x,
-    dz = from.z - targetPoint.z,
-    length = Math.hypot(dx, dz),
-    radius =
-      effectiveBodyProfile(world, actor).radius +
-      effectiveBodyProfile(world, target).radius +
-      standOff,
-    angle = length > 0 ? Math.atan2(dz, dx) : actor.spatial.heading;
-  return (
-    resolveSupport(
-      spatialMap(world),
-      {
-        x: targetPoint.x + Math.cos(angle) * radius,
-        y: targetPoint.y,
-        z: targetPoint.z + Math.sin(angle) * radius,
-      },
-      targetPoint.surfaceId,
-    ) ?? undefined
-  );
+  const dx = from.x - targetPoint.x;
+  const dz = from.z - targetPoint.z;
+  const heading = dx !== 0 || dz !== 0 ? Math.atan2(dx, dz) : actor.spatial.heading;
+  const radius =
+    effectiveBodyProfile(world, actor).radius +
+    effectiveBodyProfile(world, target).radius +
+    standOff;
+  // Sample the height at the offset on the target's named support. Using
+  // the target's own height can refuse a valid stance on a slope.
+  return relativeSurfacePoint(spatialMap(world), targetPoint, heading, 0, radius) ?? undefined;
 }

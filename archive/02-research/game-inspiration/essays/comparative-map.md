@@ -2,7 +2,7 @@
 
 The “lesson” column is an analytical recommendation. Sources in the case studies support the underlying mechanics and outcomes.
 
-| Case | Main promise | Outcome lens used here | Most useful lesson for OpenLegend |
+| Case | Main promise | Outcome lens used here | Most useful lesson for Open Legend |
 |---|---|---|---|
 | Minecraft | Make a place and do things your way | Dated mass-market and cultural milestones | Simple reusable primitives; personal projects; a visible sharing unit |
 | RimWorld | Keep particular people alive through unpredictable events | Developer account and strong published reception | Traits and relationships matter when they change choices and consequences |
@@ -39,7 +39,7 @@ The “lesson” column is an analytical recommendation. Sources in the case stu
 | Balatro | Combine familiar cards into surprising systems | Creator demo/wishlist diary and original criticism | Small operators can create large meaningful variety |
 | Vampire Survivors | Focus on positioning and builds while routine attacks automate | Creator account and original criticism | Relocate agency rather than removing every decision |
 | Slay the Spire | Construct and operate a coherent deck | Historical development and original criticism | More options are not always better; subtraction can be strategy |
-| Palworld | Collect creatures who help and express emotion | Producer interview, player testimony and player milestone | Useful autonomy plus character is a close OpenLegend comparison |
+| Palworld | Collect creatures who help and express emotion | Producer interview, player testimony and player milestone | Useful autonomy plus character is a close Open Legend comparison |
 | PEAK | Solve a simple risky predicament together | Rapid sales and accessible interview excerpt | One legible social problem can produce many stories |
 | Core Keeper | Explore danger and return to a growing underground home | Launch milestones and detailed criticism | Readable top-down play can be warm, spectacular and systemic |
 | Against the Storm | Repeatedly solve constrained settlement problems | Developer account and criticism | Renew local problems without necessarily erasing the main world |

@@ -1,6 +1,6 @@
 # Garry's Mod: tools, constraints, and player-made games
 
-**Gameplay inspiration; researched September 25, 2026.** This extends the [Garry's Mod chapter](../games/garry-s-mod.md), preserving earlier reviews, videos, and conclusions. It distinguishes the base sandbox, community modes, server conventions, and developer APIs. No new game session or code experiment was performed. This is not an instruction to reproduce Garry's Mod's architecture or a new OpenLegend task list.
+**Gameplay inspiration; researched September 25, 2026.** This extends the [Garry's Mod chapter](../games/garry-s-mod.md), preserving earlier reviews, videos, and conclusions. It distinguishes the base sandbox, community modes, server conventions, and developer APIs. No new game session or code experiment was performed. This is not an instruction to reproduce Garry's Mod's architecture or a new Open Legend task list.
 
 ## 1. A manipulation tool makes objects available for thought
 
@@ -94,7 +94,7 @@ The official game positions itself around physical construction, cooperative bui
 
 **Interpretation:** the platform's flexibility is most convincing when it supports several complete activities, not merely a theoretically unbounded list of objects. Someone should be able to participate at a comfortable level: play an example, modify a contraption, build a new one, or author a mode.
 
-For OpenLegend inspiration, the key questions are whether a reusable creation includes the relationships that make it work, whether its recipient understands its purpose, and whether the surrounding world gives someone a reason to use it. Those are research questions, not an instruction to build a universal editor or copy TTT's fiction.
+For Open Legend inspiration, the key questions are whether a reusable creation includes the relationships that make it work, whether its recipient understands its purpose, and whether the surrounding world gives someone a reason to use it. Those are research questions, not an instruction to build a universal editor or copy TTT's fiction.
 
 ## Sources and scope
 

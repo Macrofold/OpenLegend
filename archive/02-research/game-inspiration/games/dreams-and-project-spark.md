@@ -6,6 +6,6 @@
 
 It would be too strong to claim that a specific absent feature—PC support, monetization, export, multiplayer, or a particular recommendation system—caused Dreams’ support decision. This research does not establish that counterfactual. The defensible lesson is narrower: impressive creation technology and an engaged community were not sufficient to secure its continuing live-development path.
 
-**OpenLegend implication.** Treat the following as separate product milestones: creating a mechanic; making that mechanic enjoyable; letting another person discover it; making it easy to reuse; and sustaining the service around it. Do not wait for a public marketplace to validate the first four. Ship authored example worlds and understandable templates so people have a starting point.
+**Open Legend implication.** Treat the following as separate product milestones: creating a mechanic; making that mechanic enjoyable; letting another person discover it; making it easy to reuse; and sustaining the service around it. Do not wait for a public marketplace to validate the first four. Ship authored example worlds and understandable templates so people have a starting point.
 
-**Key test.** Would someone who never authors anything choose to play OpenLegend? Would someone who authors something care about the actual response it receives? A growing count of generated packs does not answer either question.
+**Key test.** Would someone who never authors anything choose to play Open Legend? Would someone who authors something care about the actual response it receives? A growing count of generated packs does not answer either question.

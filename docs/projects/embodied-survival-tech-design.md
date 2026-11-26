@@ -8,7 +8,7 @@
 
 ## Baseline, scope and risk
 
-Initial September 27 implementation baseline: local `main` and freshly fetched `origin/main` at `412b5b480b4911d9977de73168c6072e2c023b83`, OpenLegend's verified remote default branch.
+Initial September 27 implementation baseline: local `main` and freshly fetched `origin/main` at `412b5b480b4911d9977de73168c6072e2c023b83`, Open Legend's verified remote default branch.
 
 The initial estimate was several hundred to roughly a thousand logic lines across domain, context/scheduling and client projections. The implemented change is larger (roughly 1,200 added/changed logic lines plus removals); cross-layer qualification remains necessary. Risk is substantial because removing automatic feeding changes unattended survival, scheduling affects paid execution, and combat must preserve authority and exact-once effects across time and save/load. Re-estimate after tracing the implementation base and any action-foundation changes.
 

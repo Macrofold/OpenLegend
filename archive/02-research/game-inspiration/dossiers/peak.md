@@ -4,7 +4,7 @@
 
 [Preserved overview](../games/peak.md) · [Detailed mechanics study](../mechanics/peak-shared-burdens-rescue-and-spatial-tools.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
-PEAK demonstrates how a small shared predicament can produce memorable social stories when position, information, limited supplies and physical help are real. A rescue need not be separately narrated into existence: separation changes what people know, communication helps locate someone, and a tool or another climber changes what can happen. This is research and conditional inspiration, not an accepted OpenLegend feature specification. No firsthand play, watched footage, soundtrack audition or current network test is claimed.
+PEAK demonstrates how a small shared predicament can produce memorable social stories when position, information, limited supplies and physical help are real. A rescue need not be separately narrated into existence: separation changes what people know, communication helps locate someone, and a tool or another climber changes what can happen. This is research and conditional inspiration, not an accepted Open Legend feature specification. No firsthand play, watched footage, soundtrack audition or current network test is claimed.
 
 ## 1. Identity, scope and current boundary
 
@@ -184,7 +184,7 @@ The developers describe unexpected attention and support burdens and a wish to r
 
 The same FAQ says the team deliberately did not adopt Steam Workshop after discussion with modders, including cross-platform limitations. An unofficial modding community and selective support are not a native Workshop feature or a promise of unrestricted official authoring tools. [PK-B](#pk-b)
 
-**Interpretation:** a finished premium cooperative activity and an always-hosted persistent world inherit different obligations. An eventual OpenLegend business model should align expectations with actual ongoing work, not treat either perpetual expansion or abandonment as the only choices.
+**Interpretation:** a finished premium cooperative activity and an always-hosted persistent world inherit different obligations. An eventual Open Legend business model should align expectations with actual ongoing work, not treat either perpetual expansion or abandonment as the only choices.
 
 ## 24. Marketing and the shareable incident
 

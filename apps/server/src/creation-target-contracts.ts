@@ -45,6 +45,26 @@ export const configuredCreationTargetSchema = z
   .strict();
 export type ConfiguredCreationTarget = z.infer<typeof configuredCreationTargetSchema>;
 
+export type CreationSourceConfig = {
+  installationId?: string;
+  targets: readonly ConfiguredCreationTarget[];
+};
+
+/** Read the operator's configured source identity and allowed destinations. */
+export function readCreationSourceConfig(env: NodeJS.ProcessEnv): CreationSourceConfig {
+  const installationId = env['OPEN_LEGEND_INSTALLATION_ID']?.trim();
+  const targets = z
+    .array(configuredCreationTargetSchema)
+    .max(256)
+    .parse(JSON.parse(env['OPEN_LEGEND_CREATION_TARGETS_JSON'] ?? '[]'));
+  if (targets.length && !installationId)
+    throw new Error('Configured creation targets require OPEN_LEGEND_INSTALLATION_ID.');
+  if (installationId) id.parse(installationId);
+  if (new Set(targets.map((target) => target.id)).size !== targets.length)
+    throw new Error('Configured creation target identities must be unique.');
+  return { installationId, targets };
+}
+
 const initialAccountSchema = z
   .object({
     issuer: z.string().url(),

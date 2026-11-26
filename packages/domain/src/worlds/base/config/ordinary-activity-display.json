@@ -1,0 +1,79 @@
+{
+  "stableLearnedPurpose": "Hunt once",
+  "chosenPurpose": "chosen purpose",
+  "move": {
+    "name": "Move",
+    "targetPrefix": "the chosen place at ",
+    "coordinateSeparator": ", ",
+    "distanceName": "distance",
+    "distanceSuffix": " m directly; the route length is not known"
+  },
+  "say": {
+    "name": "Speak",
+    "chunkUnits": 500,
+    "wordsName": "my words",
+    "moreWordsName": "more of my words",
+    "replyName": "reply",
+    "reply": "Speaking does not promise that anyone hears, answers or agrees"
+  },
+  "followName": "Follow",
+  "cookName": "Cook",
+  "eatName": "Eat",
+  "craft": {
+    "name": "Make",
+    "recipeChoice": "Craft {recipe}",
+    "batchChoice": "Craft one batch",
+    "materials": "Materials",
+    "keptTools": "Kept tools",
+    "workName": "Work",
+    "work": "{seconds} game seconds. Materials are spent when work starts and stay spent if work stops.",
+    "started": "started crafting {recipe}."
+  },
+  "status": {
+    "name": "Act",
+    "activatePrefix": "Begin ",
+    "deactivatePrefix": "End ",
+    "resultName": "result",
+    "result": "An attempt; the actual applied or resisted change is recorded when it happens"
+  },
+  "strike": {
+    "name": "Attack once",
+    "attackName": "attack",
+    "approachName": "approach",
+    "approachPrefix": "Move to within ",
+    "approachSuffix": " m; route length is not known",
+    "weaponName": "Strike with {weapon}",
+    "weaponTarget": "Attack {target} with {weapon}",
+    "weaponPast": "struck with {weapon}",
+    "catalogue": {
+      "approachPrefix": "Approach and ",
+      "uncertaintyName": "Uncertainty",
+      "uncertainty": "An attempt, not a promised hit or kill; range and line of effect are checked at impact"
+    }
+  },
+  "ranged": {
+    "shot": "{damage} injury before protection; range {range} m; base aim steadiness {steadiness}%; straight flight {speed} m per game second. {contact}",
+    "automaticPreparation": "{seconds} game seconds{approach}; then releases one projectile automatically",
+    "afterApproach": " after any approach",
+    "withoutApproach": " without automatic approach",
+    "approach": "Move to within {distance} m; the route length is not known",
+    "stock": "Uses one {ammunition}; {quantity} in this carried stack",
+    "ammunitionUnavailable": "The selected ammunition is unavailable."
+  },
+  "observed": {
+    "distanceName": "distance",
+    "distanceSuffix": " m",
+    "directionName": "direction",
+    "directions": [
+      "ahead",
+      "ahead and to my right",
+      "to my right",
+      "behind and to my right",
+      "behind",
+      "behind and to my left",
+      "to my left",
+      "ahead and to my left"
+    ],
+    "healthName": "health"
+  }
+}

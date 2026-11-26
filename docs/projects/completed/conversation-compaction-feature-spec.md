@@ -10,7 +10,7 @@
 
 NPC conversations can continue for a long time without eventually failing because the complete retained transcript no longer fits in one model request.
 
-OpenLegend still keeps the full durable speech and actor-awareness history. For one NPC decision, the server provides a bounded actor-specific conversation projection: recent dialogue remains verbatim and older dialogue may be represented by a compact summary. The projection must preserve the information needed for a natural continuation without widening what the NPC was allowed to hear.
+Open Legend still keeps the full durable speech and actor-awareness history. For one NPC decision, the server provides a bounded actor-specific conversation projection: recent dialogue remains verbatim and older dialogue may be represented by a compact summary. The projection must preserve the information needed for a natural continuation without widening what the NPC was allowed to hear.
 
 This is context-window management, not a new fictional memory system. Conversation compaction does not create knowledge, promises, beliefs, relationships, actions or world facts.
 
@@ -38,9 +38,9 @@ Research basis: [conversation state and grounding](../../../archive/02-research/
 
 ### Research lineage and terminology
 
-This design deliberately adopts concepts from decades of dialogue research rather than inventing a new conversational-state vocabulary. The OpenLegend names are simplified adaptations of established terms:
+This design deliberately adopts concepts from decades of dialogue research rather than inventing a new conversational-state vocabulary. The Open Legend names are simplified adaptations of established terms:
 
-| Research lineage                                                                                                                    | OpenLegend term                              | How we use it                                                                                                                                                                                                               |
+| Research lineage                                                                                                                    | Open Legend term                             | How we use it                                                                                                                                                                                                               |
 | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Dialogue Gameboard / information state** — especially shared assumptions, **Questions Under Discussion (QUD)** and **LatestMove** | Overall compact conversation projection      | Maintain a small evolving conversational state instead of replaying an unbounded transcript. We do not copy a full dialogue-manager ontology.                                                                               |
 | **Common ground / grounding**                                                                                                       | **Established conversational context**       | Preserve what this actor can treat as established for continuing the exchange, while keeping attribution, disagreement and uncertainty. This is actor-local conversational context, not objective or globally shared truth. |
@@ -49,7 +49,7 @@ This design deliberately adopts concepts from decades of dialogue research rathe
 | **LatestMove / local discourse coherence**                                                                                          | **Recent verbatim dialogue + exact Trigger** | Keep recent turns and the current speech exact rather than forcing pronouns, ellipsis, tone and local coherence through lossy summary text.                                                                                 |
 | **Persistent referential grounding**                                                                                                | **Reference continuity**                     | Preserve temporal, spatial, attributive and comparative relationships needed to resolve later references to people, objects, places and events.                                                                             |
 
-The terminology is intentionally not identical where the research term would imply stronger semantics than OpenLegend can safely claim. In particular, **common ground** often describes mutually established information; OpenLegend stores an actor-specific permitted projection and must not infer mutual agreement or objective truth merely from speech. The underlying concepts and original names remain documented here so future readers can trace the design lineage.
+The terminology is intentionally not identical where the research term would imply stronger semantics than Open Legend can safely claim. In particular, **common ground** often describes mutually established information; Open Legend stores an actor-specific permitted projection and must not infer mutual agreement or objective truth merely from speech. The underlying concepts and original names remain documented here so future readers can trace the design lineage.
 
 Key background includes Dialogue Gameboard/information-state work, Questions Under Discussion, common-ground/grounding research, Centering Theory, clarification/repair, discourse obligations and recent persistent-reference research. See the linked research notes for primary sources and the limits of each analogy.
 
@@ -71,7 +71,7 @@ These examples define a general continuity goal, not fixed extraction fields.
 
 Short and normal conversations behave as they do today: the NPC receives its permitted conversation verbatim.
 
-When the permitted transcript becomes too large for the conversation portion of a model request, OpenLegend transparently compacts older dialogue. The NPC still receives:
+When the permitted transcript becomes too large for the conversation portion of a model request, Open Legend transparently compacts older dialogue. The NPC still receives:
 
 - a compact representation of relevant older conversation;
 - recent personally experienced dialogue verbatim;
@@ -84,7 +84,7 @@ The saved transcript and transcript UI remain complete. Compaction must never de
 
 ## 4. Privacy and perspective
 
-Compaction happens **after** OpenLegend determines what the specific NPC was permitted to perceive.
+Compaction happens **after** Open Legend determines what the specific NPC was permitted to perceive.
 
 There is no shared conversation summary that is automatically given to every participant. Two actors in the same conversation may have different compacted histories because they joined at different times, overheard different intervals, heard indistinct speech, recognized different speakers or had different event-time permissions.
 
@@ -102,7 +102,7 @@ The summary is derived context only. It may restate information the actor alread
 - broaden an audience;
 - rewrite the underlying transcript.
 
-Where OpenLegend already has a stronger semantic owner, that owner remains authoritative. For example, an actual active obligation can be included through the existing mandatory-context path rather than trusting the compactor to rediscover it.
+Where Open Legend already has a stronger semantic owner, that owner remains authoritative. For example, an actual active obligation can be included through the existing mandatory-context path rather than trusting the compactor to rediscover it.
 
 Compaction should preserve material corrections and revisions in its prose, but existing correction/forgetting mechanisms remain authoritative and can invalidate derived compaction.
 

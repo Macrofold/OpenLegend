@@ -1,3 +1,5 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
+import outputRules from './config/recipe-output-rules.json' with { type: 'json' };
 import { BASE_ATTACK_EXECUTION } from './skilled-execution.js';
 import { entityValues } from '../../entity-collection.js';
 import type {
@@ -131,7 +133,7 @@ function inheritedProperties(world: WorldState, candidate: RecipeCandidate): Mat
       ),
     ),
   ]
-    .filter((property) => property !== 'food' && property !== 'fuel')
+    .filter((property) => !outputRules.excludedInheritedProperties.includes(property))
     .sort();
 }
 function baseOutput(
@@ -163,7 +165,7 @@ function rangedWeaponFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor
   const swing = mechanism === 'swing';
   const ammunitionKind = swing ? 'stone' : 'arrow';
   const data = definition(
-    `base:${mechanism}`,
+    swing ? 'base:swing' : arms.bowCandidate.family.id,
     swing ? 'Sling-like ranged weapon' : 'Bow-like ranged weapon',
     swing
       ? 'A physical sling-like stone ranged weapon using binding and a flexible pouch.'
@@ -223,7 +225,7 @@ function rangedWeaponFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor
             range: numeric(candidate, 'range'),
             accuracy: numeric(candidate, 'accuracy'),
             flightSpeed: BASE_PROJECTILE_SPEED[ammunitionKind],
-            recoverySeconds: mechanism === 'swing' ? 18 : 24,
+            recoverySeconds: mechanism === 'swing' ? 18 : arms.bowRecoverySeconds,
           },
           execution: structuredClone(
             swing ? BASE_ATTACK_EXECUTION.sling : BASE_ATTACK_EXECUTION.bow,
@@ -252,7 +254,7 @@ function rangedWeaponFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor
   };
 }
 const arrowDefinition = definition(
-  'base:arrow',
+  arms.arrowCandidate.family.id,
   'Arrow ammunition',
   'A physical arrow with shaft, point and fiber fletching, requiring a compatible bow.',
   [roles.shaft, roles.point, roles.fletching],

@@ -1,3 +1,4 @@
+import { selectedOccurrenceRules } from './world-composition.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
 import { attackExecutionFactor, attackExecutionScore } from './combat-execution.js';
 import { canonicalJson, outcome } from './events.js';
@@ -20,14 +21,22 @@ export function attackPermissionProblem(
   const policy = bodyPolicy(world)?.combat;
   const sourceController = actor.actor?.controller;
   if (!actor.actor?.alive || actor.actor.incapacitated || !activelyParticipates(actor))
-    return outcome(false, 'attack-source-unavailable', 'This body cannot begin an attack.');
+    return outcome(
+      false,
+      selectedOccurrenceRules(world).response.offers.availability.attackSource.code,
+      selectedOccurrenceRules(world).response.offers.availability.attackSource.message,
+    );
   if (
     !target?.actor?.alive ||
     !activelyParticipates(target) ||
     target.id === actor.id ||
     (attack.targetLife !== undefined && attack.targetLife !== (target.actor.physicalLife ?? 0))
   )
-    return outcome(false, 'attack-target-unavailable', 'The selected living body is unavailable.');
+    return outcome(
+      false,
+      selectedOccurrenceRules(world).response.offers.availability.attackTarget.code,
+      selectedOccurrenceRules(world).response.offers.availability.attackTarget.message,
+    );
   if (
     !policy ||
     !sourceController ||
@@ -37,8 +46,9 @@ export function attackPermissionProblem(
   )
     return outcome(
       false,
-      'attack-not-permitted',
-      policy?.unavailableText ?? 'Combat is unavailable in this world.',
+      selectedOccurrenceRules(world).response.offers.availability.attackPermission.code,
+      policy?.unavailableText ??
+        selectedOccurrenceRules(world).response.offers.availability.attackPermission.message,
     );
   return null;
 }

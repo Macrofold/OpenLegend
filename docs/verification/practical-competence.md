@@ -152,7 +152,7 @@ Additional second-review Jev/provider cost is **$0**. Cumulative task exposure r
 
 ## Intelligence-weighted progress — October 27, 2026
 
-**Separate prototype evidence:** the following campaign ran on the mechanics implementation preserved at `codex/character-mechanics-prototype`, commit `1ad0bbf6cdcbb0d079e4407bd0938d8a4e2ba05b`. Intelligence-weighted progress is not installed by the current UI-only Gildmoss delivery. The earlier practical-competence evidence retains its original implementation scope.
+**Separate prototype evidence:** the following campaign ran on the mechanics implementation preserved at `codex/character-mechanics-prototype`, commit `1ad0bbf6cdcbb0d079e4407bd0938d8a4e2ba05b`. Intelligence-weighted progress is not installed by the current UI-only Gildmoss delivery. The earlier character skill evidence retains its original implementation scope.
 
 A disposable native scenario used the existing equipped-sling fixture and ordinary `aim` → `release-shot` command owners, including preparation and actual combat recovery. Each shot spent exactly one compatible projectile. The release owner captured the effective Intelligence factor once; only its admitted actor gained support. No provider, browser, server or database was started for these checks; `AI_BUDGET_USD=0`.
 
@@ -168,3 +168,27 @@ The stored sum for the eleven low-Intelligence releases was `6.049999999999999`;
 A clearly supplied completed-coaching support exercised the native award reader: 3 earned progress plus that support granted the practiced rank, later releases continued filling independent support, removing the coaching support retained rank once 6 progress was independently supported, and correcting one of those releases lowered it again. The supplied support proves arithmetic/correction only; it does not establish voluntary agreement or repair the separately tracked delayed-shot observation gap.
 
 The profile names `independentProgress`/`coachedProgress` own thresholds; release count remains the actual number of evidence records. Exact earned progress appears in both the canonical release record and its compact support. No effective stat/progress total or inverse unequip delta is saved. Retention uses the installed positive minimum factor, including an ordinary factor of one for bodies without an applicable stat. Existing authority, disclosure, feedback choice and memory-reader fences were unchanged in that prototype. Its combined CMA browser/server/database acceptance remained incomplete; it is not remaining work for the current UI-only assignment.
+
+## Main practice target on the stand-alone Rust server — November 21, 2026
+
+A disposable PostgreSQL opening used the unchanged target from Main seed 1086 and the supported River Camp layout with one player, two human NPCs and three hares. The target occupied its original named terrain support. Rust installed it against the current finite-practice definition and exposed the inert target through the normal authenticated browser view. The browser received the public target kind while its mechanical attribute identifier stayed private.
+
+The player walked past the target, saved through the ordinary autosave, and reopened the same PostgreSQL world with Node absent from the server runtime. The full saved target row and named placement matched across restart. The browser resumed control and the next walk saved its new position. In a separate startup within the same disposable database, the server refused an uninstalled attribute reference and left the damaged row untouched. Both ordinary shutdowns succeeded and the fixture database was dropped.
+
+Frozen source tree `9549f272a1e63b5bcde890d078fc2317dd76eb19`, binary SHA-256 `34dadc648aae21ddc90e1c6220f421aed646f666392625d5e84166e710d60001`. This check covers the standing target's installation, permitted observation and saved continuation. The [live sling check](#live-sling-practice-through-the-rust-browser--november-22-2026) covers taking the shot on Rust.
+
+## Completed practice history on the stand-alone Rust server — November 22, 2026
+
+Source equipped the authored Field sling in the same opening and fired a real practice shot. Release at game second 18 spent one of three stones. The target was hit at second 21.71079506305589. Rust opened the resulting current PostgreSQL world and returned the player's rank and one release with the exact occurrence and event IDs and the original activity description. The target's public view did not contain private practice evidence. The committed release and terminal ammunition claim matched Source. After an ordinary walk and save, Rust reopened the same database, restored control, showed the same practice evidence and saved another walk. Both Rust processes exited cleanly. Node was absent from their runtime.
+
+Frozen source tree `8600875ef82789624b5cd5dc07e7d6d8fa021fde`, binary SHA-256 `02fe0228d0fbbaaf0a2c9c7b728712baa8220781797b29f6a9710bb35a1a53f9`. Retained result `sling-practice-20261121/projectile/caller-h5r/result.json` starts `6329e163cc5b`. This run qualifies opening and continuing after a completed shot.
+
+## Live sling practice through the Rust browser — November 22, 2026
+
+The signed-in player selected the authored Main practice target in River Camp, with two human NPCs, three hares, a worn Field sling and three stones. The original browser stream stayed open through the shot. PostgreSQL saved one consumed claim, two remaining stones, one release and one observed hit 3.7108 game seconds later. The player's Skills panel displayed one private entry. Repeating the command and reopening the world returned the exact receipt, stock, claim and evidence.
+
+A separate player used Stop during the windup at the supported half-speed setting. The same stream stayed open and the ordinary save recorded the exact hold as released at revision 2. The stone count stayed at three, with no projectile, contact or practice credit. The cold server displayed the world, returned both original receipts and preserved the released claim. The common action replacement path now uses the same hold selection to release claims for practice and other supported timed work.
+
+The authorized Forget route removed the exact release from the player's view and removed its skill credit. The committed projectile history, ammunition debit and resolved command receipt survived. The cold server preserved that result. Rust retains the named tool and target, the release outcome and the separate observation of impact. The earlier TypeScript description also included the initial distance, direction and tool lore.
+
+Earlier builds refused the signed command at the preview gate, stopped the stream while a valid practice action was active, refused the event for a freshly launched flight and left a held claim after cancellation. The frozen attempts and exact failed PostgreSQL cut establish each cause. The release and Stop cases passed on tree `499b73196b317af194e38dcb266d616d77a49194`, executable SHA-256 `099cd6ebc3c8d67bedf0ba3d6031bac3f21e61979636c1c48a7b2a887280b4ce`. Protected Forget passed on tree `7c5e2d257a4afa3eb753a77fb201b6f18076c6c3` before the shared hold fix. Warm and cold listeners exited normally in the passing cases. All disposable databases were removed. Provider cost was $0. No speed or broader ranged combat claim follows from these checks.

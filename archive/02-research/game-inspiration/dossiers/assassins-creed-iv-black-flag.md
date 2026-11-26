@@ -218,7 +218,7 @@ These are qualitative, self-selected accounts, not a representative prevalence e
 
 **A new purpose can transform reused mechanics.** Freedom Cry demonstrates why identical controls need not imply identical meaning. The reward structure must support that meaning rather than quietly turning its moral stakes into an interchangeable currency.
 
-These are research interpretations and reference patterns, not accepted OpenLegend implementation tasks or proposals to reuse copyrighted characters, art or music.
+These are research interpretations and reference patterns, not accepted Open Legend implementation tasks or proposals to reuse copyrighted characters, art or music.
 
 ## 12. Reading and viewing route
 

@@ -4,12 +4,12 @@ import { digest } from './content-digest.js';
 import type { CognitionLevel, LedgerCategory, LevelLimits } from './cognition-budget.js';
 
 /** Operating policy, not fictional laws. docs/limits/ai-execution.md#decision-escalation-limits */
+export const DEFAULT_NPC_AI_CONCURRENCY = 1000;
+
 export const DECISION_LIMITS = {
-  backgroundExecutions: 100,
   immediateMs: 1000,
   lifetimeMs: 30_000,
   queueMs: 2000,
-  queued: 16,
   descriptorBytes: 8192,
   inputBytes: 100_000,
   schemaBytes: 65_536,
@@ -85,6 +85,7 @@ export interface DecisionAttemptLink {
 }
 export interface LinkedDecisionAttempt extends DecisionAttemptLink {
   attemptId: string;
+  dispatchIntent: boolean;
   provider: 'jev' | 'openai' | 'macrofold';
   reservedUsd: number;
   receipt?: import('@open-legend/ai').AiReceipt;
@@ -350,6 +351,22 @@ export function endDecision(state: DecisionState, reason: DecisionEnd, at: numbe
 
 const integer = z.number().int().nonnegative().safe();
 const identity = z.string().min(1).max(256);
+/** The producer and durable cursor share one current format. Evidence may not yet
+ * have been considered when a character first receives an opportunity. */
+export const actorThoughtScheduleSchema = z
+  .object({
+    fingerprint: identity,
+    at: integer,
+    semanticRevision: identity.optional(),
+    watermark: integer.optional(),
+    attemptedOpportunity: z.string().max(2000).optional(),
+    attemptedJobId: identity.optional(),
+    skippedOpportunity: z.string().max(2000).optional(),
+    reviewKey: z.string().max(2000).optional(),
+  })
+  .strict();
+export type ActorThoughtSchedule = z.infer<typeof actorThoughtScheduleSchema>;
+
 const end = z.enum([
   'expired',
   'stale',
@@ -404,16 +421,7 @@ const stateSchema = z
     cursor: z
       .object({
         key: identity,
-        value: z
-          .object({
-            fingerprint: identity,
-            at: integer,
-            watermark: integer,
-            attemptedOpportunity: z.string().max(2000).optional(),
-            skippedOpportunity: z.string().max(2000).optional(),
-            reviewKey: z.string().max(2000).optional(),
-          })
-          .strict(),
+        value: actorThoughtScheduleSchema,
       })
       .strict()
       .optional(),

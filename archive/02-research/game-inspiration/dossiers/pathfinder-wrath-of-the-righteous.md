@@ -2,7 +2,7 @@
 
 **Original R01–R14 research September 26, 2026; identified path/battle gaps addressed September 27.** [Roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Requirements](../research-requirements.md) · [Library](../README.md) · [Mythic paths and crusade battles](../mechanics/wrath-mythic-paths-and-crusade-battles.md).
 
-Research, not an OpenLegend implementation proposal. Historical observations, shipped rules, publisher promises and this dossier's interpretations are distinguished below. Mechanics are scoped to the unmodded computer game and its identified additions, not automatically to tabletop Pathfinder, Kingmaker or every console patch. Story/path spoilers appear in §§3–6 and the worked situations.
+Research, not an Open Legend implementation proposal. Historical observations, shipped rules, publisher promises and this dossier's interpretations are distinguished below. Mechanics are scoped to the unmodded computer game and its identified additions, not automatically to tabletop Pathfinder, Kingmaker or every console patch. Story/path spoilers appear in §§3–6 and the worked situations.
 
 ## 1. Identity, promise and preservation
 
@@ -271,7 +271,7 @@ The accessible GOG most-helpful surface supplied these contrasting observations.
 
 These are historical reactions, not confirmation of spyware, a current legal interpretation or a security audit. Helpful ordering favors particular enduring disputes; it is not a random sample, and the visible negative emphasis cannot establish the prevalence of those views. The last review is particularly useful because it separates admiration for execution from dislike of the underlying fantasy. **Interpretation:** player trust and fantasy fit can dominate satisfaction even when the tactical systems work as intended.
 
-## 13. Lessons and counter-lessons for OpenLegend
+## 13. Lessons and counter-lessons for Open Legend
 
 These are research hypotheses, not accepted product requirements or claims that the two games should share an architecture.
 

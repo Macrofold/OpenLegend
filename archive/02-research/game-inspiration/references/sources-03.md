@@ -284,7 +284,7 @@ The source count includes related sources from the same organization and dynamic
 
 **Added September 23, 2026.** FG entries document sources used for the 22 new game guides. Several revisit sources already present above; aliases preserve local clarity and do not imply additional unique evidence. Explicitly marked prior-capture entries reuse inspected material from the earlier research notebook. The 28 FGV records below are video recommendations with metadata/link verification, not watched-video transcripts.
 
-No numerical “most common complaint” estimates were computed. Source descriptions identify professional criticism, individual players, developer feature claims, and community mechanics references separately. Game version and model version matter. Generic OpenLegend takeaways are analysis, not findings about actual source-game implementations.
+No numerical “most common complaint” estimates were computed. Source descriptions identify professional criticism, individual players, developer feature claims, and community mechanics references separately. Game version and model version matter. Generic Open Legend takeaways are analysis, not findings about actual source-game implementations.
 
 <a id="source-fg-wy-c"></a>
 ## FG-WY-C — Wildermyth review — Sin Vega / PC Gamer

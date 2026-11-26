@@ -1,14 +1,13 @@
 import { validateContentsExposureDefinitions } from './contents-exposure.js';
 import { entityDelete, entityGet, entityOwn, entitySet } from './entity-collection.js';
 import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
-import { subjectNarration, narrationTemplate } from './narration.js';
-import { BASE_PICKUP_NARRATION } from './worlds/base/item-handling.js';
+import { narrationTemplate } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
   itemsForOwner,
-  directChildIds,
+  iterateOwnerItems,
   itemFor,
   moveLot,
   validateObjects,
@@ -20,8 +19,9 @@ import {
 import { recordSemanticChange } from './dependencies.js';
 import { WorkBudgetError } from './work-budget.js';
 export { itemsForOwner } from './objects.js';
+import { nearbyEntities } from './spatial.js';
 import { worldPlacement } from './spatial-state.js';
-import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
+import { rootMembershipChanged } from './entity-index.js';
 import { worldSupport, worldPosition } from './spatial-state.js';
 import {
   canStand,
@@ -46,8 +46,24 @@ export interface ItemHandlingPolicy {
   defaultPortable: boolean;
   reach: number;
   pickupSeconds: number;
+  pickupLabel: string;
+  pickupAllLabel: string;
+  pickupAllDescription: string;
+  pickupNarration: string;
+  drop: ItemDropPolicy;
   actorBodyProfiles: string[];
   objectBody: BodyProfile;
+}
+export interface ItemDropPolicy {
+  pileName: string;
+  samePileDistance: number;
+  label: string;
+  narration: string;
+  success: string;
+  unavailable: string;
+  quantity: string;
+  needed: string;
+  support: string;
 }
 export function canHandleItems(world: WorldState, actor: Entity): boolean {
   return (
@@ -58,22 +74,35 @@ export function canHandleItems(world: WorldState, actor: Entity): boolean {
 export function portableItems(
   world: WorldState,
   ownerId: string,
-  limit = Infinity,
+  maximum = Infinity,
 ): ItemInstance[] {
-  const result: ItemInstance[] = [];
-  // Preserve the ownership index's order, and stop before projecting stock that
-  // a bounded consumer will discard. No extra inventory or portability index.
-  for (const id of directChildIds(world, ownerId)) {
-    if (result.length >= limit) break;
-    const item = itemFor(world, id);
-    if (item && world.itemDefinitions[item.definitionId]?.portable === true) result.push(item);
+  const items: ItemInstance[] = [];
+  if (maximum <= 0) return items;
+  for (const item of iterateOwnerItems(world, ownerId)) {
+    if (world.itemDefinitions[item.definitionId]?.portable !== true) continue;
+    items.push(item);
+    if (items.length >= maximum) break;
   }
-  return result;
+  return items;
+}
+/** Stop before materializing unrelated pile contents. All owners retain canonical order. */
+export function portableItemIds(
+  world: WorldState,
+  owners: Iterable<string>,
+  maximum: number,
+): string[] {
+  const ids: string[] = [];
+  for (const owner of owners) {
+    if (ids.length >= maximum) break;
+    for (const item of portableItems(world, owner, maximum - ids.length)) ids.push(item.id);
+  }
+  return ids;
 }
 function pileAt(world: WorldState, position: SurfacePoint): Entity {
   // Merge only coincident positions on the same support: nearby floors never share custody.
   // docs/worlds/base/items.md#ground-piles
-  const existing = worldRootEntities(world).find(
+  const { pileName, samePileDistance } = world.itemHandling.drop;
+  const existing = nearbyEntities(world, position, samePileDistance).find(
     (e) =>
       e.kind === 'item-pile' &&
       worldSupport(e) === position.surfaceId &&
@@ -81,13 +110,13 @@ function pileAt(world: WorldState, position: SurfacePoint): Entity {
         worldPosition(e).x - position.x,
         worldPosition(e).y - position.y,
         worldPosition(e).z - position.z,
-      ) < 0.01,
+      ) < samePileDistance,
   );
   if (existing) return existing;
   const id = nextEntityId(world, 'pile');
   const pile: Entity = {
     id,
-    name: 'Items on the ground',
+    name: pileName,
     nameForm: 'plural',
     kind: 'item-pile',
     placement: worldPlacement({ x: position.x, y: position.y, z: position.z }, position.surfaceId),
@@ -191,7 +220,11 @@ export function pickUpItems(
     'items-picked-up',
     // Render the observed source before an empty pile disappears; later history must
     // not guess its identity from a now-missing object. No current reference is revived.
-    narrationTemplate(BASE_PICKUP_NARRATION, { actor, items: { name: description }, source: pile }),
+    narrationTemplate(world.itemHandling.pickupNarration, {
+      actor,
+      items: { name: description },
+      source: pile,
+    }),
     actor,
     pile.id,
     { targetMustBeVisible: true },
@@ -208,6 +241,7 @@ export function dropItemReason(
   itemId: string,
   quantity: number,
 ): string | null {
+  const copy = world.itemHandling.drop;
   if (world.paused) return 'Resume the world to act.';
   if (
     !actor.actor?.alive ||
@@ -222,9 +256,9 @@ export function dropItemReason(
     !accessiblePossession(world, actor.id, item.id) ||
     world.itemDefinitions[item.definitionId]?.portable !== true
   )
-    return 'Choose a portable item in this inventory.';
+    return copy.unavailable;
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > item.quantity)
-    return 'Choose an available whole quantity.';
+    return copy.quantity;
   if (
     quantity >
     (availableResource(world, {
@@ -233,7 +267,7 @@ export function dropItemReason(
       definition: itemDefinitionPin(world.itemDefinitions[item.definitionId]!),
     }) ?? 0)
   )
-    return 'That quantity is committed to ongoing work.';
+    return copy.needed;
   const surfaceId = worldSupport(actor);
   if (
     !surfaceId ||
@@ -243,7 +277,7 @@ export function dropItemReason(
       world.itemHandling.objectBody,
     )
   )
-    return 'Dropping requires space for a pile on a supported surface.';
+    return copy.support;
   const workReason = inventoryWorkReason(world, actor.id, itemId);
   if (workReason) return workReason;
   return null;
@@ -299,10 +333,14 @@ export function dropSelectedItems(
     world,
     events,
     'items-dropped',
-    subjectNarration(
+    narrationTemplate(world.itemHandling.drop.narration, {
       actor,
-      `dropped ${[...quantities].map(([id, amount]) => `${amount} ${world.itemDefinitions[id]!.name}`).join(', ')}.`,
-    ),
+      items: {
+        name: [...quantities]
+          .map(([id, amount]) => `${amount} ${world.itemDefinitions[id]!.name}`)
+          .join(', '),
+      },
+    }),
     actor,
     pileId,
   );
@@ -430,6 +468,26 @@ export function validateItemHandling(world: WorldState): void {
     !Number.isFinite(policy.pickupSeconds) ||
     policy.pickupSeconds < 0 ||
     policy.pickupSeconds > 3600 ||
+    [
+      policy.pickupLabel,
+      policy.pickupAllLabel,
+      policy.pickupAllDescription,
+      policy.pickupNarration,
+    ].some((text) => typeof text !== 'string' || !text.trim()) ||
+    !policy.drop ||
+    !Number.isFinite(policy.drop.samePileDistance) ||
+    policy.drop.samePileDistance <= 0 ||
+    policy.drop.samePileDistance > policy.reach ||
+    [
+      policy.drop.pileName,
+      policy.drop.label,
+      policy.drop.narration,
+      policy.drop.success,
+      policy.drop.unavailable,
+      policy.drop.quantity,
+      policy.drop.needed,
+      policy.drop.support,
+    ].some((text) => typeof text !== 'string' || !text.trim()) ||
     !Array.isArray(policy.actorBodyProfiles) ||
     policy.actorBodyProfiles.some((id) => !isSafeRecordId(id))
   )

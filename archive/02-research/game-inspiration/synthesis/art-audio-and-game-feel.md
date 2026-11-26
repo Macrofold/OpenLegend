@@ -17,7 +17,7 @@ The [player appreciation of game music study](../../../../docs/research/player-m
 
 ## Ownership boundary
 
-PRESENT owns expressive execution and immediate feedback. Navigation/controls belong to TRAVEL and UX, the world's physical result belongs to the action/world owner, and setting meaning belongs to LORE. A visual or audio cue may communicate a fact without becoming the source of that fact. This is research, not an approved OpenLegend implementation.
+PRESENT owns expressive execution and immediate feedback. Navigation/controls belong to TRAVEL and UX, the world's physical result belongs to the action/world owner, and setting meaning belongs to LORE. A visual or audio cue may communicate a fact without becoming the source of that fact. This is research, not an approved Open Legend implementation.
 
 ## Focused evidence — Sea of Stars
 
@@ -43,7 +43,7 @@ This supports expressive environments without making every surface equally detai
 
 A dominant light is more convincing when neighboring stone, cloth, water, skin and vegetation respond coherently while retaining their material differences. The player's eye can then infer source, reach and atmosphere.
 
-OpenLegend's implication is already consistent with its current art direction: prefer a small number of purposeful light relationships over unexplained bright patches. A screenshot cannot establish the source game's renderer, moving-shadow stability or performance.
+Open Legend's implication is already consistent with its current art direction: prefer a small number of purposeful light relationships over unexplained bright patches. A screenshot cannot establish the source game's renderer, moving-shadow stability or performance.
 
 <a id="present-l003"></a>
 
@@ -57,7 +57,7 @@ The transferable principle is not “add timing minigames.” It is: when an adm
 
 ### PRESENT-L004 — Presentation convenience must not rewrite physical identity
 
-A distinctive scar, handed tool, closure, missing part or carried object should stay attached to the same side and person across supported views. A creator account describes Sea of Stars deliberately mirroring a scar for retro presentation; OpenLegend's grounded-world target chooses continuity instead.
+A distinctive scar, handed tool, closure, missing part or carried object should stay attached to the same side and person across supported views. A creator account describes Sea of Stars deliberately mirroring a scar for retro presentation; Open Legend's grounded-world target chooses continuity instead.
 
 This is more than polish for a world of remembered individuals. Recognition, equipment and later evidence can refer to persistent physical facts, while the renderer remains only their depiction.
 

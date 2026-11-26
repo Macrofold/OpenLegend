@@ -2,7 +2,7 @@
 
 **Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
-This is a technical synthesis and a set of **proposed OpenLegend experiments**, not a reconstruction of any proprietary renderer. [Reference research](reference-techniques.md) owns claims about the individual games. The [realtime follow-up](realtime-pixel-rendering.md) revises the earlier emphasis: a designed renderer is now the leading candidate to compare, while painted surfaces remain useful. No technique below was implemented or benchmarked in this documentation task.
+This is a technical synthesis and a set of **proposed Open Legend experiments**, not a reconstruction of any proprietary renderer. [Reference research](reference-techniques.md) owns claims about the individual games. The [realtime follow-up](realtime-pixel-rendering.md) revises the earlier emphasis: a designed renderer is now the leading candidate to compare, while painted surfaces remain useful. No technique below was implemented or benchmarked in this documentation task.
 
 ## Three different grids
 
@@ -84,7 +84,7 @@ Project the desired camera position onto that plane, round its coordinates to mu
 
 Only the rendering camera is adjusted. Gameplay positions, physics, picking intentions and authoritative movement must not be rounded to this grid. Picking must account for the actual displayed image and camera.
 
-This handles translation cleanly under the stated conditions. Rotation changes the sampling basis; zoom changes `s`; perspective changes projected scale with distance. Parallax layers need separate treatment. The method therefore deserves a targeted test, not a promise of zero motion artifacts during every OpenLegend camera gesture. The [texel-splatting review](texel-splatting.md) addresses a different approach to perspective stability and its remaining limitations.
+This handles translation cleanly under the stated conditions. Rotation changes the sampling basis; zoom changes `s`; perspective changes projected scale with distance. Parallax layers need separate treatment. The method therefore deserves a targeted test, not a promise of zero motion artifacts during every Open Legend camera gesture. The [texel-splatting review](texel-splatting.md) addresses a different approach to perspective stability and its remaining limitations.
 
 ## Lighting without losing the pixel artwork
 
@@ -119,7 +119,7 @@ The following is a proposed construction order. It is **not** a claim that Holla
 
 [Roystan's tutorial](https://roystan.net/articles/toon-water/) supplies a concrete depth/foam starting point; [Catlike Coding](https://catlikecoding.com/unity/tutorials/flow/looking-through-water/) explains refraction and underwater depth handling. The [planar reflection implementation](https://github.com/eldskald/planar-reflections-unity) is a study reference for the extra camera and clipping, not a directly compatible engine component.
 
-For OpenLegend, first compare a simple animated surface plus depth-related shore treatment. Add a reflection view only when it visibly improves the selected water scene. Restrict reflection work to visible relevant planes and appropriate scene detail. A reflection must respect the player's permitted scene information, just as the primary camera does.
+For Open Legend, first compare a simple animated surface plus depth-related shore treatment. Add a reflection view only when it visibly improves the selected water scene. Restrict reflection work to visible relevant planes and appropriate scene detail. A reflection must respect the player's permitted scene information, just as the primary camera does.
 
 Planar reflections approximate a flat reflecting surface. They are not a general solution for arbitrary curved water, and every separately rendered plane can add cost. Screen-space reflections are another tradeoff: cheaper reuse of visible information can produce missing off-screen reflections. A stylized fallback can be more coherent than an intermittently incomplete physically ambitious effect.
 

@@ -14,7 +14,7 @@ How do goals and stories make player choices matter without removing initiative?
 
 ## Ownership boundary
 
-Owns playable narrative structure. Setting history belongs to LORE, personal continuity to NPC, and clues/puzzles to KNOW. This is research, not an approved OpenLegend specification.
+Owns playable narrative structure. Setting history belongs to LORE, personal continuity to NPC, and clues/puzzles to KNOW. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -72,7 +72,7 @@ Use the [source and goal map](source-and-goal-map.md#topic-story) to locate rele
 
 After a successful repair, an old map and a resident’s account reveal that the crossing also led to a workshop known for an unusual climbing tool. The new route makes that place a practical destination. The traveler can plan an expedition, seek a willing companion whose expertise helps interpret what survives, or enjoy the crossing as a finished contribution. A recovered tool or a genuinely learned method could later enable another route, if the selected world supports it. Later visitors encounter the repaired crossing and remaining traces, with their own reasons to use them. The discovery connects an earned achievement to a fresh adventure without requiring everyone to pursue it.
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 Compare one short authored situation with several meaningful resolutions against a larger branching tree. Evaluate remembered contributions, understandable stakes and actual alternatives before expanding narrative volume. Neither reference establishes that generated dialogue, a shared world or independent characters will preserve these qualities automatically. Use their disagreements to form test questions, not to prescribe a universal tragic, hopeful or ambiguous ending.
 
@@ -80,7 +80,7 @@ Compare one short authored situation with several meaningful resolutions against
 
 Confidence is moderate in the distinctions above and low in their transfer to unscripted shared play. Test whether participants understand what changed, whether another participant can encounter the aftermath coherently, and whether refusal remains worthwhile. Conflicting memories and competing simultaneous projects remain unassessed. The G77 review sample demonstrates divergent interpretations, not their prevalence or the emotional response of OpenLegend’s audience.
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Situations arising from lives and conflicting purposes
 

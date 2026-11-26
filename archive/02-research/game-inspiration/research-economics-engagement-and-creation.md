@@ -80,7 +80,7 @@ When substantive lore exists, go beyond a premise paragraph. Document the creati
 
 Explain how the player encounters and uses that lore: environment and architecture, objects and crafting, religion, dialogue, quests, social relationships, economic rules, institutions and decisions. Separate written backstory from delivered quests or simulated behavior. A lore claim does not establish a functioning mechanic, and a procedural campaign is not necessarily procedurally authored mythology.
 
-Preserve ambiguity instead of inventing a coherent timeline when sources disagree. Reference lore names for analysis, not as proposed OpenLegend assets. Record meaningful absences; a game can be enjoyable without deep lore, and lore depth alone does not explain commercial or player success.
+Preserve ambiguity instead of inventing a coherent timeline when sources disagree. Reference lore names for analysis, not as proposed Open Legend assets. Record meaningful absences; a game can be enjoyable without deep lore, and lore depth alone does not explain commercial or player success.
 
 ## R09 and R13 — Explain how players and creators actually author content
 
@@ -90,7 +90,7 @@ Describe the actual tools and workflow: editor and templates; terrain/scene/room
 
 Use a clear **platform/engine provides versus creator must supply** comparison. Default physics, avatars or networking do not mean the platform supplies a good economy, NPC motivation, progression, lore or fair combat. Templates are examples, not proof of a universal rule. Spell out the security and ownership boundary for shared assets, scripts, live edits and player-submitted content, without treating trusted developer scripts as equivalent to unrestricted player-generated code.
 
-Include a concrete end-to-end example: start from an existing supported artifact, alter appearance and behavior, test a complete playable activity, package/publish it, and explain what another creator or player can reuse. Label a constructed workflow versus one personally executed. Identify authoring friction and what remains difficult after AI assistance. Derive specific OpenLegend lessons and tradeoffs, not an instruction to clone another platform or implement its architecture.
+Include a concrete end-to-end example: start from an existing supported artifact, alter appearance and behavior, test a complete playable activity, package/publish it, and explain what another creator or player can reuse. Label a constructed workflow versus one personally executed. Identify authoring friction and what remains difficult after AI assistance. Derive specific Open Legend lessons and tradeoffs, not an instruction to clone another platform or implement its architecture.
 
 ## Coverage and preservation
 

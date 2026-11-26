@@ -1,21 +1,21 @@
-# Conversation state, common ground, and continuity for OpenLegend
+# Conversation state, common ground, and continuity for Open Legend
 
 **Research date:** 2026-09-27. **Status:** research synthesis for the proposed long-conversation compaction design; no runtime implementation, provider benchmark, or dependency adoption is authorized by this document.
 
-This note asks a narrow question: **what information from a conversation actually has to survive when older dialogue is compressed so that a fictional character can continue naturally and correctly?** It reviews dialogue-state tracking, common-ground/grounding research, Questions Under Discussion, discourse focus, clarification/repair, discourse obligations, and recent work on persistent referential grounding. It then translates the useful ideas into OpenLegend's existing actor-perspective evidence model.
+This note asks a narrow question: **what information from a conversation actually has to survive when older dialogue is compressed so that a fictional character can continue naturally and correctly?** It reviews dialogue-state tracking, common-ground/grounding research, Questions Under Discussion, discourse focus, clarification/repair, discourse obligations, and recent work on persistent referential grounding. It then translates the useful ideas into Open Legend's existing actor-perspective evidence model.
 
 The companion [long-conversation memory and compaction review](long-conversation-memory-and-compaction.md) covers memory architectures, summarization systems, frameworks, and evaluation benchmarks. The active proposal lives in [conversation compaction feature spec](../../docs/projects/completed/conversation-compaction-feature-spec.md) and [technical design](../../docs/projects/completed/conversation-compaction-tech-design.md).
 
 ## 1. Executive conclusion
 
-OpenLegend does **not** need a large dialogue ontology for v1. A surprisingly durable pattern appears across several generations of dialogue research:
+Open Legend does **not** need a large dialogue ontology for v1. A surprisingly durable pattern appears across several generations of dialogue research:
 
 1. **What has been established in the exchange.**
 2. **What is currently at issue or in focus.**
 3. **What has changed, been repaired, clarified, or superseded.**
 4. **The latest moves verbatim enough to continue naturally.**
 
-The first three are appropriate guidance for a rolling older-history summary. The fourth is already handled better by OpenLegend's recent verbatim tail and exact current Trigger.
+The first three are appropriate guidance for a rolling older-history summary. The fourth is already handled better by Open Legend's recent verbatim tail and exact current Trigger.
 
 Several cross-cutting properties matter more than adding more categories:
 
@@ -24,7 +24,7 @@ Several cross-cutting properties matter more than adding more categories:
 - **Reference continuity:** later phrases such as “that room,” “the second sword,” or “the inn beside the bridge” must still resolve when the relationship was established earlier.
 - **Temporal/update order:** later explicit correction, clarification, reversal, or resolution can change what should be treated as current without erasing the historical fact that an earlier claim occurred.
 
-This suggests a smaller rubric than the first OpenLegend draft. “Promises,” “apologies,” “preferences,” “boundaries,” and similar phenomena can matter, but they should not become top-level compaction record types. When they matter to an ongoing exchange, they naturally fall under established context, active issues, or updates. Mechanically authoritative obligations, relationships, goals, knowledge, and corrections remain owned by their existing OpenLegend systems.
+This suggests a smaller rubric than the first Open Legend draft. “Promises,” “apologies,” “preferences,” “boundaries,” and similar phenomena can matter, but they should not become top-level compaction record types. When they matter to an ongoing exchange, they naturally fall under established context, active issues, or updates. Mechanically authoritative obligations, relationships, goals, knowledge, and corrections remain owned by their existing Open Legend systems.
 
 ## 2. Classic information-state models are a useful sanity check
 
@@ -38,13 +38,13 @@ An issue-based dialogue-management account described each participant's view of 
 
 Source: [Issue based Dialogue Management: basic principles, ACL 2005 proceedings](https://aclanthology.org/P05-1.pdf).
 
-This is not a schema OpenLegend should copy literally. The mapping is nevertheless striking:
+This is not a schema Open Legend should copy literally. The mapping is nevertheless striking:
 
-| Classic concept | Useful OpenLegend interpretation | Why not copy literally |
+| Classic concept | Useful Open Legend interpretation | Why not copy literally |
 | --- | --- | --- |
 | FACTS | Established conversational context | Spoken claims may be false, disputed, hearsay, or known only from one actor's perspective; “fact” is too strong. |
 | QUD | Active issues and focus | Open-world conversation is not always a literal question stack, but the idea of unresolved/current issues generalizes well. |
-| LatestMove | Recent verbatim dialogue + exact Trigger | OpenLegend already has a better source-preserving representation than another derived field. |
+| LatestMove | Recent verbatim dialogue + exact Trigger | Open Legend already has a better source-preserving representation than another derived field. |
 
 The lesson is not “implement a Dialogue Gameboard.” It is that **a compact state plus recent moves is a long-standing dialogue architecture**, not merely an LLM-era workaround.
 
@@ -52,18 +52,18 @@ The lesson is not “implement a Dialogue Gameboard.” It is that **a compact s
 
 Dialogue State Tracking (DST) tracks the state needed to interpret the conversation and support the next action, often user goals and constraints in task-oriented domains. A 2022 survey describes DST as tracking user needs/goals from conversation history and notes that generalization beyond narrow domains remains a challenge. [Jacqmin et al., 2022](https://aclanthology.org/2022.sigdial-1.33/).
 
-Two findings are particularly relevant to OpenLegend:
+Two findings are particularly relevant to Open Legend:
 
 - Incremental approaches update prior state as new turns arrive instead of re-deriving everything from the whole history. [Liao et al., 2021](https://aclanthology.org/2021.tacl-1.34/).
 - A study comparing context granularities found a tradeoff: predicting from the entire history can suffer from noise for short dependencies, while updating only from prior state/current turn can struggle with longer dependencies; combining granularities helps. [Yang et al., 2021](https://aclanthology.org/2021.acl-long.193/).
 
-That supports OpenLegend's proposed **older compact state + recent exact dialogue**, rather than either a summary-only design or “always send every turn.”
+That supports Open Legend's proposed **older compact state + recent exact dialogue**, rather than either a summary-only design or “always send every turn.”
 
-## 3. Common ground is useful, but the word is dangerous for OpenLegend
+## 3. Common ground is useful, but the word is dangerous for Open Legend
 
 Human dialogue relies on common ground: participants build enough shared understanding to interpret each other's utterances. A 2025 survey covering 448 papers emphasizes that common ground has many meanings and can include personal, domain-specific, or commonsense information, with static or dynamic representations. [Anikina, Leippert, and Ostermann, 2025](https://aclanthology.org/2025.luhme-1.2/).
 
-For OpenLegend, **common ground must not become an omniscient shared database**. There are at least three reasons:
+For Open Legend, **common ground must not become an omniscient shared database**. There are at least three reasons:
 
 1. Each NPC has actor-specific event-time awareness.
 2. Two participants may misunderstand one another.
@@ -83,7 +83,7 @@ For compaction, the practical consequence is simple:
 
 Silence, topic continuation, or the model's sense that a statement is plausible are not evidence of acceptance.
 
-OpenLegend does not need an explicit grounding-status enum for every sentence in v1. The summary prompt should preserve acceptance, disagreement, uncertainty, or lack of resolution **when losing that distinction would change the meaning of the ongoing exchange**.
+Open Legend does not need an explicit grounding-status enum for every sentence in v1. The summary prompt should preserve acceptance, disagreement, uncertainty, or lack of resolution **when losing that distinction would change the meaning of the ongoing exchange**.
 
 ## 4. Questions Under Discussion are a better abstraction than “unresolved promises”
 
@@ -102,7 +102,7 @@ Examples:
 
 This is why “unresolved commitments” should **not** be the main compaction category. Dialogue research does contain explicit models of discourse obligations and public commitments—for example, [Traum and Allen, 1994](https://aclanthology.org/P94-1001/) and later work on public commitments—but commitments are one important subclass of interaction state, not the universal organizer of conversation.
 
-For v1, OpenLegend needs to know **what remains live in the exchange**, not maintain a dedicated record for each pragmatic phenomenon.
+For v1, Open Legend needs to know **what remains live in the exchange**, not maintain a dedicated record for each pragmatic phenomenon.
 
 ## 5. Repair and clarification deserve explicit preservation
 
@@ -137,7 +137,7 @@ That aligns with Microsoft's Semantic Kernel summarization reducer, whose curren
 
 Centering Theory models local discourse coherence by tracking which entities/concepts are currently central. The classic treatment is [Grosz, Joshi, and Weinstein, 1995](https://aclanthology.org/J95-2003/). Follow-up-question research has also shown that discourse structure and centering information can help decide which earlier context matters. [Bernardi, Kirschner, and Ratkovic, 2010](https://aclanthology.org/L10-1226/).
 
-For OpenLegend, this argues against reducing “active issue” to explicit unanswered questions.
+For Open Legend, this argues against reducing “active issue” to explicit unanswered questions.
 
 Consider:
 
@@ -168,7 +168,7 @@ The paper is about situated reference resolution, not arbitrary fantasy NPC conv
 
 > A conversation summary that remembers propositions but loses **how participants identified the relevant person/place/object/event** can still make later dialogue incoherent.
 
-OpenLegend already has observer-scoped identity/reference machinery. V1 should not add a knowledge graph, but its compaction rubric should explicitly preserve **referential anchors that remain useful to the exchange**:
+Open Legend already has observer-scoped identity/reference machinery. V1 should not add a knowledge graph, but its compaction rubric should explicitly preserve **referential anchors that remain useful to the exchange**:
 
 - “the second sword Mike showed me”;
 - “the inn beside the stone bridge”;
@@ -272,7 +272,7 @@ Category: established context + reference continuity.
 
 These cases do not reveal a missing fourth or fifth top-level category. They mostly stress attribution, live focus, repairs, and references.
 
-## 9. Recommended OpenLegend rubric
+## 9. Recommended Open Legend rubric
 
 The initial four-item design should be simplified to three general concerns:
 
@@ -293,7 +293,7 @@ Do not create a universal status field for every statement.
 
 Preserve what is still being asked, discussed, negotiated, decided, explained, disputed, or deferred, plus enough referential context to understand follow-ups.
 
-This is the OpenLegend analogue of QUD plus local discourse focus, without implementing a formal stack.
+This is the Open Legend analogue of QUD plus local discourse focus, without implementing a formal stack.
 
 ### C. Updates and repairs
 
@@ -311,7 +311,7 @@ Do not infer a repair merely from contradiction.
 
 ## 10. What not to add in v1
 
-The literature offers much richer formalisms: QUD stacks, commitment stores, belief models, grounding acts, graphs, frames, dialogue-act taxonomies, and discourse relations. They are useful conceptual tools but are not justified as new OpenLegend runtime state for this task.
+The literature offers much richer formalisms: QUD stacks, commitment stores, belief models, grounding acts, graphs, frames, dialogue-act taxonomies, and discourse relations. They are useful conceptual tools but are not justified as new Open Legend runtime state for this task.
 
 Do **not** add, merely because the research has names for them:
 
@@ -319,7 +319,7 @@ Do **not** add, merely because the research has names for them:
 - a universal common-ground database;
 - a grounding-status enum on every utterance;
 - per-turn dialogue-act classification;
-- a commitment store parallel to OpenLegend's actual obligation owner;
+- a commitment store parallel to Open Legend's actual obligation owner;
 - a reference graph solely for conversation compaction;
 - a separate belief tracker;
 - a discourse parser.
@@ -362,4 +362,4 @@ Primary/review sources used:
 - [Modelling Grounding and Discourse Obligations Using Update Rules (2000)](https://aclanthology.org/A00-2001/)
 - [Semantic Kernel ChatHistorySummarizationReducer documentation](https://learn.microsoft.com/en-us/python/api/semantic-kernel/semantic_kernel.contents.history_reducer.chat_history_summarization_reducer.chathistorysummarizationreducer?view=semantic-kernel-python)
 
-The classic dialogue papers often study task-oriented or constrained settings, and the 2026 referential-grounding benchmark is situated rather than open-world roleplay. They support vocabulary, failure modes, and architecture patterns; they do not prove that a particular OpenLegend prompt or summary budget will meet quality targets. That must be established with the proposed game-specific qualification scenarios.
+The classic dialogue papers often study task-oriented or constrained settings, and the 2026 referential-grounding benchmark is situated rather than open-world roleplay. They support vocabulary, failure modes, and architecture patterns; they do not prove that a particular Open Legend prompt or summary budget will meet quality targets. That must be established with the proposed game-specific qualification scenarios.

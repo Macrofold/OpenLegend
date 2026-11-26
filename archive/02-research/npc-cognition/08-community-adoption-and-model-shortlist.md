@@ -10,7 +10,7 @@ Use five different evidence levels without treating them as interchangeable:
 - **NPC-mod guidance:** the maintainers' recommended starting configurations. A default is evidence of a supported starting point, not a user census.
 - **Hugging Face downloads:** interest and distribution for one exact repository. Repeated downloads, alternative quantizations and other repositories prevent interpreting the count as unique players or production deployments.
 - **Firsthand reports:** useful accounts of actual problems or preferences, not representative consensus or controlled comparisons.
-- **Model-card claims:** intended capabilities and training provenance, not demonstrated OpenLegend quality.
+- **Model-card claims:** intended capabilities and training provenance, not demonstrated Open Legend quality.
 
 The monthly labels below are the pages' own labels. Do not reinterpret them as a precisely defined calendar-month or rolling-30-day window. Token volume can favor long histories, verbose output and reasoning-heavy requests; none of these sources measures useful independent NPC decisions per dollar.
 
@@ -36,7 +36,7 @@ Source: [OpenRouter's SillyTavern application statistics](https://openrouter.ai/
 
 The equivalent [Janitor AI table](https://openrouter.ai/apps/janitor-ai) lists DeepSeek V3.2 first at **215 billion** tokens, Nemotron 3 Ultra second at **117 billion**, and GLM 5.2 third at **62.2 billion**. DeepSeek V4 Pro 0423 and DeepSeek V4.1 Flash follow at 49.8 and 49.1 billion. The chart does not establish which pricing tier caused that traffic.
 
-**Interpretation:** DeepSeek and GLM deserve serious inclusion in our dialogue comparisons. Gemini Flash is another important hosted candidate, while Claude provides a separate high-capability reference. Nemotron's character-chat traffic also deserves investigation rather than dismissal as an enterprise-only family. The persistence of DeepSeek V3.2 is a useful reminder that newest release and actual adoption are different questions. These are candidate-selection inferences, not conclusions about quality, cost or response time in OpenLegend.
+**Interpretation:** DeepSeek and GLM deserve serious inclusion in our dialogue comparisons. Gemini Flash is another important hosted candidate, while Claude provides a separate high-capability reference. Nemotron's character-chat traffic also deserves investigation rather than dismissal as an enterprise-only family. The persistence of DeepSeek V3.2 is a useful reminder that newest release and actual adoption are different questions. These are candidate-selection inferences, not conclusions about quality, cost or response time in Open Legend.
 
 ## 3. What actual NPC-mod projects recommend
 
@@ -76,7 +76,7 @@ Artemis illustrates why popularity cannot substitute for qualification. In [disc
 
 In [discussion 5](https://huggingface.co/TheDrummer/Artemis-31B-v1.2/discussions/5), another user reports successful everyday use and useful instruction following. These are small firsthand samples. They justify testing short spontaneous replies, not declaring the model uniformly good or bad.
 
-**OpenLegend implication:** a model that writes a beautiful page can still be a poor person to talk to while moving, working or responding to danger. Test exact requested actions, factual state, interruption, brief answers and authentic refusal separately from prose style. Test the documented template before blaming the checkpoint, while preserving a matched-context comparison and disclosing any model-specific prompt tuning.
+**Open Legend implication:** a model that writes a beautiful page can still be a poor person to talk to while moving, working or responding to danger. Test exact requested actions, factual state, interruption, brief answers and authentic refusal separately from prose style. Test the documented template before blaming the checkpoint, while preserving a matched-context comparison and disclosing any model-specific prompt tuning.
 
 ## 6. Which are actually on OpenRouter?
 
@@ -86,7 +86,7 @@ Public pages were verified for **`deepseek/deepseek-v4.1-flash`**, **`google/gem
 
 Check tool/schema support per model and provider. A hosted text-generation listing does not establish function calling, and a similarly named older checkpoint is not a valid substitute in a controlled comparison.
 
-## 7. Proposed OpenLegend comparison roster
+## 7. Proposed Open Legend comparison roster
 
 These are research recommendations, not adopted defaults or authorization to execute every comparison.
 

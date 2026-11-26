@@ -12,14 +12,17 @@ import {
   generatedNetworkArtifacts,
   inboundOwners,
   localDependencies,
+  localBinaryCommands,
   localGitCommands,
   localNodeEntries,
   localProcessOwners,
   localToolCommands,
   networkDependencies,
   rawNetworkOwners,
+  rustServerNetworkOwners,
   sdkOwners,
   testSourceOwners,
+  type LocalBinaryArgument,
 } from './network-boundary-inventory.js';
 
 export interface BoundaryFailure {
@@ -361,6 +364,7 @@ export function inspectNetworkSource(
   };
   // Resolve only constant argv and direct local forwarding functions. Unknown
   // data after a proven command is harmless; an unknown command is never local.
+  const incompleteArgv = new WeakSet<readonly (ts.Expression | undefined)[]>();
   const argv = (
     expression: ts.Expression,
     seen = new Set<ts.Node>(),
@@ -369,14 +373,32 @@ export function inspectNetworkSource(
     if (seen.has(expression)) return undefined;
     seen = new Set(seen).add(expression);
     if (ts.isArrayLiteralExpression(expression)) {
-      let values: (ts.Expression | undefined)[] = [];
+      let values: (ts.Expression | undefined)[][] = [[]];
       for (const element of expression.elements) {
         if (ts.isSpreadElement(element)) {
           const spread = argv(element.expression, seen);
-          values = [...values, ...(spread?.length === 1 ? spread[0]! : [undefined])];
-        } else values.push(ts.isOmittedExpression(element) ? undefined : element);
+          if (spread && values.length * spread.length > 256) return undefined;
+          values = values.flatMap((prefix) =>
+            (spread ?? [[undefined]]).map((suffix) => {
+              const joined = [...prefix, ...suffix];
+              if (!spread || incompleteArgv.has(prefix) || incompleteArgv.has(suffix))
+                incompleteArgv.add(joined);
+              return joined;
+            }),
+          );
+        } else
+          values = values.map((prefix) => {
+            const joined = [...prefix, ts.isOmittedExpression(element) ? undefined : element];
+            if (incompleteArgv.has(prefix)) incompleteArgv.add(joined);
+            return joined;
+          });
       }
-      return [values];
+      return values;
+    }
+    if (ts.isConditionalExpression(expression)) {
+      const yes = argv(expression.whenTrue, seen),
+        no = argv(expression.whenFalse, seen);
+      return yes && no && yes.length + no.length <= 256 ? [...yes, ...no] : undefined;
     }
     if (!ts.isIdentifier(expression)) return undefined;
     const declaration = declarationOf(expression);
@@ -463,25 +485,26 @@ export function inspectNetworkSource(
     const values = stringAt(expression);
     return !!values?.length && values.every((value) => value === expected);
   };
+  const namedImport = (expression: ts.Expression, specifier: string, symbol: string): boolean => {
+    if (!ts.isIdentifier(expression)) return false;
+    const declaration = declarationOf(expression);
+    const imported =
+      declaration &&
+      ts.isImportSpecifier(declaration) &&
+      (declaration.propertyName ?? declaration.name).text === symbol &&
+      declaration.parent.parent.parent;
+    return (
+      !!imported &&
+      ts.isImportDeclaration(imported) &&
+      ts.isStringLiteral(imported.moduleSpecifier) &&
+      imported.moduleSpecifier.text === specifier
+    );
+  };
   const localEntry = (expression: ts.Expression | undefined, entry: string): boolean => {
     if (
       !expression ||
       !ts.isCallExpression(expression) ||
-      !ts.isIdentifier(expression.expression) ||
-      expression.expression.text !== 'fileURLToPath'
-    )
-      return false;
-    const declaration = declarationOf(expression.expression);
-    const imported =
-      declaration &&
-      ts.isImportSpecifier(declaration) &&
-      (declaration.propertyName ?? declaration.name).text === 'fileURLToPath' &&
-      declaration.parent.parent.parent;
-    if (
-      !imported ||
-      !ts.isImportDeclaration(imported) ||
-      !ts.isStringLiteral(imported.moduleSpecifier) ||
-      imported.moduleSpecifier.text !== 'node:url'
+      !namedImport(expression.expression, 'node:url', 'fileURLToPath')
     )
       return false;
     const input = expression.arguments[0];
@@ -495,6 +518,56 @@ export function inspectNetworkSource(
       input.arguments?.length === 2 &&
       exactLiteral(input.arguments[0], entry) &&
       input.arguments[1]?.getText(file) === 'import.meta.url'
+    );
+  };
+  const resolvedLocalPath = (expression: ts.Expression | undefined): boolean => {
+    const declaration = expression && ts.isIdentifier(expression) && declarationOf(expression);
+    if (
+      !declaration ||
+      !ts.isVariableDeclaration(declaration) ||
+      !ts.isVariableDeclarationList(declaration.parent) ||
+      (declaration.parent.flags & ts.NodeFlags.Const) === 0
+    )
+      return false;
+    const resolved = declaration.initializer;
+    return (
+      !!resolved &&
+      ts.isAwaitExpression(resolved) &&
+      ts.isCallExpression(resolved.expression) &&
+      resolved.expression.arguments.length === 1 &&
+      namedImport(resolved.expression.expression, 'node:fs/promises', 'realpath')
+    );
+  };
+  const approvedLiterals = (expression: ts.Expression | undefined, allowed: readonly string[]) => {
+    const values = stringAt(expression);
+    return !!values?.length && values.every((value) => allowed.includes(value));
+  };
+  const matchesBinaryArgument = (
+    expression: ts.Expression | undefined,
+    expected: LocalBinaryArgument,
+  ): boolean => {
+    if (expected === null) return expression !== undefined;
+    if (typeof expected === 'string') return exactLiteral(expression, expected);
+    if ('realPath' in expected) return resolvedLocalPath(expression);
+    return approvedLiterals(expression, expected);
+  };
+  const archivedModule = (expression: ts.Expression | undefined, members: readonly string[]) => {
+    if (
+      !expression ||
+      !ts.isPropertyAccessExpression(expression) ||
+      expression.name.text !== 'href' ||
+      !ts.isCallExpression(expression.expression) ||
+      !namedImport(expression.expression.expression, 'node:url', 'pathToFileURL')
+    )
+      return false;
+    const [path] = expression.expression.arguments;
+    return (
+      expression.expression.arguments.length === 1 &&
+      !!path &&
+      ts.isCallExpression(path) &&
+      namedImport(path.expression, 'node:path', 'join') &&
+      path.arguments.length === 2 &&
+      approvedLiterals(path.arguments[1], members)
     );
   };
   const visit = (node: ts.Node) => {
@@ -518,8 +591,11 @@ export function inspectNetworkSource(
     ) {
       const name = node.arguments[0];
       if (name && ts.isStringLiteralLikeNode(name)) inspectImport(node, name.text);
-      else if (!test && !Object.hasOwn(dynamicModuleOwners, path))
-        report(node, 'Dynamic module loading needs an exact reviewed local-source owner.');
+      else if (!test) {
+        const owner = Object.hasOwn(dynamicModuleOwners, path) && dynamicModuleOwners[path];
+        if (!owner || (typeof owner !== 'string' && !archivedModule(name, owner.members)))
+          report(node, 'Dynamic module loading needs an exact reviewed local-source owner.');
+      }
     }
     if (!raw && !test) {
       if (
@@ -682,8 +758,36 @@ export function inspectNetworkSource(
             program.expression.text === 'process' &&
             globalReference(program.expression) &&
             program.name.text === 'execPath';
-          let allowed = false;
-          if (git && command !== 'fork') {
+          const binaryProfiles = localBinaryCommands[path] ?? [];
+          const programs = stringAt(program) ?? [undefined];
+          let allowed =
+            !!values?.length &&
+            programs.every((binary) =>
+              values.every(
+                (args) =>
+                  !incompleteArgv.has(args) &&
+                  binaryProfiles.some(
+                    (profile) =>
+                      (profile.kind ?? 'spawnSync') === command &&
+                      (typeof profile.program === 'string'
+                        ? profile.program === binary
+                        : binary === undefined && resolvedLocalPath(program)) &&
+                      profile.args.length === args.length &&
+                      profile.args.every((expected, index) =>
+                        matchesBinaryArgument(args[index], expected),
+                      ),
+                  ),
+              ),
+            );
+          if (
+            !allowed &&
+            nodePolicy?.kind === 'spawnSync' &&
+            command === 'spawnSync' &&
+            nodeProgram &&
+            values?.length === 1
+          ) {
+            allowed = values[0]?.length === 1 && localEntry(values[0][0], nodePolicy.entry);
+          } else if (!allowed && git && command !== 'fork') {
             const commands = localGitCommands[path] ?? [];
             allowed =
               !!values?.length &&
@@ -720,13 +824,13 @@ export function inspectNetworkSource(
             // A reviewed local tool named by an exact literal, with an argument array; the
             // shell and execPath checks below still apply.
             allowed = !!values?.length;
-          } else if (nodePolicy?.kind === command && nodeProgram && values?.length === 1) {
+          } else if (!allowed && nodePolicy?.kind === command && nodeProgram && values?.length === 1) {
             const arguments_ = values[0]!;
             allowed =
               exactLiteral(arguments_[0], '--import') &&
               exactLiteral(arguments_[1], 'tsx') &&
               localEntry(arguments_[2], nodePolicy.entry);
-          } else if (nodePolicy?.kind === 'fork' && command === 'fork' && program) {
+          } else if (!allowed && nodePolicy?.kind === 'fork' && command === 'fork' && program) {
             // fork's module and startup flags are both executable acquisition.
             const execArgv =
               options &&
@@ -777,7 +881,7 @@ export function inspectNetworkSource(
           if (!allowed)
             report(
               node,
-              'Local subprocesses require a proven reviewed Git command or exact local Node entry; remote or unresolved work uses the bounded adapter.',
+              'Local subprocesses require a reviewed Git command, closed binary invocation or exact local Node entry; remote or unresolved work uses the bounded adapter.',
             );
         }
       }
@@ -855,7 +959,7 @@ export function checkNetworkBoundaries(root: string): BoundaryFailure[] {
     },
   });
   const snapshot = api.updateSnapshot({ openProjects: [configurationPath] });
-  const failures: BoundaryFailure[] = [],
+  const failures: BoundaryFailure[] = checkRustServerNetwork(root),
     embedded: NetworkSource[] = [];
   const used = new Set<string>();
   try {
@@ -1014,6 +1118,40 @@ export function checkNetworkBoundaries(root: string): BoundaryFailure[] {
         message: 'Stale generated network artifact/source inventory.',
       });
   if (embedded.length) failures.push(...inspectNetworkSources(root, embedded));
+  return failures;
+}
+
+/** Compile-time SDK imports are limited to the application transport, its
+ * protocol adapters and the PostgreSQL owner. The connection acquisition
+ * points also have an explicit owning file within those consumers. */
+function checkRustServerNetwork(root: string): BoundaryFailure[] {
+  const source = 'native/game-server/src';
+  const failures: BoundaryFailure[] = [];
+  const sdk = /\b(reqwest|openidconnect|tokio_postgres|tokio_postgres_rustls)\s*::/g;
+  const scan = (directory: string) => {
+    for (const entry of readdirSync(resolve(root, source, directory), { withFileTypes: true })) {
+      const path = portable(`${directory}${entry.name}`);
+      if (entry.isDirectory()) scan(`${path}/`);
+      else if (path.endsWith('.rs')) {
+        const file = `${source}/${path}`;
+        const text = readFileSync(resolve(root, file), 'utf8');
+        const report = (index: number | undefined, message: string) =>
+          failures.push({ path: file, line: text.slice(0, index).split('\n').length, message });
+        for (const match of text.matchAll(sdk)) {
+          const owner = match[1]!;
+          if (!rustServerNetworkOwners[owner]?.some((allowed) => allowed.test(path)))
+            report(match.index, `Rust SDK ${owner} has no reviewed owner here.`);
+        }
+        const http = /\breqwest\s*::\s*(?:Client\s*::|(?:get|blocking)\b)/.exec(text);
+        if (http && path !== 'network.rs')
+          report(http.index, 'Rust HTTP acquisition must use the bounded transport owner.');
+        const database = /\b(?:config|database)\s*\.\s*connect\s*\(/.exec(text);
+        if (database && path !== 'store.rs')
+          report(database.index, 'Rust PostgreSQL connection acquisition belongs to the store.');
+      }
+    }
+  };
+  if (existsSync(resolve(root, source))) scan('');
   return failures;
 }
 

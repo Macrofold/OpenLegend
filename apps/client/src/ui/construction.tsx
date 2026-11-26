@@ -10,7 +10,7 @@ import type {
   GameView,
   HearthConstructionView,
 } from '@open-legend/protocol';
-import { getScoped, post } from '../api';
+import { getScoped, post, postContactRead } from '../api';
 import { playerActionStatusKey } from '../action-browser';
 import type { CommandDispatcher } from '../command-request';
 import { Button, SelectField } from '../design-system/components';
@@ -562,9 +562,10 @@ function AssemblyConstruction({
     setBusyScope(readKey);
     setError('');
     try {
-      const result = await post<ApiResult & { shapes: ConstructionShape[] }>(
+      const result = await postContactRead<ApiResult & { shapes: ConstructionShape[] }>(
         '/api/construction/preview',
         plan,
+        [],
         AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
       );
       if (

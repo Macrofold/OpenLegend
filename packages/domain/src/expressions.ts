@@ -6,6 +6,7 @@ import { activelyParticipates } from './participation-state.js';
 import { seesEntity } from './perception.js';
 import type { ExpressionDefinition } from './expression-definitions.js';
 import { canReachEntity, hasLineOfSight } from './spatial.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { worldPosition } from './spatial-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import type { Entity, Outcome, WorldEvent, WorldState } from './types.js';
@@ -54,7 +55,11 @@ export function expressionProblem(
     definition.reach !== undefined &&
     (!target || !canReachEntity(world, actor, target, definition.reach))
   )
-    return outcome(false, 'out-of-reach', 'Move within reach before trying that gesture.');
+    return outcome(
+      false,
+      'out-of-reach',
+      selectedOccurrenceRules(world).response.expression.outOfReach,
+    );
   return null;
 }
 
@@ -101,7 +106,8 @@ export function commitExpression(
       ...(target ? { targetReference: true } : {}),
     },
   );
+  const rules = selectedOccurrenceRules(world).response.expression;
   return definition.contact
-    ? outcome(true, 'contacted', 'Brief contact occurred.')
-    : outcome(true, 'expressed', 'Expression accepted without mechanical effects.');
+    ? outcome(true, 'contacted', rules.contacted)
+    : outcome(true, 'expressed', rules.accepted);
 }

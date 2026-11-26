@@ -35,6 +35,19 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
       reflection: false,
     },
     {
+      id: 'wilderness:recognized-appearance-fear',
+      version: 1,
+      implementation: 'appraisal-v1',
+      label: 'fear',
+      causes: ['perceived-event'],
+      stacking: 'cause',
+      value: { kind: 'scaled', min: 0, max: 1 },
+      lifetime: { kind: 'decays', perHour: 0.25, bands: [0.5, 0.2, 0] },
+      decision: false,
+      reflection: false,
+      nativeAppearance: true,
+    },
+    {
       id: 'wilderness:grief',
       version: 1,
       implementation: 'appraisal-v1',
@@ -86,19 +99,35 @@ export const BASE_APPRAISAL_POLICY: AppraisalPolicy = {
   ],
 };
 
+/** The selected event law shared by both simulation implementations. */
+export const BASE_EVENT_APPRAISAL_RULES = Object.freeze({
+  id: 'wilderness:event-appraisal',
+  version: 2,
+  eventType: 'body-effect',
+  damageField: 'healthDelta',
+  definitionId: 'wilderness:discomfort',
+  fallbackMaxHealth: 100,
+  appearance: {
+    definitionId: 'wilderness:recognized-appearance-fear',
+    intensity: 0.65,
+    coverage: 'personally recognized appearance',
+    expressionVerb: 'flinch',
+  },
+});
+
 /** Bodily discomfort is immediate. Fear/anger wait for personal interpretation;
  * ordinary contact evidence and urgency never wait for that judgment. */
 export function appraiseEvent(world: WorldState, event: WorldEvent): void {
   if (
-    event.type !== 'body-effect' ||
+    event.type !== BASE_EVENT_APPRAISAL_RULES.eventType ||
     !event.targetId ||
     !entityGet(world.entities, event.targetId)?.actor
   )
     return;
-  const damage = -Number(event.data?.['healthDelta'] ?? 0);
+  const damage = -Number(event.data?.[BASE_EVENT_APPRAISAL_RULES.damageField] ?? 0);
   if (typeof damage !== 'number' || !Number.isFinite(damage) || damage <= 0) return;
   const definition = world.moduleManifest.appraisals?.definitions.find(
-    (entry) => entry.id === 'wilderness:discomfort',
+    (entry) => entry.id === BASE_EVENT_APPRAISAL_RULES.definitionId,
   );
   if (!definition) return;
   const subject = event.actorId ?? event.targetId;
@@ -106,7 +135,9 @@ export function appraiseEvent(world: WorldState, event: WorldEvent): void {
     kind: 'scaled',
     value: Math.min(
       1,
-      damage / (entityGet(world.entities, event.targetId)!.actor!.body?.maxHealth ?? 100),
+      damage /
+        (entityGet(world.entities, event.targetId)!.actor!.body?.maxHealth ??
+          BASE_EVENT_APPRAISAL_RULES.fallbackMaxHealth),
     ),
   });
 }

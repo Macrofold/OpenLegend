@@ -1,5 +1,6 @@
 import type { NativeValueHold } from './native-value-holds.js';
 import { freeze } from 'immer';
+import permissionPolicy from './construction-permission-policy.json' with { type: 'json' };
 import { isImmutableData } from './records.js';
 import { nextId } from './data.js';
 import {
@@ -42,7 +43,9 @@ export const CONSTRUCTION_OPERATIONS = [
   'repair-boundary',
 ] as const;
 /** Operational input bound, not a material or fictional world law. */
-export const CONSTRUCTION_PERMISSION_LIMITS = { materialOrigins: 2048 } as const;
+export const CONSTRUCTION_PERMISSION_LIMITS = {
+  materialOrigins: permissionPolicy.materialOrigins,
+} as const;
 export interface MaterialPermissionBinding {
   definition: DefinitionPin;
   grants: Array<{ id: string; revision: number }>;
@@ -232,7 +235,7 @@ function eligible(
 const capacityRefusal = (): Outcome => ({
   ok: false,
   code: 'construction-material-limit',
-  message: 'Current construction permission cannot include another independent material origin.',
+  message: permissionPolicy.full,
 });
 
 /** Source creation gives a tracked gather one new origin, regardless of quantity.
@@ -292,7 +295,7 @@ export function currentGatherMaterialPermission(
     return {
       ok: false,
       code: 'construction-permission',
-      message: 'The material-use permission or selected source changed during gathering.',
+      message: permissionPolicy.changed,
     };
   const current = gatherMaterialPermission(
     batch.worldId,

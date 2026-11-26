@@ -108,7 +108,7 @@ Original recommendation: **Review**.
 
 **Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
 
-The current immediate-decision workflow limits assembled model input to 100,000 bytes.
+The current immediate-decision workflow limits assembled model input to 100,000 bytes. The Rust listener counts the actual UTF-8 prompt and installed system instructions together. Optional action descriptions and broad scene hints fit within that allowance. A query-enabled reply also needs room for its query instructions.
 
 **Reason / tradeoff:** Keep a finite input allowance, but size it for the selected model and include instructions and response-format overhead consistently.
 
@@ -154,27 +154,19 @@ Original recommendation: **Completed removals**.
 
 ## LA038
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Very safe.**
+**Current selection limit · Restrictiveness: Safe.**
 
-A spontaneous cognition request describes at most the 8 newest significant experiences that could have caused the character to think.
+The stand-alone scheduler prepares up to eight required personal accounts for one decision from the oldest unhandled sequence groups. An equal-sequence group fits together or stays pending. Related context and separately required sources retain their existing admission.
 
-**Reason / tradeoff:** Select the events needed to explain the current situation rather than cutting the trigger description at eight regardless of meaning.
-
-[Implementation starting point](../../apps/server/src/decision-context.ts).
-
-Original recommendation: **Replace**.
+**Reason / tradeoff:** Bound one decision without losing the next one. A group that cannot fit on its own remains unacknowledged until a relevant change. [Selection and qualification](../projects/witness-decisions-and-memory-tech-design.md#2-select-personal-reasons-before-selecting-prompt-detail).
 
 ## LA039
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
+**Stand-alone admission candidate · Restrictiveness: Medium.**
 
-An experience normally qualifies to trigger spontaneous thinking when its importance is at least 6, or its event type is explicitly configured as significant.
+A witness needs a [personally supported reason](#cg19--ordinary-witnesses-and-personal-reactions) for an immediate decision. Received direct address can qualify below the previous score of 6. Importance and configured event types still guide reconsideration of personally experienced consequences.
 
-**Reason / tradeoff:** Review whether this importance cutoff misses meaningful situations before changing how often characters think.
-
-[Implementation starting point](../../apps/server/src/decision-context.ts).
-
-Original recommendation: **Review**.
+**Reason / tradeoff:** Retain meaningful quiet choices while leaving ordinary observations for later recall. [Current implementation and qualification](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording).
 
 ## LA040
 
@@ -532,27 +524,43 @@ Original recommendation: **Replace**.
 
 ## LA231
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
+**Current — provisional development allowance · Restrictiveness: Safe.**
 
-The scheduler admits at most **two immediate pipelines per world**, **one per
-actor** and **one ordinary pipeline**. Two urgent actors can occupy both positions.
-Urgent execution shares the existing background provider lease, preserving two
-total executions across immediate decisions, higher reasoning and maintenance.
-Deferral records timing while the running job retains its admission position;
-completion or handoff releases only its own position. Uncertain execution retains
-its actual financial lease class across restart. Controlled native coverage
-includes ordinary plus urgent, two urgent, no third slot and exact cancellation;
-complete live fairness and latency qualification remain open under
-[CTR08/CTR10](../maintainers/combat-and-threat-responses.md).
+`OPEN_LEGEND_NPC_AI_CONCURRENCY` defaults to **1,000** concurrent NPC AI jobs.
+The trusted server setting applies to immediate coordination and shared provider
+execution. The HTTP owner funds both potentially overlapping transport operations
+per job. There is one live decision
+workflow per NPC. Independent ordinary and urgent decisions can coexist without
+separate quotas or reserved positions; urgency still affects selection order.
+The setting is not measured population capacity, funding or a provider quota.
+Director, provider and memory admission can still refuse genuine contention.
+The [execution owner](ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
+keeps occupied and uncertain remote leases through their actual lifetimes.
 
 **Demand-driven admission:** otherwise eligible pending evidence now requests one captured durable cut; the existing clock coalesces its completion into another admission pass. This removes an intentional periodic-save wait without adding a slot, extending a job or changing the game-time ratio. [Measured native work and live limits](../verification/cognition-context/2026/2026-11-05-readiness-and-admission.md) remain distinct.
 
 **Reason / tradeoff:** One long ordinary deliberation no longer owns both immediate
 positions. Shared funding and provider capacity still limit dispatch, and each
 actor/job retains its own evidence, reservations and cancellation.
-[Implementation starting point](../../apps/server/src/ai-director.ts).
 
-Original recommendation: **Review**.
+The directed-reply availability read can report that Send is eligible to wait.
+The read reserves no place. An explicit directed Send can wait for the addressed
+NPC's occupied position within the player's existing 30-second mutation request
+envelope. A wait for the shared job cap has a five-second deadline. Both deadlines
+start at the original admission and the wait holds neither the world nor
+cognition admission lane. If this NPC is still busy, changes to another NPC's jobs do not wake the waiting request.
+
+A same-NPC waiter precedes new ordinary jobs for that NPC. A waiter at the shared
+cap precedes new ordinary jobs using that cap. Existing jobs and urgent work keep
+their positions. Each new admission attempt checks the original request ID,
+current control, recipient and funding. An expired wait cannot start speech
+admission. Disconnect or lost authority prevents uncommitted speech from
+settling. The wait does not retry provider requests.
+
+**Reason / tradeoff:** The original one-ordinary and two-immediate limits made
+unrelated ordinary conversations compete even when provider and memory capacity
+were free. Keep actor ordering and actual resource admission at their owners.
+[Implementation starting point](../../apps/server/src/ai-director.ts).
 
 ## LA232
 
@@ -592,7 +600,7 @@ Original recommendation: **Keep**.
 
 **Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
-**Measured follow-through, October 7:** the [AV02 complete resident caller](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
+**Measured follow-through, October 7:** the [AV02 NPC decision preparation](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
 
 **Implemented mitigation:** The count/text guards refuse oversized candidate preparation without deleting retained sources. Observation and resident-world preparation still precede them. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
 
@@ -626,13 +634,15 @@ Ordinary animal/object first sightings and returns update current visibility and
 
 ## CG04
 
-**Current — source and native measurements, September 27 · Restrictiveness: Liberal for preparation, Safe for output.** Selected possessions remain capped at **16**. Their immutable definition facts are shared, required action-tool references are reserved, and cognition reuses one permitted observation across immediate discovery/planning. Preparation still scans/copies the actor's accessible inventory before selection; this is not indexed semantic retrieval.
+**Current — source and native measurements, September 27 · Restrictiveness: Liberal for preparation, Safe for output.** Selected possessions remain capped at **16**. Their immutable definition facts are shared, required action-tool references are reserved, and cognition reuses one permitted observation across immediate discovery/planning. Decision preparation counts accessible stock as metadata, selects its inventory page before copying bodies, and preserves equipped/action/queued-work items through one bound-reference helper. Exact stock conclusions remain independent of the selected page; this is not indexed inventory semantic retrieval.
 
 Explicit inspection returns at most **16 possessions / 8,000 UTF-8 description bytes** with inventory-revision-bound continuation. It retains the last page's item IDs, with current custody rechecked before reuse. A changed inventory rejects continuation; a single oversized descriptor refuses truthfully. There is no automatic paid page-walking loop or total stored-inventory cap.
 
-When combined visible/inventory/recipe/note preparation would exceed **8,192 rows**, decision observation retains only the current inspection page (initially the first) and bound action/equipment items. It discloses available/considered coverage and preserves the inspection command. Other required-context or noninventory overflows still refuse before paid dispatch. Page selection is explicitly incomplete; it must not claim “no food” from a page with no food. Required possession references over 16 still refuse instead of dropping references.
+When combined visible/inventory/method candidate preparation would exceed **8,192 rows**, decision observation retains only the current inspection page (initially the first) and bound action/equipment items. It discloses available/considered coverage and preserves the inspection command. Other required-context or noninventory overflows still refuse before paid dispatch. Page selection is explicitly incomplete; it must not claim “no food” from a page with no food. Required possession references over 16 still refuse instead of dropping references.
 
 **Reason / tradeoff:** Preserve an inspection route and reduce formatting above the existing preparation limit without inventing goal-keyword policies, per-item calls or another vector store. Cold scans/sorting, 8k inventories below the fallback, and weapon-by-target action fan-out can still be costly. [Measurements](../verification/embodied-survival.md#inventory-preparation) observed those costs; they establish no population or stable latency envelope. [AG06](../maintainers/agent-agency.md#ag06--goalplan-aware-context-and-derived-interests) retains scoped candidate retrieval and full scheduling qualification. Revisit paging before materialization/semantic indexing when these tails affect ordinary play; do not hide necessary evidence to claim speed.
+
+Optional method preparation keeps at most **300 recent method identities**, plus currently bound methods, before hydration when the complete set exceeds the existing preparation allowance. Optional notes use at most **300 canonical metadata candidates** plus exact required subjects, through the existing scoped vector/search owners. Explicit coverage reports omitted candidates; source revisions and names are revalidated after selection. Stored notes/methods remain inspectable and searchable. Known-place preparation batches distinct exact IDs in one scoped read. [RU05](../projects/runtime-unification-tech-design.md#8-ru05--select-before-preparing-personal-context) owns integration and preparation measurements.
 
 ## CG05
 
@@ -668,13 +678,15 @@ Autonomous activity parameters use the highest-scoring offered choice, including
 | 2 mini LLM                             | 100,000 bytes instructions + context                        | 65,536 bytes               | 1,024 tokens (1,800 with actor invention) | 40,000 bytes (advertised envelope) | low effort; 512-token accounted allowance | 0           | 10                    | 10 × LLM allowance        |
 | 3 complex LLM, low                     | 100,000 bytes                                               | 65,536 bytes               | 4,096 tokens                              | 40,000 bytes                       | low effort; 2,048-token allowance         | 0           | 10                    | 10 × LLM allowance        |
 | 4 complex LLM, high                    | 100,000 bytes                                               | 65,536 bytes               | 8,192 tokens                              | 40,000 bytes                       | high effort; 6,144-token allowance        | 0           | 10                    | 10 × LLM allowance        |
-| 5 reflection harness                   | 100,000 bytes reflection context                            | harness-managed            | harness-managed                           | 100,000-byte reflection proposal   | xhigh effort                              | 8           | 1 run                 | one harness run allowance |
+| 5 reflection harness                   | 100,000 bytes reflection context                            | harness-managed            | harness-managed                           | 100,000-byte reflection proposal   | medium effort by default                  | 8           | 1 run                 | one harness run allowance |
 
 Allowances are the existing per-call reservations (`decisionAllowance`): Jev uses the greater of `JEV_CALL_RESERVE_USD` and its configured 500,000-input price bound, with Macrofold’s additional 1,024-byte input padding; generation uses `MACROFOLD_RUN_MAX_USD` for Macrofold or its configured minimum and 500,000-input/8,192-output-token price bound for direct providers. Interactive preflight also sums individually rounded per-request allowances through that same owner. Every request reserves exactly one allowance rounded upward to integer microdollars. Each money ceiling sums those individually rounded reservations for its request count, so fractional-microdollar configuration does not accidentally refuse the last permitted request. This adds no separate refusal or change to the request counts. [NP01 review evidence](../verification/level1-decisions.md#thorough-review--october-3-2026) covers the rounding boundary. These counts are runaway-loop stops, not tuning: Mike set them on September 30 well above current use so later pipeline steps fit without retuning. At the boundary the next request is refused before reservation with outcome `budget-exhausted`; an escalation refused this way defers. A schema over its allowance refuses like oversized context (`context-exceeded`); a response over its visible allowance, or failing schema/envelope validation, is rejected as `invalid` with no paid repair. The visible allowance is the domain's advertised response envelope (`RESPONSE_LIMITS`), measured on the operations exactly as admission measures them, so it rejects nothing admission would accept; the provider output ceiling normally binds first. The input rows restate pre-existing checks (the 100,000-byte context bound and the Jev client's size limit); this table adds no new input refusal. Level-5 limits are enforced by the reflection path (eight tool rounds, one run allowance) and listed here for one view. Conversation compaction and AG01 action grounding keep their own bounds; the ledger records their spend in the decision total but does not cap them here.
 
 **Reason / tradeoff:** A decision could previously issue any number of Jev and generation requests with only the monthly per-actor reservation as a bound. Counting instructions, schemas and Jev attention/routing/selection in one ledger makes the actual per-decision cost inspectable. Current adapters send one output ceiling that covers visible and reasoning tokens and expose no separate hard reasoning cap, so reasoning is limited by effort and its token allowance is checked against reported usage afterward (an overrun is flagged, not refunded). The original headroom inspection counted three level-1 Jev requests per attempt and measured 7.6–15.8 KB schemas; these are historical code-path measurements, not current maxima or live traffic. Native parameter selection can now use up to eight dependent selection/narrowing rounds in addition to routing and attention, still within the same shared twenty-request ceiling. Current forms, permitted-reference counts and actual routes determine schema size; the [native capability campaign](../verification/cognition-lab/2026/2026-10-29-final-native-panel.md) records complete-request qualification. Revisit if traces show legitimate decisions refused. Unpriced direct-provider models (level-2–4 mini/complex models whose prices are not configured) settle as uncertain at their full reservation. Values are engineering starting points, not measured optima. [Evidence](../verification/level1-decisions.md).
 
 **Current threat-route consumer:** [CTR06/CTR07](../maintainers/combat-and-threat-responses.md) retain the October 17 two-stage relevance/appraisal and actual-choice design, without a mandatory generated thought. The installed independent-voice extension may add at most one selected bounded speech-only generation after native conduct. All selected calls, any otherwise authorized retrieval work and every superseded/failed request remain charged through this owner; the original job must have sufficient admitted allowance and reserve each call before dispatch. This selects a route within shared request/accounting bounds, not a separate combat allowance or an automatic paid retry. The earlier headroom counts describe their recorded baseline; qualify the actual new route and [complete relevant-feelings preparation](feelings.md#fl24--interpreted-threat-reactions) before making cost or latency claims.
+
+Reflection/dream effort is medium by Mike's October 31 decision, replacing automatic `xhigh` for native full execution. Tool permission and reasoning difficulty are independent; an explicit caller effort is honored. Token ceilings, tool-round bounds and spending allowances stay unchanged while the new default is qualified. Higher effort remains an explicit task choice, with no extra routing call or automatic paid retry. [Runtime evidence and remaining qualification](../verification/performance/2026-10/runtime-unification.md#funded-continuation-and-native-output-limit).
 
 ## CG09
 
@@ -684,16 +696,11 @@ Allowances are the existing per-call reservations (`decisionAllowance`): Jev use
 
 ## CG10
 
-**Current — September 28, [perception-reaction intake](../projects/completed/perception-reaction-intake.md) · Restrictiveness: Medium.** Each observer keeps at most one private arrival record and one departure record per sighted person within a **3,600 game-second** window. The window is measured from its newest resident sighting record. Further comings and goings in the window update current visibility only. Losing sight of someone with memory is recorded at the arrival profile (importance **3**, urgency **0**, no automatic reasoning). Routine appearances of ordinary animals and objects stay unrecorded under the bundled-world policy; exposed outward changes retain their separate private records.
+**Installed — 2026-10-31 · Restrictiveness: Medium.** Routine arrival/departure alone creates no personal prose event, for people, animals or scenery. Current received bodies and attended chronology remain. Meaningful received outward changes produce the world-owned notice; intake does not independently resense or build a second feature diary. Removing routine wrappers adds no retrospective route or new recording allowance.
 
-A person who returns within **30 game seconds** of a recorded departure keeps their perception episode, so non-authored recognition and plan targets survive a first brief occlusion or edge flicker. Live exposure, new detail and action reach still use exact current sight. The grace period counts only from the first departure recorded in the one-hour re-record window; later exits in that window write no record. A return within 30 seconds of that recorded departure keeps the episode even after further brief exits, and a return more than 30 seconds after it starts a new episode however brief the latest exit was. Outward-change records never re-arm a departure. [Base policy](../../packages/domain/src/worlds/base/senses.ts).
+Brief-loss continuity uses life-scoped episode/loss/expiry state. The selected grace remains **0.5 normal-speed seconds**, currently **30 game seconds** at the bundled 60:1 clock. Actual loss ends current body/detail permission immediately; the gap preserves correlation, never fresh detail or action permission. Re-entry receives an actual sample; restart does not replay reception. Source/life changes and correction remain with the evidence owner.
 
-**Reason / tradeoff:** The one-hour window already existed, but it read only `world.memories`. Sightings moved to awareness entries, so every return created a new record. Enforcing it trades individual recall of repeated comings and goings for bounded history under jitter and crowd movement.
-
-- Only resident awareness is consulted. Residency trimming at commits or a restart can therefore add a record that an uninterrupted run would have coalesced; it never loses one. Such outcomes depend on commit timing, like other residency-dependent reads.
-- Linger does not see perception loss: if an observer's perception is blocked for less than 30 seconds after a recorded departure, a return can still reuse the episode. The episode-state clearing on loss otherwise applies.
-- Episode linger covers people only. Animals and objects have no departure records, so their episodes still end on exit (see EPR03 hysteresis).
-- D54 retains tuning. Revisit when authored conspicuous objects, dangerous fauna or a narration consumer of departures appears.
+**Reason / tradeoff:** current visibility, admitted temporal changes and native occurrences already supply useful context. Removing a second diary reduces history noise and repeated work. [RU02](../projects/runtime-unification-tech-design.md#5-ru02--one-acquired-change-path-preserve-meaningful-notices) records the conversion; D54 retains broader sensory tuning and SR07 retains complete-game capacity.
 
 ## CG11
 

@@ -85,6 +85,7 @@ export const captionScope = (view: GameView) =>
     view.saveTimeline,
     view.access?.scope,
     view.player.id,
+    view.player.life,
     view.historyEpoch,
   ]);
 const captionText = (event: Entry['event']) =>
@@ -226,9 +227,11 @@ export class SpeechCaptions {
         this.drop(event);
         continue;
       }
-      const speaker = event.actorId;
+      const speaker = event.speech.speakerReference;
       const queueSize = speaker
-        ? [...this.active, ...this.pending].filter((e) => e.event.actorId === speaker).length
+        ? [...this.active, ...this.pending].filter(
+            (e) => e.event.speech.speakerReference === speaker,
+          ).length
         : 0;
       // Overflow stays available in durable World Events; these are presentation limits only.
       if (queueSize >= 3) {
@@ -329,8 +332,8 @@ export class SpeechCaptions {
     if (this.options.enabled && !document.hidden) {
       for (let i = 0; this.active.length < 8 && i < this.pending.length; ) {
         const entry = this.pending[i]!;
-        const speaker = entry.event.actorId;
-        if (speaker && this.active.some((e) => e.event.actorId === speaker)) {
+        const speaker = entry.event.speech.speakerReference;
+        if (speaker && this.active.some((e) => e.event.speech.speakerReference === speaker)) {
           i++;
           continue;
         }
@@ -443,7 +446,7 @@ export class SpeechCaptions {
       const node = entry.node;
       if (!node) continue;
       const speech = entry.event.speech;
-      const head = entry.event.actorId ? p.head(entry.event.actorId) : null;
+      const head = speech.speakerContact ? p.head(speech.speakerContact) : null;
       const { width, height } = entry;
       if (!width || !height) continue;
       const inBounds = (point: CaptionPoint) =>
@@ -451,7 +454,7 @@ export class SpeechCaptions {
         point.x + width / 2 <= p.width - 8 &&
         point.y - height >= 8 &&
         point.y <= p.height - 8;
-      const direction = p.direction(speech, width, height, entry.event.actorId);
+      const direction = p.direction(speech, width, height, speech.speakerContact);
       const candidates = [head, direction, p.neutral(index)].filter(
         (point): point is CaptionPoint => !!point && inBounds(point),
       );

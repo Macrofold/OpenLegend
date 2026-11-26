@@ -1,18 +1,14 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
 import { entityGet } from '../../entity-collection.js';
 import type { ContactDefenseProfile } from '../../contact-defense.js';
 import type { Entity, WorldState } from '../../types.js';
 import { equipmentConflicts, isEquipped } from '../../equipment.js';
+import equipmentCopy from './equipment-copy.json' with { type: 'json' };
+export { equipmentCopy as BASE_EQUIPMENT_COPY };
 
 export const BASE_GUARD_PROFILE: ContactDefenseProfile = {
-  reduction: 0.5,
-  coverageDegrees: 120,
-  preparationSeconds: 15,
-  readySeconds: 180,
-  recoverySeconds: 60,
-  label: 'Guard',
-  preparingLabel: 'Preparing guard',
-  readyLabel: 'Guard ready',
-  recoveryLabel: 'Recovering from guard',
+  ...arms.shieldCandidate.parameters,
+  ...arms.guard,
 };
 export const BASE_GUARD_TEXT = {
   description:
@@ -29,11 +25,41 @@ export const BASE_GUARD_TEXT = {
   recovery: 'Finish recovering before guarding or attacking again. Movement remains available.',
   keywords: ['guard', 'shield', 'defend'],
 };
-export function guardChoiceLabel(shieldName: string, targetName?: string): string {
-  return `${BASE_GUARD_PROFILE.label} with ${shieldName} ${targetName ? `facing ${targetName}` : 'in this direction'}`;
+export const BASE_GUARD_CHOICE_COPY = {
+  facing: '{label} with {shield} facing {name}',
+  direction: '{label} with {shield} in this direction',
+  detail:
+    'Prepare for {preparation} game seconds, then guard one connecting melee blow or supported projectile for up to {ready} game seconds. Reduces injury by {reduction}% within the front {coverage}°; then recover for {recovery} game seconds. Facing stays fixed. A late or rear blow still hurts. Other hazards are not blocked. Movement ends readiness and remains available during recovery.',
+} as const;
+function guardCopy(template: string, fields: Readonly<Record<string, string | number>>) {
+  return template.replace(/\{([a-z]+)\}/gu, (marker, key: string) =>
+    Object.hasOwn(fields, key) ? String(fields[key]) : marker,
+  );
 }
-export function guardDescription(profile: ContactDefenseProfile): string {
-  return `Prepare for ${profile.preparationSeconds} game seconds, then guard one connecting melee blow or supported projectile for up to ${profile.readySeconds} game seconds. Reduces injury by ${profile.reduction * 100}% within the front ${profile.coverageDegrees}°; then recover for ${profile.recoverySeconds} game seconds. Facing stays fixed. A late or rear blow still hurts. Other hazards are not blocked. Movement ends readiness and remains available during recovery.`;
+export function guardChoiceLabel(
+  shieldName: string,
+  targetName?: string,
+  label = BASE_GUARD_PROFILE.label,
+): string {
+  return guardCopy(targetName ? BASE_GUARD_CHOICE_COPY.facing : BASE_GUARD_CHOICE_COPY.direction, {
+    label,
+    shield: shieldName,
+    name: targetName ?? '',
+  });
+}
+export function guardDescription(
+  profile: Pick<
+    ContactDefenseProfile,
+    'preparationSeconds' | 'readySeconds' | 'reduction' | 'coverageDegrees' | 'recoverySeconds'
+  >,
+): string {
+  return guardCopy(BASE_GUARD_CHOICE_COPY.detail, {
+    preparation: profile.preparationSeconds,
+    ready: profile.readySeconds,
+    reduction: profile.reduction * 100,
+    coverage: profile.coverageDegrees,
+    recovery: profile.recoverySeconds,
+  });
 }
 export function guardContactResult(
   result: {
@@ -78,7 +104,7 @@ export function equipmentChangeDescription(
 ): string {
   if (isEquipped(world, actorId, itemId)) return '';
   const conflicts = equipmentConflicts(world, actorId, itemId);
-  return `Auto-equip${conflicts.length ? `; put away ${conflicts.map((i) => world.itemDefinitions[i.definitionId]!.name).join(', ')}` : ''}. `;
+  return `${equipmentCopy.autoEquip}${conflicts.length ? `${equipmentCopy.putAway}${conflicts.map((i) => world.itemDefinitions[i.definitionId]!.name).join(', ')}` : ''}. `;
 }
 export function equipmentEquipOutcome(
   world: WorldState,
@@ -91,7 +117,7 @@ export function equipmentEquipOutcome(
     .map((id) => world.itemDefinitions[entityGet(world.entities, id)!.item!.definitionPin.id]!.name)
     .join(', ');
   return {
-    message: `Equipped ${name}.${stowed ? ` Put away ${stowed}; the same items remain carried.` : ''}`,
-    narration: `equipped ${name}${stowed ? ` and put away ${stowed}` : ''}.`,
+    message: `${equipmentCopy.equipped}${name}.${stowed ? `${equipmentCopy.stowed}${stowed}${equipmentCopy.stowedResult}` : ''}`,
+    narration: `${equipmentCopy.equippedEvent}${name}${stowed ? `${equipmentCopy.stowedEvent}${stowed}` : ''}.`,
   };
 }

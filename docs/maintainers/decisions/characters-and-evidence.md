@@ -16,7 +16,7 @@ Scope/dependencies: Before recipes persist; F48, R04/R11/R23; [agent learning](.
 
 ### D14 — Memory capacity/retention
 
-Per-route/snapshot/backlog budgets and longer-term retention need tuning; full About me inclusion must fit. Large raw transcripts and summary-only recall are superseded; cold personal recollection is unselected and cannot bypass forgetting
+[PS04-A](../product-scalability.md#ps04-a--core-attention-and-recording) selects bounded shared recent receipts, useful-only impressions, finite optional expiry and exact required support through existing memory owners. Core age/count/byte defaults and actor-first cold access are selected in the [world profile](../../worlds/base/attention.md); supported implementation is delivered, with semantic and operating-envelope qualification open. Broader route/snapshot/required-capacity tuning and full About me fit remain open. Cold retained sources never bypass correction or forgetting.
 
 Scope/dependencies: Before long sessions; [memory architecture](../../memory-architecture.md), CR01/CR05–CR09, R10/R11/R19. Original decision status: **partly agreed**.
 
@@ -40,9 +40,9 @@ Evidence-source revisions use [resolved SA-D02’s family-owned exact types](../
 
 Scope/dependencies: [Sensory proposal](../../../archive/07-technical-architecture/perception-and-attention.md), F63/F64, SAD-B/SAD-C and the linked delivery owners. Original decision status: **partly agreed**.
 
-### D53 — Always create person-entry decision opportunities; make mundane objects relevant through arbitrary intents and semantic indexing; avoid per-object paid calls
+### D53 — Notice people and novel relevance without per-object paid calls
 
-Retrieval backend, permission-filtered index projections, interest/crowd limits, hysteresis and re-entry/habituation, which ongoing cue types can force context inclusion, latency and acceptable semantic misses
+Person-entry changes permit cheap native inspection, not automatic paid turns. [Core attention](../../projects/attention-and-scenes-tech-design.md#55-semantic-noticing-through-existing-cognition) selects shared familiarity, fair discovery, relation latches and cause-based admission without object whitelists. Core work limits, hysteresis, quiet discovery and a few-second justified-cause interpretation aim with possible misses are selected and implemented for supported channels; semantic and scale qualification remain open. Broader retrieval, crowd and sensory policies retain separate owners.
 
 Scope/dependencies: [Interests](../../memory-architecture.md#selection-signals-and-delivery-order), F65. Original decision status: **partly agreed**.
 
@@ -54,7 +54,7 @@ Scope/dependencies: [Needs/reminders](../../memory-architecture.md), F66, EPR04/
 
 ## D55 — Compact cognition and independent reflection
 
-Remaining choices cover route/model effort and budgets, attention batching/failure, snapshot inclusion, retention, summarizer support, reflection cadence, recovery and presentation. The accepted direction stays in [memory architecture](../../memory-architecture.md).
+[PS04-A](../product-scalability.md#ps04-a--core-attention-and-recording) selects core attention batching/failure, shared recent retention and finite optional expiry. Remaining choices cover broader route/model effort and budgets, full required-context fit, semantic-rewriting extensions, reflection cadence, recovery and presentation. The accepted direction stays in [memory architecture](../../memory-architecture.md); supporting implementation does not establish complete qualification.
 
 ## D57 — Narration, composed responses and durable conversations
 

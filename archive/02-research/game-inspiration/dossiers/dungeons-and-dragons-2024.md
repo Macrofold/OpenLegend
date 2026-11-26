@@ -1,6 +1,6 @@
 # Dungeons & Dragons: the 2024 rules revision / 5.5e
 
-Research date: 2026-09-27. Scope: the revised fifth-edition tabletop game, not Baldur’s Gate 3, an actual-play show, a virtual tabletop, or every D&D supplement. This is reference research, not an accepted OpenLegend rules specification.
+Research date: 2026-09-27. Scope: the revised fifth-edition tabletop game, not Baldur’s Gate 3, an actual-play show, a virtual tabletop, or every D&D supplement. This is reference research, not an accepted Open Legend rules specification.
 
 Navigation: [D&D research hub](../games/dungeons-and-dragons.md) · [3.5e comparison](dungeons-and-dragons-3-5.md) · [GM adjudication and simulation lessons](../mechanics/dungeons-and-dragons-adjudication.md) · [worldbuilding study](../../worldbuilding/worlds/29-dungeons-and-dragons.md).
 
@@ -49,7 +49,7 @@ Advantage rolls two d20s and keeps the higher; disadvantage keeps the lower. Mul
 
 The DM can select a different ability for a skill when the approach warrants it: a physical display might use Strength with Intimidation proficiency. But the player cannot obtain their best statistic simply by renaming an unchanged action. A request first needs a meaningful approach and a relevant target. Searching the wrong room cannot discover a hidden object elsewhere merely because the roll is high. [S3]
 
-The revised **Influence** action is unusually relevant to OpenLegend. The DM first decides whether the NPC is **willing, unwilling, or hesitant**. Willing characters can comply without a check, in a manner they prefer; an unwilling character can refuse without a check. Only the hesitant case calls for the prescribed uncertainty resolution. Its default DC is the higher of 15 and the target’s Intelligence score. Friendly and hostile attitudes affect the check through advantage and disadvantage. A failed attempt cannot simply be repeated in the same way immediately; the default wait is 24 hours, subject to the DM’s duration. [S5; SRD p. 184]
+The revised **Influence** action is unusually relevant to Open Legend. The DM first decides whether the NPC is **willing, unwilling, or hesitant**. Willing characters can comply without a check, in a manner they prefer; an unwilling character can refuse without a check. Only the hesitant case calls for the prescribed uncertainty resolution. Its default DC is the higher of 15 and the target’s Intelligence score. Friendly and hostile attitudes affect the check through advantage and disadvantage. A failed attempt cannot simply be repeated in the same way immediately; the default wait is 24 hours, subject to the DM’s duration. [S5; SRD p. 184]
 
 That is not a complete theory of persuasion. Intelligence as a default resistance target is a game abstraction; relationships, values, authority, and stakes still require judgment. A guard may agree that refugees deserve help but lack authority to open the fortress. A ruler’s friendliness does not make abdication a reasonable request. Charming someone is not automatically controlling their actions. The general lesson is **eligibility before probability**, with the actor’s actual desires and authority retained.
 
@@ -109,7 +109,7 @@ A useful spell catalogue groups **functions**, not just damage:
 | Care and survival                 | Cure Wounds, Lesser Restoration, Goodberry, Revivify    | Recovery and provisioning; each effect addresses particular deficits.                   |
 | Social coercion                   | Charm Person, Suggestion, Dominate Person               | Separate magical permissions, saves, durations, and boundaries—not ordinary persuasion. |
 
-The names identify reference entries, not proposed OpenLegend content. Read the revised individual spell before importing a familiar interaction. For example, Knock opens or suppresses a qualifying barrier but creates an audible knock up to 300 feet away; multiple locks are not all removed at once. An illusion of a bridge is not a load-bearing bridge. A corpse’s answers do not automatically become omniscient history. These distinctions make utility magic interesting because bypassing one constraint can expose another. [SRD, individual spell entries]
+The names identify reference entries, not proposed Open Legend content. Read the revised individual spell before importing a familiar interaction. For example, Knock opens or suppresses a qualifying barrier but creates an audible knock up to 300 feet away; multiple locks are not all removed at once. An illusion of a bridge is not a load-bearing bridge. A corpse’s answers do not automatically become omniscient history. These distinctions make utility magic interesting because bypassing one constraint can expose another. [SRD, individual spell entries]
 
 ## 7. Exploration, social life, quests, and management
 

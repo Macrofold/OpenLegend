@@ -1,6 +1,6 @@
 # Wildermyth — people whose histories change their available actions
 
-**G25 · Completed research pass · September 26, 2026.** Research inspiration, not an accepted OpenLegend specification. PC campaigns, DLC and historical console criticism are distinguished. No gameplay, current source-code audit, benchmark or full video viewing was performed. The unsuccessful negative-rated Steam retrieval is recorded in §9, not disguised as a completed negative sample.
+**G25 · Completed research pass · September 26, 2026.** Research inspiration, not an accepted Open Legend specification. PC campaigns, DLC and historical console criticism are distinguished. No gameplay, current source-code audit, benchmark or full video viewing was performed. The unsuccessful negative-rated Steam retrieval is recorded in §9, not disguised as a completed negative sample.
 
 [Original chapter](../games/wildermyth.md) · [Preserved mechanics study](../mechanics/wildermyth-bodies-relationships-and-authored-myth.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
@@ -181,7 +181,7 @@ Repeated negative-only requests, language variants and the attempted review-API 
 
 Helpfulness selection, historical versions and very small samples limit inference. The durable tension is whether repeated authored structures keep creating new meaning for the player or reveal machinery they no longer enjoy. More possible names or body combinations alone cannot settle that question.
 
-## 10. OpenLegend hypotheses and failure modes
+## 10. Open Legend hypotheses and failure modes
 
 **Persist identity through consequences.** A changed hand, learned action, remembered person or surviving object can connect past and future. A biography without any changed possibility is weaker evidence of continuity. Do not make every unusual change either an obligatory upgrade or a punishment for curiosity.
 

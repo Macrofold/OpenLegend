@@ -1,4 +1,4 @@
-# OpenLegend synthetic decision benchmark
+# Open Legend synthetic decision benchmark
 
 The current corpus contains **4,000 scored decision questions in 724 scenes**, plus **80 separate structured-generation tasks**. Eighty additional authored episodes have seven controlled views each, with 32–512 memories, twenty explicitly hypothetical trackers, functional injuries, personal history and proposed emotional reactions. Forty matched mood views and twelve difficult planning views reuse those episode groups. Twelve controls exercise selected joy rules that are not yet installed gameplay.
 
@@ -240,6 +240,8 @@ This is authored synthetic evidence, not independently labeled player transcript
 Latency measures each configured integration path, including Macrofold overhead and awaited acceptance journaling for its arms; direct OpenAI and intermediary paths are not identical infrastructure. Macrofold's `providerLatencyMs` measures its upstream adapter interval, including networking and response normalization, from `inference.timings_ms.provider`. Its admission wait is separately named `intermediaryQueueLatencyMs`; Run start-to-completion duration is `intermediaryRunLatencyMs` when recovery supplies those timestamps. Normal terminal POST receipts do not supply Run duration. Missing timings remain absent; none of these measurements isolates model computation. Cache writes/hits, warm-up, request order, output budgets and reasoning token counts affect costs and latency. One pass cannot establish repeatability or deployment readiness.
 
 ## Decision escalation qualification
+
+The two commands below belong to the retired TypeScript server. The final source containing them is pinned at `1c58db9ee`. Current stand-alone verification uses signed gameplay and controlled provider responses. [Decision evidence](../../docs/verification/decision-escalation.md)
 
 This is a separate experiment for the implemented one-attempt fallback, not a rerun or regrading of the full 4,000-question comparison. It uses the production trigger resolver, coordinator, prompt, schema, decoder and scoped answer consumer. Run against an explicit loopback **disposable** PostgreSQL administrative URL; output must be an absolute private path outside the repository. Never use an application database or save.
 

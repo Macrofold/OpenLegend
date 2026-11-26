@@ -8,7 +8,7 @@
 
 **Pitfall.** Needs can provide rhythm or become maintenance debt. A mechanic that makes the player interrupt every interesting activity to refill a bar may undermine the social simulation it supports.
 
-**Transfer.** OpenLegend’s AI should remove tedious supervision where appropriate, while preserving meaningful decisions and imperfect personalities. Let the player care for people, not service meters. Give the player tools to retell or inspect an episode, but keep interpretation distinct from authoritative facts.
+**Transfer.** Open Legend’s AI should remove tedious supervision where appropriate, while preserving meaningful decisions and imperfect personalities. Let the player care for people, not service meters. Give the player tools to retell or inspect an episode, but keep interpretation distinct from authoritative facts.
 
 
 <!-- BEGIN FIELDGUIDE ADDITION -->
@@ -36,7 +36,7 @@
 
 3. **A homelessness premise changes the meaning of ordinary objects.** *Attributed player narrative.* Alice and Kev follows a player-created father and daughter in The Sims 3 under a homelessness premise. Everyday spaces and interactions become material for hardship and relationships. The author supplies framing; the simulation supplies constraints and behavior. This is not an official campaign or proof of realistic social prediction. [FG-SIM-A](../references/sources-04.md#source-fg-sim-a)
 
-**What to borrow for OpenLegend.** Give OpenLegend enough expressive ambiguity for players to interpret lives, while preserving evidence about what mechanically happened. Useful autonomy should reduce chores without erasing agency. Let players understand what will happen to people and projects while attention moves elsewhere.
+**What to borrow for Open Legend.** Give Open Legend enough expressive ambiguity for players to interpret lives, while preserving evidence about what mechanically happened. Useful autonomy should reduce chores without erasing agency. Let players understand what will happen to people and projects while attention moves elsewhere.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

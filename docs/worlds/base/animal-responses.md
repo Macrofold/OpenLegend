@@ -13,7 +13,7 @@ not establish the complete world or independent player experience.
 
 A struck deer should run toward somewhere it can actually reach and remain uneasy while nearby people could still hurt it. Another person in its escape route matters even when that person did not deliver the blow. Obstacles should create readable changes of route. Leaving an animal alone should eventually let it settle and resume its ordinary life. The same episode must continue through pause and save/load without a new random route or an unexplained return to grazing.
 
-These animals use efficient native control. They make **no Decision API, thought, reflection, narration-generation or memory-consolidation calls**. Authored options and scores supply variation within a small supported behavior family. This is permitted world policy under [engine/world boundaries](../../engine-and-world-boundaries.md#8-minds-agency-and-behavior); species instincts are not universal engine laws. People keep their separately designed cognition.
+The installed world rules choose these animals’ actions. The saved controller is called `native` in both the TypeScript and Rust implementations. These animals make **no Decision API, thought, reflection, narration-generation or memory-consolidation calls**. Authored options and scores supply variation within a small supported behavior family. This is permitted world policy under [engine/world boundaries](../../engine-and-world-boundaries.md#8-minds-agency-and-behavior); species instincts are not universal engine laws. People keep their separately designed cognition.
 
 Realism serves readable play. A good route may initially be straight when the land is open; the requirement is purposeful refuge selection and obstacle-aware navigation, not a compulsory zigzag. A healthy hare or deer should usually outrun an ordinary person over the short escape distances in this world. Hunting therefore rewards approach, positioning and existing ranged tools. The design does not slow every animal until repeated punching becomes an effective pursuit technique.
 
@@ -75,10 +75,7 @@ An alarm has three physical situations, all owned by one episode:
 | Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode.    |
 | Blocked   | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful change permits a usable route or establishes the current supported position as a clear refuge. |
 
-Visible activity and look-closer text call blocked and settling animals **Alert**;
-escaping animals are **Fleeing**. Actual active work and territorial behavior keep
-their own more specific descriptions. No private danger identity is disclosed.
-
+Generic alarm, escape, settling and routine announcements are removed under [R1](../../projects/runtime-work-removal-recommendations.md#r1--remove-generic-animal-response-announcements-entirely). No received fleeing/alert label or inference replaces them. Observers receive actual movement, physical interactions and genuine sensory cues through their existing owners; an onset between samples can be missed. Private response state and danger identities do not become personal knowledge.
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
 
 Crossing inside the 15-metre clear boundary resets `clearSince`, including during the final fraction of the four-second interval. Returning inside 12 metres additionally makes the route urgent to review. The gap provides hysteresis for route changes, while the continuous-clearance requirement remains strict. A danger moving between 12 and 15 metres can postpone settling without causing a new destination every frame.
@@ -181,9 +178,9 @@ Do not apply the new deer escape speed to antler preparation, pursuit timing or 
 
 ## Bird flight and unsupported routes
 
-An alarm must reach the bird controller even while a bird is perched on, waiting for or traversing its ordinary flight route. The current early return for any `spatial.flight` must not silently discard the episode. Existing airborne movement retains sole ownership of the body; record the alarm immediately and redirect only through a valid, swept connection in the admitted flight graph.
+The same controller receives an alarm while a bird is perched on, waiting for or traversing its ordinary flight route. It records the personally acquired cue immediately. The flight owner keeps control of the body and redirects it only through a valid, swept connection in the admitted flight graph.
 
-The current authored graph contains west `(12, 34.5)` and east `(28, 20)` ground refuges, with height and support resolved by the initializer. Seeded rocks and decorative trees stay outside their authored 1.5-metre clearing radius. The ordinary deck loop remains selected; native danger-driven choices now use these corridors through the existing flight owner. Complete integration qualification remains with CTR03–CTR04.
+The current authored graph contains west `(12, 34.5)` and east `(28, 20)` ground refuges, with height and support resolved by the initializer. Seeded rocks and decorative trees stay outside their authored 1.5-metre clearing radius. The ordinary deck loop remains selected. The stand-alone server's [connected flight checks](../../verification/spatial-cadence-main-integration.md#stand-alone-rust-airborne-alarms) cover the existing east escape and return corridors. Complete integration qualification remains with CTR03–CTR04.
 
 For the starting woodland bird, author at least two alternative escape destinations/perches and connections into the existing air corridors, on distinct sides of the clearing. Rank valid destinations against the same complete danger set using **three-dimensional body separation** and corridor clearance. A high perch is useful only when its physical position actually meets those tests. Its mere `perch` label does not make it safe.
 

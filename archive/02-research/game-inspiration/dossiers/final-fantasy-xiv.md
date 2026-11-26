@@ -1,6 +1,6 @@
 # G91 — Final Fantasy XIV
 
-**Research pass:** September 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions, with shipped systems checked through 7.56; announced future content is separated. **Use:** gameplay and production reference, not accepted OpenLegend design or an implementation task list.
+**Research pass:** September 26, 2026. **Scope:** the original 2010 service, A Realm Reborn and its expansions, with shipped systems checked through 7.56; announced future content is separated. **Use:** gameplay and production reference, not accepted Open Legend design or an implementation task list.
 
 [Library](../README.md) · [Canonical roster](../research-roster.md) · [Completion requirements](../research-requirements.md) · [Progress and resume ledger](../research-progress.md) · [G88: Final Fantasy XI](final-fantasy-xi.md)
 
@@ -167,7 +167,7 @@ Free Companies, linkshell-style communication, party chat and community recruitm
 
 **Housing** adds persistent place and presentation but also scarcity and administration. The official land guide distinguishes personal and Free Company eligibility and describes the lottery cycle, deposit, winner claim and refund rules. Buying land and obtaining the construction permit are separate steps. A lottery does not mean every interested player obtains a plot. This is a useful warning against letting a desired social fantasy depend on scarce infrastructure without acknowledging exclusion. [S37](#s37)
 
-The game's central companions can accumulate enormous authored history with the player across expansions, while most ordinary conversations remain quest- and scene-controlled. That is a different achievement from simulating every citizen's relationships. For OpenLegend, the relevant question is where persistent history is emotionally legible, not whether a familiar face is automatically evidence of autonomous cognition.
+The game's central companions can accumulate enormous authored history with the player across expansions, while most ordinary conversations remain quest- and scene-controlled. That is a different achievement from simulating every citizen's relationships. For Open Legend, the relevant question is where persistent history is emotionally legible, not whether a familiar face is automatically evidence of autonomous cognition.
 
 ## 7. Worked cross-system situations
 
@@ -233,7 +233,7 @@ ARR establishes an adventurer's place within Eorzea and the Scions' larger strug
 
 **Dawntrail** shifts attention toward Wuk Lamat and the succession contest in Tural, with the established hero often serving as support. This directly divides the critics: Wood and Buchanan welcome the new focal character and rebuilt stakes, while Hashimoto finds the development insufficiently earned. The disagreement is especially useful for a persistent protagonist: lowering the player's narrative centrality can renew a world for one audience and feel like enforced passivity to another. Later 7.x material continues beyond the launch campaign; its current plot developments should not be retroactively attributed to those launch reviews. [S3](#s3) [S4](#s4) [S18](#s18) [S7](#s7)
 
-**Narrative limitation:** the reviewed structure mainly offers an authored route, recurring companions and controlled callbacks, not freely branching faction sovereignty, permanently murdered quest providers, or player-created political endings. This is a boundary for OpenLegend comparison. Emotional continuity alone should not be labeled emergent narrative.
+**Narrative limitation:** the reviewed structure mainly offers an authored route, recurring companions and controlled callbacks, not freely branching faction sovereignty, permanently murdered quest providers, or player-created political endings. This is a boundary for Open Legend comparison. Emotional continuity alone should not be labeled emergent narrative.
 
 ## 10. Production history and constraints
 
@@ -279,21 +279,21 @@ The product is not just the purchase of one campaign: licenses, subscription ter
 
 The actionable distinction is between **access failure**, **group-expectation mismatch**, **activity fatigue**, and **dislike of the underlying experience**. A negative recommendation does not identify which of these applies without reading the body. No prevalence or causal commercial estimate is inferred from this sample.
 
-## 14. OpenLegend implications — hypotheses and limits
+## 14. Open Legend implications — hypotheses and limits
 
 **Persistent identity can host changing roles.** The strongest transfer is not “add many classes.” It is allowing a person to change how they contribute without losing accumulated social identity. The limit is the learning and equipment burden of each role; nominal flexibility can conceal repetitive preparation.
 
-**Put unusual powers inside understandable boundaries.** Blue Mage, Beastmaster and field-operation actions show several ways to let expressive abilities exist without promising compatibility with every encounter. OpenLegend could study how a rule boundary is communicated. It should not copy a list of exclusions merely to avoid designing coherent world laws.
+**Put unusual powers inside understandable boundaries.** Blue Mage, Beastmaster and field-operation actions show several ways to let expressive abilities exist without promising compatibility with every encounter. Open Legend could study how a rule boundary is communicated. It should not copy a list of exclusions merely to avoid designing coherent world laws.
 
 **Separate the opportunity to organize from compatibility of intentions.** A matcher can fill roles; it cannot by itself determine whether everyone wants discovery, efficiency, teaching or relaxed play. For agent and human groups, stating intent may matter as much as finding participants. This is an inference from the matching rules and reception, not an approved feature.
 
 **Noncombat work can have public meaning.** Cosmic Exploration links specialist effort to visible shared construction. The transferable question is whether a contribution changes something others can recognize. The limit is that XIV uses authored projects and controlled stages, not open-ended player invention or an unrestricted simulated supply chain.
 
-**History needs a legible expression.** Recurring companions, recognizable music, saved appearances and persistent meeting places make continuity tangible. OpenLegend should study which concrete reminders carry history into the next scene. It should not equate a large memory database with an emotionally convincing relationship.
+**History needs a legible expression.** Recurring companions, recognizable music, saved appearances and persistent meeting places make continuity tangible. Open Legend should study which concrete reminders carry history into the next scene. It should not equate a large memory database with an emotionally convincing relationship.
 
 **A side system needs an identity, not just a reward schedule.** Palace, Island Sanctuary, cards, field operations and ordinary raids ask different questions of the player. This supports a world with varied roles and moods. The warning is maintenance and fragmentation: each subsystem needs comprehensible rules, compatible access and a reason to return beyond another currency.
 
-**Do not transplant the whole MMO operating model.** XIV's authored-content volume, licensed platforms, regional service, continuous localization and community production are substantial obligations. Its recovery is evidence that rebuilding can work under particular circumstances, not a recommendation that OpenLegend promise comparable scale or cadence.
+**Do not transplant the whole MMO operating model.** XIV's authored-content volume, licensed platforms, regional service, continuous localization and community production are substantial obligations. Its recovery is evidence that rebuilding can work under particular circumstances, not a recommendation that Open Legend promise comparable scale or cadence.
 
 ## 15. Reading routes, preservation, and completion map
 

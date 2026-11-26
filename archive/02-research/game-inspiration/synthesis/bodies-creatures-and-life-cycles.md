@@ -36,7 +36,7 @@ Owns embodied capability and life-cycle experience. SURVIVE owns recurring survi
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use [bodies and species](../../../../docs/repertoires/bodies-species.md), [invention journeys](../../../../docs/invention-scenarios.md) and [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions). Existing body/damage capabilities, proposed richer care, and proposed generations are different scopes; links do not certify any of them as fully implemented.
 
@@ -44,7 +44,7 @@ Use [bodies and species](../../../../docs/repertoires/bodies-species.md), [inven
 
 <!-- Trace how a different body or a change in condition affects sensing, a chosen activity, useful tools, relationships and later life. Compare an accommodation or nonhuman route rather than just changing a health number. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 

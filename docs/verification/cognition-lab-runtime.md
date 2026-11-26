@@ -1,6 +1,8 @@
 # Cognition Lab native runtime verification
 
-This campaign measures the complete native HTTP caller while the ordinary game remains active. It uses [cognition-lab-runtime.ts](../../scripts/performance/cognition-lab-runtime.ts), the shared game/lab HTTP fixture, and disposable loopback PostgreSQL databases. It never opens or replaces the development game database. Base: `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`, plus the Cognition Lab implementation.
+The measurements below use the earlier TypeScript host. The [signed Rust HTTP profile](../../scripts/performance/cognition-lab.mjs) runs on a disposable standard worker. Compare the same released world, inventory and history on both sides of an isolated change.
+
+This campaign measures the complete native HTTP caller while the ordinary game remains active. It uses [cognition-lab-runtime.ts](https://github.com/Macrofold/OpenLegend/blob/c962980424b2eacf9d58078139aab0e7ea02ed20/scripts/performance/cognition-lab-runtime.ts), the shared game/lab HTTP fixture, and disposable loopback PostgreSQL databases. It never opens or replaces the development game database. Base: `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`, plus the Cognition Lab implementation.
 
 ## Workload and interpretation
 

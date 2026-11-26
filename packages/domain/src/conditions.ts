@@ -1,3 +1,4 @@
+import { selectedObservationRules } from './world-composition.js';
 import { validNarrationTemplate } from '@open-legend/language';
 import { narrationTemplate, renderNarration } from './narration.js';
 import { emit } from './events.js';
@@ -67,6 +68,7 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
   const actor = entity.actor;
   if (!actor || !hasMemory(entity) || !activelyParticipates(entity)) return;
   const definitions = attributeDefinitions(world);
+  const notices = selectedObservationRules(world).conditions;
   for (const definition of definitions) {
     const policy = definition.condition;
     const value = policy && readAttribute(world, entity, definition);
@@ -113,18 +115,24 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
       emit(
         world,
         events,
-        'body-condition',
+        notices.eventType,
         `${conditionText(world, entity, definition, value)!} ${definition.name}: ${value}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
         entity,
         undefined,
-        { attributeId: definition.id, severity, value, change: 'recovery', importance: 3 },
+        {
+          attributeId: definition.id,
+          severity,
+          value,
+          change: 'recovery',
+          importance: notices.recoveryImportance,
+        },
         'private',
       );
     if (notice)
       emit(
         world,
         events,
-        'body-condition',
+        notices.eventType,
         `${conditionText(world, entity, definition, value)!} ${definition.name}: ${value}${definition.schema.kind === 'number' ? definition.schema.unit : ''}.`,
         entity,
         undefined,
@@ -135,8 +143,8 @@ export function reconcileConditions(world: WorldState, entity: Entity, events: W
           severity,
           value,
           semanticTrigger: true,
-          importance: 6,
-          urgency: critical ? 7 : 4,
+          importance: notices.importance,
+          urgency: critical ? notices.criticalUrgency : notices.urgency,
           change: changedPolicy ? 'initial' : due ? 'review' : 'worsening',
         },
         'private',

@@ -206,7 +206,7 @@ No Steam review surface for this exact Warcraft II release was established. Acco
 
 **Treat creation tools as part of the experience.** Map editing extends the situation space, but advertised expressive power must match actual rules. Placing a portal-shaped object is not equivalent to defining an escape condition.
 
-**Check semantic exceptions and version migration.** Names such as Haste and Invulnerability invite assumptions. Exceptions should be taught and inspected, while changing balance or controls should trigger review of examples, onboarding and compatibility. These are research patterns, not accepted OpenLegend requirements or proposals to copy protected names/assets.
+**Check semantic exceptions and version migration.** Names such as Haste and Invulnerability invite assumptions. Exceptions should be taught and inspected, while changing balance or controls should trigger review of examples, onboarding and compatibility. These are research patterns, not accepted Open Legend requirements or proposals to copy protected names/assets.
 
 ## 12. Reading / viewing route and completion map
 

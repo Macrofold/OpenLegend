@@ -94,7 +94,7 @@ The design consequence is elegant:
 - learned abilities remain useful after leaving them;
 - mastering many jobs eventually strengthens a generalist state.
 
-**OpenLegend transfer:** careers, training and lived roles can leave durable capabilities without requiring a person to remain permanently labeled by one class.
+**Open Legend transfer:** careers, training and lived roles can leave durable capabilities without requiring a person to remain permanently labeled by one class.
 
 ## 5. A job is more than a stat bundle
 
@@ -246,7 +246,7 @@ Typical solutions include:
 
 RPG Site's boss guide summarizes the game's practical rule: do not assume one job setup will carry every situation. [FFV12](#ffv12)
 
-This is a strong OpenLegend pattern: **difficulty can test whether the player understands available systems, not whether a designer chose the correct build for them in advance.**
+This is a strong Open Legend pattern: **difficulty can test whether the player understands available systems, not whether a designer chose the correct build for them in advance.**
 
 ## 12. Story, characters and the relationship to mechanics
 
@@ -309,7 +309,7 @@ This is one of the strongest transferable lessons in the entire FF series:
 
 > A composable system can create **challenge-run affordances** far beyond the modes the developer explicitly ships.
 
-For OpenLegend, world laws should ideally be rich enough that players can invent meaningful constraints, professions, rituals, tournaments or self-imposed rules without needing a dedicated bespoke feature for every mode.
+For Open Legend, world laws should ideally be rich enough that players can invent meaningful constraints, professions, rituals, tournaments or self-imposed rules without needing a dedicated bespoke feature for every mode.
 
 ## 15. Production and design intent
 
@@ -425,7 +425,7 @@ A particularly helpful negative review came from a self-described speedrunner/Fo
 | Challenge/endgame | Optional bosses/areas, mastery experiments; Advance adds Sealed Temple/jobs |
 | User-generated modes | No editor/mod framework required for Four Job Fiesta-style self-imposed rules |
 
-## 21. OpenLegend transferable lessons and limits
+## 21. Open Legend transferable lessons and limits
 
 ### A. Skills should outlive roles
 
@@ -457,7 +457,7 @@ Mix and Blue Magic are rich but opaque.
 
 Four Job Fiesta works because restrictions expose alternative solutions rather than making the game impossible.
 
-**Borrow:** test OpenLegend with artificial constraints—no violence, one profession, no money, one settlement, no magic, etc.—to discover whether systems genuinely support different plans.
+**Borrow:** test Open Legend with artificial constraints—no violence, one profession, no money, one settlement, no magic, etc.—to discover whether systems genuinely support different plans.
 
 ### F. World transformation is stronger than a static content unlock
 
@@ -499,7 +499,7 @@ No FFV-specific prior file or packet owner was found in the existing game/mechan
 
 FFV's core contribution is a progression architecture where **roles are temporary, learning is durable and capabilities compose**. Its best systems turn specialization into ingredients for later hybridization. The community's ability to create Four Job Fiesta from those rules is strong evidence that the design space is not only deep when unconstrained—it remains interesting when deliberately constrained.
 
-For OpenLegend, the highest-value lesson is to make professions, education, equipment permissions and learned techniques **modular enough to combine, but grounded enough that combinations still feel like consequences of a person's history rather than arbitrary build slots**.
+For Open Legend, the highest-value lesson is to make professions, education, equipment permissions and learned techniques **modular enough to combine, but grounded enough that combinations still feel like consequences of a person's history rather than arbitrary build slots**.
 
 ## 24. Acquisition, performance and complete situations
 

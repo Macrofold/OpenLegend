@@ -72,13 +72,13 @@ function plainMaterial(definition: ItemDefinition): boolean {
   );
 }
 export const isTinder = (definition: ItemDefinition): boolean =>
-  plainMaterial(definition) && definition.properties.includes('fiber');
+  plainMaterial(definition) && definition.properties.includes(BASE_FIRE_CARE.materials.tinder);
 export const isFuel = (definition: ItemDefinition): boolean =>
-  plainMaterial(definition) && definition.properties.includes('fuel');
+  plainMaterial(definition) && definition.properties.includes(BASE_FIRE_CARE.materials.fuel);
 export const isFireDrill = (definition: ItemDefinition): boolean =>
   !definition.container &&
-  definition.properties.includes('rigid') &&
-  definition.properties.includes('shaft');
+  definition.properties.includes(BASE_FIRE_CARE.materials.drillRigid) &&
+  definition.properties.includes(BASE_FIRE_CARE.materials.drillShaft);
 
 /** Saved plans and learned records carry only these closed fields. */
 export function isFireCareCommand(command: Command): boolean {
@@ -244,11 +244,13 @@ export function guardedFireProblem(
 
 /** Coarse visible fuel: the wood in a fire pit is visible, its exact burn time is not. */
 export function fireFuelDescription(heat: HeatComponent): string {
-  if (heat.fuelSeconds <= 0) return 'no fuel left';
-  const hours = Math.round(heat.fuelSeconds / 3600);
+  if (heat.fuelSeconds <= 0) return BASE_FIRE_CARE.menu.noFuel;
+  const hours = Math.round(heat.fuelSeconds / BASE_FIRE_CARE.secondsPerHour);
   return heat.fuelSeconds < BASE_LOW_FUEL_SECONDS
-    ? 'less than an hour of fuel'
-    : `about ${hours} hour${hours === 1 ? '' : 's'} of fuel`;
+    ? BASE_FIRE_CARE.menu.lowFuel
+    : hours === 1
+      ? BASE_FIRE_CARE.menu.oneHour
+      : BASE_FIRE_CARE.menu.hours.replace('{hours}', String(hours));
 }
 
 /** Shared by admission, work start and completion so every stage rechecks live state. */
@@ -275,12 +277,7 @@ export function fireCareProblem(
         code: 'no-fuel',
         message: `Add fuel to ${namePhrase(fire, 'definite')} before lighting it.`,
       };
-    if (!lightingMaterials(world, actor.id))
-      return {
-        code: 'missing-material',
-        message:
-          'Lighting needs one carried tinder bundle (plain fibers) and a rigid shaft to use as a fire drill.',
-      };
+    if (!lightingMaterials(world, actor.id)) return BASE_FIRE_CARE.refusals.missingIgnition;
     return null;
   }
   if (operation === 'fuel') {
@@ -339,11 +336,7 @@ export function fireCareProblem(
 /** Readable start of fire work for world events, instead of the internal command name. */
 export function fireCareStartText(operation: FireOperation, fire: Named | string): string {
   const fireName = namePhrase(fire, 'definite');
-  return operation === 'light'
-    ? `started lighting ${fireName}`
-    : operation === 'fuel'
-      ? `started adding fuel to ${fireName}`
-      : `started putting out ${fireName}`;
+  return BASE_FIRE_CARE[operation].words.start + fireName;
 }
 
 /** Consumed material and the fire change commit together when the work finishes, so
@@ -374,8 +367,12 @@ export function completeFireCare(
     emit(
       world,
       events,
-      'fire-extinguished',
-      subjectNarration(actor, ['put out ', person(fire!, 'object', 'definite'), '.']),
+      BASE_FIRE_CARE.extinguish.words.eventType,
+      subjectNarration(actor, [
+        BASE_FIRE_CARE.extinguish.words.effect,
+        person(fire!, 'object', 'definite'),
+        '.',
+      ]),
       actor,
       fire!.id,
       {
@@ -420,9 +417,9 @@ export function completeFireCare(
     emit(
       world,
       events,
-      'fire-fueled',
+      BASE_FIRE_CARE.fuel.words.eventType,
       subjectNarration(actor, [
-        `added ${namePhrase(definition, 'definite')} to `,
+        `${BASE_FIRE_CARE.fuel.words.effect}${namePhrase(definition, 'definite')} to `,
         person(fire!, 'object', 'definite'),
         '.',
       ]),
@@ -443,8 +440,12 @@ export function completeFireCare(
   emit(
     world,
     events,
-    'fire-lit',
-    subjectNarration(actor, ['lit ', person(fire!, 'object', 'definite'), '.']),
+    BASE_FIRE_CARE.light.words.eventType,
+    subjectNarration(actor, [
+      BASE_FIRE_CARE.light.words.effect,
+      person(fire!, 'object', 'definite'),
+      '.',
+    ]),
     actor,
     fire!.id,
     {

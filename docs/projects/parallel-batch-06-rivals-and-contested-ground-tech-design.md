@@ -164,7 +164,7 @@ The resumed aftermath exposed one menu correction: speech-capable corpse metadat
 
 ### Authorized implementation plan — October 8, 2026
 
-Mike authorized the complete CF01–CF05 assignment in chat. The selected development base is local `main` at `2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5` in the OpenLegend repository, with no remote ref substituted. It includes the consolidated prompt and the prerequisite integrations listed above. Edits belong to `/Users/mzw/.codex/worktrees/f0fe/OpenLegend` on `codex/rivals-and-contested-ground`; the main checkout is unaffected.
+Mike authorized the complete CF01–CF05 assignment in chat. The selected development base is local `main` at `2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5` in the Open Legend repository, with no remote ref substituted. It includes the consolidated prompt and the prerequisite integrations listed above. Edits belong to `/Users/mzw/.codex/worktrees/f0fe/OpenLegend` on `codex/rivals-and-contested-ground`; the main checkout is unaffected.
 
 The initial estimate remains 4,850–8,650 changed production logic lines. This is a substantial cross-layer change: attack authority, moving physical effects, participant consent, private evidence and current-format continuation must agree. The accepted policies settle the product decisions; implementation cannot weaken their acceptance. No legacy conversion, new paid retry, separate enemy controller or victory flag is authorized.
 

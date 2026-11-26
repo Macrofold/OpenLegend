@@ -1,4 +1,4 @@
-# Using engine research to improve OpenLegend
+# Using engine research to improve Open Legend
 
 This guide connects the [current Unreal and Unity research](../research/unity-unreal-runtime/README.md) and [browser/platform comparison research](../research/game-engines/README.md) to OpenLegend's existing product and design documents. The Unreal/Unity evidence cutoff remains **2026-10-23**; this consumer routing was reviewed on **2026-10-31**. Its [version and evidence baseline](../research/unity-unreal-runtime/01-evidence-and-version-baseline.md) owns those external claims; the [renderer capability assessment](projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) owns the focused October 31 browser/GPU review. This guide supplies **interpretation and design preparation**, not measured OpenLegend benefits.
 
@@ -20,7 +20,7 @@ Use [simulation and perception](../research/unity-unreal-runtime/02-simulation-a
 
 ### Let useful capabilities combine across activities
 
-The study of definitions, tasks, effects and content lifetimes makes a transferable engineering opportunity visible: a capability can have a clear executable meaning while different authored worlds give it different purposes and consequences. That supports OpenLegend's ambition for an invention or learned method to be useful beyond its first demonstration.
+The study of definitions, tasks, effects and content lifetimes makes a transferable engineering opportunity visible: a capability can have a clear executable meaning while different authored worlds give it different purposes and consequences. That supports Open Legend's ambition for an invention or learned activity to be useful beyond its first demonstration.
 
 A proposed tool becomes interesting when it changes an available approach, can be understood and used through ordinary interaction, and retains a worthwhile use afterward. The relevant question is what existing operations can express that behavior, and precisely which computation is missing if they cannot. A general plugin, graph or scripting system is not itself the player benefit.
 
@@ -66,6 +66,8 @@ Name what an additional resident, region or retained history contributes before 
 
 [World scale](../research/unity-unreal-runtime/06-world-streaming-and-scale.md), [networking](../research/unity-unreal-runtime/07-networking-persistence-and-replay.md), [rendering](../research/unity-unreal-runtime/08-rendering-animation-and-audio.md), and [profiling](../research/unity-unreal-runtime/10-profiling-and-verification.md) provide mechanisms and measurement distinctions. [Product scalability](projects/product-scalability-feature-spec.md) owns the selected exact calculated advancement and ordinary bounded fallback. Research about approximate populations does not change that selected promise.
 
+For persistent-world scale, use the separately dated [MMORPG foundation study](../research/mmorpg-engine-foundations/README.md) and [focused design handoff](maintainers/decisions/mmorpg-engine-foundations.md). They extend this map through [NSC01/NSC08](maintainers/native-simulation-core.md) and DG17/DG18/DG29/DG34, covering residency, dense encounters, publication and mature history without another roadmap. The handoff links existing designs and delivery owners; its sources do not extend the Unreal/Unity evidence cutoff above.
+
 ## Route each research question to its existing owner
 
 The table is a reading and ownership map. It is not a second backlog. Follow the linked tracker for current design state, implementation, dependencies and unsatisfied acceptance. The [broader coverage map](../research/unity-unreal-runtime/00-openlegend-context-and-coverage.md#6-coverage-of-the-broader-intended-product) includes the intended bodies, care, ecology, economy, institutions and alternate realities whose particular meanings are authored outside engine APIs.
@@ -96,7 +98,7 @@ Start with a concrete question from the selected experience or an observed failu
 For a finding that could affect a design, the useful record contains:
 
 - **The intended benefit and existing owner.** Name the activity, choice, expression or consequence helped. Link its current feature/technical pair or persistent contract.
-- **The evidence and the inference.** Link the precise research section. Separate documented engine behavior from the proposed relevance to OpenLegend.
+- **The evidence and the inference.** Link the precise research section. Separate documented engine behavior from the proposed relevance to Open Legend.
 - **The smallest consequential decision.** Identify the actual missing contract, measured repeated work, presentation problem or unsupported authoring capability. Compare the proposed change with the existing adequate route and a credible simpler option.
 - **The evidence that would change the conclusion.** State what would establish correctness, meaningful behavior, player understanding/value and complete cost for that particular question. Reuse the owner's current qualification rather than adding a parallel procedure.
 

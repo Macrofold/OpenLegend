@@ -1,0 +1,22 @@
+{
+  "verbs": ["stop", "cancel", "halt"],
+  "unnamed": [
+    "",
+    "it",
+    "that",
+    "now",
+    "everything",
+    "working",
+    "what i'm doing",
+    "what im doing",
+    "what i am doing",
+    "what you're doing",
+    "what youre doing"
+  ],
+  "activities": {
+    "following": "follow",
+    "gathering": "gather",
+    "moving": "move",
+    "walking": "move"
+  }
+}

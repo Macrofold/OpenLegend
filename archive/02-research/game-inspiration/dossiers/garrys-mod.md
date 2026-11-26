@@ -185,7 +185,7 @@ The 2023 Cinema retrospective adds a noncompetitive counterexample: a finished s
 
 The direct PC Gamer review could not be retrieved, Eurogamer was robots-blocked, and TrueSteamAchievements routes failed. The CVG archival lead did not resolve. None is counted as read, and the official site's PC Gamer 88 quotation is not promoted into a full review. The complete accessible 2019 interview is primary production evidence, **not a substitute review**. These distinctions prevent the five-review count from implying a professional corpus that was not obtained.
 
-## 9. OpenLegend inspiration — interpretation, not accepted requirements
+## 9. Open Legend inspiration — interpretation, not accepted requirements
 
 **Objects need useful relationships.** The hinge-versus-weld example suggests that composition can be more meaningful than a growing catalog of named items. A player should understand which connection caused a behavior and how to revise it.
 
@@ -197,7 +197,7 @@ The direct PC Gamer review could not be retrieved, Eurogamer was robots-blocked,
 
 **Social richness has operating requirements.** Human trust, administration and continuity are part of the experience, not free by-products of multiplayer. Conversely, replacing every ambiguous decision with rigid adjudication can remove the very social negotiation players enjoy.
 
-**Do not copy absence of goals indiscriminately.** Garry's Mod supports self-directed creators and many bounded games. An OpenLegend world may need stronger invitations, stakes or onboarding. The transferable pattern is multiple depths of participation—not a requirement to abandon authored structure, simulate every tool, reproduce protected assets or make every server rule universal.
+**Do not copy absence of goals indiscriminately.** Garry's Mod supports self-directed creators and many bounded games. An Open Legend world may need stronger invitations, stakes or onboarding. The transferable pattern is multiple depths of participation—not a requirement to abandon authored structure, simulate every tool, reproduce protected assets or make every server rule universal.
 
 ## 10. Coverage and preservation
 

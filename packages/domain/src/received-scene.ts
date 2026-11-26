@@ -1,0 +1,261 @@
+import {
+  BoundsIndex,
+  bodySurfaceDistance,
+  type Bounds3,
+  type BoundsQueryCursor,
+} from '@open-legend/spatial';
+import {
+  prepareCurrentBodyGeometryRead,
+  currentReceivedObservationSources,
+  type BodyGeometrySample,
+  type CurrentBodyGeometryInput,
+  type LocationGeometrySample,
+} from './perception-evidence.js';
+import { entityGet } from './entity-collection.js';
+import { readOnlyDraftView } from './draft.js';
+import type { Position, WorldState } from './types.js';
+
+export interface ReceivedBodyGeometry {
+  body: CurrentBodyGeometryInput['body'];
+  sample: Omit<BodyGeometrySample, 'fact'>;
+  location?: Omit<LocationGeometrySample, 'fact'>;
+  motion?: {
+    earlier: Omit<LocationGeometrySample, 'fact'>;
+    later: Omit<LocationGeometrySample, 'fact'>;
+  };
+}
+export interface ReceivedSceneBody extends CurrentBodyGeometryInput {
+  bounds: Bounds3;
+}
+
+export interface ReceivedScene {
+  observerId: string;
+  physicalLife: number;
+  bodies: ReadonlyMap<string, ReceivedSceneBody>;
+  index: BoundsIndex<ReceivedSceneBody>;
+  nonlocalized: number;
+}
+const cached = new WeakMap<WorldState, Map<string, ReceivedScene>>();
+
+/** One compatible current read: catalogue membership is cheap, while geometry
+ * and proof are owned values produced only for selected relation inputs. */
+export function prepareReceivedSceneRead(world: WorldState, observerId: string) {
+  const input = prepareCurrentBodyGeometryRead(world, observerId);
+  const bodies = new Map<string, ReceivedSceneBody>();
+  let byTrack: Map<string, string> | undefined;
+  const body = (sourceId: string): ReceivedSceneBody | undefined => {
+    const cached = bodies.get(sourceId);
+    if (cached) return cached;
+    const value = input.get(sourceId);
+    if (!value) return;
+    const error =
+      value.location?.location.kind === 'point' ? value.location.location.errorRadius : 0;
+    const result = { ...value, bounds: receivedBodyBounds(value.body, error) };
+    bodies.set(sourceId, result);
+    return result;
+  };
+  return {
+    catalogue: input.catalogue,
+    body,
+    allBodies(): ReadonlyMap<string, ReceivedSceneBody> {
+      for (const { sourceId } of input.catalogue) body(sourceId);
+      return bodies;
+    },
+    bodyByTrack(track: string) {
+      byTrack ??= new Map(input.catalogue.map((value) => [value.track, value.sourceId]));
+      const sourceId = byTrack.get(track);
+      return sourceId === undefined ? undefined : body(sourceId);
+    },
+  };
+}
+
+/** Derived only when a reader actually needs scene context. This never polls a
+ * target transform or keeps a second writable position. */
+export function receivedScene(world: WorldState, observerId: string): ReceivedScene {
+  const previous = Object.isFrozen(world) ? cached.get(world)?.get(observerId) : undefined;
+  if (
+    previous &&
+    previous.observerId === observerId &&
+    previous.physicalLife ===
+      (entityGet(readOnlyDraftView(world.entities), observerId)?.actor?.physicalLife ?? 0)
+  )
+    return previous;
+  const reception = currentReceivedObservationSources(world, observerId);
+  const physicalLife = reception.physicalLife;
+  let nonlocalized = 0;
+  const read = prepareReceivedSceneRead(world, observerId);
+  const bodies = read.allBodies();
+  // This coverage count needs only the admitted facet kinds. Expanding complete
+  // originals would copy body/history proof that no scene measurement consumes.
+  for (const contribution of reception.observations) {
+    const facets = readOnlyDraftView(readOnlyDraftView(contribution).facets);
+    if (
+      facets.some((facet) => readOnlyDraftView(facet).value.kind === 'sound') &&
+      !facets.some((facet) => readOnlyDraftView(facet).value.kind === 'location')
+    )
+      nonlocalized++;
+  }
+  const scene = receivedSceneFromBodies(observerId, physicalLife, bodies, nonlocalized);
+  if (Object.isFrozen(world)) {
+    let byActor = cached.get(world);
+    if (!byActor) cached.set(world, (byActor = new Map()));
+    byActor.set(observerId, scene);
+  }
+  return scene;
+}
+
+/** A scene indexes only bodies already admitted by the receiver's native or
+ * Source read owner. Building this query index acquires no physical facts. */
+export function receivedSceneFromBodies(
+  observerId: string,
+  physicalLife: number,
+  bodies: ReadonlyMap<string, ReceivedSceneBody>,
+  nonlocalized: number,
+): ReceivedScene {
+  let index: ReceivedScene['index'] | undefined;
+  return {
+    observerId,
+    physicalLife,
+    bodies,
+    // Prepare the spatial tree only for readers actually requesting a spatial
+    // query; native relation paging uses the lightweight reader directly.
+    get index() {
+      return (index ??= new BoundsIndex(
+        [...bodies.values()].map((value) => ({ value, bounds: value.bounds })),
+      ));
+    },
+    nonlocalized,
+  };
+}
+
+/** Full received body extent, expanded only by the supplied measurement error. */
+export function receivedBodyBounds(body: CurrentBodyGeometryInput['body'], error = 0): Bounds3 {
+  const point = body.position;
+  return {
+    min: { x: point.x - body.radius - error, y: point.y - error, z: point.z - body.radius - error },
+    max: {
+      x: point.x + body.radius + error,
+      y: point.y + body.height + error,
+      z: point.z + body.radius + error,
+    },
+  };
+}
+
+export const receivedBoundsIntersect = (a: Bounds3, b: Bounds3) =>
+  a.min.x <= b.max.x &&
+  a.max.x >= b.min.x &&
+  a.min.y <= b.max.y &&
+  a.max.y >= b.min.y &&
+  a.min.z <= b.max.z &&
+  a.max.z >= b.min.z;
+export function receivedNear(
+  scene: ReceivedScene,
+  anchor: ReceivedSceneBody,
+  radius: number,
+  visits: number,
+  cursor?: BoundsQueryCursor,
+) {
+  const bounds: Bounds3 = {
+    min: {
+      x: anchor.bounds.min.x - radius,
+      y: anchor.bounds.min.y - radius,
+      z: anchor.bounds.min.z - radius,
+    },
+    max: {
+      x: anchor.bounds.max.x + radius,
+      y: anchor.bounds.max.y + radius,
+      z: anchor.bounds.max.z + radius,
+    },
+  };
+  const found = scene.index.query(
+    (candidate) => receivedBoundsIntersect(bounds, candidate),
+    visits,
+    cursor,
+  );
+  return { ...found, values: found.values.filter((body) => body.sourceId !== anchor.sourceId) };
+}
+
+function measuredPoint(
+  body: ReceivedBodyGeometry,
+  at: number,
+): { point: Position; error: number } | undefined {
+  const location = body.location;
+  if (
+    location?.location.kind === 'point' &&
+    at >= (location.valueSupportedFrom ?? location.valueMeasuredFrom) &&
+    at <= (location.valueSupportedThrough ?? location.valueMeasuredThrough)
+  )
+    return { point: location.location.point, error: location.location.errorRadius };
+  for (const sample of body.motion ? [body.motion.earlier, body.motion.later] : [])
+    if (
+      sample.location.kind === 'point' &&
+      at >= (sample.valueSupportedFrom ?? sample.valueMeasuredFrom) &&
+      at <= (sample.valueSupportedThrough ?? sample.valueMeasuredThrough)
+    )
+      return { point: sample.location.point, error: sample.location.errorRadius };
+  // The body producer's actually measured unchanged interval can support a stationary
+  // participant while a neighbor moves; contact continuity alone cannot do so.
+  if (
+    at >= (body.sample.valueSupportedFrom ?? body.sample.valueMeasuredFrom) &&
+    at <= (body.sample.valueSupportedThrough ?? body.sample.valueMeasuredThrough)
+  )
+    return {
+      point: body.body.position,
+      error: location?.location.kind === 'point' ? location.location.errorRadius : 0,
+    };
+  return undefined;
+}
+
+export function receivedSeparation(
+  first: ReceivedBodyGeometry,
+  second: ReceivedBodyGeometry,
+): {
+  status: 'complete' | 'unavailable';
+  at?: number;
+  lower?: number;
+  upper?: number;
+  decreaseLower?: number;
+} {
+  const at = Math.min(
+    first.sample.valueSupportedThrough ?? first.sample.valueMeasuredThrough,
+    second.sample.valueSupportedThrough ?? second.sample.valueMeasuredThrough,
+  );
+  const a = measuredPoint(first, at),
+    b = measuredPoint(second, at);
+  if (!a || !b) return { status: 'unavailable' };
+  const distance = bodySurfaceDistance(a.point, first.body, b.point, second.body),
+    error = a.error + b.error;
+  const constantFrom = Math.max(
+    first.sample.valueSupportedFrom ?? first.sample.valueMeasuredFrom,
+    second.sample.valueSupportedFrom ?? second.sample.valueMeasuredFrom,
+  );
+  const earlierTimes = [
+    ...new Set([
+      first.motion?.earlier.valueSupportedThrough ?? first.motion?.earlier.valueMeasuredThrough,
+      second.motion?.earlier.valueSupportedThrough ?? second.motion?.earlier.valueMeasuredThrough,
+      ...(constantFrom < at ? [constantFrom] : []),
+    ]),
+  ]
+    .filter((time): time is number => time !== undefined && time < at)
+    .sort((x, y) => y - x);
+  let decreaseLower: number | undefined;
+  for (const time of earlierTimes) {
+    const beforeA = measuredPoint(first, time),
+      beforeB = measuredPoint(second, time);
+    if (!beforeA || !beforeB) continue;
+    decreaseLower =
+      bodySurfaceDistance(beforeA.point, first.body, beforeB.point, second.body) -
+      beforeA.error -
+      beforeB.error -
+      distance -
+      error;
+    break;
+  }
+  return {
+    status: 'complete',
+    at,
+    lower: Math.max(0, distance - error),
+    upper: Math.max(0, distance + error),
+    ...(decreaseLower !== undefined ? { decreaseLower } : {}),
+  };
+}

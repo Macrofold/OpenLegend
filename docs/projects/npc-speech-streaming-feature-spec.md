@@ -1,8 +1,8 @@
 # Shared NPC speech streaming — feature specification
 
-| Status      | Current progress                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Selected behavior is designed; NST01–NST10 implementation and qualification remain pending. | 2026-10-18   |
+| Status      | Current progress                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Implementation has started with shared prerequisites. Growing captions, Events and player-facing qualification remain pending. | 2026-11-25   |
 
 ## Purpose and selected decisions
 
@@ -142,4 +142,4 @@ The technical design's [qualification matrix](npc-speech-streaming-tech-design.m
 
 ## Design disposition
 
-No product decision remains open for the selected text-only scope. NST00 records this design as done; implementation and qualification remain unchecked. The outstanding provider adapter, content-admission, storage, UI and workload work is specified delivery work, not a reason to keep this slice in the needs-design queue. Broader acoustic/media, private-caller and production-policy decisions are neither silently adopted nor closed.
+The selected text-only behavior is settled. NST00 records the completed design, and the [implementation tracker](../maintainers/npc-speech-streaming.md#november-25-implementation-start) records the shared prerequisites now in place. The provider adapter, content admission, storage, UI and workload qualification remain open. Broader acoustic/media, private-caller and production-policy work retain their existing owners.

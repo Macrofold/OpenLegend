@@ -1,4 +1,5 @@
 import { BASE_EXPRESSIONS } from './expressions.js';
+import { BASE_TIME_POLICY } from './time.js';
 import firstPlayable from './config/first-playable.generated.json' with { type: 'json' };
 import { BASE_COGNITION_LAB_RECIPES } from './cognition-lab-recipes.js';
 import {
@@ -24,7 +25,7 @@ import { BASE_CANOPY, CANOPY_ATTRIBUTES, BASE_CANOPY_SCENE } from './canopies.js
 import { BASE_BOUNDARY_CONFIGURATION, installBaseBoundary } from './camp-boundaries.js';
 import { BASE_SOCIAL_POLICY } from './social.js';
 import { baseConstructionProfile } from './canopy-scene.js';
-import { assignGivenName, BASE_KNOWLEDGE_POLICY, BASE_SOCIAL_PERCEPTION } from './knowledge.js';
+import { assignGivenName, BASE_KNOWLEDGE_POLICY } from './knowledge.js';
 import { BASE_RANGED_POLICY } from './hunting.js';
 import {
   STARTER_EXTENT,
@@ -68,7 +69,7 @@ import { initialInventionPolicy } from '../../invention-policy.js';
 import { seedAgency } from '../../agency.js';
 import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
 import { definitionPin } from '../../world-modules.js';
-import { DEFAULT_ATTRIBUTES } from './attributes.js';
+import { DEFAULT_ATTRIBUTES, PERCEPTION, FOCUS } from './attributes.js';
 import { DEFAULT_SENSES } from '../../perception.js';
 import { BASE_BODY_POLICY } from './body-policy.js';
 import { baseCognitionPolicy } from './cognition.js';
@@ -99,7 +100,7 @@ import {
   TAVIN_STARTING_BELIEFS,
 } from './missing-belonging.js';
 import { livingBody, nativeActor, hasMemory } from '../../living.js';
-import traitBank from './config/traits.json' with { type: 'json' };
+import traitCatalogue from './config/traits.json' with { type: 'json' };
 import { migrateCognition } from '../../experience.js';
 import type { ActorComponent, CharacterTrait, Entity, WorldState } from '../../types.js';
 import type { ConstructionPermission } from '../../assembly-types.js';
@@ -118,7 +119,9 @@ export {
   TAVIN_STARTING_BELIEFS,
 };
 const MERCENARY_ID = 'peacock-mercenary';
+const traitBank = traitCatalogue.choices;
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
+export const MAX_SELECTED_PERSON_TRAITS = traitCatalogue.maxSelected;
 export { NATIVE_ITEMS } from './items.js';
 
 /** The full authored camp supplies this permission for its exact starting builder. */
@@ -182,6 +185,11 @@ export function baseWorldInitialConstructionSeeds(
   ];
 }
 
+export const RANDOM_PERSON_TRAITS = 3;
+export const PERSON_VOICE_STEPS = { count: 51, step: 20 } as const;
+const sampleVoice = (world: WorldState) =>
+  PERSON_VOICE_STEPS.step * Math.floor(nextRandom(world) * PERSON_VOICE_STEPS.count);
+
 export function createActor(
   world: WorldState,
   controller: 'player' | 'npc',
@@ -201,6 +209,13 @@ export function createActor(
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
     ...(initialGoals !== undefined ? { initialGoals } : {}),
     controller,
+    individualRecognition: { attributeId: PERCEPTION.id },
+    voiceProfile: {
+      pitchRange: sampleVoice(world),
+      resonance: sampleVoice(world),
+      texture: sampleVoice(world),
+      rhythm: sampleVoice(world),
+    },
     species: 'human',
     body: livingBody('human'),
     capabilities: { cognition: true, memory: true, innerWorld: true, speech: true, language: true },
@@ -224,6 +239,8 @@ export function createActor(
     (definition) =>
       definition.id === 'wilderness:fullness' ||
       definition.id === 'wilderness:energy' ||
+      definition.id === PERCEPTION.id ||
+      definition.id === FOCUS.id ||
       definition.implementation === 'finite-practice-v1',
   );
   const food = meters.find((definition) => definition.id === 'wilderness:fullness');
@@ -271,7 +288,7 @@ export function createFreshBaseWorld(
           }
         : {}),
     },
-    perceptionFeatures: {},
+    timePolicy: { normalGameSecondsPerSecond: BASE_TIME_POLICY.normalGameSecondsPerSecond },
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),
     participationPolicy: structuredClone(BASE_PARTICIPATION_POLICY),
@@ -308,7 +325,6 @@ export function createFreshBaseWorld(
         BASE_CANOPY_ACTIVITY_HOST,
       ].map(activityHostPin),
       BASE_RANGED_POLICY,
-      BASE_SOCIAL_PERCEPTION,
       BASE_COGNITION_LAB_RECIPES.map(
         ([id, name, description, setup, changedFactor, observe, prerequisites]) => ({
           id,
@@ -979,7 +995,7 @@ function sampleTraits(world: WorldState) {
   )
     throw new Error('Trait bank needs at least three unique, described traits.');
   const available = [...traitBank];
-  return Array.from({ length: 3 }, () => ({
+  return Array.from({ length: RANDOM_PERSON_TRAITS }, () => ({
     ...available.splice(Math.floor(nextRandom(world) * available.length), 1)[0]!,
   }));
 }

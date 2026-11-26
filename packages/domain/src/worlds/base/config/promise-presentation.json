@@ -1,0 +1,14 @@
+{
+  "retiredCompletionEvent": "animal-response",
+  "undefinedItem": "an item no longer defined",
+  "anyItem": "anything",
+  "gatherTermsPrefix": "Kept automatically when you gather ",
+  "keptGatherPrefix": "You gathered ",
+  "unsupportedTerms": "Checked automatically by a completion rule this list cannot describe.",
+  "untrackedOpen": "This world does not check this promise automatically, so it stays open.",
+  "untrackedPast": "This world does not check this promise automatically.",
+  "keptOther": "An action of yours matched its completion rule.",
+  "cancelled": "Cancelled. This does not mean anyone else agreed to release you.",
+  "overdueTracked": "The deadline passed before the checked action happened.",
+  "overdueUntracked": "The deadline passed."
+}

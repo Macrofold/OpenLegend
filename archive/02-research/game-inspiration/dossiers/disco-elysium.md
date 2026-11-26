@@ -2,7 +2,7 @@
 
 **G66 · Complete research pass, September 26, 2026.** This dossier uses **Disco Elysium: The Final Cut** as the current canonical play experience while distinguishing the original October 2019 PC release, the free 2021 Final Cut upgrade, later console/mobile ports, and the post-release corporate/creator dispute that now materially affects player reception of the product. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-For OpenLegend, Disco Elysium is one of the most important references in the entire corpus because it demonstrates that **cognition itself can be gameplay**. Its 24 skills are not passive numbers tucked behind dialogue; they speak, interrupt, disagree, hallucinate, notice, tempt and mislead. The game also proves that failure can create *more story* rather than merely blocking progress.
+For Open Legend, Disco Elysium is one of the most important references in the entire corpus because it demonstrates that **cognition itself can be gameplay**. Its 24 skills are not passive numbers tucked behind dialogue; they speak, interrupt, disagree, hallucinate, notice, tempt and mislead. The game also proves that failure can create *more story* rather than merely blocking progress.
 
 ## 1. Identity and player promise
 
@@ -86,7 +86,7 @@ High Authority pushes dominance.
 Therefore:
 > more skill is not synonymous with more truth.
 
-This is extraordinarily relevant to OpenLegend cognition.
+This is extraordinarily relevant to Open Legend cognition.
 
 ## 3. Skills as internal agents
 
@@ -107,7 +107,7 @@ If a passive threshold is met, the skill may:
 
 The player can hear multiple faculties arguing about one situation.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 A believable mind need not run one undifferentiated reasoning process.
 
@@ -124,7 +124,7 @@ Potential faculties:
 But Disco Elysium also teaches an important boundary:
 > the voices are **authored abstractions**, not a claim about literal neuroscience.
 
-OpenLegend should preserve the useful functional separation without pretending humans really contain 24 discrete narrators.
+Open Legend should preserve the useful functional separation without pretending humans really contain 24 discrete narrators.
 
 ## 4. Active checks: Red, White, and failure
 
@@ -181,7 +181,7 @@ It can mean:
 
 Two players can stand in the same room yet receive different **perceived worlds**.
 
-This is perhaps the strongest direct precedent for OpenLegend's perception/cognition architecture.
+This is perhaps the strongest direct precedent for Open Legend's perception/cognition architecture.
 
 A character should receive observations according to:
 - senses;
@@ -235,7 +235,7 @@ The player is not just choosing dialogue about being:
 
 The repeated pattern can become a cognition object that changes future play.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 Characters should be able to develop:
 - models;
@@ -263,7 +263,7 @@ This creates two layers:
 - **social reputation** — what others think;
 - **self-concept** — what the character's mind thinks they are.
 
-OpenLegend should distinguish:
+Open Legend should distinguish:
 - public reputation;
 - relationship-specific reputation;
 - internal identity.
@@ -316,7 +316,7 @@ Equipment is semantically connected to:
 
 Players may swap absurd outfits immediately before a dialogue check for numerical optimization.
 
-OpenLegend should prefer:
+Open Legend should prefer:
 - equipment effects grounded in actual affordance;
 - social consequences for visibly ridiculous context-switching.
 
@@ -340,7 +340,7 @@ Sources include:
 
 Substances can temporarily alter attributes but carry roleplaying meaning.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Resource pressure is stronger when it creates moral/social decisions:
 > “I need money” can make bribery tempting.
@@ -370,7 +370,7 @@ The murder investigation therefore has chronology without an always-ticking real
 
 The player can explore physically without feeling punished for walking slowly, while dialogue and commitments still move the day.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 Different world actions can have different temporal semantics, but the simulation should remain coherent to inhabitants.
 
@@ -423,7 +423,7 @@ His stable personality creates:
 - contrast;
 - earned respect.
 
-OpenLegend agents should not be endlessly agreeable companions. Relationships need:
+Open Legend agents should not be endlessly agreeable companions. Relationships need:
 - boundaries;
 - preferences;
 - judgment;
@@ -445,7 +445,7 @@ A dialogue node can involve:
 
 This is precisely why the absence of combat does not make the game mechanically empty.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Dialogue should be capable of **changing world state**:
 - commitments;
@@ -477,7 +477,7 @@ the player's chosen ideology.
 
 It does not simply award “ideology points” and certify the player as correct.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 Beliefs should:
 - create affinities;
@@ -516,7 +516,7 @@ A 2025 negative player account describes reaching many “Impossible” checks b
 
 A 2026 mixed retrospective similarly praised choice/writing while criticizing perceived story/payoff limitations. [DE06](#de06)
 
-OpenLegend's more open simulation must avoid requiring one invisible canonical interaction chain unless the world itself logically requires it.
+Open Legend's more open simulation must avoid requiring one invisible canonical interaction chain unless the world itself logically requires it.
 
 ## 17. Art direction and spatial feel
 
@@ -533,7 +533,7 @@ The aesthetic does system work:
 - painterly portraits make characters psychologically vivid;
 - the small district can feel historically enormous.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A world does not need photorealism to feel ontologically dense.
 
@@ -563,7 +563,7 @@ Full voice acting improves:
 
 But a text-heavy system produces enormous VO cost if every generated line must be voiced.
 
-OpenLegend should not assume full generated VO is always necessary for depth.
+Open Legend should not assume full generated VO is always necessary for depth.
 
 ## 19. Production origins
 
@@ -587,7 +587,7 @@ ZA/UM's own pre-release dev material and later making-of reporting show:
 
 The game's unusual coherence comes partly from a world that existed **before** the software.
 
-OpenLegend can benefit from:
+Open Legend can benefit from:
 - authored cultures;
 - histories;
 - ontologies
@@ -733,7 +733,7 @@ Therefore:
 
 **Result:** player gains unusual lore/solutions but may receive excessive irrelevant information.
 
-**OpenLegend lesson:** expertise should have attention/opportunity costs, not only bonuses.
+**Open Legend lesson:** expertise should have attention/opportunity costs, not only bonuses.
 
 ### C. Internalize a self-concept
 
@@ -753,7 +753,7 @@ Therefore:
 
 **Limitation:** base game only partially models how absurd the outfit looks to others.
 
-**OpenLegend extension:** observers should perceive appearance and respond.
+**Open Legend extension:** observers should perceive appearance and respond.
 
 ### E. Morale loss makes words dangerous
 
@@ -763,7 +763,7 @@ Therefore:
 
 **Result:** dialogue can threaten game-over without violence.
 
-**OpenLegend lesson:** psychological stakes can have mechanical consequence.
+**Open Legend lesson:** psychological stakes can have mechanical consequence.
 
 ### F. Kim's trust is earned through patterns, not one persuasion roll
 
@@ -773,9 +773,9 @@ Therefore:
 
 **Result:** relationship tone/end-state changes.
 
-**OpenLegend lesson:** repeated behavior should outweigh a single “relationship check.”
+**Open Legend lesson:** repeated behavior should outweigh a single “relationship check.”
 
-## 25. Transferable inspiration for OpenLegend
+## 25. Transferable inspiration for Open Legend
 
 ### A. Cognition should be plural
 
@@ -831,7 +831,7 @@ Kim works because he has stable standards.
 
 Disco's faculties are authored dramatic devices.
 
-OpenLegend needs efficient semantic subsystems, not theatrical duplication for every NPC.
+Open Legend needs efficient semantic subsystems, not theatrical duplication for every NPC.
 
 ### Do not make every check random
 

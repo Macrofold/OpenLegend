@@ -26,7 +26,7 @@ Compare finding a useful starting artifact, adapting it, diagnosing a failure, t
 
 <!-- Compare embodied invention, configuring a component, rule authorship and community contribution. Not every player should have to become a programmer or publish a complete game. -->
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Read the [source and goal map](source-and-goal-map.md#topic-create), [invention journeys](../../../../docs/invention-scenarios.md) and [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions). Reuse selected world-creation designs and distinguish their remaining acceptance from broader pack, marketplace or arbitrary-rule proposals.
 

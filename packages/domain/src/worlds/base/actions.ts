@@ -4,6 +4,44 @@ import { readOnlyDraftView } from '../../draft.js';
 
 import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
 
+/** This world's speaking family owns its wording and input allowance. Native
+ * execution receives this same definition rather than universalizing it. */
+export const BASE_SPEECH_ACTION = {
+  id: 'wilderness:speech-action',
+  version: 2,
+  maximumCharacters: 1500,
+  eventType: 'speech',
+  noSpeech: { code: 'no-speech', message: 'This actor cannot speak.' },
+  invalidSpeech: { code: 'invalid-speech', message: 'Speech must contain 1–1500 characters.' },
+  invalidVolume: { code: 'invalid-volume', message: 'Choose whisper, normal or shout.' },
+  invalidRole: { code: 'invalid-recipient', message: 'Choose a permitted recipient role.' },
+  missingRecipient: {
+    code: 'invalid-recipient',
+    message: 'The intended recipient no longer exists.',
+  },
+  nonPersonRecipient: {
+    code: 'invalid-recipient',
+    message: 'The intended recipient is not a person.',
+  },
+  invalidPublicAppeal: {
+    code: 'invalid-public-appeal',
+    message: 'Choose an available request and say it to everyone who can hear.',
+  },
+  publicAppeals: [
+    {
+      id: 'ask-for-cooked-fish',
+      label: 'Ask for a cooked fish',
+      invitation: 'Could someone spare',
+      between: ' ',
+      contribution: 'a cooked fish',
+      closing: '?',
+      itemDefinition: 'cooked_river_fish',
+    },
+  ],
+  overheardReferenceExperiment: false,
+  success: { code: 'spoken', message: 'Spoken.' },
+} as const;
+
 /** Describe current carried capability, never a future invention's possible maximum.
  * Paged possessions disclose the missing tool knowledge. docs/worlds/base/actions.md */
 export function gatheringDescription(

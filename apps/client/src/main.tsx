@@ -58,6 +58,8 @@ import { useTabControl, type TabControl } from './tab-control';
 import { Narrator } from './ui/history';
 import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
+import { usePlayerProfile } from './player-profile';
+import { usePlayerAiUsage } from './player-ai-usage';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { WorldClockProvider } from './ui/event-time';
@@ -88,6 +90,8 @@ import {
   WorldCreationHostError,
   clearAccess,
   acceptAccess,
+  commandRecoveryOwner,
+  invalidateStreamAccess,
   eventsUrl,
   applyGamePatch,
   getState,
@@ -138,10 +142,12 @@ import { ActionPicker, type PickerContext } from './ui/action-picker';
 import {
   PersonCreationModal,
   PersonEditor,
+  PersonMemoryEditor,
   WorldEventsEditor,
   type PersonDraft,
 } from './ui/god-tools';
 import { WorldAgent } from './ui/world-agent';
+import { WorldInspection } from './ui/world-inspection';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
 import { CampActivity, type ActivityEntry } from './ui/camp-activity';
@@ -175,7 +181,6 @@ type PanelId =
   | 'intelligence'
   | 'help'
   | 'mind';
-const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
   trade: { title: 'Trade', side: 'right', wide: true },
   map: { title: 'Map', side: 'left', wide: true },
@@ -200,7 +205,13 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
 type GodEditorWindow =
-  | { id: string; type: 'person'; actorId: string; opener: HTMLElement }
+  | {
+      id: string;
+      type: 'person' | 'person-memory';
+      actorId: string;
+      opener: HTMLElement;
+      scope?: string;
+    }
   | { id: string; type: 'world-events'; opener: HTMLElement }
   | { id: string; type: 'family'; actorId: string };
 const mainWorkspaces: PanelId[] = [
@@ -290,6 +301,7 @@ function App({
     [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: entryFailure ?? 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
+    [sceneCanvasRevision, setSceneCanvasRevision] = useState(0),
     [notice, setNotice] = useState('');
   const [sceneLoad, setSceneLoad] = useState<{
     owner: string;
@@ -334,7 +346,15 @@ function App({
   const [lethalReview, setLethalReview] = useState<{
     review: NonNullable<ApiResult['lethalReview']>;
     action: ActionOption;
+    invitation?: true;
+    timedAttack?: true;
   } | null>(null);
+  const activeAttackInvitation = view?.player.attackReview?.review.id;
+  useEffect(() => {
+    setLethalReview((current) =>
+      current?.invitation && current.review.id !== activeAttackInvitation ? null : current,
+    );
+  }, [activeAttackInvitation]);
   const [lethalBusyReviewId, setLethalBusyReviewId] = useState<string | null>(null);
   const lethalBusy = lethalBusyReviewId !== null && lethalBusyReviewId === lethalReview?.review.id;
   useEffect(
@@ -401,13 +421,26 @@ function App({
   const [eventsQuick, setEventsQuick] = useState(false);
   const [craftingSection, setCraftingSection] = useState('recipes');
   const [tradeNegotiation, setTradeNegotiation] = useState<TradeNegotiationTarget | null>(null);
-  const registerTradeNegotiation = useCallback(
-    (target: TradeNegotiationTarget, clear = false) =>
-      setTradeNegotiation((current) =>
-        clear ? (current?.element === target.element ? null : current) : target,
-      ),
-    [],
-  );
+  const registerTradeNegotiation = useCallback((target: TradeNegotiationTarget, clear = false) => {
+    const person = clear
+      ? undefined
+      : latest.current?.entities.find((entity) => entity.id === target.person.id);
+    setTradeNegotiation((current) =>
+      clear
+        ? current?.element === target.element
+          ? null
+          : current
+        : {
+            ...target,
+            person: {
+              ...target.person,
+              ...(person?.communicationReference
+                ? { communicationReference: person.communicationReference }
+                : {}),
+            },
+          },
+    );
+  }, []);
   const [tradeTarget, setTradeTarget] = useState<string | null>(null);
   useEffect(() => {
     setTradeTarget(null);
@@ -490,7 +523,6 @@ function App({
       cancelPrimaryAction: () => {},
     }),
     retryEntry = useRef(() => {});
-  latest.current = view;
   const settingsView = useMemo(
     () =>
       view
@@ -498,11 +530,10 @@ function App({
             worldId: view.worldId,
             saveTimeline: view.saveTimeline,
             godMode: view.godMode,
-            profile: view.profile,
             inventionPolicy: view.inventionPolicy,
           }
         : undefined,
-    [view?.worldId, view?.saveTimeline, view?.godMode, view?.profile, view?.inventionPolicy],
+    [view?.worldId, view?.saveTimeline, view?.godMode, view?.inventionPolicy],
   );
   const browseSettingsActions = useCallback(
     (opener: HTMLElement) => handlers.current.browseKnown(opener),
@@ -552,6 +583,19 @@ function App({
       : { phase: 'loading' as const, completed: 0, total: 0 };
   const sceneReady = sceneProgress.phase === 'ready' && !sceneError;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling && sceneReady;
+  const profile = usePlayerProfile(
+    view?.access?.scope,
+    transportReady && !tabPaused,
+    open.includes('help') && settingsSection === 'graphics',
+  );
+  const aiJobs = view?.ai.jobs;
+  const aiJobsRevision = useMemo(
+    () => JSON.stringify(aiJobs?.map(({ id, status }) => [id, status])),
+    [aiJobs],
+  );
+  const aiUsageVisible =
+    transportReady && !tabPaused && (open.includes('ai') || open.includes('agent'));
+  const aiUsage = usePlayerAiUsage(view?.access?.scope, aiUsageVisible, aiJobsRevision ?? '');
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -594,18 +638,13 @@ function App({
           previous.access?.privateDraftScope !== next.access?.privateDraftScope ||
           previous.saveTimeline !== next.saveTimeline
         ) {
-          const samePrivateOwner =
-            !!previous.access?.commandRecoveryScope &&
-            previous.access.commandRecoveryScope === next.access?.commandRecoveryScope &&
-            previous.worldId === next.worldId &&
-            previous.access.actorId === next.access?.actorId &&
-            previous.player.id === next.player.id &&
-            previous.saveTimeline === next.saveTimeline;
+          const previousOwner = commandRecoveryOwner(previous);
           // A successful load replaces the timeline, but its original outcome
           // remains readable under the same native checkpoint authority. This
           // exception never preserves an executable old-timeline command.
           clearAccess({
-            preservePendingCommands: samePrivateOwner,
+            preservePendingCommands:
+              !!previousOwner && previousOwner === commandRecoveryOwner(next),
             preserveCheckpointResultsFor:
               previous.checkpoint?.recoveryScope === next.checkpoint?.recoveryScope
                 ? next.checkpoint?.recoveryScope
@@ -619,11 +658,10 @@ function App({
         scene.current?.resetTransientCaptions();
       }
       acceptAccess(next);
-      setView((current) => {
-        if (!reset && current?.worldId === next.worldId && next.revision < current.revision)
-          return current;
-        return next;
-      });
+      // Later stream frames and player actions must see the accepted view even
+      // when React has not rendered it yet.
+      latest.current = next;
+      setView(next);
     },
     [resetApplication, acceptView],
   );
@@ -648,6 +686,11 @@ function App({
       setConnected(false);
       clearTimeout(timer);
       timer = setTimeout(() => void bootstrap(), delay);
+    };
+    const refreshStreamAccess = (current: GameView) => {
+      pauseTab();
+      invalidateStreamAccess(current);
+      resetApplication();
     };
     function connectEvents() {
       const current = streamView;
@@ -674,9 +717,7 @@ function App({
           } else if (frame.event === 'access-changed') {
             source = undefined;
             connection.close();
-            pauseTab();
-            clearAccess();
-            resetApplication();
+            refreshStreamAccess(streamView ?? current);
           } else if (frame.event === 'reset') {
             try {
               const reset = JSON.parse(frame.data) as GameView;
@@ -709,6 +750,10 @@ function App({
           if (result.reason === 'connection_failed' && result.failure.kind === 'http_status') {
             const status = result.failure.status;
             if (status === 204) return;
+            if (status === 409) {
+              refreshStreamAccess(current);
+              return;
+            }
             if (status === 401 || status === 403) {
               pauseTab();
               clearAccess();
@@ -774,6 +819,7 @@ function App({
             return;
           }
           if (e instanceof WorldCreationHostError) {
+            latest.current = null;
             setView(null);
             streamView = undefined;
             setEntryStatus({ kind: 'creation-host', host: e.host });
@@ -820,7 +866,9 @@ function App({
         if (e.persisted) void bootstrap();
       };
     const focus = () => {
-      if (isPaused()) void bootstrap(true);
+      // The original entry owns its deadline and Retry action. Foreground
+      // recovery is for a tab that has already accepted a view.
+      if (latest.current && isPaused()) void bootstrap(true);
     };
     const visibility = () => {
       // A visible tab need not receive a separate window-focus event. Reuse
@@ -879,7 +927,26 @@ function App({
     id,
     label: inspectedEntities.get(id)?.name ?? 'Out of sight',
   }));
+  const canUseWorldAgent = view?.access?.canUseWorldAgent ?? false;
+  const canInspectIntelligence = !!(view?.godMode || view?.access?.canInspectIntelligence);
+  const canInspectWorld = !!(view?.godMode || view?.access?.canInspectWorld);
+  useEffect(() => {
+    if (!canUseWorldAgent)
+      setOpen((panels) =>
+        panels.includes('world-editor') ? panels.filter((id) => id !== 'world-editor') : panels,
+      );
+  }, [canUseWorldAgent]);
+  useEffect(() => {
+    if (!canInspectWorld)
+      setOpen((panels) =>
+        panels.includes('world-inspection')
+          ? panels.filter((id) => id !== 'world-inspection')
+          : panels,
+      );
+  }, [canInspectWorld]);
   const panelVisible = (id: PanelId) =>
+    (id !== 'world-editor' || canUseWorldAgent) &&
+    (id !== 'world-inspection' || canInspectWorld) &&
     open.includes(id) &&
     (!narrow || (open.at(-1) === id && !inspectorSheetVisible && !bagSheetShowing));
   const inventoryFeedbackVisible = useRef(false);
@@ -1004,6 +1071,8 @@ function App({
     return hasGame ? [...result, 'game' as const] : result;
   }
   function show(id: PanelId) {
+    if (id === 'world-editor' && !canUseWorldAgent) return;
+    if (id === 'world-inspection' && !canInspectWorld) return;
     if (id === 'inventory') id = 'character';
     if (!panelVisible(id) && document.activeElement)
       panelOpeners.current.set(id, document.activeElement);
@@ -1336,12 +1405,13 @@ function App({
     const confirmingReviewId = lethalReview.review.id;
     setLethalBusyReviewId(confirmingReviewId);
     try {
-      const result = lethalReview.action.command.execution
-        ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
-        : await command({
-            ...lethalReview.action,
-            command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
-          });
+      const result =
+        lethalReview.timedAttack || lethalReview.action.command.execution
+          ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
+          : await command({
+              ...lethalReview.action,
+              command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+            });
       if (!('lethalReview' in result) || !result.lethalReview)
         setLethalReview((current) =>
           current?.review.id === lethalReview.review.id ? null : current,
@@ -1356,7 +1426,7 @@ function App({
     if (!current || !recipient) return;
     setWorldIntent({
       mode: 'speak',
-      targetId: id,
+      targetId: recipient.communicationReference ?? id,
       label: namePhrase(recipient, 'indefinite'),
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
@@ -1375,7 +1445,27 @@ function App({
     setPicker(null);
     hide('events');
   }
+  function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
+    const current = latest.current;
+    if (!current) return;
+    const recipient = current.entities.find(
+      (entity) => entity.canTalk && entity.id === item.recipientId,
+    );
+    setWorldIntent({
+      mode: 'speak',
+      ...(recipient
+        ? {
+            targetId: recipient.communicationReference ?? recipient.id,
+            label: namePhrase(recipient, 'indefinite'),
+          }
+        : {}),
+      item: { id: item.itemId, name: item.name },
+      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
+    });
+    setPicker(null);
+  }
   function invent(text = '') {
+    if (!canUseWorldAgent) return;
     setInventionSeed({ id: crypto.randomUUID(), text });
     setCraftingSection('invention');
     show('crafting');
@@ -1547,9 +1637,10 @@ function App({
     preferences: actionInput,
     blocked:
       !!picker || targeting || choosingActionSubject || placingConstruction || !!lethalReview,
-    ownReview: !!lethalReview?.action.command.execution,
+    ownReview: !!(lethalReview?.timedAttack || lethalReview?.action.command.execution),
     command,
-    onReview: (action, review) => setLethalReview({ action, review }),
+    onReview: (action, review, invitation) =>
+      setLethalReview({ action, review, invitation, timedAttack: true }),
     notify,
   });
   const primaryAction = usePrimaryAction(
@@ -1742,6 +1833,9 @@ function App({
     }
   }, [view, sceneError, shadowQuality, tabPaused, sceneCreated, failScene]);
   useEffect(() => {
+    scene.current?.setPlayerPreferences(profile.profile?.preferences);
+  }, [profile.profile?.preferences, sceneCreated]);
+  useEffect(() => {
     // List inspection can precede graphics. Replay once; inspect/clear own later selections.
     if (
       sceneCreated &&
@@ -1887,7 +1981,8 @@ function App({
         e.preventDefault();
         if (e.repeat) return;
         if (e.key.toLowerCase() === 'p') void pause();
-        else if (view.godMode) {
+        else if (view.access?.timeSpeeds) {
+          const timeSpeeds = view.access.timeSpeeds;
           const speed =
             e.code === 'BracketRight'
               ? timeSpeeds.find((value) => value > view.clock.speed)
@@ -2064,7 +2159,28 @@ function App({
     }
   }
   function characterGodControls(target: EntityView) {
-    if (!view?.godMode) return undefined;
+    if (!view?.godMode) {
+      if (!view || target.kind !== 'actor') return undefined;
+      const access = view.access;
+      const ownPerson = target.id === view.player.id;
+      const inspectMind =
+        access?.canInspectMind && !ownPerson ? () => openMind(target.id) : undefined;
+      const editPerson =
+        access?.canEditPersonMemory && (ownPerson || access.canInspectMind)
+          ? (opener: HTMLElement) =>
+              setGodEditors((current) => [
+                ...current,
+                {
+                  id: crypto.randomUUID(),
+                  type: 'person-memory',
+                  actorId: target.id,
+                  opener,
+                  scope: access.scope,
+                },
+              ])
+          : undefined;
+      return inspectMind || editPerson ? { inspectMind, editPerson } : undefined;
+    }
     return {
       revive,
       enableCognition,
@@ -2165,12 +2281,17 @@ function App({
         }}
         presentation={presentation}
         visible={visible}
-        picker={picker}
+        picker={{
+          ...picker,
+          entity: picker.entity
+            ? (view.entities.find((entity) => entity.id === picker.entity?.id) ?? null)
+            : null,
+        }}
         view={view}
         connected={connected}
         close={closePicker}
         run={(action) => run(action, picker.dispatchCommand)}
-        invent={invent}
+        invent={canUseWorldAgent ? invent : undefined}
         inspect={inspect}
         onTrade={(entity) => {
           setTradeTarget(entity.id);
@@ -2188,7 +2309,10 @@ function App({
             targetId !== view.player.id &&
             (mode === 'act' || !!picker.entity?.canTalk)
               ? {
-                  targetId,
+                  targetId:
+                    mode === 'speak'
+                      ? (picker.entity?.communicationReference ?? targetId)
+                      : targetId,
                   label: picker.item?.name ?? picker.entity?.name,
                   possession: !!picker.context.itemId,
                 }
@@ -2293,13 +2417,13 @@ function App({
           </Section>
         );
       case 'time':
-        return view.godMode ? (
+        return view.access?.timeSpeeds ? (
           <>
             <DaylightDial clock={view.clock} />
             {pauseButton}
             <SegmentedControl
               label="Time speed"
-              options={timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
+              options={view.access.timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
               value={String(view.clock.speed)}
               disabled={!connected || speedPending}
               onChange={(value) => void changeSpeed(Number(value))}
@@ -2320,6 +2444,7 @@ function App({
               narrow={narrow}
               showHeading={false}
               onNegotiationTarget={registerTradeNegotiation}
+              onTalkAbout={talkAbout}
               chooseWork={(item) => {
                 if (!item.workBatch) return;
                 setWorkBatchEntry({
@@ -2407,9 +2532,8 @@ function App({
                 operations={workBatchOperations}
                 resolutionRevision={workBatchResolution}
                 visible={visible && craftingSection === 'recipes'}
-                invent={() => {
-                  setCraftingSection('invention');
-                }}
+                inventionLabel={canUseWorldAgent ? 'Invention' : 'Saved invention requests'}
+                openInventions={() => setCraftingSection('invention')}
                 browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
               />
             </div>
@@ -2490,6 +2614,17 @@ function App({
       case 'agent':
       case 'world-editor':
       case 'world-inspection':
+        if (id === 'world-inspection' && !view.godMode) {
+          return canInspectWorld ? (
+            <WorldInspection
+              key={JSON.stringify([view.worldId, view.access?.scope, view.historyEpoch])}
+              actorId={view.player.id}
+              worldId={view.worldId}
+              connected={connected}
+              conditionPolicyRevision={conditionPolicyRevision}
+            />
+          ) : null;
+        }
         return (
           <WorldAgent
             mode={id === 'agent' ? 'invent' : id === 'world-editor' ? 'author' : 'inspect'}
@@ -2504,8 +2639,9 @@ function App({
             accessScope={view.access?.privateDraftScope ?? view.player.id}
             requestScope={view.access?.scope ?? ''}
             inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
-            budget={view.ai.budget}
-            godMode={view.godMode}
+            allowanceLimitUsd={view.ai.allowanceLimitUsd}
+            usage={aiUsage}
+            enabled={id === 'world-inspection' ? view.godMode : canUseWorldAgent}
             saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
@@ -2519,7 +2655,7 @@ function App({
           />
         );
       case 'ai':
-        return <AiSettings view={view} />;
+        return <AiSettings view={view} usage={aiUsage} />;
       case 'events':
         return (
           <WorldEvents
@@ -2570,7 +2706,7 @@ function App({
           </>
         );
       case 'intelligence':
-        return view.godMode ? (
+        return canInspectIntelligence ? (
           <Diagnostics
             key={view.worldId}
             worldId={view.worldId}
@@ -2580,16 +2716,19 @@ function App({
             readScope={view.access?.scope}
           />
         ) : (
-          <p>God inspection is disabled.</p>
+          <p>Intelligence diagnostics are unavailable.</p>
         );
       case 'mind':
-        return mindId && (view.godMode || mindId === view.player.id) ? (
+        return mindId &&
+          (view.godMode || view.access?.canInspectMind || mindId === view.player.id) ? (
           <>
             {mindSwitchMessage && <p role="status">{mindSwitchMessage}</p>}
             <Mind
               key={`${taskScope(view)}:${mindId}`}
               actorId={mindId}
               owned={mindId === view.player.id}
+              readOnly={!view.godMode && mindId !== view.player.id}
+              canEditKnowledge={!!(view.access?.canEditPersonMemory && view.access.canInspectMind)}
               visible={visible}
               onDirtyChange={setMindDirty}
               readScope={view.access?.scope}
@@ -2659,33 +2798,45 @@ function App({
                 </div>
               ))}
             </Section>
-            <Section title="Create">
-              <Button
-                onPress={() => {
-                  setCraftingSection('invention');
-                  openGameTask('crafting');
-                }}
-              >
-                Invent something
-              </Button>
-              <p className="ol-caption">
-                Describe an idea, find learned recipes, or revisit a request.
-              </p>
-            </Section>
-            {(view.godMode || view.access?.canOperate) && (
+            {canUseWorldAgent && (
+              <Section title="Create">
+                <Button
+                  onPress={() => {
+                    setCraftingSection('invention');
+                    openGameTask('crafting');
+                  }}
+                >
+                  Invent something
+                </Button>
+                <p className="ol-caption">
+                  Describe an idea, find learned recipes, or revisit a request.
+                </p>
+              </Section>
+            )}
+            {(canUseWorldAgent ||
+              view.godMode ||
+              canInspectWorld ||
+              canInspectIntelligence ||
+              view.access?.canOperate) && (
               <Section title="World tools">
-                {view.godMode && (
+                {canUseWorldAgent && (
                   <>
                     <Button onPress={() => openGameTask('world-editor')}>World Agent</Button>
-                    <Button onPress={() => openGameTask('time')}>Time</Button>
                     <p className="ol-caption">
                       Chat about changes to the world, then review and apply them.
                     </p>
-                    <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
-                    <Button onPress={() => openGameTask('intelligence')}>
-                      Intelligence diagnostics
-                    </Button>
                   </>
+                )}
+                {view.access?.timeSpeeds && (
+                  <Button onPress={() => openGameTask('time')}>Time</Button>
+                )}
+                {canInspectWorld && (
+                  <Button onPress={() => openGameTask('world-inspection')}>Inspect world</Button>
+                )}
+                {canInspectIntelligence && (
+                  <Button onPress={() => openGameTask('intelligence')}>
+                    Intelligence diagnostics
+                  </Button>
                 )}
                 {view.access?.canOperate && (
                   <a href="/?view=operations" target="_blank" rel="noopener">
@@ -2713,6 +2864,8 @@ function App({
         return (
           <Settings
             view={settingsView ?? view}
+            canUseWorldAgent={canUseWorldAgent}
+            profile={profile}
             section={settingsSection}
             setSection={setSettingsSection}
             theme={theme}
@@ -2835,6 +2988,7 @@ function App({
     <WorldClockProvider clock={view?.clock}>
       <canvas
         id="world"
+        key={sceneCanvasRevision}
         ref={canvas}
         data-entry-loading={!sceneReady}
         tabIndex={view && sceneReady ? 0 : -1}
@@ -2869,6 +3023,8 @@ function App({
             status={visibleEntryStatus}
             onRetry={() => {
               if (sceneError) {
+                // A failed canvas may still own the lost WebGL context.
+                setSceneCanvasRevision((previous) => previous + 1);
                 setSceneLoad(null);
                 setSceneError('');
                 return;
@@ -3362,6 +3518,9 @@ function App({
                 canvas.current?.focus();
               }}
               setup={() => show('ai')}
+              changeAddressee={(targetId, label) =>
+                setWorldIntent((current) => (current ? { ...current, targetId, label } : null))
+              }
             />
             {!tabPaused &&
               view.godMode &&
@@ -3432,9 +3591,21 @@ function App({
               />
             )}
             {!tabPaused &&
-              view.godMode &&
               godEditors.map((editor) =>
-                editor.type === 'family' ? (
+                editor.type === 'person-memory' ? (
+                  view.access?.canEditPersonMemory &&
+                  editor.scope === view.access.scope &&
+                  (editor.actorId === view.player.id || view.access.canInspectMind) && (
+                    <PersonMemoryEditor
+                      key={editor.id}
+                      actorId={editor.actorId}
+                      opener={editor.opener}
+                      close={() =>
+                        setGodEditors((current) => current.filter((item) => item.id !== editor.id))
+                      }
+                    />
+                  )
+                ) : !view.godMode ? null : editor.type === 'family' ? (
                   <FamilyEditor
                     title={view.godTools?.familyLabel ?? 'Relationships'}
                     key={editor.id}
@@ -3574,7 +3745,11 @@ function App({
           review={lethalReview.review}
           busy={lethalBusy}
           cancel={() => {
-            if (lethalReview.action.command.execution) attack.cancelReview(lethalReview.review.id);
+            if (lethalReview.timedAttack || lethalReview.action.command.execution)
+              attack.cancelReview(
+                lethalReview.review.id,
+                lethalReview.action.command.aimId ?? lethalReview.action.command.expectedActionId,
+              );
             else
               void command({
                 id: `cancel-review:${lethalReview.review.id}`,

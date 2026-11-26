@@ -1,6 +1,6 @@
 # G124 — Persona 5 Royal
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Persona 5 Royal is especially useful as a study of **interlocking authored schedules**: an everyday calendar, relationship arcs, social-stat gates, dungeon deadlines, resource attrition and turn-based combat all consume different forms of scarcity but continually feed one another.
 

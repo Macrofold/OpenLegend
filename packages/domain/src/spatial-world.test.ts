@@ -13,6 +13,7 @@ import {
   NPC_ID,
   canReachEntity,
   executeCommand,
+  freezeWorld,
   hearsEntity,
   quantityOf,
   replaceSpatialLayout,
@@ -97,7 +98,8 @@ describe('native spatial-world integration without providers', () => {
     expect(bodyProfile(actor).height).toBe(actor.spatial.body.height);
   });
   it('moves onto the lookout, gathers its actual resource, and returns below', () => {
-    let world = active();
+    // Match the server's published world through real navigation continuations.
+    let world = freezeWorld(active());
     let t = executeCommand(world, {
       id: 'up',
       actorId: PLAYER_ID,
@@ -157,11 +159,12 @@ describe('native spatial-world integration without providers', () => {
     const perceived = projectEventEvidence(event, evidence);
     expect(perceived.speech).toMatchObject({
       intelligibility: 'clear',
-      speaker: { nameAtTime: 'person', nameForm: 'count' },
+      speaker: null,
     });
     expect(perceived.data?.['text']).toBe('Audible words above the floor');
-    // Hearing creates a stable personal voice reference, without live location.
-    expect(perceived.actorId).toBe(b.id);
+    // Clear words through an opaque floor do not identify this unfamiliar speaker.
+    expect(perceived.actorId).toBeUndefined();
+    expect(evidence.sourceBody).toBeUndefined();
     expect(
       executeCommand(world, {
         id: 'unseen-voice-strike',
@@ -238,12 +241,14 @@ describe('native spatial-world integration without providers', () => {
     expectCurrentWorldEquivalent(advance(restored, 120), advance(world, 120));
   });
   it('executes native flight and grounded landing without an AI job', () => {
-    let world = active();
+    let world = freezeWorld(active());
     const ids = entityKeys(world.entities);
     world = advance(world, 240);
     expect(worldPosition(entityGet(world.entities, 'bird-1')!).y).toBeGreaterThan(3);
     expect(worldSupport(entityGet(world.entities, 'bird-1')!)).toBeNull();
-    const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
+    const restored = freezeWorld(
+      JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState,
+    );
     expectCurrentWorldEquivalent(advance(world, 20), advance(restored, 20));
     const trip = advanceWorld(world, 650);
     world = trip.world;

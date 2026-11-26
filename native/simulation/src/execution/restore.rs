@@ -1,0 +1,103 @@
+//! Rewind and enrollment can change a body’s account-facing control. Keep its
+//! original controller and inspection in the same sparse physical journal.
+use super::*;
+impl PhysicalMutation<'_> {
+    pub(crate) fn reconcile_actor_access(
+        &mut self,
+        id: &str,
+        make_player: bool,
+    ) -> Result<(), ExecutionError> {
+        self.set_actor_access_metadata(id, make_player, None)
+    }
+
+    pub(crate) fn clear_inventory_inspection(&mut self, id: &str) -> Result<(), ExecutionError> {
+        self.set_actor_access_metadata(id, false, None)
+    }
+
+    /// The already funded page moves into the same actor-storage journal as
+    /// control reconciliation. It grants no read until the disclosure owner
+    /// checks current contents and either owned ancestry or a reachable
+    /// visible world contact.
+    pub(crate) fn install_inventory_inspection(
+        &mut self,
+        id: &str,
+        page: crate::state::InventoryInspection,
+        custody: ByteReservation,
+    ) -> Result<(), ExecutionError> {
+        self.journal.reservation.merge(custody)?;
+        self.set_actor_access_metadata(id, false, Some(page))
+    }
+
+    fn set_actor_access_metadata(
+        &mut self,
+        id: &str,
+        make_player: bool,
+        page: Option<crate::state::InventoryInspection>,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let actor = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let control_changes = make_player && actor.controller != "player";
+        if !control_changes && page.is_none() && actor.inventory_inspection.is_none() {
+            return Ok(());
+        }
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                id.len() * 2,
+                actor.controller.capacity() * 2,
+                actor
+                    .inventory_inspection
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+                12,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let first = self
+            .journal
+            .first(&UndoKey::RestoreActor(handle.slot, handle.generation))?;
+        let controller = if first {
+            Some(actor.controller.clone())
+        } else {
+            None
+        };
+        let actor = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        let inspection = std::mem::replace(&mut actor.inventory_inspection, page);
+        if control_changes {
+            actor.controller = "player".to_owned();
+        }
+        if let Some(controller) = controller {
+            self.journal.retain(
+                UndoKey::RestoreActor(handle.slot, handle.generation),
+                Undo::RestoreActor {
+                    entity: handle,
+                    controller,
+                    inspection,
+                },
+            )?;
+        }
+        self.state.entities.settle_operational_memory(
+            handle,
+            &mut self.journal.reservation,
+            false,
+        )?;
+        if control_changes {
+            self.state.bodies.refresh(&self.state.entities, id)?;
+        }
+        Ok(())
+    }
+}

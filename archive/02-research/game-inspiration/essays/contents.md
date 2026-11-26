@@ -9,7 +9,7 @@
 6. [What actually makes these worlds fun](what-actually-makes-these-worlds-fun.md#6-what-actually-makes-these-worlds-fun)
 7. [Virality and discovery](virality-and-discovery.md#7-virality-and-discovery)
 8. [Production and platform pitfalls](production-and-platform-pitfalls.md#8-production-and-platform-pitfalls)
-9. [Implications for OpenLegend](implications-for-openlegend.md#9-implications-for-openlegend)
+9. [Implications for Open Legend](implications-for-openlegend.md#9-implications-for-open-legend)
 10. [A practical validation program](a-practical-validation-program.md#10-a-practical-validation-program)
 11. [Prioritized study itinerary](prioritized-study-itinerary.md#11-prioritized-study-itinerary)
 12. [Sources](../references/master-bibliography.md#12-sources)

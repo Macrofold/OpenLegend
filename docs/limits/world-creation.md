@@ -12,7 +12,7 @@ DG12’s 5 October expansion adds the bounded library/reuse consumer below. INV-
 
 ## WC-L02 — Initial rule-family coverage
 
-**Bundled-family consumer implemented; expansion proposed · Restrictiveness: Safe.** The current profile uses supported native bodies, placements, finite resources, item definitions and learned methods; it adds no generated executable law. Add another composition only when its complete body, action, knowledge, resource and entry dependencies qualify. Essential unsupported behavior blocks that candidate; optional mechanics may remain explicitly deferred. The restriction keeps a useful first release concrete while allowing arbitrary premises to remain drafts. It does not make survival universal or establish general navigation, magic, construction or market support. Revisit with a real new opening that demonstrates the missing family.
+**Bundled-family consumer implemented; expansion proposed · Restrictiveness: Safe.** The current profile uses supported native bodies, placements, finite resources, item definitions and learned activities; it adds no generated executable law. Add another composition only when its complete body, action, knowledge, resource and entry dependencies qualify. Essential unsupported behavior blocks that candidate; optional mechanics may remain explicitly deferred. The restriction keeps a useful first release concrete while allowing arbitrary premises to remain drafts. It does not make survival universal or establish general navigation, magic, construction or market support. Revisit with a real new opening that demonstrates the missing family.
 
 ## WC-L03 — Local detail and historical preparation
 

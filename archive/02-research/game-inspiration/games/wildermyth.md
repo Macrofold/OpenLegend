@@ -6,7 +6,7 @@
 
 **Key versus optional.** A generated name is less important than a visible consequence of a choice. A reusable story situation can be valuable without a large open-world simulation. Conversely, procedural recombination without strong situations can expose repetition quickly.
 
-**Transfer.** Seed OpenLegend with a small set of reusable social dilemmas and world pressures. Let actual character state and player choices determine their outcomes. Generation can personalize presentation and unusual approaches; it should not be responsible for inventing pacing, stakes, and meaningful resolution from nothing on every occasion.
+**Transfer.** Seed Open Legend with a small set of reusable social dilemmas and world pressures. Let actual character state and player choices determine their outcomes. Generation can personalize presentation and unusual approaches; it should not be responsible for inventing pacing, stakes, and meaningful resolution from nothing on every occasion.
 
 
 <!-- BEGIN FIELDGUIDE ADDITION -->
@@ -36,7 +36,7 @@
 
 3. **A familiar hero outlives one campaign.** *Documented campaign system.* Aging and retirement change the party over a campaign; legacy systems let selected heroes return in later stories. The player recognizes an accumulated identity even as the new campaign supplies different circumstances. This supports continuity without requiring one endless, immutable cast. [FG-WY-O](../references/sources-03.md#source-fg-wy-o)
 
-**What to borrow for OpenLegend.** For OpenLegend, preserve a small set of identity-bearing consequences across appearance, capability, memory, and later choices. Use authored situation patterns to establish stakes; let simulation and character decisions determine the outcome. Do not expect randomized biography alone to create attachment.
+**What to borrow for Open Legend.** For Open Legend, preserve a small set of identity-bearing consequences across appearance, capability, memory, and later choices. Use authored situation patterns to establish stakes; let simulation and character decisions determine the outcome. Do not expect randomized biography alone to create attachment.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

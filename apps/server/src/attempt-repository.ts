@@ -1,5 +1,5 @@
 import { normalizeReceiptCost, usdToMicroUsd, type AiReceipt } from '@open-legend/ai';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 import type { DecisionAttemptLink } from './decision-state.js';
 import {
   assertAttemptReceiptContinuity,

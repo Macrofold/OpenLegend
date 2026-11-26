@@ -4,7 +4,7 @@
 
 Mike asked whether the existing study recorded the economy and deep lore. **The economy already had substantial operational coverage; the lore had only a limited outline.** This supplement deepens the setting and makes the relationship between fiction, economic decisions and player enjoyment explicit. It preserves the original dossier and its evidence history rather than replacing it.
 
-This is research, not an OpenLegend implementation proposal. The new game shortlist remains roster-only. No game executable was run, and no new full R01–R14 review or all-store revenue model is claimed.
+This is research, not an Open Legend implementation proposal. The new game shortlist remains roster-only. No game executable was run, and no new full R01–R14 review or all-store revenue model is claimed.
 
 ## 1. What is already recorded about the economy
 
@@ -120,13 +120,13 @@ A fresh PROC3SS critical essay describes the settlement's history as emerging th
 
 Calling the game addictive would not explain which of those is operating. A player returning to finish a district, solve a shortage, protect a valued population or try a different society has four different motivations. A future enjoyment audit should seek those specific accounts and their opposites. None of the present evidence establishes a causal retention uplift from deeper lore, exact population scale or a particular production chain.
 
-## 8. Transferable research lessons, not adopted OpenLegend rules
+## 8. Transferable research lessons, not adopted Open Legend rules
 
 The strongest general lesson is **give history something to change in play**: the meaning of an object, the value of a relationship, the reason to protect a place, or the cost of an institution. A long encyclopedia that never affects attention or choice can be less effective than one well-communicated local history.
 
 A second lesson is to preserve the difference between what happened, what people believe and what remains unknown. Dondorian origins and Shmalor's continued influence are interesting partly because the sources leave uncertainty. Inventing definitive answers during research would remove, rather than enrich, that texture.
 
-For OpenLegend, a hypothetical application could be a settlement whose residents disagree about a place's history and make different choices because of that disagreement. This is not a claim that such authored content currently exists, nor an instruction to implement a new mythology or general religious simulation. Existing engine/world boundaries and player-focused priorities remain unchanged.
+For Open Legend, a hypothetical application could be a settlement whose residents disagree about a place's history and make different choices because of that disagreement. This is not a claim that such authored content currently exists, nor an instruction to implement a new mythology or general religious simulation. Existing engine/world boundaries and player-focused priorities remain unchanged.
 
 Do not automatically copy universal species hostility, a punitive governance system, permanent upkeep or catastrophe-scale lore. Ask whether the pattern produces a worthwhile moment for the player and meaningful individuality for the characters in the particular authored world.
 

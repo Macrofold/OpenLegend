@@ -334,15 +334,6 @@ export function capabilityBlocked(
   }
   return !!(currentStatusPreparation(world, entity!).mask & capabilityBits[capability]);
 }
-/** Dependency token, never authority: includes all active restrictions, expires
- * with fixed contributions, and is intentionally fresh for foreign lifetimes. */
-export function statusEffectsReadToken(world: WorldState, entity: Entity): object | undefined {
-  const current = entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity;
-  return readOnlyDraftView(current).statusEffects
-    ? currentStatusPreparation(world, current)
-    : undefined;
-}
-
 export function activeStatusEffects(
   world: WorldState,
   entity: Entity | undefined,

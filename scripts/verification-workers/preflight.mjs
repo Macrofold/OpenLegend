@@ -11,9 +11,20 @@ import {
   DescribeSubnetsCommand,
   DescribeImagesCommand,
   DescribeVolumesCommand,
+  DescribeInstanceTypeOfferingsCommand,
 } from '@aws-sdk/client-ec2';
 import { clientOptions, send } from './aws.mjs';
-export async function preflight(config, concurrency, availableSlots, deadlineSeconds = 3600) {
+import { selectedHardware, selectWorkers } from './hardware.mjs';
+export async function preflight(
+  config,
+  concurrency,
+  availableSlots,
+  deadlineSeconds = 3600,
+  environment,
+  affinity,
+  requireRetainedWorkers = false,
+) {
+  const hardware = selectedHardware(environment, config, true);
   if (!Number.isSafeInteger(config.capacity))
     throw new Error('Deploy the current campaign controller before running campaigns.');
   if (concurrency > config.capacity)
@@ -22,9 +33,14 @@ export async function preflight(config, concurrency, availableSlots, deadlineSec
     );
   if (!Array.isArray(availableSlots) || availableSlots.length < concurrency)
     throw new Error('The complete requested worker count is unavailable. No jobs started.');
-  const selected = [...availableSlots]
-    .sort((a, b) => Number(Boolean(b.instanceId)) - Number(Boolean(a.instanceId)))
-    .slice(0, concurrency);
+  const selected = selectWorkers(availableSlots, hardware, concurrency, affinity, {
+    required: requireRetainedWorkers,
+    warmSlots: config.warmSlots ?? 2,
+  });
+  if (selected.length < concurrency)
+    throw new Error(
+      'The complete requested retained-worker capacity is unavailable. No jobs started.',
+    );
   const options = clientOptions(),
     ec2 = new EC2Client(options);
   const image = (await send(ec2, DescribeImagesCommand, { ImageIds: [config.imageId] })).Images[0];
@@ -58,28 +74,65 @@ export async function preflight(config, concurrency, availableSlots, deadlineSec
     instances.push(...(page.Reservations ?? []).flatMap((r) => r.Instances ?? []));
     next = page.NextToken;
   } while (next);
+  if (affinity) {
+    const actual = instances.find((instance) => instance.InstanceId === affinity.instanceId);
+    if (actual?.InstanceType !== hardware.instanceType || actual?.ImageId !== hardware.imageId)
+      throw new Error(
+        'The exact affinity instance no longer matches the requested hardware/image.',
+      );
+  }
   const standard = instances.filter(
     (i) => i.State.Name !== 'stopped' && /^[acdhimrtz]\d/.test(i.InstanceType),
   );
-  const names = [...new Set(standard.map((i) => i.InstanceType))],
+  const names = [...new Set([...standard.map((i) => i.InstanceType), hardware.instanceType])],
     cpus = new Map();
+  let selectedType;
   for (let offset = 0; offset < names.length; offset += 100) {
     const page = await send(ec2, DescribeInstanceTypesCommand, {
       InstanceTypes: names.slice(offset, offset + 100),
     });
-    for (const item of page.InstanceTypes) cpus.set(item.InstanceType, item.VCpuInfo.DefaultVCpus);
+    for (const item of page.InstanceTypes) {
+      cpus.set(item.InstanceType, item.VCpuInfo.DefaultVCpus);
+      if (item.InstanceType === hardware.instanceType) selectedType = item;
+    }
   }
+  if (
+    selectedType?.VCpuInfo.DefaultVCpus !== hardware.vcpus ||
+    selectedType?.MemoryInfo.SizeInMiB !== hardware.memoryMiB ||
+    !selectedType?.ProcessorInfo.SupportedArchitectures.includes('x86_64')
+  )
+    throw new Error('AWS machine description differs from the selected profile; no jobs started.');
   const occupied = standard.reduce((sum, i) => sum + cpus.get(i.InstanceType), 0);
   const selectedIds = new Set(selected.map((w) => w.instanceId).filter(Boolean));
-  const reusable = standard.filter((instance) => selectedIds.has(instance.InstanceId)).length;
-  const required = Math.max(0, concurrency - reusable) * 4;
+  const reusable = standard.filter(
+    (instance) =>
+      selectedIds.has(instance.InstanceId) &&
+      instance.InstanceType === hardware.instanceType &&
+      instance.ImageId === config.imageId,
+  ).length;
+  const required = Math.max(0, concurrency - reusable) * hardware.vcpus;
   if (occupied + required > quota.Value)
     throw new Error(
       `Requested concurrency needs ${required} additional vCPUs; ${occupied}/${quota.Value} are occupied. No jobs started.`,
     );
   const subnet = (await send(ec2, DescribeSubnetsCommand, { SubnetIds: [config.subnetId] }))
     .Subnets[0];
-  const newHosts = selected.filter((w) => !w.instanceId).length;
+  const offerings = await send(ec2, DescribeInstanceTypeOfferingsCommand, {
+    LocationType: 'availability-zone',
+    Filters: [
+      { Name: 'instance-type', Values: [hardware.instanceType] },
+      { Name: 'location', Values: [subnet.AvailabilityZone] },
+    ],
+  });
+  if (!offerings.InstanceTypeOfferings?.length)
+    throw new Error('Selected machine type is not offered in the worker subnet; no jobs started.');
+  const byId = new Map(instances.map((instance) => [instance.InstanceId, instance]));
+  const newHosts = selected.filter((w) => {
+    const actual = byId.get(w.instanceId);
+    return (
+      !actual || actual.InstanceType !== hardware.instanceType || actual.ImageId !== config.imageId
+    );
+  }).length;
   if (subnet.AvailableIpAddressCount < newHosts)
     throw new Error('Subnet cannot fit the requested workers. No jobs started.');
   const quotas = new ServiceQuotasClient(options);
@@ -119,5 +172,6 @@ export async function preflight(config, concurrency, availableSlots, deadlineSec
     gp3OccupiedGiB: usedGiB,
     newHosts,
     availableSubnetIps: subnet.AvailableIpAddressCount,
+    hardware,
   };
 }

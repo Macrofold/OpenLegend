@@ -215,6 +215,7 @@
           "pursuitMetres": 18,
           "entryRadius": 4,
           "territoryRadius": 8,
+          "arrivalRadius": 0.15,
           "pursuitSeconds": 600,
           "reentryAfterTimeout": false,
           "searchSeconds": 30,

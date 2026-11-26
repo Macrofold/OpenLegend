@@ -1,5 +1,5 @@
 import { routineSensePolicy } from './perception.js';
-import { routineObservationRelevant } from './perception-timing.js';
+import { nextRoutineSightAt, routineObservationRelevant } from './perception-timing.js';
 import { actionHasMotion, strikeDefinition } from './strikes.js';
 import { nativeResponseProfile, nativeSensoryObserver } from './native-response.js';
 import {
@@ -36,11 +36,12 @@ import {
   motionTrackPosition as poseAt,
   LandingOccupancy,
   routeLapSeconds,
-  TERMINAL_FALL_SPEED,
   type MotionTrack,
 } from './flight.js';
 import { worldRootEntities } from './entity-index.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { hasMemory } from './living.js';
+import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { activelyParticipates } from './participation-state.js';
 import { sensesFor, sightSampleSeconds, SIGHT_BODY_FRACTIONS } from './perception.js';
 import { spatialCandidates } from './spatial.js';
@@ -60,7 +61,7 @@ import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS } from './worlds/base/action-defaults.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { animalWanderRemaining } from './native-response-controller.js';
-import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { selectedTimeRules } from './world-composition.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
 import { readOnlyDraftView } from './draft.js';
@@ -76,7 +77,8 @@ const IMMINENT_LANDING_SECONDS = 1;
  */
 export function motionReach(world: WorldState, entity: Entity, seconds: number): number {
   if (capabilityBlocked(world, entity, 'locomotion')) return 0;
-  if (entity.spatial.fallVelocity !== undefined) return TERMINAL_FALL_SPEED * seconds;
+  if (entity.spatial.fallVelocity !== undefined)
+    return selectedOccurrenceRules(world).flight.terminalFallSpeed * seconds;
   if (!entity.actor?.alive || entity.actor.incapacitated) return 0;
   if (entity.actor.action)
     return actionHasMotion(entity.actor.action) ? nativeMovementSpeed(world, entity) * seconds : 0;
@@ -92,12 +94,13 @@ export function motionTravelBounds(
   actorIds: readonly string[],
   moverIds: readonly string[],
 ) {
+  const normalTravel = selectedTimeRules(world).perceptionTravelMetres;
   const observers = actorIds.flatMap((id) => {
     const entity = entityGet(world.entities, id);
     if (!entity?.actor?.alive || entity.actor.incapacitated || !hasMemory(entity)) return [];
     const senses = sensesFor(world, entity).filter(
       (s): s is Extract<typeof s, { radius: number }> =>
-        'radius' in s && s.radius > 0 && s.radius / 4 < BASE_TIME_POLICY.perceptionTravelMetres,
+        'radius' in s && s.radius > 0 && s.radius / 4 < normalTravel,
     );
     if (!senses.length) return [];
     const radius = Math.max(...senses.map((s) => s.radius));
@@ -106,14 +109,13 @@ export function motionTravelBounds(
         position: { ...worldPosition(entity) },
         radius,
         reach: motionReach(world, entity, seconds) + bodyProfile(entity).height,
-        travel: Math.min(
-          BASE_TIME_POLICY.perceptionTravelMetres,
-          ...senses.map((s) => s.radius / 4),
-        ),
+        travel: Math.min(normalTravel, ...senses.map((s) => s.radius / 4)),
       },
     ];
   });
-  if (!observers.length) return () => BASE_TIME_POLICY.perceptionTravelMetres;
+  // The retained forecast outlives this draft. Its fallback owns the selected
+  // scalar just as the populated lookup below owns its captured bounds.
+  if (!observers.length) return () => normalTravel;
   const near = spatialCandidates(observers);
   const maximum = observers.reduce(
     (max, observer) => Math.max(max, observer.radius + observer.reach),
@@ -124,7 +126,7 @@ export function motionTravelBounds(
     const entity = entityGet(world.entities, id)!;
     const position = worldPosition(entity);
     const reach = motionReach(world, entity, seconds) + bodyProfile(entity).height;
-    let travel: number = BASE_TIME_POLICY.perceptionTravelMetres;
+    let travel: number = normalTravel;
     for (const observer of near(position, reach + maximum))
       if (distance3D(position, observer.position) <= reach + observer.reach + observer.radius)
         travel = Math.min(travel, observer.travel);
@@ -206,6 +208,7 @@ export function nativeMotionInterval(
       bound = Math.min(
         bound,
         fallingDuration(
+          selectedOccurrenceRules(world).flight,
           entity.spatial.fallVelocity,
           Math.min(travel, support ? Math.max(0, worldPosition(entity).y - support.y) : travel),
         ),
@@ -1067,12 +1070,12 @@ export function sensoryCrossingBound(
   ambientIds: readonly string[],
   cache: CrossingCache,
   inputMotion?: ReadonlyMap<string, MotionTrack[]>,
-): number {
-  if (!(seconds > TIME_EPSILON)) return seconds;
+): { seconds: number; endsAt?: number } {
+  const requestedSeconds = seconds;
   const entities = readOnlyDraftView(world.entities);
   crossingGeometryCurrent(world, cache);
   const now = world.simTime,
-    horizon = Math.max(seconds, BASE_TIME_POLICY.idleHorizonSeconds);
+    horizon = Math.max(seconds, selectedTimeRules(world).idleHorizonSeconds);
   const actors = new Set(actorIds),
     ambient = new Set(ambientIds);
   const bodies = new Map<string, BodyCertificate>();
@@ -1086,6 +1089,24 @@ export function sensoryCrossingBound(
   // retain their exact owners. Absolute sample times also agree after cold load.
   let sampled = seconds,
     exact = false;
+  let observationAt = Infinity;
+  const sampleAt = (at: number, overdue = false) => {
+    if (!(at > now)) {
+      if (overdue) sampled = Math.min(sampled, TIME_EPSILON);
+      return;
+    }
+    observationAt = Math.min(observationAt, at);
+    sampled = Math.min(sampled, at - now);
+  };
+  const result = (bound: number): { seconds: number; endsAt?: number } => {
+    // An actual received-work deadline owns its exact clock value, even when
+    // it precedes the conservative minimum displacement slice by one ulp.
+    const seconds = Math.min(requestedSeconds, Math.max(TIME_EPSILON, bound), observationAt - now);
+    return {
+      seconds,
+      ...(seconds === observationAt - now ? { endsAt: observationAt } : {}),
+    };
+  };
   const movingOrAlarmed = [...new Set([...actorIds, ...ambientIds])].some((id) => {
     const entity = entityGet(entities, id);
     return (
@@ -1097,6 +1118,8 @@ export function sensoryCrossingBound(
     );
   });
   for (const id of actorIds) {
+    const perceptionAt = nextPerceptionWorkAt(world, id);
+    if (perceptionAt !== undefined) sampleAt(perceptionAt);
     const entity = entityGet(entities, id);
     if (!entity) continue;
     const body = certificate(entity);
@@ -1114,7 +1137,7 @@ export function sensoryCrossingBound(
       (movingOrAlarmed || entity.sensoryProgress?.incidentalContact)
     ) {
       const at = entity.sensoryProgress?.incidentalContact?.nextAt ?? now + contact.seconds;
-      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+      sampleAt(at, true);
     }
     exact ||=
       body.touch ||
@@ -1122,22 +1145,16 @@ export function sensoryCrossingBound(
       Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => !!pair.watch) ||
       (entity.actor?.agency.plan?.activity?.control?.kind === 'finite' &&
         !!entity.actor.agency.plan.activity.control.stopWithin);
-    if (
-      cadence &&
-      body.radius > 0 &&
-      observing &&
-      (movingOrAlarmed ||
-        (policy.sight?.mode === 'cadence' && entity.sensoryProgress?.routineSight))
-    ) {
-      let at =
-        policy.sight?.mode === 'cadence'
-          ? (entity.sensoryProgress?.routineSight?.nextAt ?? now + cadence)
-          : (Math.floor(now / cadence) + 1) * cadence;
-      if (policy.sight?.mode !== 'cadence' && at - now <= TIME_EPSILON) at += cadence;
-      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+    if (policy.sight?.mode === 'cadence') {
+      const at = nextRoutineSightAt(world, entity);
+      if (at !== undefined) sampleAt(at, true);
+    } else if (cadence && body.radius > 0 && observing && movingOrAlarmed) {
+      let at = (Math.floor(now / cadence) + 1) * cadence;
+      if (at - now <= TIME_EPSILON) at += cadence;
+      sampleAt(at, true);
     }
   }
-  if (!exact) return Math.max(TIME_EPSILON, sampled);
+  if (!(requestedSeconds > TIME_EPSILON) || !exact) return result(sampled);
   seconds = sampled;
   // A body that left its predicted track invalidates everything derived from it.
   for (const [id, certain] of cache.tracks) {
@@ -1214,7 +1231,9 @@ export function sensoryCrossingBound(
     maximumDomainWork('crossingTrackPeak', cache.tracks.size);
     certain.set(id, entry);
   }
-  if (!certain.size && !outcomes.size && !growingNativeRegion) return seconds;
+  if (!certain.size && !outcomes.size && !growingNativeRegion) {
+    return result(seconds);
+  }
   const still = (entity: Entity): CertainTrack => {
     const cached = cache.tracks.get(entity.id);
     // A body that is not moving now (e.g. a flyer that just reached its hover) may still hold
@@ -1262,7 +1281,7 @@ export function sensoryCrossingBound(
   });
   const observationBound = Math.min(seconds, Math.max(TIME_EPSILON, observationDue - now));
   if (!observers.length && !proximityObservers.length && !watchedObservers.length)
-    return observationBound;
+    return result(observationBound);
   // Moving targets for every observer; static targets only matter to a moving observer.
   const targets = !observers.length
     ? []
@@ -1607,7 +1626,7 @@ export function sensoryCrossingBound(
       }
     }
   }
-  return Math.max(TIME_EPSILON, bound);
+  return result(bound);
 }
 function poseMoves(track: MotionTrack): boolean {
   return track.pose.some(

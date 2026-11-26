@@ -65,13 +65,7 @@ export interface NativeResponseProfile {
   movementFactors: { scars: boolean };
   wander: { distance: number; minimumWaitSeconds: number; waitChoices: number };
   wake?: { attributeId: string; above: number; reason: 'perceived-danger' };
-  presentation: {
-    alarmed: string;
-    escaping: string;
-    settling: string;
-    blocked: string;
-    routine: string;
-  };
+  presentation: { projectilePassage: string };
 }
 
 /** A body estimate is retained evidence, never a live hidden tracking reference.
@@ -841,13 +835,7 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
   )
     invalid();
   if (
-    !hasRecordFields(profile.presentation, [
-      'alarmed',
-      'escaping',
-      'settling',
-      'blocked',
-      'routine',
-    ]) ||
+    !hasRecordFields(profile.presentation, ['projectilePassage']) ||
     !Object.values(profile.presentation).every((text) => typeof text === 'string' && text.trim())
   )
     invalid();

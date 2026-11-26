@@ -1,4 +1,4 @@
-// docs/technical/verification-workers.md#prepared-environment-and-source-fidelity
+// docs/projects/verification-workers-tech-design.md#prepared-environment-and-source-fidelity
 // Baked installation receipts survive imaging; cloud-init's marker proves this instance finished bootstrapping.
 export const bootReady = 'test -f /var/lib/cloud/instance/boot-finished || exit 75; ';
 // The one VM definition used by experiment and clean-image preparation owners.
@@ -12,8 +12,8 @@ export function machine(config, worker, script) {
     script;
 
   return {
-    ImageId: config.imageId,
-    InstanceType: config.instanceType,
+    ImageId: worker.imageId ?? config.imageId,
+    InstanceType: worker.instanceType ?? config.instanceType,
     MinCount: 1,
     MaxCount: 1,
     ClientToken: worker.creationToken,

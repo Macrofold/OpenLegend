@@ -1,31 +1,45 @@
-import { enterGame } from '../fixtures/browser.js';
-import { testRepository, closeTestDatabases } from '../fixtures/database.js';
-import { test, expect } from '@playwright/test';
-import { createGameServer } from '../../apps/server/src/http.js';
-import { readConfig } from '../fixtures/database.js';
+import type { AiUsageView } from '@open-legend/protocol';
+import { expect, test, type Locator } from '@playwright/test';
+import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
+import { browserTabHeaders, rustBrowserGame } from '../fixtures/rust-browser.js';
 test('scaled themes, reduced motion and responsive controls persist across reload', async ({
   page,
 }, info) => {
   // Three full-canvas readbacks plus reload need a separate whole-journey
   // allowance on software rendering. Individual control assertions stay at 5s.
   test.setTimeout(120_000);
-  const game = await createGameServer({
-    config: readConfig({ OPEN_LEGEND_GOD_MODE: 'true', AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
-    production: true,
-    tick: false,
-  });
-  await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
-  const address = game.server.address();
-  if (!address || typeof address === 'string') throw Error('No listener');
+  await blockExternalBrowserRequests(page);
+  const game = await rustBrowserGame();
+  const gameMenu = page.getByRole('button', { name: 'Game menu (Escape)', exact: true });
+  const character = page.getByRole('button', { name: 'Character (C)', exact: true });
+  const hud = page.locator('.ol-hud');
+  const fitsMobile = async (locator: Locator) => {
+    const bounds = await locator.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
+    expect(bounds!.y).toBeGreaterThanOrEqual(0);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
+  };
   try {
-    await page.goto(`http://127.0.0.1:${address.port}`);
+    await page.goto(game.base);
     await enterGame(page);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
-    await expect.poll(() => game.service.paused).toBe(false);
-    await page.getByRole('button', { name: 'Settings and help', exact: true }).click();
+    await gameMenu.click();
+    await page.getByRole('button', { name: 'Resume world', exact: true }).click();
+    await expect
+      .poll(async () => {
+        const state = await page.request.get(game.base + '/api/state', {
+          headers: await browserTabHeaders(page),
+        });
+        expect(state.ok()).toBe(true);
+        return state.json();
+      })
+      .toMatchObject({ clock: { paused: false } });
+    await page.getByRole('button', { name: 'Settings & help', exact: true }).click();
+    await page.getByRole('tab', { name: 'Appearance & reading', exact: true }).click();
     await page.getByLabel('Interface theme', { exact: true }).selectOption('fantasy');
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'fantasy');
+    await expect(hud).toHaveAttribute('data-theme', 'fantasy');
     await page.screenshot({ path: info.outputPath('fantasy.png') });
     await page.getByLabel('Interface theme', { exact: true }).selectOption('scifi');
     await page
@@ -33,39 +47,35 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
       .filter({ has: page.getByRole('radio', { name: '130%', exact: true }) })
       .click();
     await page.getByRole('checkbox', { name: 'Reduce motion', exact: true }).check();
-    await expect(page.locator('html')).toHaveAttribute('data-reduce-motion', 'true');
+    await expect(hud).toHaveAttribute('data-reduce-motion', 'true');
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.getByRole('button', { name: 'Game', exact: true }).click();
-    await page.getByRole('button', { name: 'World editor', exact: true }).click();
-    await page.getByRole('button', { name: 'Start conversation', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await character.click();
+    const characterPanel = page.locator('#characterPanel');
+    await expect(characterPanel.locator('#inventoryPanel')).toBeVisible();
     await page.screenshot({ path: info.outputPath('scifi-scaled.png') });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: info.outputPath('mobile-scaled.png') });
-    for (const locator of [
-      page.getByRole('button', { name: 'Pause world', exact: true }),
-      page.locator('#world-editorPanel'),
-      page.locator('#world-editorPanel').getByRole('button', { name: /\bSend$/ }),
-    ]) {
-      const bounds = await locator.boundingBox();
-      expect(bounds).not.toBeNull();
-      expect(bounds!.x).toBeGreaterThanOrEqual(0);
-      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
-      expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
-    }
-    for (const name of ['Inventory', 'Craft', 'Build', 'Character', 'Events', 'Create', 'In view'])
-      await page
-        .locator('.ol-rail')
-        .getByRole('button', { name, exact: true })
-        .click({ trial: true });
+    await fitsMobile(characterPanel);
+    await fitsMobile(characterPanel.getByRole('button', { name: 'Hide Character panel' }));
+    await characterPanel.getByRole('button', { name: 'Hide Character panel' }).click();
+    const playControls = page.getByRole('navigation', { name: 'Play controls', exact: true });
+    for (const name of ['Character (C)', 'Journal (J)', 'Crafting (K)', 'Game menu (Escape)'])
+      await playControls.getByRole('button', { name, exact: true }).click({ trial: true });
+    await gameMenu.click();
+    await fitsMobile(page.getByRole('button', { name: 'Pause world', exact: true }));
     await page.reload();
     await enterGame(page);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'scifi');
+    await expect(hud).toHaveAttribute('data-theme', 'scifi');
     await expect(page.locator('.ol-hud')).toHaveCSS('zoom', '1.3');
-    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
+    await expect(hud).toHaveAttribute('data-reduce-motion', 'true');
+    const usage = await page.request.get(game.base + '/api/ai/usage', {
+      headers: await browserTabHeaders(page),
+    });
+    expect(usage.ok()).toBe(true);
+    expect(((await usage.json()) as AiUsageView).usage.llmCalls).toBe(0);
   } finally {
     await page.close();
     await game.close();
   }
 });
-
-test.afterAll(closeTestDatabases);

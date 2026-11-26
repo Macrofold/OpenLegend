@@ -35,7 +35,7 @@ export const SLING_HANDLING: AttributeDefinition = {
       coachingActivityLabel: 'Giving/receiving guided feedback',
       selectedTool: 'Tool: {toolName}.',
       missingTool: 'Select a compatible tool and ammunition first.',
-      targetChance: 'Known inert-target chance: {accuracyPercent}%. ',
+      targetChance: 'Sling handling: {accuracyPercent}%. The target does not dodge. ',
       requestLabel: 'Ask {target} for {skill} coaching',
       requestDescription:
         'Ask {target} to observe one actual release and, if both later choose, give guided feedback. They may decline or lack the applicable competence. {scope} Completed help does not stack or disclose a private recipe.',

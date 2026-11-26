@@ -1,5 +1,29 @@
+import { resultEvidenceId, type ResultEvidence } from '@open-legend/domain';
+import { encodeAttentionStorage, decodeAttentionStorage } from './attention-storage.js';
+import {
+  serializeCurrentContact,
+  currentContactMetadata,
+  decodeCurrentContactRow,
+} from './current-contact-codec.js';
+import {
+  accountClass,
+  experienceIndividualIds,
+  type ExperienceEntry,
+  type WorldState,
+} from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
+import { accountRetentionMetadata, accountSelectionMetadata } from './retention-record-metadata.js';
+import {
+  receivedRecordReferences,
+  receivedCurrentOwnerTables,
+} from './received-record-references.js';
+import {
+  encodeTemporalPage,
+  temporalPageColumns,
+  decodeTemporalPageRow,
+  serializeTemporalPage,
+} from './temporal-page-storage.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
@@ -7,39 +31,73 @@ import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
  */
 export interface RecordNode {
   table: string;
+  /** This map's key is its personal actor; descendants inherit that ownership. */
+  actorOwner?: boolean;
   children?: Record<string, RecordCollection>;
-  columns?: Record<string, { sql: string; value: (value: JsonRecord, path: string[]) => unknown }>;
+  columns?: Record<
+    string,
+    { sql: string; value: (value: JsonRecord, path: string[], world?: WorldState) => unknown }
+  >;
   indexes?: string[][];
   uniqueIndexes?: string[][];
   constraints?: string[];
+  /** Normalize a shared native value within this same owned record subtree. */
+  encode?: (value: unknown, previous?: unknown, world?: WorldState) => unknown;
+  decode?: (value: unknown) => unknown;
+  decodeRow?: (row: JsonRecord) => unknown;
+  /** A codec may supply its exact already-prepared leaf payload. */
+  serialize?: (value: unknown) => string;
 }
 export type JsonRecord = Record<string, unknown>;
 export interface RecordCollection {
   mode: 'map' | 'list' | 'one' | 'indexed-map' | 'entity-map';
   node: RecordNode;
   key?: string;
+  /** Native semantic ordinal; no process-local array placement binding. */
+  orderKey?: string;
   /** Key lookup only; insertion order is not part of the owned value's meaning. */
   unordered?: boolean;
   /** Ordered rolling maps retain surviving ordinals; genuine reorders renumber. */
   stablePositions?: boolean;
+  /** This collection never omits canonical members during load or compaction.
+   * Only an exact accepted immutable predecessor may prove new members absent. */
+  complete?: boolean;
 }
 const leaf = (table: string): RecordNode => ({ table });
-const map = (table: string, children?: RecordNode['children']): RecordCollection => ({
+const map = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => ({
   mode: 'map',
-  node: { table, children },
+  node: { table, children, ...codec },
 });
 const list = (table: string, key?: string): RecordCollection => ({
   mode: 'list',
   node: leaf(table),
   key,
 });
-const one = (table: string, children?: RecordNode['children']): RecordCollection => ({
+const one = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => ({
   mode: 'one',
-  node: { table, children },
+  node: { table, children, ...codec },
 });
+const actorMap = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => {
+  const collection = map(table, children, codec);
+  collection.node.actorOwner = true;
+  return collection;
+};
 const actorLists = (table: string, key?: string): RecordCollection =>
-  map(`${table}_owners`, { $: list(table, key) });
-const actorMaps = (table: string): RecordCollection => map(`${table}_owners`, { $: map(table) });
+  actorMap(`${table}_owners`, { $: list(table, key) });
+const actorMaps = (table: string): RecordCollection =>
+  actorMap(`${table}_owners`, { $: map(table) });
 const textColumn = (field: string) => ({
   sql: 'TEXT',
   value: (value: JsonRecord) => value[field] ?? null,
@@ -79,6 +137,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       pendingNativeIntegration: one('sim_native_values', {
         bindings: map('sim_native_value_bindings'),
         byEntity: map('sim_native_value_subjects'),
+      }),
+      sensory: one('sim_sensory_continuation', {
+        scopes: { ...map('sim_sensory_scopes'), unordered: true, complete: true },
+        processed: { ...map('sim_sensory_policy_progress'), unordered: true, complete: true },
       }),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
@@ -157,8 +219,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         occurrences: actorLists('activity_occurrences', 'id'),
         methods: map('activity_methods'),
         acquisitions: actorMaps('activity_acquisitions'),
-        learning: map('activity_learning'),
-        current: map('activity_current'),
+        learning: actorMap('activity_learning'),
+        current: actorMap('activity_current'),
         active: map('activity_active'),
         items: map('activity_item_sources'),
         changes: map('activity_state_sources'),
@@ -178,22 +240,69 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       places: map('definition_places'),
       visiblePlaces: actorMaps('mind_visible_places'),
       memories: actorLists('mind_memories', 'id'),
-      minds: map('mind_state', {
+      minds: actorMap('mind_state', {
         documents: list('mind_documents', 'id'),
         records: list('mind_facets', 'id'),
         thoughts: list('mind_thoughts'),
-        receipts: map('mind_receipts'),
       }),
       knowledge: actorLists('mind_learned_capabilities', 'recipeId'),
       actorKnowledge: actorMaps('mind_knowledge_documents'),
-      knowledgeRevisions: map('mind_knowledge_revisions'),
+      knowledgeRevisions: actorMap('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
+      receivedValues: one('mind_perception_value_state', {
+        sources: { ...map('mind_perception_values'), unordered: true },
+      }),
+      perceptionEvidence: actorMap('mind_perception_owners', {
+        // Rolling maps preserve iteration order without renumbering surviving rows.
+        current: {
+          mode: 'indexed-map',
+          node: {
+            table: 'mind_perception_current',
+            serialize: serializeCurrentContact,
+            decodeRow: decodeCurrentContactRow,
+          },
+          unordered: true,
+          complete: true,
+        },
+        motionSamples: {
+          ...map('mind_perception_motion_samples'),
+          unordered: true,
+          complete: true,
+        },
+        // Confirmation clocks must not rewrite the unchanged scene and attention
+        // candidates. These retain their existing ordered, observer-owned values.
+        geometry: one('mind_perception_geometry', {
+          fragments: { ...list('mind_perception_geometry_fragments', 'key'), complete: true },
+          boundaries: { ...list('mind_perception_geometry_boundaries', 'id'), complete: true },
+        }),
+        attention: one(
+          'mind_perception_attention',
+          {
+            annotations: {
+              ...map('mind_perception_attention_annotations'),
+              stablePositions: true,
+              complete: true,
+            },
+            latches: {
+              ...map('mind_perception_attention_latches'),
+              stablePositions: true,
+              complete: true,
+            },
+            relationScans: {
+              ...map('mind_perception_attention_scans'),
+              stablePositions: true,
+              complete: true,
+            },
+          },
+          { encode: encodeAttentionStorage, decode: decodeAttentionStorage },
+        ),
+      }),
       mapMarkers: actorMaps('mind_map_markers'),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck
       perceptionEpisodes: {
-        ...map('mind_exposure_owners', {
+        ...actorMap('mind_exposure_owners', {
           $: { ...map('mind_exposure'), unordered: true },
         }),
         unordered: true,
@@ -201,21 +310,38 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       visibleObjects: actorLists('mind_visible_objects'),
       visiblePeople: actorLists('mind_visible_people'),
       appraisals: actorMaps('mind_appraisals'),
-      appraisalProcesses: map('mind_appraisal_processes'),
+      appraisalProcesses: actorMap('mind_appraisal_processes'),
       familyTree: one('sim_family_tree', { links: map('sim_parent_links') }),
       responseReceipts: { ...map('response_receipts'), stablePositions: true },
       experience: one('experience_state', {
         // Correction chronology belongs to its evidence, not map insertion order.
         corrections: {
-          ...map('mind_corrections_owners', { $: { ...map('mind_corrections'), unordered: true } }),
+          ...actorMap('mind_corrections_owners', {
+            $: { ...map('mind_corrections'), unordered: true },
+          }),
           unordered: true,
         },
         awareness: actorLists('mind_awareness', 'eventId'),
         summaries: actorLists('mind_summaries', 'id'),
-        consolidatedAt: map('mind_consolidation'),
+        consolidatedAt: actorMap('mind_consolidation'),
         forgotten: actorLists('mind_forgotten'),
+        privacyRevisions: actorMap('mind_privacy_revisions'),
+        temporal: one('mind_temporal_state', {
+          actors: actorMap('mind_temporal_actors', {
+            pages: {
+              ...list('mind_temporal_pages', 'id'),
+              orderKey: 'order',
+              node: {
+                table: 'mind_temporal_pages',
+                decodeRow: decodeTemporalPageRow,
+                serialize: serializeTemporalPage,
+              },
+            },
+            supports: map('mind_temporal_supports'),
+          }),
+        }),
       }),
-      innerWorlds: map('mind_inner_worlds', { files: list('mind_inner_files', 'path') }),
+      innerWorlds: actorMap('mind_inner_worlds'),
       events: list('world_hot_events', 'id'),
       // Exact command IDs govern replay; insertion order has no gameplay meaning.
       // Canonical row identities/bodies remain independent of the runtime tree.
@@ -226,18 +352,30 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       },
       declarationReceipts: map('declaration_receipts'),
     }),
-    milestones: map('world_milestones'),
-    actorMilestones: map('actor_milestones'),
+    actorMilestones: actorMap('actor_milestones'),
   },
 };
 
 export const RECORD_NODES = new Map<string, RecordNode>();
 export const RECORD_PARENTS = new Map<string, string>();
-function register(node: RecordNode, parent?: RecordNode) {
+/** Canonical identity lengths include collection keys, but not transparent `$` fields. */
+export const RECORD_PATH_DEPTHS = new Map<string, number>();
+/** Actor key position in canonical identities, inherited from the schema owner. */
+export const RECORD_ACTOR_PATHS = new Map<string, number>();
+function register(node: RecordNode, parent?: RecordNode, depth = 0, actorAt?: number) {
   if (RECORD_NODES.has(node.table)) throw new Error(`Duplicate record table: ${node.table}`);
   RECORD_NODES.set(node.table, node);
+  RECORD_PATH_DEPTHS.set(node.table, depth);
+  if (node.actorOwner) actorAt = depth - 1;
+  if (actorAt !== undefined) RECORD_ACTOR_PATHS.set(node.table, actorAt);
   if (parent) RECORD_PARENTS.set(node.table, parent.table);
-  for (const child of Object.values(node.children ?? {})) register(child.node, node);
+  for (const [field, child] of Object.entries(node.children ?? {}))
+    register(
+      child.node,
+      node,
+      depth + (field === '$' ? 0 : 1) + (child.mode === 'one' ? 0 : 1),
+      actorAt,
+    );
 }
 register(WORLD_RECORD_SCHEMA);
 function columns(table: string, value: NonNullable<RecordNode['columns']>, indexes: string[][]) {
@@ -330,6 +468,7 @@ const actorColumn = {
   sql: 'TEXT NOT NULL',
   value: (_value: JsonRecord, path: string[]) => (path[1] === 'experience' ? path[3] : path[2]),
 };
+columns('mind_learned_capabilities', { actor_id: actorColumn }, [['actor_id']]);
 for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
   columns(
     table,
@@ -339,8 +478,104 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       at: numberColumn(table === 'mind_summaries' ? 'to' : 'at'),
       importance: numberColumn('importance'),
       event_id: textColumn('eventId'),
+      // The explicit edit closure follows this safe identity without parsing
+      // unrelated quoted UTF-16 prose inside the canonical memory body.
+      ...(table === 'mind_memories' ? { activity_id: textColumn('activityId') } : {}),
       kind: textColumn('kind'),
       sequence: { ...numberColumn('sequence'), sql: 'BIGINT' },
+      individual_ids: {
+        sql: 'TEXT[] NOT NULL',
+        value: (value) =>
+          experienceIndividualIds({
+            source:
+              table === 'mind_awareness'
+                ? 'awareness'
+                : table === 'mind_summaries'
+                  ? 'summary'
+                  : 'memory',
+            value,
+          } as unknown as ExperienceEntry),
+      },
+      retention_metadata: {
+        sql: 'JSONB NOT NULL',
+        value: (value) =>
+          accountRetentionMetadata({
+            source:
+              table === 'mind_awareness'
+                ? 'awareness'
+                : table === 'mind_summaries'
+                  ? 'summary'
+                  : 'memory',
+            value,
+          } as unknown as ExperienceEntry),
+      },
+      ...(table !== 'mind_awareness'
+        ? {
+            account_revision: {
+              sql: 'TEXT NOT NULL',
+              value: (value: JsonRecord) => personalAccountRevision(JSON.stringify(value)),
+            },
+          }
+        : {}),
+      logical_bytes: {
+        sql: 'BIGINT NOT NULL',
+        value: (value) => Buffer.byteLength(JSON.stringify(value)),
+      },
+      retention_class: {
+        sql: 'TEXT NOT NULL',
+        value: (value) =>
+          table === 'mind_awareness' && value['retentionClass'] === 'sensory'
+            ? 'sensory'
+            : accountClass({
+                source:
+                  table === 'mind_awareness'
+                    ? 'awareness'
+                    : table === 'mind_summaries'
+                      ? 'summary'
+                      : 'memory',
+                value,
+              } as unknown as ExperienceEntry),
+      },
+      ...Object.fromEntries(
+        [
+          ['policy_priority', 'BIGINT NOT NULL'],
+          ['active_or_protected', 'BIGINT NOT NULL'],
+          ['next_due_at', 'DOUBLE PRECISION'],
+        ].map(([name, sql]) => [
+          name!,
+          {
+            sql: sql!,
+            value: (value: JsonRecord, _path: string[], world?: WorldState) => {
+              if (!world)
+                throw new Error('Account selection projection requires its selected world.');
+              const source =
+                table === 'mind_awareness'
+                  ? 'awareness'
+                  : table === 'mind_summaries'
+                    ? 'summary'
+                    : 'memory';
+              return accountSelectionMetadata(world, {
+                source,
+                value,
+              } as unknown as ExperienceEntry)[
+                name as 'policy_priority' | 'active_or_protected' | 'next_due_at'
+              ];
+            },
+          },
+        ]),
+      ),
+      retention_reason: {
+        sql: 'TEXT',
+        value: (value) =>
+          (value['retention'] as JsonRecord | undefined)?.['reason'] ??
+          (value['impression'] as JsonRecord | undefined)?.['reason'] ??
+          null,
+      },
+      retention_required: {
+        sql: 'BIGINT NOT NULL',
+        value: (value) =>
+          Number((value['retention'] as JsonRecord | undefined)?.['required'] === true),
+      },
       ...(table === 'mind_awareness'
         ? {
             account_revision: {
@@ -349,18 +584,20 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             },
             agreement_key: {
               sql: 'TEXT',
-              value: (value) =>
-                personalAgreementMetadata(value as unknown as Awareness)?.key ?? null,
+              value: (value, _path, world) =>
+                personalAgreementMetadata(world!, value as unknown as Awareness)?.key ?? null,
             },
             agreement_open: {
               sql: 'BIGINT NOT NULL',
-              value: (value) =>
-                Number(personalAgreementMetadata(value as unknown as Awareness)?.open ?? false),
+              value: (value, _path, world) =>
+                Number(
+                  personalAgreementMetadata(world!, value as unknown as Awareness)?.open ?? false,
+                ),
             },
             agreement_until: {
               sql: 'DOUBLE PRECISION',
-              value: (value) =>
-                personalAgreementMetadata(value as unknown as Awareness)?.until ?? null,
+              value: (value, _path, world) =>
+                personalAgreementMetadata(world!, value as unknown as Awareness)?.until ?? null,
             },
             agreement_head: { sql: 'BIGINT NOT NULL', value: () => 0 },
           }
@@ -370,7 +607,22 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             unresolved: {
               sql: 'BIGINT NOT NULL',
               value: (value: JsonRecord) =>
-                Number(value['kind'] === 'commitment' && !value['resolved']),
+                Number(
+                  (value['kind'] === 'commitment' && !value['resolved']) ||
+                    (value['obligation'] as JsonRecord | undefined)?.['status'] === 'active',
+                ),
+            },
+            expires_at: {
+              sql: 'DOUBLE PRECISION',
+              value: (value) =>
+                (value['impression'] as JsonRecord | undefined)?.['expiresAt'] ?? null,
+            },
+            weaken_at: {
+              sql: 'DOUBLE PRECISION',
+              value: (value) => {
+                const impression = value['impression'] as JsonRecord | undefined;
+                return impression && !impression['weakened'] ? impression['weakenAt'] : null;
+              },
             },
           }
         : {}),
@@ -386,14 +638,205 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             ['agreement_head', 'agreement_open', 'agreement_until'],
           ]
         : []),
+      ...(table === 'mind_memories'
+        ? [
+            ['expires_at', 'actor_id'],
+            ['weaken_at', 'actor_id'],
+          ]
+        : []),
       ['actor_id', 'position'],
     ],
   );
 }
 columns(
   'mind_knowledge_documents',
-  { actor_id: actorColumn, subject_id: textColumn('subjectId') },
-  [['actor_id', 'subject_id']],
+  {
+    actor_id: actorColumn,
+    subject_id: textColumn('subjectId'),
+    document_revision: numberColumn('revision'),
+    text_bytes: { sql: 'BIGINT', value: (value) => Buffer.byteLength(String(value['text'] ?? '')) },
+    subject_kind: {
+      sql: 'TEXT',
+      value: (value) => (value['subjectId'] as JsonRecord | null)?.['kind'] ?? null,
+    },
+  },
+  [
+    ['actor_id', 'subject_id'],
+    ['actor_id', 'slot'],
+  ],
+);
+const pageStorage = (value: JsonRecord, world: WorldState | undefined) => {
+  if (!world) throw new Error('Temporal page projection requires its captured world.');
+  return encodeTemporalPage(value as unknown as import('@open-legend/domain').TemporalPage, world);
+};
+const temporalPageColumnTypes = {
+  actor_id: 'TEXT NOT NULL',
+  physical_life: 'BIGINT NOT NULL',
+  receipt_epoch: 'TEXT NOT NULL',
+  first_batch_order: 'BIGINT NOT NULL',
+  first_entry: 'BIGINT NOT NULL',
+  first_member: 'BIGINT NOT NULL',
+  last_batch_order: 'BIGINT NOT NULL',
+  last_entry: 'BIGINT NOT NULL',
+  last_member: 'BIGINT NOT NULL',
+  first_at: 'DOUBLE PRECISION NOT NULL',
+  last_at: 'DOUBLE PRECISION NOT NULL',
+  entry_bytes: 'BIGINT NOT NULL',
+  receipt_count: 'BIGINT NOT NULL',
+  encoded_bytes: 'BIGINT NOT NULL',
+  charge_directory: 'TEXT NOT NULL',
+  spatial_context: 'BIGINT NOT NULL',
+  subject_keys: 'TEXT[] NOT NULL',
+  track_keys: 'TEXT[] NOT NULL',
+  source_ids: 'TEXT[] NOT NULL',
+  individual_ids: 'TEXT[] NOT NULL',
+  value_refs: 'TEXT[] NOT NULL',
+  occurrence_keys: 'TEXT[] NOT NULL',
+  lookup_buckets: 'SMALLINT[] NOT NULL',
+};
+columns(
+  'mind_temporal_pages',
+  Object.fromEntries(
+    Object.entries(temporalPageColumnTypes).map(([name, sql]) => [
+      name,
+      {
+        sql,
+        value: (value: JsonRecord, _path: string[], world?: WorldState) =>
+          temporalPageColumns(pageStorage(value, world))[name],
+      },
+    ]),
+  ),
+  [
+    ['actor_id', 'first_batch_order', 'first_entry', 'first_member', 'id'],
+    ['actor_id', 'first_at', 'first_batch_order', 'first_entry', 'first_member', 'id'],
+    ['actor_id', 'position'],
+  ],
+);
+columns(
+  'mind_temporal_actors',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
+    next_due: numberColumn('nextDue'),
+    expired_through_time: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) =>
+        (value['frontier'] as JsonRecord | undefined)?.['expiredThroughTime'] ?? null,
+    },
+    pressure_batch_order: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['batchOrder'] ?? null,
+    },
+    pressure_entry: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['entryIndex'] ?? null,
+    },
+    pressure_member: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['memberIndex'] ?? null,
+    },
+    pressure_at: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) =>
+        (
+          (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+            | JsonRecord
+            | undefined
+        )?.['receivedAt'] ?? null,
+    },
+    pressure_order: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+            | JsonRecord
+            | undefined
+        )?.['order'] ?? null,
+    },
+    logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
+    receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
+  },
+  [['next_due', 'actor_id'], ['actor_id']],
+);
+columns(
+  'mind_perception_values',
+  {
+    source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
+    at: numberColumn('at'),
+    gc_candidate_seq: { sql: 'BIGINT', value: () => null },
+  },
+  [['source_id']],
+);
+
+for (const table of receivedCurrentOwnerTables)
+  columns(
+    table,
+    {
+      actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[2] },
+      value_refs: {
+        sql: 'TEXT[] NOT NULL',
+        value: (value) => receivedRecordReferences(table, value),
+      },
+    },
+    [],
+  );
+RECORD_NODES.get('mind_perception_current')!.columns!['metadata'] = {
+  sql: 'TEXT NOT NULL',
+  value: (value) =>
+    currentContactMetadata(value as unknown as import('@open-legend/domain').CurrentContact),
+};
+columns(
+  'mind_temporal_supports',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[4] },
+    source_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
+    logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
+    required: { sql: 'BIGINT NOT NULL', value: (value) => Number(value['required'] === true) },
+    account_revision: {
+      sql: 'TEXT NOT NULL',
+      value: (value) => personalAccountRevision(JSON.stringify(value)),
+    },
+    physical_life: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => (value['receipt'] as JsonRecord)['physicalLife'],
+    },
+    receipt_epoch: {
+      sql: 'TEXT NOT NULL',
+      value: (value) => (value['receipt'] as JsonRecord)['epoch'],
+    },
+    batch_order: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => (value['receipt'] as JsonRecord)['batchOrder'],
+    },
+    entry_index: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => (value['receipt'] as JsonRecord)['entryIndex'],
+    },
+  },
+  [
+    ['actor_id', 'source_id'],
+    ['actor_id', 'physical_life', 'receipt_epoch', 'batch_order', 'entry_index'],
+  ],
 );
 columns(
   'mind_forgotten',
@@ -420,14 +863,18 @@ columns(
     at: numberColumn('at'),
     status: textColumn('status'),
     purpose_id: textColumn('parentId'),
-    result_memory_id: textColumn('resultMemoryId'),
+    result_evidence_id: {
+      sql: 'TEXT',
+      value: (value) =>
+        resultEvidenceId(value['resultEvidence'] as ResultEvidence | undefined) ?? null,
+    },
   },
   [
     ['actor_id', 'position'],
     ['actor_id', 'source_id'],
     ['actor_id', 'status'],
     ['actor_id', 'purpose_id'],
-    ['actor_id', 'result_memory_id'],
+    ['actor_id', 'result_evidence_id'],
   ],
 );
 columns(
@@ -443,3 +890,11 @@ columns(
 RECORD_NODES.get('activity_methods')!.uniqueIndexes = [['signature_key']];
 RECORD_NODES.get('activity_methods')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
 RECORD_NODES.get('activity_occurrences')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
+
+/** Ownerless pooled values are debris. Temporal blocks remain canonical until
+ * collection; personal readers apply actor frontiers to their logical entries. */
+export function liveEvidenceRowSql(table: string, alias = 't'): string {
+  if (table === 'mind_perception_values')
+    return `EXISTS(SELECT 1 FROM received_value_uses live_use WHERE live_use.world_id=${alias}.world_id AND live_use.value_id=${alias}.source_id)`;
+  return 'TRUE';
+}

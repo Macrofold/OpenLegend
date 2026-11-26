@@ -4,7 +4,17 @@ This established collection contains mixed historical campaigns and current summ
 
 [Optional profiling implementation and evidence](profiling-controls.md) records disabled work, process/worker/browser cleanup, tool modes and measured-overhead qualification separately from the smooth3× goal.
 
-Start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
+The [November 5 matched AWS investigation](bookkeeping/2026/2026-11-05-runtime-ablation.md) compares the historical and current source on one host and isolates perception, recording and attention costs through disposable subsystem removals. It distinguishes failed operating acceptance from proposed structural replacement. The [expanded subsystem ranking](bookkeeping/2026/2026-11-05-subsystem-ranking.md) measures additional native, presentation, storage and scheduling costs on the standard worker.
+
+The [November 7 latest-source investigation](bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) profiles reviewed source `934190d80` on the standard 16 GiB worker, traces command waiting to account maintenance, and distinguishes diagnostic removals from proposed BK28 fixes.
+
+The [BK28 implementation evidence](bookkeeping/2026/2026-11-07-bk28-implementation.md) records current-format native/PostgreSQL checks, source-specific AWS comparisons and conditional adoption separately from broader qualification.
+
+The [BK29 latest-source investigation](bookkeeping/2026/2026-11-07-bk29-profile.md) measures `330da6405` after the retention/retry fixes, attributes remaining CPU and repeated animal-response reception, and separates completed profiles from blocked or incomplete follow-ups. Its structural proposals remain unimplemented.
+
+For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why Open Legend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
+
+The [October 31 runtime-unification qualification](2026-10/runtime-unification.md) records the isolated cleanup branch, current-format correctness, failed normal/substantial operating checks and remaining evidence.
 
 For implementation and candidate dispositions, read [Performance Overhaul Ideas](../../projects/performance-overhaul-feature-spec.md). The October 16 project treats old measurements as directional evidence, identifies caveats in the [evidence audit](../../projects/performance-overhaul/evaluation.md), and records status in [PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas). The [ordinary implementation results](overhaul-implementation.md), [compromise trials](overhaul-compromises.md) and [changed-document index](overhaul-documents.md) describe what was actually built, checked, rejected and left open. Smooth 3× remains unmet.
 
@@ -96,7 +106,7 @@ The previous reader report is preserved as [earlier reader-report detail](reader
 
 - [Late browser trace](45-late-browser-trace.md): qualify the recorder before tracing the unexplained pause during actual play.
 
-[Resident decisions sharing a save](46-resident-decision-save-groups.md) records the selected bounded diagnostic of fewer complete saves, individual admission/failure checks and its future actual comparison. No result is yet available.
+[NPC decisions sharing a save](46-resident-decision-save-groups.md) records the selected bounded diagnostic of fewer complete saves, individual admission/failure checks and its future actual comparison. No result is yet available.
 
 - [Capture the browser when a freeze happens](47-catch-a-freeze.md): selected bounded rolling-recording investigation; no result yet.
 

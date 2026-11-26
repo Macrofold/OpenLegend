@@ -205,7 +205,7 @@ Thus the positive and negative samples use **different time filters**. They esta
 
 ## 11. Transferable patterns and their limits
 
-These are research interpretations, not adopted OpenLegend requirements.
+These are research interpretations, not adopted Open Legend requirements.
 
 **Make identity constrain and enable action.** Anatomy, culture, equipment and affiliations are strongest when they affect usable verbs. A body plan without equipment consequences or a faction biography without social effects is weaker than the connected system. Do not copy every exception without a readable model of which slots and permissions apply.
 

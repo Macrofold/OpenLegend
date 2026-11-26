@@ -1,5 +1,8 @@
-import { toolHttp, toolSequence } from '../network.js';
+import { randomUUID } from 'node:crypto';
 import type { AssetRevisionReference } from '@open-legend/assets';
+import type { OperationsView } from '@open-legend/protocol';
+import { toolHttp, toolSequence } from '../network.js';
+import { localGameOrigin, localGameSession } from './local-game.js';
 
 /** Local operator convenience, through the same browser-session, Origin, scope
  * and owner-admitted operation used by the game. No direct save/catalog writes. */
@@ -8,40 +11,30 @@ export async function installLocalAssetRelease(options: {
   operationId: string;
   reference: AssetRevisionReference;
 }): Promise<unknown> {
-  const origin = new URL(options.origin);
-  if (
-    origin.protocol !== 'http:' ||
-    !['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) ||
-    origin.username ||
-    origin.password ||
-    origin.pathname !== '/' ||
-    origin.search ||
-    origin.hash
-  )
-    throw new Error('Local asset installation requires an exact loopback HTTP origin.');
+  const origin = localGameOrigin(options.origin);
+  if (!origin) throw new Error('Local asset installation requires an exact loopback HTTP origin.');
   return toolSequence(20_000, async (operation) => {
-    const state = await toolHttp(
-      new URL('/api/state', origin),
-      {
-        redirect: 'error',
-      },
-      { timeoutMs: 10_000, parent: operation },
-    );
-    if (!state.ok) throw new Error('Open the local game before selecting its asset release.');
-    const session = state.headers
-      .getSetCookie()
-      .find((value) => value.startsWith('ol_session='))
-      ?.split(';')[0];
-    const view = (await state.json()) as {
-      access?: { scope?: string };
-      checkpoint?: { timeline: string };
-      presentationRelease?: AssetRevisionReference;
-      presentationReleaseRevision?: number;
-    };
-    if (!session || !view.access?.scope || !view.checkpoint?.timeline)
+    const session = await localGameSession(origin);
+    if (!session)
       throw new Error(
         'This command requires local operator authentication. Use the authenticated game for hosted worlds.',
       );
+    const tab = `assets-${randomUUID()}`;
+    const state = await toolHttp(
+      new URL('/api/operations', origin),
+      {
+        redirect: 'error',
+        headers: { Cookie: session, 'X-Ol-Client': tab },
+      },
+      { timeoutMs: 10_000, parent: operation },
+    );
+    const view = await state.json<OperationsView & { message?: string }>();
+    if (!state.ok)
+      throw new Error(
+        `World operations refused the read (HTTP ${state.status}): ${view.message ?? 'No reason was reported.'}`,
+      );
+    if (!view.scope || !view.checkpoint?.timeline)
+      throw new Error('This account cannot select the artwork for this world.');
     const result = await toolHttp(
       new URL('/api/assets/install', origin),
       {
@@ -52,7 +45,8 @@ export async function installLocalAssetRelease(options: {
           Cookie: session,
           Origin: origin.origin,
           'Content-Type': 'application/json',
-          'X-Ol-Scope': view.access.scope,
+          'X-Ol-Client': tab,
+          'X-Ol-Scope': view.scope,
         },
         body: JSON.stringify({
           id: options.operationId,

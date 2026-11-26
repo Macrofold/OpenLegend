@@ -1,4 +1,4 @@
-# OpenLegend applications and evidence-producing experiments
+# Open Legend applications and evidence-producing experiments
 
 **October 20, 2026 — proposed comparisons; none executed.** This dossier translates the [source reconstructions](01-kevin-source-reconstruction.md), [architecture panel](03-architectures-and-papers.md), [model catalogue](04-models-local-hosted-openrouter.md) and [voice investigation](05-realtime-voice-and-serving.md) into concrete questions for existing owners. It is not a full implementation design, a new test framework or permission to spend.
 
@@ -59,7 +59,7 @@ Measure accepted errors versus coverage, abstention, unnecessary escalation, mis
 
 **Hypothesis:** a different model or prompt can improve coherent characterization, including permitted conflict, without sacrificing evidence fidelity or native action validity.
 
-Compare stock Gemma 4 12B Instruct and the exact Kevin HauhauCS artifact at matched context and, where feasible, equivalent quantization. Add one verified hosted larger model and the current OpenLegend generator as baselines. Explicitly record unavoidable differences in training ancestry or deployment rather than attributing all gains to reduced refusal behavior.
+Compare stock Gemma 4 12B Instruct and the exact Kevin HauhauCS artifact at matched context and, where feasible, equivalent quantization. Add one verified hosted larger model and the current Open Legend generator as baselines. Explicitly record unavoidable differences in training ancestry or deployment rather than attributing all gains to reduced refusal behavior.
 
 Use coherent authored people with different values and histories. Include an ordinary afternoon, solitude, a declined invitation, actual useful help, sufficient food ending a food-seeking reason, an interruption, a disagreement, and a later return. Do not put the desired action sequence in biography or supply a hidden instruction to be more varied.
 
@@ -73,7 +73,7 @@ Evaluate appropriate independent choice, continued interests, stopping, factual 
 
 Compare current context with corrected native projection of the same lawful evidence. Only then add an on-demand image arm for a specific visual task. The candidate image must come from a selected authorized viewpoint, without human-only UI or hidden labels. A player pointing at something supplies a referent cue, not automatic access to the player's entire camera.
 
-Cases include two similar rocks, an object behind a wall, a moved target, an identical-looking stranger, a claimed gift without transfer, a real gift with exact count, a spawned object outside the exported roster, an observed attack and an unseen attack. Use an explicit no-match/uncertain result. Marked candidates can select exact native places; route feasibility and action currentness remain separate.
+Cases include two similar rocks, an object behind a wall, a moved target, an identical-looking stranger, a claimed gift without transfer, a real gift with exact count, a spawned object outside the exported roster, an observed attack and an unseen attack. Use an explicit no-match/uncertain result. Marked candidates can select exact native places; route feasibility and whether the chosen action is still valid remain separate.
 
 Trace whether a false answer came from absent bridge coverage, stale input, improper identity, failed retrieval or model error despite sufficient evidence. The system must not convert “not represented” into “definitely absent.” A model-generated visual description remains an interpretation of a captured image, not authority to rewrite the world.
 

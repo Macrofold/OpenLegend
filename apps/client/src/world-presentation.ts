@@ -710,15 +710,15 @@ export class WorldPresentation {
     // Faded out entirely, the light stops casting, so its shadow faces are not drawn.
     light.castShadows = this.fireShadow > 0;
   }
-  lighting(view: GameView, remembered: GameView['entities'] = view.entities): void {
+  lighting(view: GameView): void {
     this.receiveSunlight(view);
     const p = view.player.position;
-    // Retain illumination from last-permitted fire images when their sources leave sight.
-    // This is presentation memory, never current hidden source data.
+    // Only currently authorized sources illuminate the scene. Retained history
+    // never becomes a live light emitter. See the shared publication contract.
     const distance = (e: GameView['entities'][number]) =>
       Math.hypot(e.position.x - p.x, e.position.y - p.y, e.position.z - p.z) -
       (this.selectedLights.has(e.id) ? 1 : 0);
-    const sources = remembered
+    const sources = view.entities
       .filter((e) => e.heat?.lit)
       .sort((a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id))
       .slice(0, this.shadowQuality === 'economy' ? 2 : 8);

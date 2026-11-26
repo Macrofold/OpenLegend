@@ -29,7 +29,7 @@ Minecraft Realms offers useful host-paid/private-world inspiration; RuneScape me
 
 **Supporter:** a higher bounded allowance, optional extra character, and cosmetic or community benefits. Avoid “unlimited AI” until worst-case usage is sustainable. Reserve estimated compute internally, settle actual use, and expose a simple fair-use concept externally.
 
-**Host/creator:** a private sector with bounded active residents, concurrent guests, storage, and generation allowances. Provide pause/hibernate options. A world full of autonomous residents has a cost even if its human host is absent.
+**Host/creator:** a private sector with bounded active residents, concurrent guests, storage, and generation allowances. Provide pause/hibernate options. A world full of NPCs has a cost even if its human host is absent.
 
 This is a packaging sketch, not a pricing table. Paid-area access remains an option, but the first design should test whether it harms social cohesion. Paid novelty also creates a public-good question: if one person funds invention of a bow, do all players then use the known action freely? A proposed answer is yes where world knowledge permits; fund discovery and compute, not permanent exclusive ownership of every useful verb.
 

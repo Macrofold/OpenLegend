@@ -14,7 +14,7 @@ Michael Buttner's 2013 developer session describes using reinforcement learning 
 
 This is a useful counterexample to comparing systems by entity count alone. A crowd can react individually and contribute to play without each member supporting conversation, long-term obligations, private autobiographical memory or open-ended planning.
 
-For OpenLegend, a performance report should name the work performed by each counted person. Distinguish rendered bodies, moving agents, native activity executors, characters eligible for cognition and characters actually making model-backed decisions. Frame rate is not the same measurement as decisions per second or simulated time advanced per real second.
+For Open Legend, a performance report should name the work performed by each counted person. Distinguish rendered bodies, moving agents, native activity executors, characters eligible for cognition and characters actually making model-backed decisions. Frame rate is not the same measurement as decisions per second or simulated time advanced per real second.
 
 Those distinctions also prevent an unfair comparison in the other direction: a small language-agent demonstration can show much richer interpretation while leaving physical interaction, animation and large-population scheduling largely untested.
 
@@ -30,7 +30,7 @@ Those distinctions also prevent an unfair comparison in the other direction: a s
 
 A smaller populated space may support more meaningful people than a large crowd with shallow interaction. A creator may deliberately choose anonymous crowd ambience, but that is a world and product promise, not a universal optimization rule. For the ambition of individually cognitive characters, prioritize reducing repeated work and retaining valid intentions before declaring most people semantically interchangeable.
 
-The evidence would justify a stronger implementation recommendation only after inspecting the actual technical material or a reproducible implementation. It does not currently support importing an exact Hitman scheduling algorithm or advertising an equivalent OpenLegend population target.
+The evidence would justify a stronger implementation recommendation only after inspecting the actual technical material or a reproducible implementation. It does not currently support importing an exact Hitman scheduling algorithm or advertising an equivalent Open Legend population target.
 
 ## Sources
 
@@ -38,4 +38,4 @@ The evidence would justify a stronger implementation recommendation only after i
 
 **HI2.** Michael Buttner, IO Interactive / Square Enix, *Reinforcement Learning Based Character Locomotion in Hitman: Absolution*, GDC 2013. [Official session description](https://www.gdcvault.com/play/1018827/Reinforcement-Learning-Based-Character-Locomotion).
 
-Evidence confidence is high for the stated presentation scope, limited for inaccessible implementation detail, and unmeasured for transfer to OpenLegend. No full-game or runtime completion is claimed.
+Evidence confidence is high for the stated presentation scope, limited for inaccessible implementation detail, and unmeasured for transfer to Open Legend. No full-game or runtime completion is claimed.

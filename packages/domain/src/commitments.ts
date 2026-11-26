@@ -1,3 +1,4 @@
+import { selectedSpokenPromise, selectedCommitmentCompletionAllowed } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
@@ -68,6 +69,20 @@ export function retainsCommitmentSchedule(
     )
   );
 }
+/** Event suppression consults the same completion index as fulfillment. A
+ * matching live promise requires the original occurrence; silence cannot fulfill it. */
+export function hasCommitmentCompletion(
+  world: WorldState,
+  actorId: string,
+  eventTypes: readonly string[],
+): boolean {
+  const index = commitmentIndex(world.memories);
+  // The index contains unresolved promises, including overdue promises that can
+  // still be fulfilled. Match the same candidates as advanceCommitments.
+  return eventTypes.some(
+    (type) => !!index.completions.get(JSON.stringify([actorId, type]))?.length,
+  );
+}
 /** Reuse the obligation owner's existing sorted deadline index. */
 export function nextCommitmentDeadline(world: WorldState): number {
   return (
@@ -87,7 +102,6 @@ export interface Obligation {
 }
 /** Unresolved obligations per actor; further promise speech is still spoken but not
  * recorded. docs/limits/base-world.md#bw04 */
-export const COMMITMENT_ADMISSION_LIMIT = 16;
 /** The count admission checks against the limit: every unresolved commitment record,
  * including forgotten ones and commitments without a native obligation. */
 export function unresolvedCommitmentCount(world: WorldState, actorId: string): number {
@@ -107,35 +121,23 @@ export function openObligations(world: WorldState, actorId: string): MemoryRecor
 }
 /** Only committed, self-attributed explicit promise speech creates an obligation. */
 export function recordSpokenPromise(world: WorldState, event: WorldEvent): void {
-  if (
-    event.type !== 'speech' ||
-    !event.actorId ||
-    !/^I promise to\s+\S/i.test(String(event.data?.['text'] ?? ''))
-  )
-    return;
+  const recognized = selectedSpokenPromise(world, event);
+  if (!recognized || !event.actorId) return;
   const actorId = event.actorId;
-  if (unresolvedCommitmentCount(world, actorId) >= COMMITMENT_ADMISSION_LIMIT) return;
-  const words = String(event.data?.['text'] ?? '')
-    .trim()
-    .replace(/[.!]$/, '');
-  const gather = /^I promise to gather (.+)$/i.exec(words);
-  const named = gather?.[1]?.toLowerCase();
-  const definitions = Object.values(world.itemDefinitions).filter(
-    (d) => d.id.replaceAll('_', ' ').toLowerCase() === named || d.name.toLowerCase() === named,
-  );
-  const completion =
-    definitions.length === 1
-      ? { eventType: 'gathered', definitionId: definitions[0]!.id }
-      : undefined;
+  if (unresolvedCommitmentCount(world, actorId) >= recognized.limit) return;
+  const completion = recognized.completion;
   appendMemory(world, actorId, {
     kind: 'commitment',
     source: 'observed',
-    summary: subjectNarration(actorId, ['said: ', String(event.data?.['text'] ?? '')]),
+    summary: subjectNarration(actorId, [
+      recognized.summaryPrefix,
+      String(event.data?.['text'] ?? ''),
+    ]),
     eventId: event.id,
-    eventType: 'speech',
+    eventType: recognized.speechEvent,
     speakerId: actorId,
     entityIds: [actorId, ...(event.targetId ? [event.targetId] : [])],
-    importance: 10,
+    importance: recognized.importance,
     resolved: false,
     obligation: {
       revision: 1,
@@ -144,6 +146,11 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
       ...(completion ? { completion } : {}),
     },
   });
+}
+/** Keep the open native event-name contract while refusing conditions the
+ * selected world has deliberately retired. Presentation is not that vocabulary. */
+export function supportsCommitmentCompletion(world: WorldState, eventType: string): boolean {
+  return /^[a-z-]{1,64}$/.test(eventType) && selectedCommitmentCompletionAllowed(world, eventType);
 }
 export function amendCommitment(
   input: WorldState,
@@ -166,7 +173,7 @@ export function amendCommitment(
     (change.dueAt !== undefined &&
       (!Number.isFinite(change.dueAt) || change.dueAt < input.simTime)) ||
     (change.completion &&
-      (!/^[a-z-]{1,64}$/.test(change.completion.eventType) ||
+      (!supportsCommitmentCompletion(input, change.completion.eventType) ||
         (change.completion.targetId && !record.entityIds.includes(change.completion.targetId)) ||
         (change.completion.definitionId && !input.itemDefinitions[change.completion.definitionId])))
   )

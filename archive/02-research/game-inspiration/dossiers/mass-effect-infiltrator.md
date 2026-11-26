@@ -143,7 +143,7 @@ IronMonkey also acknowledged the launch criticism rather than leaving the post-r
 
 **Synthesis — interpretation:** the important divide is not simply “mobile versus console.” Players differ about how much imprecision they tolerate for a compact action loop, and how much story the franchise name led them to expect. Both expectation and actual input reliability belong in an assessment of the adaptation.
 
-## 11. Conditional OpenLegend research lessons
+## 11. Conditional Open Legend research lessons
 
 **Give repeated encounters more than a binary result.** Time, resource preservation and variety can support voluntary mastery. The dependency is transparent scoring aligned with intentional actions. A grade should not punish an interface mistake as though it were a meaningful tactical decision.
 
@@ -155,7 +155,7 @@ IronMonkey also acknowledged the launch criticism rather than leaving the post-r
 
 **Make automatic consequences understandable.** Repeated treatment of others can shape a later action without another explicit choice, but the player needs a credible model of the connection. A research comparison could contrast automatic character continuity with a final confirmation prompt. Neither format is inherently superior; the question is whether the player experiences recognition or arbitrary loss of control.
 
-These are conditional research hypotheses, not accepted OpenLegend requirements, implementation tasks or permission to reuse BioWare's intellectual property.
+These are conditional research hypotheses, not accepted Open Legend requirements, implementation tasks or permission to reuse BioWare's intellectual property.
 
 ## 12. Reading route, requirement map and preservation
 

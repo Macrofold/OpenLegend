@@ -51,6 +51,7 @@ function OwnedNicknameEditor({
           worldId: view.worldId,
           generation: view.historyEpoch?.split(':')[0] ?? '',
           subjectId: entity.id,
+          bodyReference: entity.bodyReference,
           expectedRevision: base.revision,
           nickname: draft.trim(),
         })
@@ -71,7 +72,6 @@ function OwnedNicknameEditor({
         <input
           value={draft}
           disabled={busy || !connected}
-          maxLength={80}
           onChange={(event) => setDraft(event.target.value)}
           aria-describedby={`nickname-help-${entity.id}`}
         />
@@ -87,13 +87,7 @@ function OwnedNicknameEditor({
       <div className="ol-button-row">
         <Button
           type="submit"
-          disabled={
-            busy ||
-            !connected ||
-            changed ||
-            draft.trim() === base.nickname ||
-            Array.from(draft.trim()).length > 40
-          }
+          disabled={busy || !connected || changed || draft.trim() === base.nickname}
         >
           Save nickname
         </Button>
@@ -137,7 +131,14 @@ export function NicknameEditor(props: Parameters<typeof OwnedNicknameEditor>[0])
   const { view, entity } = props;
   return (
     <OwnedNicknameEditor
-      key={`${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.access?.scope}:${entity.id}`}
+      key={JSON.stringify([
+        view.worldId,
+        view.saveTimeline,
+        view.historyEpoch,
+        view.access?.scope,
+        entity.id,
+        entity.bodyReference,
+      ])}
       {...props}
     />
   );

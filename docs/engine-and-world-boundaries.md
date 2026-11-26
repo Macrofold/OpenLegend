@@ -4,13 +4,13 @@
 
 [Spatial world](spatial-world.md) owns the XYZ/support/query boundary. The first provider supports bounded public planar patches embedded in 3D and finite blockers; the wilderness module supplies the lookout, profiles and native flight route. Keep those content choices replaceable rather than treating every world as a wilderness. Sensory definitions remain replaceable policies consuming geometry; rendering/appearance never admits physical capabilities. Broader provider/profile registration remains EWF/SW work.
 
-**Status: target architecture.** This document defines the intended separation between OpenLegend's runtime and the realities built with it. It does not claim that the current implementation already has a general module runtime. [Architecture](architecture.md) describes executable behavior; [EWF delivery](maintainers/extensible-world-foundation.md) tracks the missing shared foundation.
+**Status: target architecture.** This document defines the intended separation between Open Legend's runtime and the realities built with it. It does not claim that the current implementation already has a general module runtime. [Architecture](architecture.md) describes executable behavior; [EWF delivery](maintainers/extensible-world-foundation.md) tracks the missing shared foundation.
 
 ## 1. The product being built
 
-**OpenLegend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks.**
+**Open Legend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks.**
 
-Build OpenLegend first and extract its reusable engine boundaries through playable features. The final architecture is a direction, not an instruction to complete every abstraction before making the game useful. A v1-specific implementation is acceptable when its responsibility, current limitation, and future replacement boundary are explicit.
+Build Open Legend first and extract its reusable engine boundaries through playable features. The final architecture is a direction, not an instruction to complete every abstraction before making the game useful. A v1-specific implementation is acceptable when its responsibility, current limitation, and future replacement boundary are explicit.
 
 **Worlds define what exists and how it behaves. The runtime defines how admitted rules are represented, executed, combined, authorized, inspected, and preserved.**
 
@@ -74,10 +74,10 @@ For every new feature or significant change, answer these questions in its ownin
 2. **Can supported mechanisms express it?** Prefer configuration or composition. Do not add a native branch for a named finished invention.
 3. **What new computation is genuinely missing?** Add a narrow reviewed service or evaluator only when the existing interface cannot express the necessary work.
 4. **What can it read and change?** Distinguish world knowledge, actor evidence, private interpretation, security grants, and actual effects.
-5. **What wakes it and what bounds it?** Declare meaningful dependencies, execution phase, deadlines, maximum affected work, and failure behavior.
+5. **What wakes it and how much work can it cause?** Identify the dependencies, execution phase, deadlines and failure behavior. Give the maximum affected work when there is a bound. For an [intentionally uncapped case](limits/README.md), say what grows with the input and what safeguards still apply.
 6. **How does it enter and leave a running world?** Define state ownership, initialization, definition pins, active-work compatibility, removal, and save/load treatment.
 7. **Does it work through ordinary user and actor surfaces?** New state/actions need scoped inspection, context, discovery, and truthful presentation—not only a field in storage.
-8. **Can a substantially different fixture use the same contract?** Test a machine's charge rather than only adding thirst beside hunger.
+8. **What demonstrates the change?** When changing a reusable rule or claiming it works across cases, check a materially different case through the same contract. A machine using charge, for example, can reveal assumptions about human hunger. For new content under unchanged rules, exercise that content through its normal caller. Adding a plant to an existing gathering rule needs a check that someone can gather it. It needs a contrasting case only if the task also changes a reusable rule, claims generality or explicitly requires the comparison.
 
 A negative answer does not prohibit the feature. It identifies the missing layer. Localize a necessary fixed implementation behind a narrow interface rather than pretending it is already generally extensible.
 
@@ -100,7 +100,7 @@ These principles guide engine design, subsystem design, and implementation revie
 | **P09 — Lifecycle is part of a feature**                      | Creation, ongoing execution, cancellation, replacement, removal, save/restore, and failure must have defined outcomes.                                                                |
 | **P10 — Natural language is the primary authoring interface** | The world agent handles supported technical assembly, explains consequences, and asks consequential questions; inspectable technical artifacts remain the executable source of truth. |
 | **P11 — Make specificity explicit and local**                 | A fixed v1 subsystem may remain fixed. Mark its intended extension seam, owner, and expansion trigger in its documentation and nearby code, without pretending an interface exists.   |
-| **P12 — Prove generality with a different example**           | Test charge instead of only thirst, touch instead of only wider sight, and a nonnumeric disposition instead of only another meter.                                                    |
+| **P12 — Prove generality with a different example**           | Use a materially different case when changing a reusable rule or claiming generality, such as touch alongside sight or a nonnumeric disposition alongside a meter.                    |
 
 Apply P07 separately to fictional knowledge and application security. A world may deliberately support telepathy or compulsion through admitted game effects; neither can reach credentials, actual billing, or ungranted human-private data.
 
@@ -116,7 +116,9 @@ Exact approval must bind all effective trusted inputs that can change the approv
 
 Supply the complete committed occurrence, including its physical position, to the recording owner before it clones, persists or distributes evidence. The attributed actor and the location of an effect may differ, as when a released shot reaches a wall. Mutating a returned record cannot repair a copy already retained in history. Verify transition output against stored and restored history through the actual producer. Read-only TypeScript types prevent the assignments they cover; they do not establish deep runtime immutability.
 
-For event, action-result, awareness, memory, recall, consolidation, journal, telemetry and other historical tracking work, preserve the exact available facts at the recording boundary: identities and attribution, occurrence time/order, quantities and units, before/after values, attempted versus committed effects, failure/cancellation, and source/observation uncertainty. Record actual values after clamping or partial execution. Do not replace “15 to 33” with “improved,” silently round a canonical value, truncate an account, or let a compact summary become the only surviving representation. Precision means retaining what was actually known, not inventing exactness or exposing truth an observer could not perceive.
+For authoritative game records and receipts, including events, action results, awareness, memory, recall, consolidation and journals, preserve the exact permitted facts their contract requires for their allowed lifetime. These can include identities and attribution, occurrence time/order, quantities and units, before/after values, attempted versus committed effects, failure/cancellation, and source/observation uncertainty. Record actual values after clamping or partial execution. Do not replace “15 to 33” with “improved,” silently round a canonical value, truncate an account, or let a compact summary become the only surviving representation. Precision means retaining what was actually known, not inventing exactness or exposing truth an observer could not perceive.
+
+For optional performance diagnostics, keep only what the measurement needs. A counter for the number of completed saves can increment once per save and discard the input. The save owner still records the actual committed result. Use [measurement guidance](performance/measurement.md#optional-measurement) for diagnostic capture and retention.
 
 Keep deliberate refusal/withdrawal distinct from deadline expiry or automatic invalidation. An observer's account must not assign a choice to someone who did not make it. Carry the actual terminal cause through shared closure/rendering rather than replacing every ending with the same phrase. [The rivals review](verification/rivals-and-contested-ground.md#truthful-help-endings-after-live-expiry--october-14-2026) found an expired unanswered request described as chosen withdrawal, followed by a character repeating that false claim.
 
@@ -124,15 +126,17 @@ Keep authoritative event facts and each observer’s permitted evidence distinct
 
 Check starting work, continuing committed effects, physical participation and receiving new personal evidence separately against their owning lifecycles and installed world rules. A released effect may continue after its source stops participating, while that source is no longer eligible to observe; a body remaining in physical queries does not prove observer eligibility. Preserve exact source/life attribution without granting fresh knowledge from a historical reference or canceling committed effects merely to exclude an observer. For observation changes, also read [Personal perspective and acquisition](memory-architecture.md#personal-perspective-and-acquisition). Qualify participant loss between commitment and the later effect through both physical consequences and permitted evidence. [The rivals checks](verification/rivals-and-contested-ground.md#controlled-consent-privacy-and-useful-aftermath) caught a released projectile correctly surviving its shooter's death while the corpse incorrectly received new evidence.
 
-When a newly discovered case fails, trace the owner and complete producer-to-consumer path against these principles before adding a local branch, duplicate state or stronger prompt. State the general missing fact, contract or operation, repair its owner, and check a materially different case plus a meaningful failure. A successful forced experiment identifies a missing link; it cannot establish that the general design works. Reassess the architecture when the repair would bypass an owner or create competing representations. Do not change acceptance to excuse a defect.
+When a newly discovered case fails, trace the owner and complete producer-to-consumer path against these principles before adding a local branch, duplicate state or stronger prompt. Repair the missing fact, contract or operation at its owner and check a meaningful failure. For a changed reusable rule or a claim of generality, also check a materially different case under the boundary procedure above. A successful forced experiment identifies a missing link; it cannot establish that the general design works. Reassess the architecture when the repair would bypass an owner or create competing representations. Do not change acceptance to excuse a defect.
 
 ### Trace selected world behavior through its consumers
 
-Before changing a selected rule, installation or authored explanation, identify the actual producer and every consumer that independently constructs its meaning: ordinary and inventory menus, entity/equipped shortcuts, resident choices, grounding/help/schema examples, activity/status descriptions, records, learned methods and restoration. Trace defaults and explicit operator overrides through actual execution as well as startup. Component presence or linked implementation code alone cannot establish installation. A temporary missing prerequisite differs from an omitted capability; each affected consumer uses the same selected owner rather than recreating a bundled fallback.
+Before changing a selected rule, installation or authored explanation, identify the actual producer and every consumer that independently constructs its meaning: ordinary and inventory menus, entity/equipped shortcuts, NPC choices, grounding/help/schema examples, activity/status descriptions, records, learned activities and restoration. Trace defaults and explicit operator overrides through actual execution as well as startup. Component presence or linked implementation code alone cannot establish installation. A temporary missing prerequisite differs from an omitted capability; each affected consumer uses the same selected owner rather than recreating a bundled fallback.
 
 New definition families also enter the shared compact module manifest through content fingerprints, so same-version edits invalidate learned methods without copying full definitions into bounded method records.
 
 Verify the changed selected meaning through its affected downstream callers, including secondary shortcuts and current wording. For behavior or installation changes, include a materially different supported rule and omission. Preserve historical facts separately from current availability: exact trusted meaning can interpret finished records without granting another attempt, while resumable work needs its current required support. For action records, output bindings or reusable methods, also read the relevant [action-experience contract](action-experience.md). [The October 14 review](verification/world-engine-boundaries.md#requested-full-review--october-14-2026) found these missed consumers after the primary menu/executor already used the selected rules; it supplies examples, not new universal gameplay laws.
+
+For the native simulation, installation is the composition point for compiled world policy. A receiver can supply an observer's real evidence, proof and chronology while an installed interpretation supplies its fictional meaning. The [ordinary-warning recipe](projects/native-runtime-foundations-tech-design.md#93-nrf08--put-grounded-warning-meaning-behind-the-installed-policy) is the designed extraction from a current direct bundled-world dependency. Use this distinction at touched mechanic ports; it does not require a plugin loader or a rewrite of unrelated current-format codecs.
 
 ### Delivered selected boundaries
 
@@ -166,15 +170,15 @@ Keep detailed work in the focused tracker. Do not create an independent permanen
 
 The same storage mechanism may support multiple types, but their meanings differ:
 
-| Concept                    | Appropriate starting model                                                                                |
-| -------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Fullness or battery charge | Reservoir with bounds, rates, replenishment, and transition policies                                      |
-| Temperature or mass        | Quantity with units, precision, applicability, and conversion rules                                       |
-| Skill                      | Proficiency and knowledge, with explicitly supported prerequisites and action effects                     |
-| Trait                      | Category, disposition, structured value, or bounded narrative description                                 |
-| Empathy                    | Interpretation/behavior disposition unless the world deliberately defines a numerical mechanic            |
-| Health                     | A body-model value or derived condition summary; not universally a mandatory scalar                       |
-| Psychological need         | State with declared satisfaction mechanisms and controller relevance, not necessarily a physical resource |
+| Concept                    | Appropriate starting model                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Fullness or battery charge | Reservoir with bounds, rates, replenishment, and transition policies                                                   |
+| Temperature or mass        | Quantity with units, precision, applicability, and conversion rules                                                    |
+| Character skill            | Proficiency at an activity, with explicitly supported action effects and any required knowledge or other prerequisites |
+| Trait                      | Category, disposition, structured value, or bounded narrative description                                              |
+| Empathy                    | Interpretation/behavior disposition unless the world deliberately defines a numerical mechanic                         |
+| Health                     | A body-model value or derived condition summary; not universally a mandatory scalar                                    |
+| Psychological need         | State with declared satisfaction mechanisms and controller relevance, not necessarily a physical resource              |
 
 A bar is a projection of state. A useful new mechanic includes its state contract, update rules, effects, observation policy, controller meaning, available responses, and presentation. Its name alone grants none of these.
 
@@ -249,8 +253,8 @@ Transport and presentation adapt these owners; they do not create another capabi
 
 Use the existing [G0–G3 classification](../archive/07-technical-architecture/declarations-and-evolution.md#generation-levels-and-executable-references):
 
-- Configure existing behavior inside its supported envelope.
-- Compose registered state, predicates, effects, and processes as G1 where the interpreter supports them.
+- G0 expresses speech, interpretations or plans through existing actions and supported outcomes. A character can propose lighting a fire without defining a new fire rule.
+- G1 configures or composes supported behavior through typed definitions, such as a material or recipe. It can combine registered state, predicates, effects and processes where the interpreter supports them.
 - Introduce a bounded new algorithm as G2 only when an isolated execution interface is implemented and qualified.
 - Add a host primitive, privilege, storage interpretation, or incompatible runtime change through G3 engineering.
 

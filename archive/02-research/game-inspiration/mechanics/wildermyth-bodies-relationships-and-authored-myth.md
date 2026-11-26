@@ -45,7 +45,7 @@ The documented relationship types behave differently. Friends gain a defensive b
 
 **Interpretation:** a relationship is not just dialogue availability. It can make a familiar person matter in a practical moment. Equally important, rivalry is not treated as merely a failed friendship: friction has its own playable role.
 
-This is not a recommendation that OpenLegend adopt relationship points or fixed numerical tiers. It is an example of emotional framing and mechanical consequence reinforcing one another. A character helping a friend, competing with a rival, or refusing a request can express relationship meaning through different systems.
+This is not a recommendation that Open Legend adopt relationship points or fixed numerical tiers. It is an example of emotional framing and mechanical consequence reinforcing one another. A character helping a friend, competing with a rival, or refusing a request can express relationship meaning through different systems.
 
 The danger is reducing people to optimized bonus pairings. The opportunity is to let a player recognize why these two particular individuals act differently together. Which effect dominates depends on presentation, pacing, and the intended player motivation.
 

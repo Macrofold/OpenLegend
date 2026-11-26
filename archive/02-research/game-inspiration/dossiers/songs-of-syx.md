@@ -2,7 +2,7 @@
 
 **Research snapshot: October 13, 2026.** Full R01–R14 research pass; documentation and source review, not a hands-on playtest or an audit of the game's source code. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
 
-**Research only.** Observations about Songs of Syx are not accepted OpenLegend requirements. Adaptation ideas below do not authorize implementation, new engine policies, or reuse of copyrighted names, music, or art.
+**Research only.** Observations about Songs of Syx are not accepted Open Legend requirements. Adaptation ideas below do not authorize implementation, new engine policies, or reuse of copyrighted names, music, or art.
 
 Songs of Syx is especially valuable as a study of **how the player's responsibilities can change as a settlement grows without discarding the settlement that made the player care**. A useful question is not merely how many inhabitants it simulates, but how food, distance, public services, political obedience, industry, and war become connected decisions. This is the interpretation developed in this dossier, not a measured explanation of the game's commercial success.
 
@@ -207,7 +207,7 @@ Jonathan Bolding's 2021 PC Gamer account describes acquiring rare blue Cantors a
 
 ### Autonomous people, not demonstrated language-model characters
 
-Residents carry out work and use services within the player's arrangements. Individual inspection and population summaries offer two ways to understand the city. The researched material supports ordinary game simulation; it does **not** establish that vanilla inhabitants converse through LLMs, invent arbitrary goals, or possess OpenLegend-style generated conversational memories. [P01], [P07]
+Residents carry out work and use services within the player's arrangements. Individual inspection and population summaries offer two ways to understand the city. The researched material supports ordinary game simulation; it does **not** establish that vanilla inhabitants converse through LLMs, invent arbitrary goals, or possess Open Legend-style generated conversational memories. [P01], [P07]
 
 V71 gives most species natural children and family relationships, with parents temporarily caring for infants rather than working. Genealogy is inspectable; schools and higher education have distinct roles. Dondorians and Garthimi remain important reproductive exceptions. Those facts make “another inhabitant” potentially part of a household and dependency chain, not just instant labor. The existence of ancestry records does not establish a full romance simulation, inheritance drama, or generated biographical narrative. [P05], [W20], [W23]
 
@@ -215,7 +215,7 @@ V71 gives most species natural children and family relationships, with parents t
 
 Religion is not just a lore label. The reference distinguishes **Athuri**, **Crator**, **Aminion**, and **Shmalor**, with differing associations and benefits. Shrines and temples differ in their provision and conversion roles; religious preferences and opposition can affect a mixed population. Crator connects to nature and reproduction, Athuri to educated and productive institutions, and Shmalor to martial interests. These are authored religious systems with costs and consequences, not evidence of player-created theology or dynamically reasoned beliefs. [W26]
 
-Nobles, governors, soldiers, and ordinary workers also connect personal roles to population-wide effects. The design question for OpenLegend is whether a person can matter because of a specific relationship or responsibility, without reducing everyone else to an anonymous production modifier. That is a proposed lens for comparison, not an implemented transfer.
+Nobles, governors, soldiers, and ordinary workers also connect personal roles to population-wide effects. The design question for Open Legend is whether a person can matter because of a specific relationship or responsibility, without reducing everyone else to an anonymous production modifier. That is a proposed lens for comparison, not an implemented transfer.
 
 ### Single-player base; social creation around it
 
@@ -276,7 +276,7 @@ The project nonetheless includes distinct contributions: Jasinka's composition, 
 
 The official itch listing identifies **LWJGL**. The developer's FAQ discusses data and code modding. That supports a custom, extensible game implementation; it does not establish an open-source license for the game, a particular entity-storage layout, a multithreading strategy, or a reproducible performance result. [P03], [P07]
 
-Visible autonomy likewise does not reveal the scheduler, pathfinding algorithm, or internal AI model. Screenshots with many people and promotional population claims are not substitutes for a workload, machine specification, simulation speed, and measured latency. This dossier deliberately makes no claim that OpenLegend could obtain equivalent scale by copying an uninspected architecture.
+Visible autonomy likewise does not reveal the scheduler, pathfinding algorithm, or internal AI model. Screenshots with many people and promotional population claims are not substitutes for a workload, machine specification, simulation speed, and measured latency. This dossier deliberately makes no claim that Open Legend could obtain equivalent scale by copying an uninspected architecture.
 
 ### Development sequence and meaningful reversals
 
@@ -286,7 +286,7 @@ The V69 account is unusually useful evidence of iteration: Jake said attempts in
 
 The research-rework discussion similarly exposes disagreement over the difference between a meaningful support economy and repetitive staffing overhead. Developer comments, player proposals, and delivered release notes must remain separate. A suggestion in a feedback thread is not a roadmap commitment. [P10]
 
-Major releases can break saves and mods, with older branches offered so players can finish existing runs. That creates both freedom to revise systems and continuity costs for players and creators. It is Songs of Syx's development practice, not a recommendation to change OpenLegend's current compatibility policy. [P05], [P07]
+Major releases can break saves and mods, with older branches offered so players can finish existing runs. That creates both freedom to revise systems and continuity costs for players and creators. It is Songs of Syx's development practice, not a recommendation to change Open Legend's current compatibility policy. [P05], [P07]
 
 ## R10 — Distribution, marketing, community, and sharing
 
@@ -351,15 +351,15 @@ The all-time top-rated/helpful English surface was accessible. Attempts to retri
 
 The most useful agreement is that the game's appeal lies in connected systems and the city becoming more than its starting village. The strongest disagreement is whether the effort required to keep those systems running produces satisfying responsibility or distracting upkeep. A player who enjoys diagnosis may value the same detailed economy that another experiences as arbitrary friction. [V02], [V03], [S01], [S02], [S03]
 
-Keep several complaint types separate: **onboarding** is not necessarily missing mechanics; **balance preference** is not a reproducible defect; **a current bug allegation** is not proof of its cause; **old advice becoming wrong** is a maintenance problem; **dislike of a tone or sound** is a real suitability issue without being universal. That separation makes reception more useful for OpenLegend than averaging opinions into a vague “deep but complex” verdict.
+Keep several complaint types separate: **onboarding** is not necessarily missing mechanics; **balance preference** is not a reproducible defect; **a current bug allegation** is not proof of its cause; **old advice becoming wrong** is a maintenance problem; **dislike of a tone or sound** is a real suitability issue without being universal. That separation makes reception more useful for Open Legend than averaging opinions into a vague “deep but complex” verdict.
 
 TheGamer's 2022 article and Rock Paper Shotgun's 2023 Rally Point article were located, but usable full bodies could not be retrieved. They were **not counted as read reviews** and their unseen contents were not reconstructed from titles or short excerpts. See R14.
 
-## R13 — Transferable patterns and limits for OpenLegend
+## R13 — Transferable patterns and limits for Open Legend
 
-These are research interpretations. OpenLegend's current [README](../../../../README.md) prioritizes a playable, enjoyable game, practical invention, independent characters, and persistent consequence, with elaborate maintenance required to earn its place. The following comparisons respect that distinction; they are not a request to turn OpenLegend into a metropolitan management game.
+These are research interpretations. Open Legend's current [README](../../../../README.md) prioritizes a playable, enjoyable game, practical invention, independent characters, and persistent consequence, with elaborate maintenance required to earn its place. The following comparisons respect that distinction; they are not a request to turn Open Legend into a metropolitan management game.
 
-| Pattern worth studying | Possible OpenLegend application | Dependency, failure mode, or alternative |
+| Pattern worth studying | Possible Open Legend application | Dependency, failure mode, or alternative |
 | --- | --- | --- |
 | **Growth changes decisions rather than replacing the original place.** | A shelter could become a meaningful social or productive center while retaining its original people and history. | Do not introduce empire management merely to imitate scale. A small place can deepen through relationships and new uses. |
 | **Useful objects participate in several activities.** | A crafted container, tool, or preserved food can affect travel, care, commerce, and practical invention. | Interdependence requires understandable consequences. Hidden universal upkeep can make every object a chore. |

@@ -4,6 +4,8 @@
 
 Confirmed favorites, with creative interpretation kept distinct from your stated preferences. This is the final curated reference set for this discussion, not a finalized renderer, asset budget or production specification.
 
+For the installed UE5 player, use the [updated creative brief](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/final-board/creative-brief.md) and [migration art requirements](../../docs/features/unreal-player/landscapes-and-building.md). The pixel treatments below belong to the earlier browser baseline.
+
 ## Shared direction
 
 Beautiful plain 3D models and textures in a grounded stylized style (real proportions, slightly simplified forms, painted-looking textures) anchored on Quaternius's stylized textured kits, with expressive and recognizable people, purposeful light and an inviting sense of life, shown at full display resolution with no pixel treatment. Nature stays closer to real growth than those kits. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in shape, palette, material interpretation, lighting and animation while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.
@@ -44,7 +46,7 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 ### Emberville — A varied world with room for action and ordinary life
 
-**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for OpenLegend; the Stardew Valley resemblance is a reference association, not a selected style.
+**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for Open Legend; the Stardew Valley resemblance is a reference association, not a selected style.
 
 **Visual reading:** Misty streets, warm timber interiors, luminous laboratory equipment, webbed caves, open desert and cultivated land create distinct places through layout, material, light and apparent use. The trailers also contrast damaged and furnished interiors, construction and fighting.
 
@@ -64,7 +66,7 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 ### Sea of Stars — Expressive environments in a grounded world
 
-**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
+**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. Open Legend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
 
 **Creative interpretation:** Organize richness around large landforms and purposeful colour and material groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
 
@@ -88,7 +90,7 @@ A pixel-authored surface does not require cubic anatomy. Cloth may use a continu
 
 The [starting-scene art plan](../../docs/projects/3d-pixel-art-first-scene-plan.md) applies this brief to the existing starting scene, preserving its playtesting content while adding controlled technique experiments, an authored/generated asset pair and measured moving review. [Tracked tasks](../../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks) own unfinished work; approving the direction does not approve an unseen result.
 
-See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [OpenLegend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
+See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [Open Legend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
 
 ### Dave the Diver — Personality at every scale
 

@@ -1,6 +1,6 @@
 # Find a reference by the interaction you are exploring
 
-**Navigation and inspiration only.** This is an entry point into the [granular studies](README.md), not a new specification, mechanic catalogue, or implementation backlog. The linked studies own the detailed descriptions, source citations, version qualifications, and review disagreements. A row identifies a useful comparison; it does not assert that the games use identical implementations or that OpenLegend should adopt the mechanic.
+**Navigation and inspiration only.** This is an entry point into the [granular studies](README.md), not a new specification, mechanic catalogue, or implementation backlog. The linked studies own the detailed descriptions, source citations, version qualifications, and review disagreements. A row identifies a useful comparison; it does not assert that the games use identical implementations or that Open Legend should adopt the mechanic.
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 

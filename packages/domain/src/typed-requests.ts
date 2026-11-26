@@ -1,5 +1,9 @@
+import pointGrammar from './typed-point.json' with { type: 'json' };
+import stopGrammar from './typed-stop.json' with { type: 'json' };
+import movementFormat from './typed-movement-format.json' with { type: 'json' };
 import { selectedTypedRequestVocabulary } from './world-composition.js';
 import type { WorldState } from './types.js';
+import type { ActivityDefinitionScope } from './activity-hosts.js';
 
 /** A world's words for typed requests: what its things and creatures are called, requests it
  * recognizes but cannot perform (with its own reason), faithful near-substitutes, and
@@ -29,6 +33,29 @@ export interface TypedRequestVocabulary {
 
 /** Composition point: the bundled world supplies the vocabulary today. An installed world
  * package would supply its own here once external packages exist (EWF); there is no loader. */
-export function typedRequestVocabulary(world: WorldState): TypedRequestVocabulary {
+export function typedRequestVocabulary(
+  world: ActivityDefinitionScope & Pick<WorldState, 'profile'>,
+): TypedRequestVocabulary {
   return selectedTypedRequestVocabulary(world);
 }
+
+/** `undefined` means other wording, `null` means stop the current work, and a name
+ * requires the matching activity. The stand-alone host reads the same grammar. */
+export function typedStop(text: string): keyof typeof stopGrammar.activities | null | undefined {
+  const split = text.indexOf(' ');
+  const verb = split < 0 ? text : text.slice(0, split);
+  if (!stopGrammar.verbs.includes(verb)) return undefined;
+  const phrase = split < 0 ? '' : text.slice(split + 1);
+  if (stopGrammar.unnamed.includes(phrase)) return null;
+  return Object.hasOwn(stopGrammar.activities, phrase)
+    ? (phrase as keyof typeof stopGrammar.activities)
+    : undefined;
+}
+
+export function typedStopMatches(activity: keyof typeof stopGrammar.activities, kind: string) {
+  return stopGrammar.activities[activity] === kind;
+}
+
+/** Neutral coordinate phrases shared by the normalized Source and Rust readers. */
+export const typedPointGrammar = pointGrammar;
+export const typedMovementFormat = movementFormat;

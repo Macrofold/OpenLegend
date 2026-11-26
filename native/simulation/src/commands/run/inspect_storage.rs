@@ -1,0 +1,461 @@
+//! Deliberate world storage access uses one sight and reach path. Inspection
+//! additionally owns its bounded page and private acquisitions.
+use super::inspect_item::{ItemEvidence, ItemPlace, prepare_item_evidence};
+use super::*;
+use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+use crate::ground_items::inspection::{PAGE_DESCRIPTION_BYTES, PAGE_ITEMS, WorldStorage};
+use crate::host::retained_size::HeapBytes;
+use crate::narration::{
+    CapturedKind, CapturedNarration, GrammaticalPerson, NameArticle, Narration, NarrationPart,
+    PersonRole,
+};
+use crate::reception::{EncounterExposure, EventScalar, SightBatch};
+use crate::state::InventoryInspection;
+use crate::text::JsText;
+
+pub(super) struct PreparedStorage {
+    page: InventoryInspection,
+    custody: ByteReservation,
+    occurrences: std::vec::IntoIter<ItemEvidence>,
+    summary: JsText,
+}
+
+impl PreparedStorage {
+    /// The same two-phase publication for one deliberately read owned record.
+    pub(super) fn owned_record(
+        page: InventoryInspection,
+        custody: ByteReservation,
+        item: ItemEvidence,
+        summary: JsText,
+    ) -> Self {
+        Self {
+            page,
+            custody,
+            occurrences: vec![item].into_iter(),
+            summary,
+        }
+    }
+}
+
+impl CommandCursor {
+    fn storage_container(&self, state:&crate::simulation::SimulationState, actor:&str) -> Result<&str, ExecutionError> {
+        match &self.command {
+            NativeCommand::InspectInventory {
+                world: Some(selected),
+                ..
+            } => Ok(&selected.root),
+            NativeCommand::TransferStock {request,..} => request.endpoint(state,actor).ok().flatten().ok_or(ExecutionError::Invariant),
+            NativeCommand::TransferItem {
+                selection,
+                group: None,
+                ..
+            } => selection
+                .world_storage
+                .as_deref()
+                .ok_or(ExecutionError::Invariant),
+            _ => Err(ExecutionError::Invariant),
+        }
+    }
+
+    fn refuse_storage_access(&mut self) -> Result<(), ExecutionError> {
+        if matches!(self.command, NativeCommand::TransferItem { .. } | NativeCommand::TransferStock { .. }) {
+            self.refuse_arrangement(crate::execution::OwnedMoveError::Unavailable)
+        } else {
+            self.refuse_inspection()
+        }
+    }
+
+    pub(super) fn start_storage_access(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+    ) -> Result<bool, ExecutionError> {
+        let id = self.storage_container(core.state,actor)?;
+        let Some(storage) = WorldStorage::selected(&core.state, actor, id) else {
+            self.refuse_storage_access()?;
+            return Ok(false);
+        };
+        if storage.root.id != id
+            && WorldStorage::disclosed(&core.state, actor, id, false, &self.budget)?.is_none()
+        {
+            self.refuse_storage_access()?;
+            return Ok(false);
+        }
+        let root = storage.root.id.as_str();
+        self.binding.serial = core.journal.next_provider_serial()?;
+        self.sight = Some(
+            SightBatch::prepare(
+                &core.state.physical,
+                &core.state.installed,
+                actor,
+                &[root],
+                self.binding,
+                &self.budget,
+            )
+            .map_err(|_| ExecutionError::Invariant)?,
+        );
+        self.phase = Phase::StorageSight;
+        Ok(true)
+    }
+
+    pub(super) fn storage_sight(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+        answer: GeometryAnswers,
+    ) -> Result<Progress, ExecutionError> {
+        let sight = self
+            .sight
+            .take()
+            .ok_or(ExecutionError::Invariant)?
+            .finish(answer)
+            .map_err(|_| ExecutionError::Invariant)?;
+        let ray = WorldStorage::selected(&core.state, actor, self.storage_container(core.state,actor)?)
+            .filter(|storage| sight.seen(&storage.root.id) == Some(true))
+            .map(|storage| storage.reach(&self.budget))
+            .transpose()?
+            .flatten();
+        if let Some(ray) = ray {
+            self.reserve(size_of::<crate::geometry::SightRay>())?;
+            self.question(core, Phase::StorageReach)?.sight.push(ray);
+            return Ok(Progress::Geometry);
+        }
+        self.refuse_storage_access()?;
+        self.drive(core, None)
+    }
+
+    pub(super) fn storage_reach(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+        answer: GeometryAnswers,
+    ) -> Result<Progress, ExecutionError> {
+        let supplied = self.queries.take().ok_or(ExecutionError::Invariant)?;
+        supplied
+            .validate_answers(&answer)
+            .map_err(|_| ExecutionError::Invariant)?;
+        if answer.sight.as_slice() != [true] {
+            self.refuse_storage_access()?;
+            return self.drive(core, None);
+        }
+        if matches!(self.command, NativeCommand::TransferItem { .. } | NativeCommand::TransferStock { .. }) {
+            if let Some(event) = self.transfer_item(core, actor)? {
+                return Ok(Progress::Occurrence(event));
+            }
+            return self.drive(core, None);
+        }
+        let NativeCommand::InspectInventory {
+            world: Some(selected),
+            ..
+        } = &self.command
+        else {
+            return Err(ExecutionError::Invariant);
+        };
+        let Some(root) = WorldStorage::selected(&core.state, actor, &selected.root) else {
+            self.refuse_inspection()?;
+            return self.drive(core, None);
+        };
+        if let Some(after) = selected.after.as_deref() {
+            let previous = root.inspection(&self.budget)?;
+            if !previous.is_some_and(|page| {
+                page.more
+                    && page.after == after
+                    && Some(page.revision) == selected.expected_revision
+                    && Some(&page.scope) == selected.expected_scope.as_ref()
+            }) {
+                self.refuse_inspection()?;
+                return self.drive(core, None);
+            }
+        }
+        let Some(items) = root.children_after(selected.after.as_deref()) else {
+            self.refuse_inspection()?;
+            return self.drive(core, None);
+        };
+        if self.options.preview || self.preparation_mode.is_some() {
+            self.finish_inspection()?;
+            return self.drive(core, None);
+        }
+        let prepared = prepare_storage(&core.state, actor, root, items, &self.budget)?;
+        let Some(prepared) = prepared else {
+            self.refuse_inspection()?;
+            return self.drive(core, None);
+        };
+        self.storage_inspection = Some(prepared);
+        self.phase = Phase::StoragePage;
+        self.drive(core, None)
+    }
+
+    /// Read only the named actor's first bounded custody page. Private item
+    /// descriptions and their acquisition receipts use the same publication path
+    /// as deliberately inspected world storage, including empty inventories.
+    pub(super) fn inspect_possessions(&mut self,core:&mut CoreMutation<'_>,actor:&str,container:&str)->Result<(),ExecutionError>{
+        let state=&core.state;
+        let Some((scope,mut custody))=crate::ground_items::inspection::owned::scope(state,actor,container,&self.budget)? else{return self.refuse_inspection();};
+        if self.options.preview || self.preparation_mode.is_some(){return self.finish_inspection();}
+        let parent=state.physical.entities.get(container).ok_or(ExecutionError::MissingEntity)?;
+        let name=if parent.id==actor{crate::state::Named{name:parent.name.clone(),name_form:parent.name_form.clone(),indefinite_article:parent.indefinite_article.clone()}}else{
+            let lot=parent.item.as_ref().ok_or(ExecutionError::Invariant)?;
+            state.installed.retained.items.get(&lot.definition_pin.id).ok_or(ExecutionError::Invariant)?.named.clone()
+        };
+        custody.resize(custody.bytes()+name.heap_bytes().ok_or(ExecutionError::Capacity)?+container.len()+4096)?;
+        let page=InventoryInspection{revision:parent.inventory_revision.unwrap_or_default(),scope,container_id:Some(container.into()),container_name:name.clone(),after:String::new(),more:false,
+            item_ids:Vec::with_capacity(PAGE_ITEMS),item_names:Vec::with_capacity(PAGE_ITEMS),evidence_ids:Vec::with_capacity(PAGE_ITEMS+1)};
+        let location=ItemPlace::Possession((actor!=container).then_some(&name.name));
+        let children=state.inventory.children(&state.physical.entities,container,false).map(Ok);
+        let Some(result)=fill_page(state,actor,page,custody,location,true,children,&self.budget)? else{return self.refuse_inspection();};
+        self.storage_inspection=Some(result);self.phase=Phase::StoragePage;Ok(())
+    }
+    pub(super) fn storage_occurrence(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+    ) -> Result<Progress, ExecutionError> {
+        let pending = self
+            .storage_inspection
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?;
+        if let Some(prepared) = pending.occurrences.next() {
+            self._reservation.merge(prepared.custody)?;
+            let event = core.stage_event(prepared.intent)?;
+            self.reserve(event.id.len())?;
+            self.storage_inspection
+                .as_mut()
+                .ok_or(ExecutionError::Invariant)?
+                .page
+                .evidence_ids
+                .push(event.id.clone());
+            self.event = Some(event.id.clone());
+            self.after_event = Phase::StoragePage;
+            return Ok(Progress::Occurrence(event));
+        }
+        let PreparedStorage {
+            mut page,
+            custody,
+            summary,
+            ..
+        } = self
+            .storage_inspection
+            .take()
+            .ok_or(ExecutionError::Invariant)?;
+        let target = page
+            .container_id
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?;
+        self.reserve(1024 + target.len() + actor.len() * 4)?;
+        let mut parts = vec![
+            NarrationPart::Participant {
+                entity_id: actor.to_owned(),
+                role: PersonRole::Subject,
+                article: None,
+            },
+            NarrationPart::Literal(" ".into()),
+            NarrationPart::Verb {
+                subject_id: actor.to_owned(),
+                verb: "inspect".into(),
+            },
+        ];
+        if target == actor {
+            parts.push(NarrationPart::Literal(" ".into()));
+            parts.push(NarrationPart::Participant {
+                entity_id: actor.to_owned(),
+                role: PersonRole::Possessive,
+                article: None,
+            });
+            parts.push(NarrationPart::Literal(" accessible possessions".into()));
+        } else {
+            parts.push(NarrationPart::Literal(
+                " the accessible contents of ".into(),
+            ));
+            parts.push(NarrationPart::Participant {
+                entity_id: target.to_owned(),
+                role: PersonRole::Object,
+                article: Some(NameArticle::Definite),
+            });
+        }
+        parts.push(NarrationPart::Literal(summary));
+        let narration = Narration { parts };
+        let contained = core
+            .state
+            .physical
+            .entities
+            .get(target)
+            .is_some_and(|container| crate::install::inventory_parent(container).is_some());
+        let text = if contained {
+            // The page acquired the exact contained name. Its private summary
+            // must not look for a separately visible body for that bag.
+            let reader = crate::worlds::InstalledPersonalNameReader::prepare(
+                &core.state.physical,
+                &core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                actor,
+            )
+            .map_err(ExecutionError::Received)?;
+            let owner = reader
+                .capture_observer_name(actor, &self.budget)
+                .map_err(ExecutionError::Received)?;
+            self.reserve(
+                1024 + actor.len()
+                    + target.len()
+                    + owner.name().heap_bytes().ok_or(ExecutionError::Capacity)?
+                    + page
+                        .container_name
+                        .heap_bytes()
+                        .ok_or(ExecutionError::Capacity)?,
+            )?;
+            EmissionText::Captured(CapturedNarration {
+                kind: CapturedKind::CapturedNarration,
+                narration,
+                names: IndexMap::from([
+                    (actor.to_owned(), owner.name().clone()),
+                    (target.to_owned(), page.container_name.clone()),
+                ]),
+                self_id: None,
+                person: GrammaticalPerson::Third,
+            })
+        } else {
+            EmissionText::Narration(narration)
+        };
+        let event = core.stage_event(EventEmissionIntent {
+            event_type: "inventory-inspected".into(),
+            text,
+            audience: AudienceSelection::Explicit(vec![actor.to_owned()]),
+            source_id: Some(actor.to_owned()),
+            target_id: None,
+            data: Some(IndexMap::from([
+                ("importance".into(), EventScalar::Number(6.0)),
+                ("semanticTrigger".into(), EventScalar::Boolean(true)),
+            ])),
+            scope: EventScope::Private,
+            origin: None,
+            exposure: None,
+        })?;
+        self.reserve(event.id.len())?;
+        page.evidence_ids.push(event.id.clone());
+        core.physical()
+            .install_inventory_inspection(actor, page, custody)?;
+        self.finish_inspection()?;
+        self.event = Some(event.id.clone());
+        self.after_event = Phase::Done;
+        Ok(Progress::Occurrence(event))
+    }
+}
+
+fn prepare_storage(
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    root: WorldStorage<'_>,
+    children: &[crate::state::EntityHandle],
+    budget: &ByteBudget,
+) -> Result<Option<PreparedStorage>, ExecutionError> {
+    let names = crate::worlds::InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        actor,
+    )
+    .map_err(ExecutionError::Received)?;
+    let root_name = names
+        .capture_observer_name(&root.root.id, budget)
+        .map_err(ExecutionError::Received)?;
+    let captured = root.disclosed_name();
+    let nested_name = if root.container.id != root.root.id && captured.is_none() {
+        Some(
+            names
+                .capture_observer_name(&root.container.id, budget)
+                .map_err(ExecutionError::Received)?,
+        )
+    } else {
+        None
+    };
+    let name = captured
+        .or(nested_name.as_ref().map(|name| name.name()))
+        .unwrap_or_else(|| root_name.name());
+    let (page, custody) = root.prepare(name, budget)?;
+    let _location =
+        budget.reserve(name.name.storage_bytes() + root_name.name().name.storage_bytes() + 32)?;
+    let place = if root.container.id != root.root.id {
+        JsText::concat(&[&name.name, &" at ".into(), &root_name.name().name])
+    } else {
+        name.name.clone()
+    };
+    fill_page(state,actor,page,custody,ItemPlace::World{parent:root.root,label:&place},false,
+        children.iter().map(|handle|state.physical.entities.resolve(*handle).ok_or(ExecutionError::Invariant)),budget)
+}
+fn fill_page<'a>(state:&crate::simulation::SimulationState,actor:&str,mut page:InventoryInspection,mut custody:ByteReservation,
+    place:ItemPlace<'_>,owned:bool,children:impl Iterator<Item=Result<&'a crate::state::Entity,ExecutionError>>,budget:&ByteBudget)
+    -> Result<Option<PreparedStorage>,ExecutionError>{
+    custody.resize(
+        custody
+            .bytes()
+            .checked_add(PAGE_DESCRIPTION_BYTES * 4 + PAGE_ITEMS * size_of::<ItemEvidence>())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut summary = JsText::from(":");
+    let mut used = 0_usize;
+    let mut occurrences = Vec::with_capacity(PAGE_ITEMS);
+    let mut more=false;
+    for next in children {
+        let body=next?;
+        if occurrences.len() == PAGE_ITEMS {more=true;break;}
+        let lot = crate::install::project_owned(
+            &state.installed.retained,
+            if owned {actor} else {""},
+            body,
+            owned && crate::install::accessible_bag(body,actor),
+            state.physical.holds.quantity(&body.id),
+        )?;
+        let Some(prepared) = prepare_item_evidence(
+            state,
+            actor,
+            body,
+            lot,
+            place,
+            budget,
+        )?
+        else {
+            if occurrences.is_empty() {
+                return Ok(None);
+            }
+            more=true;break;
+        };
+        if used + prepared.description_bytes > PAGE_DESCRIPTION_BYTES {
+            more=true;break;
+        }
+        used += prepared.description_bytes;
+        let Some(EncounterExposure::InventoryItem { description, .. }) =
+            prepared.intent.exposure.as_ref()
+        else {
+            return Err(ExecutionError::Invariant);
+        };
+        custody.resize(
+            custody
+                .bytes()
+                .checked_add(
+                    body.id.len() * 2
+                        + lot.named.heap_bytes().ok_or(ExecutionError::Capacity)?
+                        + 64,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        page.after.clone_from(&body.id);
+        page.item_ids.push(body.id.clone());
+        page.item_names.push(lot.named.clone());
+        summary.push_str(" ");
+        summary.push_text(description);
+        occurrences.push(prepared);
+    }
+    page.more = more;
+    if page.more {
+        summary.push_str(" More items remain; the next page can be inspected explicitly.");
+    } else {
+        summary.push_str(" This is the last page.");
+    }
+    Ok(Some(PreparedStorage {
+        page,
+        custody,
+        occurrences: occurrences.into_iter(),
+        summary,
+    }))
+}

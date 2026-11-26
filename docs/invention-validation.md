@@ -179,7 +179,7 @@ Jev is a replaceable focused semantic judgment adapter. Its useful jobs include 
 
 A question should name its exact evidence and possible outcomes, including none/unknown where appropriate. Do not ask whether an entire invention is safe, whether arbitrary code is correct, or whether a resource cycle conserves an exact quantity. Do not use Jev to discover a complete dependency graph from prose.
 
-Ask independent questions sharing the same state together. A later question needs another request only when its actual evidence/options cannot be built until the earlier result arrives. Do not manufacture serial calls for questions already answerable from the first packet. The vendor's [primitives documentation](https://docs.typesafe.ai/primitives) describes this independence; it is not a performance guarantee for OpenLegend.
+Ask independent questions sharing the same state together. A later question needs another request only when its actual evidence/options cannot be built until the earlier result arrives. Do not manufacture serial calls for questions already answerable from the first packet. The vendor's [primitives documentation](https://docs.typesafe.ai/primitives) describes this independence; it is not a performance guarantee for Open Legend.
 
 Use task-specific qualification and thresholds. Reported confidence summarizes the answer distribution rather than proving whole-invention correctness; see the [confidence contract](https://docs.typesafe.ai/confidence). Do not promote a single prototype threshold to all admission decisions. Preserve abstention and distinguish unknown evidence, insufficient method detail, forbidden premise, and unsupported execution.
 

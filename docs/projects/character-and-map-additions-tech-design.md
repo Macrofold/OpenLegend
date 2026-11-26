@@ -42,7 +42,7 @@ Different-world checks (P12): the clockwork world could derive a "Composure" sum
 | Crafting and making time   | `manufacture.ts`                                              | DEX, Inspired                          |
 | Hit chance                 | Combat's single effective-accuracy factor                     | DEX (all), PER (ranged); clamped 5–95% |
 | Recognition                | [Perception policy](../worlds/base/perception-recognition.md) | PER, as p = PER / 20                   |
-| Practice progress          | Practical competence                                          | INT, Inspired                          |
+| Practice progress          | Character skill                                               | INT, Inspired                          |
 | Fear grip, Spirit pull     | Emotion bodily composure; the Spirit rule                     | WIL                                    |
 | Health recovery            | Body policy                                                   | RES                                    |
 | Persuasion, mood cues      | Addressee's decision context; person-window observations      | CHA, EMP                               |

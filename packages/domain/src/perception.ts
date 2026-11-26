@@ -1,3 +1,4 @@
+import { selectedMovementRules } from './world-composition.js';
 import { readOnlyDraftView } from './draft.js';
 import { assemblyShapes } from './assembly-geometry.js';
 import { canonicalJson, contentLabel } from './events.js';
@@ -30,6 +31,7 @@ import {
   type AcousticExposure,
   SPEECH_VOLUMES,
   type SpeechVolume,
+  type AcousticPolicy,
 } from './acoustics.js';
 import { effectiveBodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
@@ -50,6 +52,7 @@ export type SenseDefinition = { id: string; version: 1 } & (
       routineTiming: 'boundary' | 'cadence';
       radius: number;
       sampleSeconds?: number;
+      detailSampleSeconds?: number;
       fieldOfViewRadians?: number;
     }
   | {
@@ -111,7 +114,7 @@ type ResolvedSenses = {
   reaches: Record<SpeechVolume, number>;
 };
 export interface RoutineSensePolicy {
-  sight?: { key: string; mode: 'boundary' | 'cadence'; seconds?: number };
+  sight?: { key: string; mode: 'boundary' | 'cadence'; seconds?: number; detailSeconds?: number };
   contact?: { key: string; mode: 'crossing' | 'sampled'; seconds?: number };
 }
 const resolvedSenses = new WeakMap<object, Map<string, ResolvedSenses>>();
@@ -148,6 +151,7 @@ function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
         ),
         mode: vision.routineTiming,
         seconds: vision.sampleSeconds,
+        detailSeconds: vision.detailSampleSeconds,
       },
       contact: contact && {
         key: contentLabel(
@@ -338,6 +342,12 @@ export function sensesFor(world: WorldState, entity: Entity): SenseDefinition[] 
 }
 export function visionRadius(world: WorldState, entity: Entity): number {
   if (capabilityBlocked(world, entity, 'perception')) return 0;
+  return installedVisionRadius(world, entity);
+}
+/** Conservative receiving bound, never visibility authority. Temporary restrictions
+ * can end through another source or elapsed time without changing this body.
+ * docs/status-effects.md#independent-capability-contributions */
+export function installedVisionRadius(world: WorldState, entity: Entity): number {
   return resolveSenses(world, entity).vision;
 }
 export function visionFieldOfView(world: WorldState, entity: Entity): number {
@@ -582,11 +592,38 @@ export function perceptionGuide(world: WorldState, observer: Entity) {
   const { hearingFloor: floor, policy, visionAngle } = resolveSenses(world, observer);
   const enabled =
     activelyParticipates(observer) && !capabilityBlocked(world, observer, 'perception');
+  return perceptionGuideFrom({
+    body,
+    heading: observer.spatial.heading,
+    enabled,
+    hearingFloor: floor,
+    visionAngle,
+    policy,
+  });
+}
+
+/** Display the selected observer's actual detector parameters. This formatter
+ * consumes an acquired own-body read; it never performs a sensory query. */
+export function perceptionGuideFrom({
+  body,
+  heading,
+  enabled,
+  hearingFloor: floor,
+  visionAngle,
+  policy,
+}: {
+  body: Pick<Entity['spatial']['body'], 'height' | 'eyeHeight' | 'earHeight'>;
+  heading: number;
+  enabled: boolean;
+  hearingFloor: number | null;
+  visionAngle: number;
+  policy: AcousticPolicy;
+}) {
   return {
     vision: {
       enabled,
       fieldOfViewRadians: visionAngle,
-      ...(visionAngle < 2 * Math.PI ? { heading: observer.spatial.heading } : {}),
+      ...(visionAngle < 2 * Math.PI ? { heading } : {}),
       eyeHeight: body.eyeHeight,
       targetHeights: SIGHT_BODY_FRACTIONS.map((fraction) => fraction * body.height),
     },
@@ -696,7 +733,11 @@ export function hearsEntity(world: WorldState, observer: Entity, source: Entity)
   return speechExposure(world, observer, source).detail === 'clear';
 }
 export function contactViews(entity: Entity): ContactView[] {
-  return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
+  return contactViewsFromContacts(Object.values(entity.actor?.contacts ?? {}));
+}
+/** Contact wording uses only the actual owner's finite tactile episodes. */
+export function contactViewsFromContacts(contacts: readonly ContactEpisode[]): ContactView[] {
+  return contacts.map((c) => ({
     id: c.id,
     senseId: c.senseId,
     recognized: false,
@@ -721,7 +762,13 @@ export function directProbe(
   const map = spatialMap(world),
     a = resolveSupport(map, from, fromSurfaceId),
     b = resolveSupport(map, to, toSurfaceId);
-  if (!a || !b || distance(from, to) > 1 || !canWalkSegment(map, a, b, body)) return null;
+  if (
+    !a ||
+    !b ||
+    distance(from, to) > selectedMovementRules(world).directProbeMaxDistance ||
+    !canWalkSegment(map, a, b, body)
+  )
+    return null;
   return [{ ...b }];
 }
 // Position-only helpers retain the default geometry for callers that do not have a receiver.

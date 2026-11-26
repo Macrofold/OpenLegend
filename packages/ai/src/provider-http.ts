@@ -1,6 +1,7 @@
 import {
   consumeHttp,
   createNetworkOwner,
+  afterNetworkResourcesClose,
   type HttpBytes,
   type HttpRequest,
   type NetworkOperation,
@@ -33,23 +34,36 @@ export async function providerText(
   operation: NetworkOperation,
   request: HttpRequest,
   headers: (metadata: Omit<HttpBytes, 'bytes'>) => void,
+  reserve?: (bytes: number) => { release(): void },
 ): Promise<string> {
   let failed = false;
   let length = 0;
   const chunks: Uint8Array[] = [];
+  const reservations: { release(): void }[] = [];
   const decode = () =>
     new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, length));
-  return consumeHttp<string>(operation, request, {
-    headers(metadata) {
-      failed = metadata.status < 200 || metadata.status >= 300;
-      headers(metadata);
-    },
-    chunk(bytes) {
-      if (failed && length + bytes.byteLength > 8192) return { kind: 'complete', value: '' };
-      chunks.push(bytes.slice());
-      length += bytes.byteLength;
-      return { kind: 'continue' };
-    },
-    end: decode,
-  });
+  try {
+    return await consumeHttp<string>(operation, request, {
+      headers(metadata) {
+        failed = metadata.status < 200 || metadata.status >= 300;
+        headers(metadata);
+      },
+      chunk(bytes) {
+        if (failed && length + bytes.byteLength > 8192) return { kind: 'complete', value: '' };
+        // A fragmented bounded body can have many separate chunk carriers.
+        // Fund each copy and both growing pointer arrays before retaining it.
+        const reservation = reserve?.(bytes.byteLength + 256 + 2 * 24);
+        if (reservation) reservations.push(reservation);
+        chunks.push(bytes.slice());
+        length += bytes.byteLength;
+        return { kind: 'continue' };
+      },
+      end: decode,
+    });
+  } finally {
+    if (reservations.length)
+      afterNetworkResourcesClose(operation, () => {
+        for (const reservation of reservations) reservation.release();
+      });
+  }
 }

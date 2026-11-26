@@ -66,7 +66,7 @@ Read these files with their canonical contracts before making changes:
 - Owner UI: `apps/client/src/ui/world-agent.tsx`, `world-agent-session.tsx`, `world-agent-review.tsx`, `world-inspection.tsx`.
 - Existing finite recipe shortcut: `invention-service.ts`, `invention-context.ts`, `invention-tools.ts`, `invention-workshop.ts`, `actor-invention.ts`; it is not the full native harness.
 
-The exact current catalogue comes from shared descriptors and `tools/list`, not a hypothetical specification table. `ol_` simply namespaces OpenLegend tools. Do not implement a tool per noun, another writable graph, another wallet, a universal state patch, or an independent NPC planner.
+The exact current catalogue comes from shared descriptors and `tools/list`, not a hypothetical specification table. `ol_` simply namespaces Open Legend tools. Do not implement a tool per noun, another writable graph, another wallet, a universal state patch, or an independent NPC planner.
 
 ## Next-work navigation and stop conditions
 

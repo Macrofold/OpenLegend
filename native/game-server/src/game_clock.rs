@@ -1,0 +1,1100 @@
+//! Real-time offers belong to the application. Native simulation owns time
+//! advancement and its accepted result. A refused candidate consumes no debt.
+
+use crate::{
+    authority::{AccessError, Authority, AuthorizedScope, Capability, bootstrap::ConfiguredAccounts},
+    boot::CurrentServer,
+    command_epoch::RequestIdentity,
+    live_save::{AcceptedSaveInput, LiveSaves, ProtectedGameplaySave},
+    npc::schedule::ScheduleWake,
+    operator_maintenance::{OperatorMaintenance, Snapshot, Window},
+    presence::Presence,
+    store::{
+        CommitError, MetadataProjection, StoreError, checkpoint::CheckpointSchedule,
+        construction_gather::MaterialGatherProjection,
+    },
+    world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
+    world_input::{InputSnapshot, TimedReviewUpdates, WorldInputs},
+};
+use openlegend_simulation::{
+    construction_gather::{ConstructionEffect, MaterialGrants},
+    host::ByteReservation,
+    runtime::{NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError},
+};
+use openlegend_world_host::pool::HostError;
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+use tokio::{
+    sync::watch,
+    time::{Instant, MissedTickBehavior},
+};
+
+const CADENCE: Duration = Duration::from_millis(50);
+const TICK_SLICE: Duration = Duration::from_millis(32);
+const SUSPENDED_GAP: Duration = Duration::from_secs(2);
+const MAX_GAME_OFFER: f64 = 86400.0;
+
+struct SpeedChange {
+    value: f64,
+    creator: Arc<AuthorizedScope>,
+}
+
+struct Advance {
+    seconds: f64,
+    accepted_at: f64,
+    navigation_pending: bool,
+    deferred_routes: bool,
+    save: Option<Arc<AcceptedSaveInput>>,
+    timed_reviews: Option<TimedReviewUpdates>,
+}
+
+type OfferedInputs = (Arc<WorldInputs>, Arc<Mutex<Option<InputSnapshot>>>);
+
+fn publish_accepted_inputs(
+    offer: Option<&OfferedInputs>,
+    previous_at: f64,
+    accepted_at: f64,
+    reviews: Option<&TimedReviewUpdates>,
+) -> Result<(), WorldError> {
+    if let Some((inputs, snapshot)) = offer {
+        {
+            let snapshot = snapshot.lock().map_err(|_| HostError::Poisoned)?;
+            inputs.record_accepted(
+                snapshot.as_ref().ok_or(HostError::Poisoned)?,
+                previous_at,
+                accepted_at,
+            )?;
+        }
+        // A released attack review may retire the steering token for this interval.
+        if let Some(reviews) = reviews {
+            inputs.publish_timed_reviews(reviews);
+        }
+    }
+    Ok(())
+}
+
+struct ProtectedAdvance {
+    advance: Advance,
+    save: ProtectedGameplaySave,
+    acquisitions: Vec<Arc<ConstructionEffect>>,
+    wake: Option<ScheduleWake>,
+    _custody: ByteReservation,
+}
+
+fn begin_current_offer(
+    session: &mut NativeWorldSession,
+    clock: RuntimeClock,
+    seconds: f64,
+    inputs: Option<Arc<WorldInputs>>,
+    capture: Option<Arc<Mutex<Option<InputSnapshot>>>>,
+    materials: Option<Arc<MaterialGrants>>,
+) -> Result<openlegend_simulation::host::CandidateKey, RuntimeError> {
+    let current = session.clock()?;
+    if current.paused || current.speed != clock.speed || current.at != clock.at {
+        return Err(RuntimeError::application_busy("The accepted clock changed before the elapsed offer"));
+    }
+    match (inputs, capture) {
+        (Some(inputs), Some(capture)) => {
+            let mut held = capture.lock().map_err(|_| RuntimeError::application_refused(HostError::Poisoned))?;
+            let mut snapshot = inputs.snapshot(session).map_err(|error| match error {
+                AccessError::Busy | AccessError::Changed => RuntimeError::application_busy(error),
+                error => RuntimeError::application_refused(error),
+            })?;
+            let values = snapshot.take();
+            // No movement window is accepted with a rolled back offer.
+            let key = session.begin_authoritative_advance(seconds, 4096, values, materials)?;
+            *held = Some(snapshot);
+            Ok(key)
+        }
+        _ => session.begin_authoritative_advance(seconds, 4096, Vec::new(), materials),
+    }
+}
+
+fn stage_release_reviews(
+    product: &openlegend_simulation::runtime::RuntimePreparedProducts<'_>,
+    inputs: Option<&WorldInputs>,
+    snapshot: Option<&Mutex<Option<InputSnapshot>>>,
+    budget: &openlegend_simulation::host::ByteBudget,
+) -> Result<Option<TimedReviewUpdates>, RuntimeError> {
+    let offers = product.timed_release_reviews();
+    if offers.is_empty() {
+        return Ok(None);
+    }
+    let missing = || RuntimeError::application_refused("Native release review has no live input.");
+    let input = inputs.ok_or_else(missing)?;
+    let snapshot = snapshot.ok_or_else(missing)?.lock()
+        .map_err(RuntimeError::application_refused)?;
+    let snapshot = snapshot.as_ref().ok_or_else(missing)?;
+    input.stage_timed_reviews(snapshot, offers, budget).map(Some)
+}
+
+struct CheckpointInterval<'a> {
+    checkpoints: &'a CheckpointSchedule,
+    elapsed: Duration,
+}
+
+impl Drop for CheckpointInterval<'_> {
+    fn drop(&mut self) {
+        self.checkpoints.advance(self.elapsed);
+    }
+}
+
+/// One monotonic host cursor for wall time and the still owed game time. The
+/// clock loop and a rare speed change use it under the same save-intake gate.
+struct ElapsedOffers {
+    through: Instant,
+    suspended: Duration,
+    cutover: Instant,
+    accepted_at: Option<f64>,
+    debt: f64,
+}
+
+impl ElapsedOffers {
+    fn new(start: Instant) -> Self {
+        Self {
+            through: start,
+            suspended: Duration::ZERO,
+            cutover: start,
+            accepted_at: None,
+            debt: 0.0,
+        }
+    }
+
+    fn discard(&mut self, through: Instant) {
+        self.through = through;
+        self.accepted_at = None;
+        openlegend_simulation::profile_count!(RELEASE_DEBT, (self.debt * 1_000_000.0) as u64);
+        self.debt = 0.0;
+    }
+
+    fn reset(&mut self, at: Instant, suspended: Duration) {
+        self.cutover = at;
+        self.suspended = suspended;
+        self.discard(at);
+    }
+
+    /// Credit only this interval and subtract the native progress that actually
+    /// committed since the last sample. Refusal consumes no owed game time.
+    fn admit(
+        &mut self,
+        through: Instant,
+        suspended: Duration,
+        accepted_at: f64,
+        ratio: f64,
+        next_ratio: Option<f64>,
+        inputs: Option<&WorldInputs>,
+    ) -> Result<Duration, WorldError> {
+        let gap = suspended.saturating_sub(self.suspended);
+        self.suspended = suspended;
+        let advance = self.accepted_at.map_or(0.0, |previous| accepted_at - previous);
+        let mut debt = (self.debt - advance).max(0.0);
+        if !gap.is_zero() {
+            if let Some(inputs) = inputs {
+                inputs.exclude()?;
+            }
+            openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
+            debt = 0.0;
+        }
+        let elapsed = through.saturating_duration_since(self.through).saturating_sub(gap);
+        if let Some(inputs) = inputs {
+            inputs.credit(through - elapsed, through, accepted_at + debt, ratio, next_ratio)?;
+        }
+        let offered = elapsed.as_secs_f64() * ratio;
+        self.through = through;
+        self.accepted_at = Some(accepted_at);
+        self.debt = debt + offered;
+        openlegend_simulation::profile_count!(OFFERED, (offered * 1_000_000.0) as u64);
+        Ok(elapsed)
+    }
+}
+
+pub struct GameClock {
+    lab: std::sync::OnceLock<std::sync::Weak<crate::lab::decisions::DecisionControl>>,
+    game: Arc<CurrentServer>,
+    saves: Arc<LiveSaves>,
+    checkpoints: Arc<CheckpointSchedule>,
+    base_ratio: f64,
+    presence: Option<Arc<Presence>>,
+    exit_grace: Duration,
+    inputs: Option<Arc<WorldInputs>>,
+    started: Instant,
+    elapsed: Arc<Mutex<ElapsedOffers>>,
+    suspension: watch::Sender<Duration>,
+    maintenance: Arc<OperatorMaintenance>,
+    identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
+}
+
+impl GameClock {
+    pub(crate) fn new(
+        game: Arc<CurrentServer>,
+        saves: Arc<LiveSaves>,
+        checkpoints: Arc<CheckpointSchedule>,
+        base_ratio: f64,
+        identity: Arc<tokio::sync::Mutex<RequestIdentity>>,
+    ) -> Self {
+        let started = Instant::now();
+        Self {
+            lab: Default::default(),
+            game,
+            saves,
+            checkpoints,
+            base_ratio,
+            presence: None,
+            exit_grace: Duration::ZERO,
+            inputs: None,
+            started,
+            elapsed: Arc::new(Mutex::new(ElapsedOffers::new(started))),
+            suspension: watch::channel(Duration::ZERO).0,
+            maintenance: Arc::new(OperatorMaintenance::default()),
+            identity,
+        }
+    }
+
+    pub(crate) fn set_lab_controls(&self, controls:std::sync::Weak<crate::lab::decisions::DecisionControl>) {
+        let _=self.lab.set(controls);
+    }
+
+    pub(crate) fn game(&self) -> &CurrentServer {
+        &self.game
+    }
+    pub(crate) fn maintenance(&self) -> &Arc<OperatorMaintenance> {
+        &self.maintenance
+    }
+    pub(crate) fn uptime(&self) -> Duration {
+        self.started.elapsed()
+    }
+    pub(crate) fn saving_failed(&self) -> bool {
+        self.saves.has_failed()
+    }
+    pub(crate) fn fail_maintenance(&self, error: WorldError) {
+        self.saves.latch_fault(error);
+    }
+
+    pub(crate) async fn set_maintenance(
+        &self,
+        snapshot: Arc<Snapshot>,
+        edit: Option<(Arc<Window>, Option<u64>)>,
+        operator: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    ) -> Result<(), WorldError> {
+        let _protected = self.saves.enter_protected().await?;
+        let previous = self.game.world.capture(NativeWorldSession::clock).await?;
+        let transition = previous.maintenance != snapshot.active;
+        let paused = if transition {
+            let visible = self
+                .presence
+                .as_ref()
+                .map_or(Ok(true), |presence| presence.visible())?;
+            snapshot.active || previous.manually_paused || !(visible || previous.exit_exposure_active)
+        } else {
+            previous.paused
+        };
+        let mut identity = if transition {
+            Some((
+                self.identity.clone().lock_owned().await,
+                Arc::new(Mutex::new(None)),
+            ))
+        } else {
+            None
+        };
+        let staged_epoch = identity.as_ref().map(|(_, epoch)| epoch.clone());
+        let active = snapshot.active;
+        let revision = snapshot.revision;
+        let provider = self.game.clone();
+        let store = self.game.store.clone();
+        let budget = self.game.host.budget().clone();
+        let persisted_operator = operator.as_ref().map(|(_, scope)| scope.clone());
+        let elapsed = self.elapsed.clone();
+        let suspension = self.suspension.clone();
+        let inputs = self.inputs.clone();
+        let saves = self.saves.clone();
+        let maintenance = self.maintenance.clone();
+        let world = self.game.world.clone();
+        self.game
+            .world
+            .execute_protected_then(
+                move |session| {
+                    session.begin_operator_maintenance(
+                        paused,
+                        previous.speed,
+                        previous.manually_paused,
+                        active,
+                        revision,
+                    )
+                },
+                move |question| {
+                    let game = provider.clone();
+                    async move { game.answer_operation(question).await }
+                },
+                |value, _| {
+                    let RuntimeDirectOutput::Prepared(value) = value else {
+                        unreachable!("host control cannot preview")
+                    };
+                    value.metadata_control().map(MetadataProjection::new)
+                },
+                move || {
+                    if let Some((authority, scope)) = operator {
+                        authority.current(&scope, Capability::Create, false, |_, _| ())?;
+                    }
+                    Ok(())
+                },
+                move |metadata, prefix| -> ProtectedCommit<'_> {
+                    Box::pin(async move {
+                        store
+                            .commit_prefix(
+                                prefix.rows(),
+                                &[],
+                                &crate::store::operator_maintenance::MaintenanceProjection {
+                                    metadata,
+                                    edit,
+                                    operator: persisted_operator,
+                                    budget,
+                                    staged_epoch,
+                                },
+                            )
+                            .await
+                    })
+                },
+                move |_| {
+                    if let Some((identity, epoch)) = identity.as_mut() {
+                        identity.epoch = epoch
+                            .lock()
+                            .map_err(|_| HostError::Poisoned)?
+                            .take()
+                            .ok_or(StoreError::StaleCut)?;
+                        elapsed
+                            .lock()
+                            .map_err(|_| HostError::Poisoned)?
+                            .reset(Instant::now(), *suspension.borrow());
+                        if let Some(inputs) = inputs {
+                            inputs.exclude()?;
+                        }
+                        if !paused {
+                            saves.resume_semantic_index();
+                        }
+                    }
+                    world.publish_decision_clock(paused);
+                    maintenance.publish(snapshot);
+                    saves.signal_view();
+                    Ok(())
+                },
+            )
+            .await?;
+        Ok(())
+    }
+
+    /// A visibility transition has the same acknowledgement boundary as the
+    /// saved clock change it requested. Ordinary heartbeat renewal has no
+    /// reason to invoke this owner.
+    pub(crate) async fn presence_changed(&self) -> Result<(), WorldError> {
+        self.clock_with_presence().await.map(|_| ())
+    }
+
+    pub(crate) fn with_inputs(
+        mut self,
+        presence: Arc<Presence>,
+        inputs: Arc<WorldInputs>,
+        exit_grace: Duration,
+    ) -> Self {
+        self.presence = Some(presence);
+        self.exit_grace = exit_grace;
+        self.inputs = Some(inputs);
+        self
+    }
+
+    async fn clock_with_presence(&self) -> Result<(RuntimeClock, bool), WorldError> {
+        if let Some(presence) = &self.presence {
+            crate::embodiment::reconcile(&self.game, &self.saves, presence, self.exit_grace)
+                .await?;
+        }
+        let current = self.game.world.capture(NativeWorldSession::clock).await?;
+        let Some(presence) = &self.presence else {
+            return Ok((current, false));
+        };
+        if !current.manually_paused && presence.restored_due()? && presence.visible()? {
+            crate::embodiment::reconcile_restored(
+                &self.game, &self.saves, presence, self.exit_grace,
+            ).await?;
+        }
+        let should_pause = |clock: RuntimeClock| {
+            Ok::<_, WorldError>(
+                clock.maintenance
+                    || clock.manually_paused
+                    || !(presence.visible()? || clock.exit_exposure_active),
+            )
+        };
+        if should_pause(current)? == current.paused {
+            return Ok((current, false));
+        }
+        let _protected = self.saves.enter_protected().await?;
+        let current = self.game.world.capture(NativeWorldSession::clock).await?;
+        let paused = should_pause(current)?;
+        if paused == current.paused {
+            return Ok((current, false));
+        }
+        self.persist_control(current, RuntimeClock { paused, ..current }, true, None, || Ok(()))
+            .await?;
+        Ok((RuntimeClock { paused, ..current }, true))
+    }
+
+    pub(crate) async fn manual_control(
+        &self,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        setting: Option<bool>,
+        speed: Option<f64>,
+    ) -> Result<bool, WorldError> {
+        let change = speed.map(|value| SpeedChange { value, creator: scope.clone() });
+        self.set_manual_control(setting, change, false, move || {
+            authority.current(&scope, Capability::Play, true, |_, _| ())?;
+            if speed.is_some() {
+                authority.current(&scope, Capability::Create, true, |_, _| ())?;
+            }
+            Ok(())
+        })
+        .await
+    }
+
+    /// Pause an isolated scenario before publishing any clock or request owner.
+    /// Ignore the checkpoint's former running state when beginning inspection.
+    pub(crate) async fn hold_opened_lab(&self) -> Result<(), WorldError> {
+        self.set_manual_control(Some(true), None, true, || Ok(())).await?;
+        Ok(())
+    }
+
+    /// World recovery uses the same durable pause and elapsed-time reset as
+    /// the player's control, with the operator's save permission instead.
+    pub(crate) async fn pause_for_recovery(
+        &self,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+    ) -> Result<(), WorldError> {
+        self.set_manual_control(Some(true), None, true, move || {
+            Ok(authority.current(&scope, Capability::Save, false, |_, _| ())?)
+        })
+        .await?;
+        Ok(())
+    }
+
+    async fn set_manual_control(
+        &self,
+        setting: Option<bool>,
+        speed: Option<SpeedChange>,
+        recovery: bool,
+        validate: impl Fn() -> Result<(), WorldError> + Send + 'static,
+    ) -> Result<bool, WorldError> {
+        validate()?;
+        let _protected = self.saves.enter_protected().await?;
+        let previous = self.game.world.capture(NativeWorldSession::clock).await?;
+        if previous.maintenance && !recovery && (setting.is_some() || speed.is_none()) {
+            return Err(WorldError::OperatorMaintenance);
+        }
+        let visible = match &self.presence {
+            Some(presence) => presence.visible()?,
+            None => true,
+        };
+        if setting == Some(false) && !visible {
+            return Ok(false);
+        }
+        let manual = setting.unwrap_or(previous.manually_paused);
+        let paused = previous.maintenance || manual || !(visible || previous.exit_exposure_active);
+        let (speed, creator) = match speed {
+            Some(change) => (change.value, Some(change.creator)),
+            None => (previous.speed, None),
+        };
+        if manual != previous.manually_paused || paused != previous.paused || speed != previous.speed {
+            let active = RuntimeClock {
+                paused,
+                manually_paused: manual,
+                speed,
+                ..previous
+            };
+            self.persist_control(previous, active, previous.paused || paused, creator, validate)
+                .await?;
+        } else {
+            validate()?;
+        }
+        Ok(true)
+    }
+
+    /// Only the ordinary-save barrier holder can settle a durable clock
+    /// transition. The caller supplies the current authorization check.
+    async fn persist_control(
+        &self,
+        previous: RuntimeClock,
+        next: RuntimeClock,
+        reset_elapsed: bool,
+        creator: Option<Arc<AuthorizedScope>>,
+        validate: impl FnOnce() -> Result<(), WorldError> + Send + 'static,
+    ) -> Result<(), WorldError> {
+        let provider = self.game.clone();
+        let store = self.game.store.clone();
+        let world = self.game.world.clone();
+        let elapsed = self.elapsed.clone();
+        let suspension = self.suspension.clone();
+        let inputs = self.inputs.clone();
+        let checkpoints = self.checkpoints.clone();
+        let saves = self.saves.clone();
+        let base_ratio = self.base_ratio;
+        self.game
+            .world
+            .execute_protected_then(
+                move |session| {
+                    session.begin_control_direct(next.paused, next.speed, next.manually_paused)
+                },
+                move |question| {
+                    let game = provider.clone();
+                    async move { game.answer_operation(question).await }
+                },
+                move |value, _| {
+                    let RuntimeDirectOutput::Prepared(value) = value else {
+                        unreachable!("host control cannot preview")
+                    };
+                    value.metadata_control().map(|metadata| {
+                        MetadataProjection::new(metadata).with_clock_creator(creator.clone())
+                    })
+                },
+                validate,
+                move |projection, prefix| -> ProtectedCommit<'_> {
+                    Box::pin(
+                        async move { store.commit_prefix(prefix.rows(), &[], projection).await },
+                    )
+                },
+                move |_| {
+                    let mut offers = elapsed.lock().map_err(|_| HostError::Poisoned)?;
+                    let suspended = *suspension.borrow();
+                    let at = Instant::now();
+                    if reset_elapsed {
+                        offers.reset(at, suspended);
+                        if let Some(inputs) = inputs {
+                            inputs.exclude()?;
+                        }
+                        if !next.paused {
+                            saves.resume_semantic_index();
+                        }
+                    } else if previous.speed != next.speed {
+                        // The accepted change does not rescale earlier time or
+                        // either held input. The new ratio starts at this cut.
+                        let running = offers.admit(
+                            at,
+                            suspended,
+                            previous.at,
+                            base_ratio * previous.speed,
+                            Some(base_ratio * next.speed),
+                            inputs.as_deref(),
+                        )?;
+                        offers.cutover = at;
+                        checkpoints.advance(running);
+                    }
+                    world.publish_decision_clock(next.paused);
+                    Ok(())
+                },
+            )
+            .await?;
+        self.saves.signal_view();
+        Ok(())
+    }
+
+    /// Reconcile the loaded hot state before accepting connections. When the
+    /// operator configured new account access, save it with the body ownership
+    /// before admission. Ordinary cold startup uses the background save queue.
+    pub(crate) async fn initialize(
+        &self,
+        configured: Option<Arc<ConfiguredAccounts>>,
+    ) -> Result<(), WorldError> {
+        if let Some(presence) = &self.presence
+            && !self.game.world.capture(NativeWorldSession::has_simulated_departure).await?
+        {
+            presence.enable_elapsed_exit()?;
+        }
+        let game = self.game.clone();
+        let accept = self.saves.clone();
+        let materials = if self.game.world.capture(NativeWorldSession::has_bound_material_gather).await? {
+            Some(self.game.store.construction_materials(self.game.world_id(), None).await?)
+        } else {
+            None
+        };
+        let answer = move |question| {
+            let game = game.clone();
+            async move { game.answer_operation(question).await }
+        };
+        if let Some(accounts) = configured {
+            let bindings = accounts.clone();
+            let store = self.game.store.clone();
+            let staging_store = store.clone();
+            let language = self.game.language().cloned();
+            self.game
+                .world
+                .execute_protected_then(
+                    move |session| session.begin_configured_startup(materials, &bindings.owners),
+                    answer,
+                    move |output, budget| {
+                        let RuntimeDirectOutput::Prepared(value) = output else {
+                            unreachable!("startup cannot preview")
+                        };
+                        if !value.outcome().ok {
+                            return Err(RuntimeError::application_refused(&value.outcome().code));
+                        }
+                        ProtectedGameplaySave::prepare(&value, &staging_store, budget)
+                    },
+                    || Ok(()),
+                    move |save, prefix| -> ProtectedCommit<'_> {
+                        Box::pin(async move {
+                            let projection = accounts.projection(save, &store, language.as_deref());
+                            let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
+                            save.record_commit(&projection.gameplay);
+                            Ok(acknowledgement)
+                        })
+                    },
+                    move |save| {
+                        save.acknowledged(&accept);
+                        Ok(())
+                    },
+                )
+                .await?;
+        } else {
+            let prepare = self.saves.clone();
+            self.game
+                .world
+                .execute_and_publish(
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_CLOCK,
+                    move |session| Ok(ApplicationStart::Candidate(session.begin_startup_with_materials(materials)?)),
+                    answer,
+                    move |output, _| match output {
+                        RuntimeDirectOutput::Prepared(product) if product.outcome().ok => {
+                            prepare.stage(&product, None)
+                        }
+                        RuntimeDirectOutput::Prepared(product) => {
+                            Err(RuntimeError::application_refused(&product.outcome().code))
+                        }
+                        RuntimeDirectOutput::Preview(_) => unreachable!("startup cannot preview"),
+                    },
+                    |fence, key, _| Ok(fence.settle(key, true)?),
+                    move |save| accept.accept(save),
+                )
+                .await?;
+        }
+        if let Some(presence) = &self.presence {
+            crate::embodiment::reconcile_startup(
+                &self.game,
+                &self.saves,
+                presence,
+                self.exit_grace,
+            )
+            .await?;
+        }
+        Ok(())
+    }
+
+    async fn advance(
+        &self,
+        clock: RuntimeClock,
+        seconds: f64,
+    ) -> Result<Option<Advance>, WorldError> {
+        openlegend_simulation::profile_body!(
+            CLOCK,
+            {
+                let game = self.game.clone();
+                let prepare = self.saves.clone();
+                let accept = self.saves.clone();
+                let inputs = self.inputs.clone();
+                let settlement = inputs
+                    .as_ref()
+                    .map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
+                let capture = settlement.clone();
+                let recheck = inputs.clone();
+                let review_inputs = inputs.clone();
+                let review_snapshots = settlement.clone();
+                let publication_inputs = recheck.clone().zip(settlement.clone());
+                let advance = self.game.world.execute_and_publish(
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_CLOCK,
+                    move |session| {
+                        // Pause/speed can change while this caller waits for the turn.
+                        let current = session.clock()?;
+                        if current.paused || current.speed != clock.speed || current.at != clock.at
+                        {
+                            return Err(WorldError::ClockChanged);
+                        }
+                        let key = match (inputs, capture) {
+                            (Some(inputs), Some(capture)) => {
+                                let mut held = capture.lock().map_err(|_| HostError::Poisoned)?;
+                                let mut snapshot = inputs.snapshot(session)?;
+                                let values = snapshot.take();
+                                // A refused begin drops the input proof before this world
+                                // turn ends. A running candidate retains it until settlement.
+                                let key = session.begin_authoritative_advance(seconds, 4096, values, None)?;
+                                *held = Some(snapshot);
+                                key
+                            }
+                            _ => session.begin_authoritative_advance(seconds, 4096, Vec::new(), None)?,
+                        };
+                        Ok(ApplicationStart::Candidate(key))
+                    },
+                    move |question| {
+                        let game = game.clone();
+                        async move { game.answer_operation(question).await }
+                    },
+                    move |output, budget| {
+                        let RuntimeDirectOutput::Prepared(product) = output else {
+                            unreachable!("advance cannot preview")
+                        };
+                        let result = product.outcome();
+                        if !result.ok {
+                            return Err(RuntimeError::application_refused(&result.code));
+                        }
+                        let accepted_at = product.progress().at;
+                        let seconds = accepted_at - clock.at;
+                        let navigation_pending = result.code == "navigation-pending";
+                        let deferred_routes = product.has_deferred_navigation();
+                        let save = if navigation_pending && seconds == 0.0 {
+                            None
+                        } else {
+                            Some(prepare.stage(&product, None)?)
+                        };
+                        Ok(Advance {
+                            seconds,
+                            accepted_at,
+                            navigation_pending,
+                            deferred_routes,
+                            save,
+                            timed_reviews: stage_release_reviews(
+                                &product, review_inputs.as_deref(), review_snapshots.as_deref(), budget,
+                            )?,
+                        })
+                    },
+                    move |fence, key, staged| {
+                        let active = staged.save.is_some();
+                        match (recheck, settlement) {
+                            (Some(inputs), Some(settlement)) if active => {
+                                let held = settlement.lock().map_err(|_| HostError::Poisoned)?;
+                                let snapshot = held.as_ref().expect("prepared input snapshot");
+                                match inputs.accept_inputs(snapshot, || fence.settle(key, true)) {
+                                    Ok(result) => Ok(result?),
+                                    Err(crate::authority::AccessError::Changed) => {
+                                        Ok(fence.settle(key, false)?)
+                                    }
+                                    Err(error) => Err(error.into()),
+                                }
+                            }
+                            _ => Ok(fence.settle(key, active)?),
+                        }
+                    },
+                    move |staged| {
+                        publish_accepted_inputs(
+                            publication_inputs.as_ref(),
+                            clock.at,
+                            staged.accepted_at,
+                            staged.timed_reviews.as_ref(),
+                        )
+                        .expect("accepted input publication owner");
+                        accept.accept(staged.save.as_ref().expect("accepted clock has save input"))
+                    },
+                );
+                tokio::pin!(advance);
+                let mut publication =
+                    tokio::time::interval_at(Instant::now() + TICK_SLICE, IO_YIELD);
+                publication.set_missed_tick_behavior(MissedTickBehavior::Skip);
+                loop {
+                    tokio::select! {
+                        biased;
+                        result = &mut advance => {
+                            #[cfg(feature = "profile-campaign")]
+                            if let Ok(Some(accepted)) = &result {
+                                let mut observation = openlegend_simulation::profile_scope!(ACCEPTED);
+                                if observation.is_observed() {
+                                    observation.work((accepted.seconds * 1_000_000.0) as u64);
+                                }
+                            }
+                            return result;
+                        },
+                        _ = publication.tick() => {
+                            // The first deadline can pass while another operation owns
+                            // the turn. Keep offering a boundary until this single
+                            // clock advance finishes, as on the pool-backed host.
+                            // docs/limits/native-work.md#nw12
+                            self.game.world.request_advance_publication();
+                        }
+                    }
+                }
+            },
+            WorldError::profile_outcome
+        )
+    }
+
+    async fn advance_with_materials(
+        &self,
+        clock: RuntimeClock,
+        seconds: f64,
+    ) -> Result<Option<Advance>, WorldError> {
+        // The ordinary candidate already rolled back before we wait here.
+        // No earlier accepted time or input is lost when this attempt refuses.
+        let _protected = self.saves.enter_protected().await?;
+        let materials = self.game.store.construction_materials(self.game.world_id(), None).await?;
+        let game = self.game.clone();
+        let store = self.game.store.clone();
+        let language = self.game.language().cloned();
+        let staging_store = store.clone();
+        let staging_saves = self.saves.clone();
+        let accepted_saves = self.saves.clone();
+        let inputs = self.inputs.clone();
+        let settlement = inputs.as_ref().map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
+        let capture = settlement.clone();
+        let recheck = inputs.clone();
+        let review_inputs = inputs.clone();
+        let review_snapshots = settlement.clone();
+        let publication_inputs = recheck.clone().zip(settlement.clone());
+        let result = self.game.world.execute_protected_then(
+            move |session| begin_current_offer(session, clock, seconds, inputs, capture, Some(materials)),
+            move |question| {
+                let game = game.clone();
+                async move { game.answer_operation(question).await }
+            },
+            move |output, budget| {
+                let RuntimeDirectOutput::Prepared(product) = output else {
+                    unreachable!("advance cannot preview")
+                };
+                let result = product.outcome();
+                if !result.ok {
+                    return Err(RuntimeError::application_refused(&result.code));
+                }
+                let bytes = product.material_acquisitions().len()
+                    .checked_mul(std::mem::size_of::<Arc<ConstructionEffect>>())
+                    .ok_or(openlegend_simulation::host::CapacityError)?;
+                let custody = budget.reserve(bytes)?;
+                Ok(ProtectedAdvance {
+                    advance: Advance {
+                        seconds: product.progress().at - clock.at,
+                        accepted_at: product.progress().at,
+                        navigation_pending: result.code == "navigation-pending",
+                        deferred_routes: product.has_deferred_navigation(),
+                        save: None,
+                        timed_reviews: stage_release_reviews(
+                            &product, review_inputs.as_deref(), review_snapshots.as_deref(), budget,
+                        )?,
+                    },
+                    save: ProtectedGameplaySave::prepare(&product, &staging_store, budget)?,
+                    acquisitions: product.material_acquisitions().to_vec(),
+                    wake: staging_saves.stage_schedule(&product)?,
+                    _custody: custody,
+                })
+            },
+            move || {
+                if let (Some(inputs), Some(settlement)) = (recheck, settlement) {
+                    let held = settlement.lock().map_err(|_| HostError::Poisoned)?;
+                    let snapshot = held.as_ref().ok_or(HostError::Poisoned)?;
+                    inputs.accept_inputs(snapshot, || ())?;
+                }
+                Ok(())
+            },
+            move |candidate, prefix| -> ProtectedCommit<'_> {
+                Box::pin(async move {
+                    let projection = MaterialGatherProjection {
+                        store: &store,
+                        gameplay: candidate.save.projection(&store, language.as_deref()),
+                        acquisitions: &candidate.acquisitions,
+                    };
+                    let acknowledgement = store.commit_save(prefix, &[], &projection).await?;
+                    candidate.save.record_commit(&projection.gameplay);
+                    Ok(acknowledgement)
+                })
+            },
+            move |candidate| {
+                publish_accepted_inputs(
+                    publication_inputs.as_ref(),
+                    clock.at,
+                    candidate.advance.accepted_at,
+                    candidate.advance.timed_reviews.as_ref(),
+                )?;
+                accepted_saves.accept_schedule(candidate.wake.as_ref());
+                candidate.save.acknowledged(&accepted_saves);
+                Ok(())
+            },
+        ).await;
+        match result {
+            Ok(Some(candidate)) => Ok(Some(candidate.advance)),
+            Err(WorldError::Access(AccessError::Changed)
+                | WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut))) => {
+                Err(WorldError::ClockChanged)
+            }
+            Ok(None) => Ok(None),
+            Err(error) => Err(error),
+        }
+    }
+
+    /// One loop offers time from a monotonic cursor and yields between
+    /// catch-up publications. It must be joined before the save task drains.
+    pub async fn run(&self, stop: watch::Receiver<bool>) -> Result<(), WorldError> {
+        let started = Instant::now();
+        let offered = self.suspension.clone();
+        let sample = offered.subscribe();
+        {
+            let mut clock = self.elapsed.lock().map_err(|_| HostError::Poisoned)?;
+            if clock.cutover <= started {
+                clock.discard(started);
+            }
+        }
+        // Sample suspension independently. An operation waiting for geometry
+        // or the next accepted turn must not discard the elapsed time it owes.
+        let mut sampler = tokio::task::JoinSet::new();
+        sampler.spawn(async move {
+            let mut next = tokio::time::interval_at(started + CADENCE, CADENCE);
+            next.set_missed_tick_behavior(MissedTickBehavior::Skip);
+            let mut previous = started;
+            let mut suspended = Duration::ZERO;
+            loop {
+                next.tick().await;
+                let now = Instant::now();
+                let gap = now.saturating_duration_since(previous);
+                previous = now;
+                if gap > SUSPENDED_GAP {
+                    suspended += gap;
+                }
+                if offered.send(suspended).is_err() {
+                    return;
+                }
+            }
+        });
+        let mut route = tokio::task::JoinSet::new();
+        let result = self.run_offers(stop, sample, &mut route).await;
+        // A deferred route holds the server while it awaits geometry. Join
+        // its cancellation before the listener can release the world owner.
+        route.shutdown().await;
+        sampler.shutdown().await;
+        result
+    }
+
+    async fn run_offers(
+        &self,
+        mut stop: watch::Receiver<bool>,
+        mut sample: watch::Receiver<Duration>,
+        route: &mut tokio::task::JoinSet<Result<(), WorldError>>,
+    ) -> Result<(), WorldError> {
+        let mut more = false;
+        let mut was_paused = true;
+        while !*stop.borrow() {
+            if more {
+                tokio::task::yield_now().await;
+            } else {
+                tokio::select! {
+                    _ = stop.changed() => break,
+                    _ = sample.changed() => (),
+                }
+            }
+            let suspended = *sample.borrow_and_update();
+            let now = Instant::now();
+            let (clock, changed) = match self.clock_with_presence().await {
+                Err(WorldError::Storage(StoreError::WriterUnavailable)
+                    | WorldError::Access(AccessError::Busy | AccessError::Changed)
+                    | WorldError::Commit(CommitError::RolledBack(StoreError::StaleCut | StoreError::Timeout | StoreError::Capacity))) => {
+                    more = false;
+                    continue;
+                }
+                Err(error) if error.is_admission_refusal() => {
+                    more = false;
+                    continue;
+                }
+                other => other?,
+            };
+            // Check a Lab-owned clock even when native presence pauses it.
+            // A stopped interval never banks wall time for a later run.
+            let remaining = if let Some(control)=self.lab.get().and_then(|weak|weak.upgrade()) {
+                let bound=control.clock_offer(clock.at);
+                if bound==Some(0.) {control.pause_finished_clock(self).await?;more=false;continue;}
+                bound
+            }else{None};
+            // The checkpoint uses nonwaiting save admission. Deliver its
+            // interval after this pass drops the ordinary intake read guard.
+            let mut checkpoint = CheckpointInterval {
+                checkpoints: &self.checkpoints,
+                elapsed: Duration::ZERO,
+            };
+            let _ordinary = self.saves.enter_ordinary().await;
+            let debt = {
+                let mut offers = self.elapsed.lock().map_err(|_| HostError::Poisoned)?;
+                // A protected clock commit may have passed this sample while it
+                // waited for admission. Retry the existing wake without charging
+                // that old cut against a newer rate or discarding its frontier.
+                if offers.cutover > now {
+                    more = true;
+                    continue;
+                }
+                if clock.paused || changed {
+                    offers.suspended = suspended;
+                    offers.discard(now);
+                    if clock.paused
+                        && !was_paused
+                        && let Some(inputs) = &self.inputs
+                    {
+                        inputs.exclude()?;
+                    }
+                    was_paused = true;
+                    more = false;
+                    continue;
+                }
+                was_paused = false;
+                checkpoint.elapsed = offers.admit(
+                    now,
+                    suspended,
+                    clock.at,
+                    clock.speed * self.base_ratio,
+                    None,
+                    self.inputs.as_deref(),
+                )?;
+                offers.debt
+            };
+            more = false;
+            if debt < 1e-6 {
+                continue;
+            }
+            while let Some(result) = route.try_join_next() {
+                match result.map_err(|_| HostError::WorkerFailed)? {
+                    Err(error) if error.is_admission_refusal() => {}
+                    other => other?,
+                }
+            }
+            match self.saves.check_admission(now) {
+                Err(WorldError::Storage(StoreError::WriterUnavailable)) => continue,
+                other => other?,
+            }
+            let offer = debt.min(MAX_GAME_OFFER).min(remaining.unwrap_or(f64::MAX));
+            let result = self.advance(clock, offer).await;
+            drop(_ordinary);
+            let result = match result {
+                Err(WorldError::Simulation(error)) if error.construction_gather_needs_authority() => {
+                    match self.advance_with_materials(clock, offer).await {
+                        Err(WorldError::Storage(StoreError::Capacity)
+                            | WorldError::Commit(CommitError::RolledBack(StoreError::Capacity))) => {
+                            Err(HostError::Capacity.into())
+                        }
+                        result => result,
+                    }
+                }
+                result => result,
+            };
+            let routes = match result {
+                Ok(Some(advance)) => {
+                    more = debt - advance.seconds >= 1e-6
+                        && advance.seconds > 0.0 && !advance.navigation_pending;
+                    (advance.deferred_routes || advance.navigation_pending)
+                        .then_some(advance.navigation_pending)
+                }
+                Ok(None) => Some(true),
+                Err(
+                    WorldError::ClockChanged | WorldError::Storage(StoreError::WriterUnavailable),
+                ) => None,
+                Err(error) if error.is_admission_refusal() => None,
+                Err(error) => return Err(error),
+            };
+            if let Some(include_world) = routes
+                && route.is_empty()
+            {
+                let game = self.game.clone();
+                route.spawn(async move { game.complete_route(include_world).await });
+            }
+        }
+        Ok(())
+    }
+}

@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -362,7 +362,7 @@ In the **October 16, 2019** shutdown thread, a deleted account remembers beta ne
 
 The retrieved reviews do not establish support for screen readers, enlarged text, color-vision settings, remappable controls or alternative input devices. That is a verification limit, not a claim that all such features were absent. No game was run and no linked footage was watched for this dossier.
 
-### What this suggests for further OpenLegend research
+### What this suggests for further Open Legend research
 
 These are hypotheses to investigate, not directions to implement or explanations of Durango's financial outcome.
 

@@ -95,7 +95,7 @@ Terra opens the story and remains central to the magic/Esper theme, but control 
 
 The development process mirrored the ensemble design. The 1994 developer interviews describe a collaborative process in which many staff contributed character, world and event ideas rather than one writer specifying every detail in advance. Square Enix's 2024 Tetsuya Nomura anniversary interview similarly describes staff across roles pitching story/world concepts, with Sakaguchi and leads deciding what entered the game. [FFVI06](#ffvi06) [FFVI07](#ffvi07)
 
-**OpenLegend relevance:** an ensemble can feel coherent without one central protagonist if each person has:
+**Open Legend relevance:** an ensemble can feel coherent without one central protagonist if each person has:
 - a distinct capability;
 - a distinct problem or motivation;
 - relationships that change the meaning of events;
@@ -169,7 +169,7 @@ Late game:
 
 TouchArcade explicitly identifies this as a weakness: once the magic system fully develops, some differentiating factors between characters can blur. [FFVI10](#ffvi10)
 
-**OpenLegend lesson:** shared education is powerful, but people need persistent differences—body, history, permissions, affinities, relationships, instincts, costs or exclusive expertise—if learning is not supposed to converge everyone into the same optimal toolkit.
+**Open Legend lesson:** shared education is powerful, but people need persistent differences—body, history, permissions, affinities, relationships, instincts, costs or exclusive expertise—if learning is not supposed to converge everyone into the same optimal toolkit.
 
 ## 6. Relics: equipment that changes rules, not only numbers
 
@@ -258,7 +258,7 @@ Examples include:
 
 In Kefka's Tower, weak characters cannot simply hide forever: separate groups encounter their own enemies/bosses and must activate paths for one another.
 
-**OpenLegend transfer:** multi-agent play becomes interesting when different people or groups occupy **different physical positions with interdependent tasks**, not merely when a menu says “Party A / Party B.”
+**Open Legend transfer:** multi-agent play becomes interesting when different people or groups occupy **different physical positions with interdependent tasks**, not merely when a menu says “Party A / Party B.”
 
 ## 10. World of Balance → World of Ruin: catastrophic state transition
 
@@ -282,7 +282,7 @@ The campaign changes genre-feel:
 
 After core steps to regain mobility, the player can pursue many allies/sidequests in a flexible order and can even approach the ending without restoring every optional character. [FFVI14](#ffvi14)
 
-This is one of the strongest precedents for OpenLegend:
+This is one of the strongest precedents for Open Legend:
 
 > A major event should be allowed to **mutate the world graph**, not merely set a quest flag.
 
@@ -307,7 +307,7 @@ These are not a generic “friendship meter.” The relationship state is expres
 - what places/events are reachable;
 - what combat verbs become available.
 
-**OpenLegend lesson:** social consequence can be mechanical without reducing relationships to a scalar affinity number.
+**Open Legend lesson:** social consequence can be mechanical without reducing relationships to a scalar affinity number.
 
 ## 12. Side content as character completion
 
@@ -336,7 +336,7 @@ This means an optional quest can be simultaneously:
 - progression;
 - system unlock.
 
-That is useful for OpenLegend because optionality need not imply inconsequence. The world can continue without resolving someone's problem, but resolving it should change more than a checklist.
+That is useful for Open Legend because optionality need not imply inconsequence. The world can continue without resolving someone's problem, but resolving it should change more than a checklist.
 
 ## 13. Encounters: asymmetric character tools + shared systemic rules
 
@@ -358,7 +358,7 @@ That is both strength and weakness.
 
 **Weakness:** if a universal high-output magic strategy dominates, the carefully authored differences among fourteen characters matter less.
 
-For OpenLegend, systemic composition should create power without making the rest of the world's affordances irrelevant.
+For Open Legend, systemic composition should create power without making the rest of the world's affordances irrelevant.
 
 ## 14. Example interactions
 
@@ -428,7 +428,7 @@ This tension is central:
 - **authored biography creates initial affordances**;
 - **player-directed learning expands beyond biography**.
 
-OpenLegend likely wants the same basic pattern, but with more causal simulation behind how learning happens.
+Open Legend likely wants the same basic pattern, but with more causal simulation behind how learning happens.
 
 ## 16. NPCs, factions, social systems and multiplayer
 
@@ -450,7 +450,7 @@ They do not generally simulate:
 
 The current Pixel Remaster is officially single-player. Its long-term social layer is cultural/community discussion rather than a native networked world.
 
-For OpenLegend, FFVI is valuable less as an NPC simulation precedent than as a demonstration that **world-state changes can make static authored NPCs feel changed because context around them changed**. A simulation-first game can take that much further.
+For Open Legend, FFVI is valuable less as an NPC simulation precedent than as a demonstration that **world-state changes can make static authored NPCs feel changed because context around them changed**. A simulation-first game can take that much further.
 
 ## 17. Art, animation, music and interface
 
@@ -494,7 +494,7 @@ Square Enix's 2024 interview with Nomura reinforces this:
 - Shadow and Setzer grew from partial ideas that other team members extended;
 - the game's final boss staging evolved alongside visual concept work. [FFVI07](#ffvi07)
 
-This is a useful production analogue for OpenLegend itself: a world with many protagonists may benefit from **modular ownership plus a strong coherence layer**, rather than one designer prescribing every detail.
+This is a useful production analogue for Open Legend itself: a world with many protagonists may benefit from **modular ownership plus a strong coherence layer**, rather than one designer prescribing every detail.
 
 ## 19. Distribution and commercial/participation context
 
@@ -594,7 +594,7 @@ The cards did not expose publication years; displayed lifetime hours are not pub
 | Multiplayer | Current Pixel Remaster single-player |
 | Endgame | Multi-party Kefka's Tower; Advance adds Dragons' Den/Soul Shrine postgame content |
 
-## 23. OpenLegend transferable lessons and limits
+## 23. Open Legend transferable lessons and limits
 
 ### A. Give every important person a distinctive verb
 
@@ -646,7 +646,7 @@ If everyone learns the same best magic, distinct identities weaken.
 
 The Coliseum can make a large action repertoire a liability because the fighter does not select actions as a human would.
 
-**Borrow:** evaluate an agent's policy over its capabilities, not just whether it possesses enough abilities. Restricting a task's action set can improve reliability, but opaque restrictions or random self-defeating behavior can instead make delegation feel arbitrary. This is a research interpretation, not an accepted OpenLegend implementation requirement.
+**Borrow:** evaluate an agent's policy over its capabilities, not just whether it possesses enough abilities. Restricting a task's action set can improve reliability, but opaque restrictions or random self-defeating behavior can instead make delegation feel arbitrary. This is a research interpretation, not an accepted Open Legend implementation requirement.
 
 ## 24. Preservation and requirement audit
 
@@ -685,7 +685,7 @@ FFVI's strongest design contribution is not one isolated mechanic. It is the way
 
 The first half proves that many authored protagonists can coexist without collapsing into one main character. Magicite proves that identity can remain flexible rather than class-locked. The World of Ruin proves that a narrative catastrophe can become a genuine systems transition, turning old relationships into optional recovery paths and old geography into a new planning problem.
 
-For OpenLegend, the highest-value lesson is: **make identity persistent but learnable, and let major events change the actual option graph of the world.**
+For Open Legend, the highest-value lesson is: **make identity persistent but learnable, and let major events change the actual option graph of the world.**
 
 ## Sources — annotated set
 

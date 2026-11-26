@@ -1,6 +1,6 @@
 # Efficient simulation of continuing individuals
 
-**Research synthesis, October 14, 2026.** This document compares engineering mechanisms and their semantic costs. It does not select a new OpenLegend engine, mandate a scheduler, approve a model vendor or report a runtime benchmark.
+**Research synthesis, October 14, 2026.** This document compares engineering mechanisms and their semantic costs. It does not select a new Open Legend engine, mandate a scheduler, approve a model vendor or report a runtime benchmark.
 
 [Main NPC guide](../synthesis/characters-companions-and-relationships.md) · [Game implementation evidence](game-ai-implementation-and-scale.md) · [Language-model societies and Simile](language-model-societies-and-simile.md)
 
@@ -22,7 +22,7 @@ Factorio's developer accounts provide useful examples across these classes. Its 
 
 ## 2. Let a choice remain useful
 
-The options framework in reinforcement learning formalizes temporally extended, closed-loop behavior rather than requiring a new top-level choice after every primitive step. Its relevance here is the separation of choosing an activity from executing a policy over a period; the paper is not evidence that an OpenLegend character should optimize a single reward function. [E1]
+The options framework in reinforcement learning formalizes temporally extended, closed-loop behavior rather than requiring a new top-level choice after every primitive step. Its relevance here is the separation of choosing an activity from executing a policy over a period; the paper is not evidence that an Open Legend character should optimize a single reward function. [E1]
 
 **Our application hypothesis:** a character can choose a bounded activity with a purpose, known means, a stopping condition and limits on acceptable substitution. Native work then continues until something relevant changes. The resulting savings are primarily fewer opportunities requiring a new decision, not merely fewer output tokens.
 
@@ -81,7 +81,7 @@ Reynolds's flocking work demonstrates coordinated-looking group motion from loca
 
 **Our application hypothesis:** separate destination choice, route planning, local avoidance, body execution and social interpretation. A route can be mechanically valid but socially unacceptable. A local steering policy can avoid an immediate collision while failing to find a route through a crowded doorway. A formation can move coherently without its participants sharing every intention.
 
-Factorio's hierarchical pathfinding is a useful example of an inexpensive abstraction serving as a hint to more detailed search, rather than being treated as final proof of reachability. See the [technical supplement](game-ai-implementation-and-scale.md#factorio). For OpenLegend, geometry, body capability and current obstacles must still govern admission.
+Factorio's hierarchical pathfinding is a useful example of an inexpensive abstraction serving as a hint to more detailed search, rather than being treated as final proof of reachability. See the [technical supplement](game-ai-implementation-and-scale.md#factorio). For Open Legend, geometry, body capability and current obstacles must still govern admission.
 
 Potential shared computation includes paths to a common destination, static connectivity and nearby obstacle queries. Sharing does not imply that everyone may take the same dangerous shortcut, traverse the same opening or know the same destination. Avoid conflating geometric reuse with shared knowledge or consent.
 
@@ -115,7 +115,7 @@ Analytical fast-forward can be appropriate for a process whose intermediate stat
 
 AgentTorch's archetype tutorial provides a concrete alternative: shared behavioral rules or language-model outputs condition population behavior through reusable archetypes. That can support large-scale population modeling without a distinct language-model conversation for every individual. It does not establish that archetypes preserve a particular person's unusual memories or commitments. [E9]
 
-For OpenLegend's individually cognitive people, begin by sharing mechanics and avoiding redundant decisions. Use population aggregation only where the authored world's promise permits it. Keeping a million labels is not the same as retaining a million distinct lives.
+For Open Legend's individually cognitive people, begin by sharing mechanics and avoiding redundant decisions. Use population aggregation only where the authored world's promise permits it. Keeping a million labels is not the same as retaining a million distinct lives.
 
 ## 9. Memory and history costs are also behavioral choices
 
@@ -125,7 +125,7 @@ Retrieval should be scoped before semantic ranking. A very relevant secret is st
 
 Measure what compaction loses, not only how small the prompt becomes. Persistent activity progress should not depend on optional autobiographical retrieval. Conversely, retaining an activity's progress should not be mistaken for retaining its emotional meaning. Background reflection can reinterpret experience without overwriting actual receipts or another person's private state.
 
-The [language-model research](language-model-societies-and-simile.md) examines these distinctions and current evaluation limits. Existing [OpenLegend memory architecture](../../../../docs/memory-architecture.md) remains the contract; this research does not replace its scheduling or retention requirements.
+The [language-model research](language-model-societies-and-simile.md) examines these distinctions and current evaluation limits. Existing [Open Legend memory architecture](../../../../docs/memory-architecture.md) remains the contract; this research does not replace its scheduling or retention requirements.
 
 ## 10. A budget model and an evidence-producing comparison
 

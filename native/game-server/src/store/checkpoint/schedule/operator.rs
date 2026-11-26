@@ -1,0 +1,549 @@
+//! The checkpoint panel consumes only file summaries and operational policy.
+//! No gameplay rows or checkpoint contents go to an HTTP response.
+
+use super::{CheckpointSchedule, Settings, Uuid};
+use crate::store::{
+    CommitError, Store, StoreError, StoreResult,
+    checkpoint::{CaptureError, CheckpointCursor, MetadataKind, catalog},
+};
+use crate::world::WorldError;
+use openlegend_simulation::host::ByteReservation;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio_postgres::GenericClient;
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CheckpointListing {
+    ok: bool,
+    saves: Vec<catalog::CheckpointSummary>,
+    autosaves: CheckpointStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    next: Option<CheckpointCursor>,
+    #[serde(skip)]
+    _custody: ByteReservation,
+}
+
+impl CheckpointListing {
+    /// A page can contain scenarios copied from different game timelines.
+    /// Resolve each distinct source once and bind final publication to the current epoch.
+    pub(crate) async fn restrict_sources(&mut self, scope:&crate::authority::AuthorizedScope,namespace:Option<uuid::Uuid>) -> crate::authority::AuthorizedScope {
+        let Some(host)=scope.lab_permit() else{return scope.clone()};
+        self.saves.retain(|row|row.namespace==namespace);
+        let mut approvals=std::collections::HashMap::new();
+        for row in &self.saves{
+            if let Some(source)=&row.origin && !approvals.contains_key(source){
+                approvals.insert(source.clone(),host.for_source(Some(source)).await.ok());
+            }
+        }
+        let mut result=scope.clone();
+        self.saves.retain(|row| match &row.origin {
+            None=>true,
+            Some(source)=>match approvals.get(source).and_then(Option::as_ref){
+                Some(permit) if permit.check().is_ok()=>{result=scope.for_lab_source(permit.clone());true}
+                _=>false,
+            },
+        });
+        result
+    }
+    pub(crate) fn autosaves(&self) -> &CheckpointStatus {
+        &self.autosaves
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CheckpointStatus {
+    saving: bool,
+    pending_manual: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    last_completed_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    failure: Option<Failure>,
+    unavailable_saves: usize,
+    storage_bytes: u64,
+    settings: Settings,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    settings_error: Option<&'static str>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct Failure {
+    id: Uuid,
+    at: String,
+    kind: MetadataKind,
+    message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    acknowledged_at: Option<String>,
+}
+
+const DAMAGED_FAILURE: Uuid = Uuid::from_u128(0x00000000_0000_4000_8000_00000000dead);
+
+#[derive(Clone, Copy, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum CreationReceipt {
+    Pending,
+    Resolved,
+    Unknown,
+}
+
+impl Failure {
+    pub(super) fn new(kind: MetadataKind, message: String) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            at: now(),
+            kind,
+            message: message.chars().take(500).collect(),
+            acknowledged_at: None,
+        }
+    }
+
+    fn valid(&self) -> bool {
+        !self.message.is_empty()
+            && self.message.encode_utf16().count() <= 500
+            && chrono::DateTime::parse_from_rfc3339(&self.at).is_ok()
+            && self
+                .acknowledged_at
+                .as_ref()
+                .is_none_or(|at| chrono::DateTime::parse_from_rfc3339(at).is_ok())
+    }
+
+    pub(super) fn undurable(mut self) -> Self {
+        self.message = format!(
+            "{} (This failure could not be saved and will disappear on restart.)",
+            self.message
+        )
+        .chars()
+        .take(500)
+        .collect();
+        self
+    }
+
+    fn damaged() -> Self {
+        Self {
+            id: DAMAGED_FAILURE,
+            at: "1970-01-01T00:00:00.000Z".to_owned(),
+            kind: MetadataKind::Auto,
+            message: "The stored checkpoint failure record is unreadable. Acknowledge to clear it."
+                .to_owned(),
+            acknowledged_at: None,
+        }
+    }
+}
+
+impl CheckpointSchedule {
+    /// Inspect a retained creation without starting another capture. A
+    /// resolved file has the requested identity and its original digest.
+    pub(crate) async fn creation_receipt(
+        &self,
+        id: Uuid,
+        label: String,
+    ) -> Result<CreationReceipt, CaptureError> {
+        {
+            let queue = self.manual.lock().map_err(|_| CaptureError::Format)?;
+            if let Some(prior) = queue
+                .running
+                .as_ref()
+                .into_iter()
+                .chain(&queue.waiting)
+                .find(|request| request.id == id)
+            {
+                return if prior.label == label {
+                    Ok(CreationReceipt::Pending)
+                } else {
+                    Err(CaptureError::Conflict)
+                };
+            }
+        }
+        let store = self.store.clone();
+        let root = self.directory.clone();
+        let world = self.world.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let _custody = store
+                .budget
+                .reserve(super::super::FILE_BUFFER)
+                .map_err(|_| StoreError::Capacity)?;
+            catalog::verify_repeated_manual(
+                &root,
+                &world,
+                &id.to_string(),
+                &label,
+                None,
+                &store.schema.checkpoint,
+            )
+        })
+        .await
+        .map_err(|_| CaptureError::Format)??;
+        Ok(if result {
+            CreationReceipt::Resolved
+        } else {
+            CreationReceipt::Unknown
+        })
+    }
+    /// Read only one page of checkpoint summaries, with independent custody
+    /// through HTTP serialization. No payload is opened for content hashing.
+    pub(crate) async fn authorized_source(&self,scope: &crate::authority::AuthorizedScope, slot:&str)
+        ->Result<crate::authority::AuthorizedScope,crate::authority::AccessError>{
+        use crate::authority::AccessError;
+        let Some(host)=scope.lab_permit() else{return Ok(scope.clone())};
+        let id=if slot==super::super::pre_load::ID{
+            self.store.pre_load_file(&self.world).await?.ok_or(AccessError::Changed)?
+        }else{uuid::Uuid::parse_str(slot).map_err(|_|AccessError::Changed)?.to_string()};
+        let dir=self.directory.join(&id);
+        let db=self.store.clone();let world=self.world.clone();
+        let source=tokio::task::spawn_blocking(move||db.scenario_origin(&dir,&world,&id)).await.map_err(|_|AccessError::Availability)??;
+        Ok(scope.for_lab_source(host.for_source(source.as_ref()).await?))
+    }
+
+    pub(crate) async fn catalog(
+        &self,
+        before: Option<CheckpointCursor>,
+    ) -> Result<CheckpointListing, CaptureError> {
+        let store = self.store.clone();
+        let world = self.world.clone();
+        let root = self.directory.clone();
+        let (protected, damaged_pointer) = match self.store.pre_load_file(&self.world).await {
+            Ok(pointer) => (pointer, false),
+            Err(StoreError::InvalidRecord) => (None, true),
+            Err(error) => return Err(error.into()),
+        };
+        let (mut catalog, custody) = tokio::task::spawn_blocking(move || {
+            let custody = store
+                .budget
+                .reserve(catalog::LIST_WORKSPACE)
+                .map_err(|_| StoreError::Capacity)?;
+            Ok::<_, CaptureError>((
+                catalog::list(
+                    &root,
+                    &world,
+                    before.as_ref(),
+                    &store.schema.checkpoint,
+                    protected.as_deref(),
+                )?,
+                custody,
+            ))
+        })
+        .await
+        .map_err(|_| CaptureError::Format)??;
+        let pending_manual = self
+            .manual
+            .lock()
+            .map_err(|_| CaptureError::Format)?
+            .waiting
+            .is_some();
+        let (settings, settings_error) = match self.store.checkpoint_settings(&self.world).await {
+            Ok(settings) => (settings, None),
+            Err(StoreError::InvalidRecord) => (
+                self.store.schema.checkpoint.schedule.defaults,
+                Some("Stored autosave settings are invalid; save them again."),
+            ),
+            Err(error) => return Err(error.into()),
+        };
+        let undurable = self
+            .undurable_failure
+            .lock()
+            .map_err(|_| CaptureError::Format)?
+            .clone();
+        let failure = match undurable {
+            Some(failure) => Some(failure),
+            None => self.store.checkpoint_failure(&self.world).await?,
+        };
+        let status = CheckpointStatus {
+            saving: self.slot.try_lock().is_err(),
+            pending_manual,
+            last_completed_at: catalog.last_automatic.take(),
+            failure: failure.filter(|failure| failure.acknowledged_at.is_none()),
+            unavailable_saves: catalog.unavailable + usize::from(damaged_pointer),
+            storage_bytes: catalog.bytes,
+            settings,
+            settings_error,
+        };
+        Ok(CheckpointListing {
+            ok: true,
+            saves: catalog.saves,
+            autosaves: status,
+            next: catalog.next,
+            _custody: custody,
+        })
+    }
+
+    pub(crate) async fn delete_pre_load(
+        &self,
+        authorize: impl Fn() -> Result<(), WorldError> + Send + Sync + 'static,
+    ) -> Result<(), CaptureError> {
+        let _slot = self.slot.lock().await;
+        let scope = &self.world;
+        let id = self.store.pre_load_file(scope).await?;
+        let writer = self.store.writer.lock().await;
+        self.store.assert_write_admission()?;
+        authorize()?;
+        writer
+            .client
+            .execute(
+                "DELETE FROM game_saves WHERE world_id=$1 AND id=$2",
+                &[&scope, &super::super::pre_load::ID],
+            )
+            .await?;
+        drop(writer);
+        if let Some(id) = id {
+            self.store
+                .remove_pre_load_file(&self.directory, scope, &id)
+                .await?;
+        }
+        Ok(())
+    }
+
+    /// A delete joins an already running publication and competes for the
+    /// same slot. A waiting create keeps its place and refuses this deletion.
+    pub(crate) async fn delete(
+        self: &Arc<Self>,
+        id: Uuid,
+        authorize: impl Fn() -> Result<(), WorldError> + Send + Sync + 'static,
+    ) -> Result<(), CaptureError> {
+        authorize()?;
+        self.refuse_waiting_delete(id)?;
+        let schedule = Arc::clone(self);
+        tokio::spawn(async move {
+            let _slot = schedule.slot.lock().await;
+            schedule.refuse_waiting_delete(id)?;
+            let id = id.to_string();
+            let world = schedule.world.clone();
+            if schedule.store.scenario_namespace.get().is_some() {
+                // A manual restore pins its active source in the same transaction as
+                // the new timeline. A retained run takes over that pin before the
+                // timeline can change. Automatic rotation only owns other kinds.
+                let candidate = id.clone();
+                let pinned = schedule.store.read_operational(move |tx| Box::pin(async move {
+                    Ok(tx.query_one(
+                        "SELECT EXISTS (SELECT 1 FROM meta p JOIN meta r ON r.key=(p.value::jsonb->>0)
+                             WHERE p.key='integration:current-load-request' AND r.value::jsonb->>'saveId'=$1)
+                         OR EXISTS (SELECT 1 FROM cognition_lab.retained_runs
+                             WHERE source_checksum IS NOT NULL AND summary::jsonb->>'originId'=$1)",
+                        &[&candidate],
+                    ).await?.try_get::<_,bool>(0)?)
+                })).await?;
+                if pinned { return Err(CaptureError::Referenced); }
+            }
+            let root = schedule.directory.clone();
+            let remove = id.clone();
+            let authorize = Arc::new(authorize);
+            let check = authorize.clone();
+            tokio::task::spawn_blocking(move || {
+                catalog::delete(&root, &world, &remove, || check())
+            })
+            .await
+            .map_err(|_| CaptureError::Format)??;
+            let result = schedule
+                .store
+                .release_checkpoint_assets(&schedule.world, &id, false)
+                .await;
+            drop(authorize);
+            result.map_err(Into::into)
+        })
+        .await
+        .map_err(|_| CaptureError::Format)?
+    }
+
+    fn refuse_waiting_delete(&self, id: Uuid) -> Result<(), CaptureError> {
+        let queue = self.manual.lock().map_err(|_| CaptureError::Format)?;
+        if queue
+            .waiting
+            .as_ref()
+            .is_some_and(|request| request.id == id)
+        {
+            return Err(CaptureError::Busy);
+        }
+        Ok(())
+    }
+
+    pub(crate) async fn update_settings(
+        self: &Arc<Self>,
+        mut requested: Settings,
+        authorize: impl Fn() -> Result<(), WorldError> + Send + Sync + 'static,
+    ) -> Result<(), CaptureError> {
+        authorize()?;
+        let schedule = self.clone();
+        tokio::spawn(async move {
+            let store = schedule.store.clone();
+            let policy = &store.schema.checkpoint.schedule;
+            if !policy.valid_settings(requested) {
+                return Err(StoreError::InvalidRecord.into());
+            }
+            let key = format!("checkpoint:settings:{}", schedule.world);
+            let default = policy.defaults;
+            let limits = policy.limits;
+            let authorize = Arc::new(authorize);
+            let check = authorize.clone();
+            let result = store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        let policy = super::SchedulePolicy {
+                            defaults: default,
+                            limits,
+                        };
+                        let current = read_settings(tx, &key, &policy).await;
+                        match current {
+                            Ok(current) if current.revision != requested.revision => {
+                                return Err(StoreError::StaleCut);
+                            }
+                            Err(StoreError::InvalidRecord) | Ok(_) => (),
+                            Err(error) => return Err(error),
+                        }
+                        requested.revision = requested
+                            .revision
+                            .checked_add(1)
+                            .filter(|value| *value <= crate::store::MAX_SAFE_INTEGER)
+                            .ok_or(StoreError::InvalidRecord)?;
+                        let value = serde_json::to_string(&requested)
+                            .map_err(|_| StoreError::InvalidRecord)?;
+                        check().map_err(|_| StoreError::StaleCut)?;
+                        put(tx, &key, &value).await
+                    })
+                })
+                .await
+                .map_err(write_refusal);
+            drop(authorize);
+            result?;
+            schedule.configured.send_replace(());
+            Ok(())
+        })
+        .await
+        .map_err(|_| CaptureError::Format)?
+    }
+
+    pub(crate) async fn acknowledge(
+        self: &Arc<Self>,
+        id: Uuid,
+        authorize: impl Fn() -> Result<(), WorldError> + Send + Sync + 'static,
+    ) -> Result<bool, CaptureError> {
+        authorize()?;
+        let schedule = self.clone();
+        tokio::spawn(async move {
+            let key = format!("checkpoint:failure:{}", schedule.world);
+            let authorize = Arc::new(authorize);
+            let check = authorize.clone();
+            let result = schedule
+                .store
+                .operational(move |tx| {
+                    Box::pin(async move {
+                        let current = read_failure(tx, &key).await?;
+                        let Some(mut failure) = current.filter(|failure| {
+                            failure.id == id && failure.acknowledged_at.is_none()
+                        }) else {
+                            return Ok(false);
+                        };
+                        check().map_err(|_| StoreError::StaleCut)?;
+                        if id == DAMAGED_FAILURE {
+                            tx.execute("DELETE FROM meta WHERE key=$1", &[&key]).await?;
+                        } else {
+                            failure.acknowledged_at = Some(now());
+                            let payload = serde_json::to_string(&failure)
+                                .map_err(|_| StoreError::InvalidRecord)?;
+                            put(tx, &key, &payload).await?;
+                        }
+                        Ok(true)
+                    })
+                })
+                .await
+                .map_err(write_refusal);
+            let was_undurable = if result.is_ok() {
+                authorize()?;
+                let mut failure = schedule
+                    .undurable_failure
+                    .lock()
+                    .map_err(|_| CaptureError::Format)?;
+                if failure.as_ref().is_some_and(|failure| failure.id == id) {
+                    *failure = None;
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+            drop(authorize);
+            result.map(|acknowledged| acknowledged || was_undurable)
+        })
+        .await
+        .map_err(|_| CaptureError::Format)?
+    }
+}
+
+impl Store {
+    pub(super) async fn checkpoint_settings(&self, world: &str) -> StoreResult<Settings> {
+        let reader = self.reader.lock().await;
+        let key = format!("checkpoint:settings:{world}");
+        read_settings(&reader.client, &key, &self.schema.checkpoint.schedule).await
+    }
+
+    async fn checkpoint_failure(&self, world: &str) -> StoreResult<Option<Failure>> {
+        let reader = self.reader.lock().await;
+        read_failure(&reader.client, &format!("checkpoint:failure:{world}")).await
+    }
+
+    pub(super) async fn record_checkpoint_failure(
+        &self,
+        world: &str,
+        failure: &Failure,
+    ) -> StoreResult<()> {
+        let key = format!("checkpoint:failure:{world}");
+        let value = serde_json::to_string(failure).map_err(|_| StoreError::InvalidRecord)?;
+        let writer = self.writer.lock().await;
+        self.assert_write_admission()?;
+        put(&writer.client, &key, &value).await
+    }
+}
+
+async fn read_settings(
+    db: &impl GenericClient,
+    key: &str,
+    policy: &super::SchedulePolicy,
+) -> StoreResult<Settings> {
+    let Some(row) = db.query_opt(
+        "SELECT CASE WHEN octet_length(value)<=1024 THEN value ELSE '' END FROM meta WHERE key=$1",
+        &[&key],
+    ).await? else { return Ok(policy.defaults) };
+    let value: &str = row.try_get(0)?;
+    let settings: Settings = serde_json::from_str(value).map_err(|_| StoreError::InvalidRecord)?;
+    if settings.revision > 0 && policy.valid_settings(settings) {
+        Ok(settings)
+    } else {
+        Err(StoreError::InvalidRecord)
+    }
+}
+
+async fn read_failure(db: &impl GenericClient, key: &str) -> StoreResult<Option<Failure>> {
+    let row = db.query_opt(
+        "SELECT CASE WHEN octet_length(value)<=4096 THEN value ELSE '' END FROM meta WHERE key=$1",
+        &[&key],
+    ).await?;
+    row.map(|row| {
+        let value: &str = row.try_get(0)?;
+        Ok(serde_json::from_str::<Failure>(value)
+            .ok()
+            .filter(Failure::valid)
+            .unwrap_or_else(Failure::damaged))
+    })
+    .transpose()
+}
+
+async fn put(db: &impl GenericClient, key: &str, value: &str) -> StoreResult<()> {
+    db.execute(
+        "INSERT INTO meta VALUES ($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        &[&key, &value],
+    )
+    .await?;
+    Ok(())
+}
+
+fn write_refusal(error: CommitError) -> CaptureError {
+    match error {
+        CommitError::RolledBack(StoreError::StaleCut) => CaptureError::Conflict,
+        other => CaptureError::World(WorldError::Commit(other)),
+    }
+}
+
+fn now() -> String {
+    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+}

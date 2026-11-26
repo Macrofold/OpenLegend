@@ -1,18 +1,18 @@
 # Readable promises — technical design
 
-| Status      | Current progress                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Own-promise reading is delivered; required world-policy separation, bounded preparation and cross-account verification remain open under BW17. | 2026-10-16   |
+| Status      | Current progress                                                                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Rust serves the private list and exact gathering outcomes. The archived-body read still needs verification after a real residency release. | 2026-11-22   |
 
 **Status:** approved read-only first slice of [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management). [Feature specification](readable-promises-feature-spec.md) owns behavior. Delivered under the [player clarity plan](completed/player-clarity-ui.md).
 
-**Interface implemented 2026-09-28; project reopened October 15.** The [recorded Journal journey](../verification/player-clarity-ui.md#bw17--read-only-promises) supports the delivered interface, with its single-account limit preserved. Sections 3, 5, 7 and 8 retain required world-policy separation, bounded read preparation and cross-account qualification; these corrections do not wait for D64. Broader BW17 amendment/negotiation remains outside this project's scope.
+The [recorded Journal journeys](../verification/player-clarity-ui.md#bw17--read-only-promises) cover the original interface and the stand-alone Rust path. Broader amendment and negotiation remain outside this project's scope.
 
 ## 1. Owners and existing contracts
 
 - **Obligation state:** [commitments.ts](../../packages/domain/src/commitments.ts) records an `Obligation` inside a `MemoryRecord` of kind `commitment` (`revision`, `status`, `dueAt`, `completion {eventType, targetId?, definitionId?}`, `evidenceId`, `fulfilledBy`, `fulfilledAt`). The experience owner is the only writer. Recognition, the 16-record admission limit and completion matching are unchanged.
 - **Residency:** unresolved obligations always stay in `world.memories`. Resolved ones can leave resident memory after the raw-history window but remain in PostgreSQL `mind_memories` and the derived `recall_sources` index (`memory_kind='commitment'`, `required=1` while unresolved, partial index `recall_commitments`).
-- **Existing surfaces:** `POST /api/commitment` amends (unchanged, not called by this slice). God mind inspection keeps its own summary.
+- **Existing surfaces:** `POST /api/commitment` amends through Source or Rust with the current player control and exact obligation revision. The read-only panel does not call it. Creator mind inspection keeps its own summary.
 
 ## 2. Read contract
 
@@ -26,6 +26,7 @@ interface OwnPromise {
   revision: number;
   words: string; // the owner's spoken words
   recipient: string | null; // observer-scoped label
+  recipientId: string | null; // scoped person reference only when recognized
   madeAt: number; // sim seconds
   status: 'open' | 'overdue' | 'kept' | 'cancelled';
   terms: string; // server-written, bundled-world wording
@@ -46,17 +47,13 @@ interface OwnPromisePage {
 }
 ```
 
-## 3. Algorithm (`apps/server/src/commitment-view.ts`)
+## 3. Algorithm
 
-1. `assertScope(scope)`; `mayInspectPrivate(scope.actorId, scope)`.
-2. Decode the optional cursor (base64url JSON `{v, fence, at, id}`); the fence digests the scope key (which includes world and actor), storage generation and actor ID. A mismatch raises `HistoryCursorError` (“Promises changed; reload the list.”).
-3. `flushMemorySources(actorId)` so newly kept promises reach storage without a full unrelated save.
-4. Open list (first page only): resident records with an obligation, unresolved, not forgotten, status active/overdue. Bounded by the admission limit. `counted` uses the admission rule itself (`unresolvedCommitmentCount`), so the list can say when forgotten or obligation-less commitments still fill the limit.
-5. Past list: `MemoryRepository.resolvedCommitments(scope, before, 20)` reads eligible resolved commitment sources ordered by `(at DESC, id DESC)` with `LIMIT 21`, then hydrates them through the existing bounded hydration. Without history storage, resident resolved records are used and `partial` is set.
-6. Recheck scope, private access and generation after the await; a change raises the cursor error. The HTTP dispatcher already holds the mutation lane for the whole request, so no tick changes the world between the flush and the reads; past entries that are also open are dropped defensively.
-7. Project each record with `promiseView`, which writes terms/evidence from the binding and item definition names and the viewer's own observer labels.
+The open list contains the owner's visible active and overdue obligations on the first page. The separate count includes every record that blocks admission, including forgotten records and those without a spoken obligation. Past pages read the same actor's eligible resolved records in descending `(at, id)` order, with one extra row to detect continuation. The server uses observer-scoped names and gives a person reference only when the owner recognizes the recipient.
 
-The English terms describe the bundled gathering rule in [spoken promises](../worlds/base/social.md#spoken-promises), but currently remain hard-coded in `commitment-view.ts`; the client repeats the recognition help in `ui/promises.tsx`. Together with the parser and admission cap in `commitments.ts`, these are current engine/world boundary gaps. BW17 owns their extraction into one authored-world source without changing the obligation lifecycle, adding a second store or broadening recognition. The supported gathering rule receives specific wording; other amended rules are described generically.
+[Source](../../apps/server/src/commitment-view.ts#commitmentpage) uses the scoped memory repository under its HTTP mutation lane. The [Rust route](../../native/game-server/src/player_http/promises.rs#list) captures the accepted actor, current privacy state and original durable revision. It pins the visible open records and the newest eligible resolved records for the requested page. The past page uses the existing indexed PostgreSQL read on a separate request-owned connection, so waiting for history does not block gameplay receipts. SQL supplies bodies the pinned page lacks. Rust combines that result with accepted completions still waiting for their ordinary save. It checks the original scope, privacy and selected source revisions again during synchronous response encoding. An unavailable SQL read returns the bounded resident page marked partial. A changed durable revision can require a fresh read. The continuation binds the original tab, actor, world generation and privacy revision.
+
+Recognition, gathering interpretation and the limit come from the [bundled promise rules](../../packages/domain/src/worlds/base/promises.ts). The Rust installed rules and the Source projection use the same [terms and evidence wording](../../packages/domain/src/worlds/base/config/promise-presentation.json). An unfamiliar completion rule receives a generic explanation.
 
 ## 4. Privacy and authority
 
@@ -68,10 +65,8 @@ The English terms describe the bundled gathering rule in [spoken promises](../wo
 
 ## 5. Performance and bounds
 
-- The admission limit bounds the normal open result, not the work to prepare it. On the first page, `openObligations` scans the actor’s resident memories and builds its forgotten-ID set; `unresolvedCommitmentCount` separately scans those memories on every page. The character-decision context has another equivalent open-obligation filter. These reads do not currently use the completion/deadline owner’s cached pending-record index.
-- With canonical history, the past-page selection is an indexed `recall_commitments` range read (≤ 21 rows), followed by bounded hydration of ≤ 20 bodies. This bound does not include resident preparation or the preceding memory-source flush.
-- Without canonical history, the partial fallback filters and sorts all resident resolved obligations and returns them without the 20-row pagination bound. It cannot retrieve records that have left residency.
-- `flushMemorySources` persists only when this actor’s memory sources changed. BW17/PF08 retain shared preparation and bounded fallback work: reuse must preserve the different admission-count and visible-open predicates, actor privacy, forgotten records, immutable revisions and restore invalidation; sharing a helper alone does not remove repeated scans.
+- Rust scans the selected actor's resident memories once per request. The retained resolved set and the PostgreSQL `recall_commitments` selection each hold at most 21 records. The lookup, including transfer admission, stays in one reversible read snapshot. The response keeps at most 20 past rows, including on the partial fallback.
+- Source still scans resident memory separately for display and admission. Its partial fallback returns the resident resolved list. BW17/PF08 track shared preparation and bounding that fallback while Source remains active.
 - Client fetches on mount and on explicit Refresh; no polling.
 
 Page size (20) and the reuse of the admission limit are recorded in [BW04](../limits/base-world.md#bw04).
@@ -82,15 +77,12 @@ Page size (20) and the reuse of the admission limit are recorded in [BW04](../li
 
 ## 7. Extension seams and deferred work
 
-- Amendment/cancellation (after D64) reuses `id`/`revision` and `/api/commitment`; the read contract needs no change.
-- BW17 must extract the existing English parser, gathering interpretation, admission tuning and server/client wording into the base-world owner under the current hard boundary rule. This correction does not wait for promise-language expansion or the D64 amendment decision.
+- Future controls after D64 can reuse `id` and `revision`. The existing amendment API supports only the owner's deadline, permitted completion rule and unilateral cancellation. The native replacement preserves the original words and evidence, and projects the changed status in the ordinary PostgreSQL transaction. A saved cancellation does not establish agreement from a recipient.
 - Cancellation time and overdue history are not recorded by the domain; the view does not invent them.
 
 ## 8. Verification
 
-Existing [player clarity evidence](../verification/player-clarity-ui.md#bw17--read-only-promises) covers native speech setup, the read-only list, completion, paging, stale requests, restart and narrow layout. Its single-human setup did not execute a second-account denial; do not present that as a completed cross-account test. This review adds source analysis, not new runtime evidence.
-
-Reuse valid recorded checks for unchanged behavior. For the boundary and preparation corrections, use a disposable world with `AI_BUDGET_USD=0` and select the affected promise-recognition, limit/count, paging and restore cases, plus the still-unrun cross-account denial. Native `say` setup is API evidence, not Talk-composer interaction. Record new results and their limits in [player clarity verification](../verification/player-clarity-ui.md).
+The [Rust and two-account verification](../verification/player-clarity-ui.md#promises-on-the-stand-alone-rust-server) covers exact text, real gathering, paging, permissions, held history and restart. The older [Source check](../verification/player-clarity-ui.md#bw17--read-only-promises) also covers overdue, cancellation and the admission cap. The archived-body read needs a promise released from the live resident set through its normal owner.
 
 ## Maintained records
 

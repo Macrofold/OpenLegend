@@ -8,6 +8,8 @@ export function initializeIdentity(world: WorldState): void {
   const controlled = actors.filter((entity) => entity.actor?.controller === 'player');
   if (controlled.length !== 1)
     throw new Error('World needs exactly one local controlled actor binding.');
+  // Select the local opening’s default NPC for callers that omit a conversation or goal target.
+  // The saved binding identifies one actor. It says nothing about where other characters live.
   const resident = actors.find((entity) => entity.actor?.controller === 'npc');
   world.identity = {
     controlledEntityId: controlled[0]!.id,

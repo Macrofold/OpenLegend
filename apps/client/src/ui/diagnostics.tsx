@@ -24,7 +24,7 @@ import type {
   GameView,
   EntityView,
 } from '@open-legend/protocol';
-import { AccessError, post } from '../api';
+import { AccessError, post, postContactRead, postPrivateRead } from '../api';
 import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
 import { modalOwnsInput } from './keyboard';
@@ -103,10 +103,12 @@ export function KnowledgeEditor({
   fixedSubject,
   editIdentity = true,
   compact = false,
+  readOnly = false,
 }: {
   fixedSubject?: MindSubject | null;
   editIdentity?: boolean;
   compact?: boolean;
+  readOnly?: boolean;
   owned?: boolean;
   visible: boolean;
   readScope?: string;
@@ -161,7 +163,7 @@ export function KnowledgeEditor({
     let active = true;
     void post<MindSubjectPage | { ok: false; message?: string }>(subjectPath(owned), {
       actorId: mind.actorId,
-      subjectId: subject.id,
+      subjectId: subject.subject,
     })
       .then((result) => {
         if (!active || latestSubjectRead.current !== subjectReadKey) return;
@@ -215,6 +217,49 @@ export function KnowledgeEditor({
     !unavailable &&
     (base.revision !== (document?.revision ?? 0) ||
       (editIdentity && base.nameRevision !== (identity?.revision ?? 0)));
+  const picker = fixedSubject === undefined && (
+    <SubjectPicker
+      actorId={mind.actorId}
+      owned={owned}
+      label="Person or general knowledge"
+      none="General knowledge"
+      value={subject}
+      onSelect={(next) => {
+        if (!dirty && !saving) setSubject(next);
+      }}
+      disabled={saving || dirty || !readCurrent}
+    />
+  );
+  const loadingState = (
+    <>
+      <LoadingIndicator active={loading} label="Loading notes" />
+      {failed && (
+        <Button
+          size="sm"
+          onPress={() => {
+            setMessage('');
+            setReload((value) => value + 1);
+          }}
+        >
+          Retry loading notes
+        </Button>
+      )}
+    </>
+  );
+  if (readOnly) {
+    return (
+      <div hidden={!readCurrent}>
+        <Section title="Knowledge notepads">
+          {picker}
+          {loadingState}
+          {message && <p role="status">{message}</p>}
+          {!loading && !unavailable && (
+            <p className="ol-prose">{document?.text || 'No saved note text.'}</p>
+          )}
+        </Section>
+      </div>
+    );
+  }
   const explanation = (
     <p className="ol-caption">
       {readCurrent
@@ -236,19 +281,7 @@ export function KnowledgeEditor({
         ) : (
           explanation
         )}
-        {fixedSubject === undefined && (
-          <SubjectPicker
-            actorId={mind.actorId}
-            owned={owned}
-            label="Person or general knowledge"
-            none="General knowledge"
-            value={subject}
-            onSelect={(next) => {
-              if (!dirty && !saving) setSubject(next);
-            }}
-            disabled={saving || dirty || !readCurrent}
-          />
-        )}
+        {picker}
         {dirty && (
           <p role="status" className="ol-caption">
             Unsaved notes. Save or discard before choosing another subject or page.
@@ -289,18 +322,7 @@ export function KnowledgeEditor({
             </Button>
           </details>
         )}
-        <LoadingIndicator active={loading} label="Loading notes" />
-        {failed && (
-          <Button
-            size="sm"
-            onPress={() => {
-              setMessage('');
-              setReload((value) => value + 1);
-            }}
-          >
-            Retry loading notes
-          </Button>
-        )}
+        {loadingState}
         {subject && editIdentity && !unavailable && (
           <label>
             {owned ? 'Your nickname' : 'Given name known by this observer'}
@@ -355,7 +377,7 @@ export function KnowledgeEditor({
                   actorId: mind.actorId,
                   worldId: mind.worldId,
                   generation: mind.generation,
-                  subjectId: subject?.id ?? null,
+                  subjectId: subject?.subject ?? null,
                   expectedRevision: base.revision,
                   text,
                   ...(subject && editIdentity && name !== base.name
@@ -451,11 +473,16 @@ function AuthoredFeeling({
         value={subject}
         onSelect={setSubject}
         onlyRecognized
+        entityOnly
       />
       <Button
         disabled={busy}
         onPress={() =>
-          send({ kind: 'create', definitionPin: policy.pin, targetId: subject?.id ?? null })
+          send({
+            kind: 'create',
+            definitionPin: policy.pin,
+            targetId: subject?.subject.kind === 'entity' ? subject.subject.entityId : null,
+          })
         }
       >
         Author feeling
@@ -481,44 +508,56 @@ function OwnedKnowledgeWorkspace({
   compact?: boolean;
 }) {
   const [mind, setMind] = useState<GodMindView>();
+  const [personSubject, setPersonSubject] = useState<MindSubject>();
   const [error, setError] = useState('');
   const [dirty, setDirty] = useState(false);
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     if (!visible || !connected) return;
-    let active = true;
+    const controller = new AbortController();
     setError('');
-    void post<{ ok: boolean; mind?: GodMindView; message?: string }>('/api/mind', {
-      actorId: view.player.id,
-    })
-      .then((result) => {
-        if (!active) return;
+    // A current contact is not a canonical person ID. The existing private-subject
+    // reader binds the actually received body before the note editor uses it.
+    void Promise.all([
+      post<{ ok: boolean; mind?: GodMindView; message?: string }>(
+        '/api/mind',
+        { actorId: view.player.id },
+        controller.signal,
+      ),
+      person
+        ? postContactRead<MindSubjectPage | { ok: false; message?: string }>(
+            '/api/mind/subjects',
+            {
+              actorId: view.player.id,
+              contactReference: person.id,
+              bodyReference: person.bodyReference,
+            },
+            [person.id],
+            controller.signal,
+          )
+        : Promise.resolve(undefined),
+    ])
+      .then(([result, selected]) => {
+        if (controller.signal.aborted) return;
         if (!result.ok || !result.mind)
           throw new Error(result.message ?? 'Your notes are unavailable.');
+        if (person && (!selected?.ok || !selected.selected))
+          throw new Error('This person is no longer available for notes.');
         setMind(result.mind);
+        setPersonSubject(selected?.ok ? selected.selected?.subject : undefined);
       })
       .catch((error) => {
-        if (active) setError(error instanceof Error ? error.message : String(error));
+        if (!controller.signal.aborted)
+          setError(error instanceof Error ? error.message : String(error));
       });
-    return () => {
-      active = false;
-    };
-  }, [visible, connected, view.player.id, refresh]);
-  const fixedSubject: MindSubject | null | undefined = person
-    ? {
-        id: person.id,
-        label: person.name,
-        status: 'in-view',
-        detail: 'Your own understanding of this person',
-      }
-    : mode === 'notes'
-      ? null
-      : undefined;
+    return () => controller.abort();
+  }, [visible, connected, view.player.id, person?.id, person?.bodyReference, refresh]);
+  const fixedSubject = person ? personSubject : mode === 'notes' ? null : undefined;
   return (
     <>
       {!mind && !error && <p role="status">Loading your notes…</p>}
       {error && <p role="alert">{error}</p>}
-      {mind && (
+      {mind && (!person || personSubject) && (
         <KnowledgeEditor
           mind={mind}
           owned
@@ -546,7 +585,7 @@ export function OwnKnowledge(props: Parameters<typeof OwnedKnowledgeWorkspace>[0
   const { view, person, mode } = props;
   return (
     <OwnedKnowledgeWorkspace
-      key={`${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.access?.scope}:${view.player.id}:${person?.id ?? mode ?? 'notes'}`}
+      key={`${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.access?.scope}:${view.player.id}:${person?.id ?? mode ?? 'notes'}:${person?.bodyReference ?? ''}`}
       {...props}
     />
   );
@@ -575,6 +614,8 @@ export function PersonKnowledge(props: {
 export function Mind({
   actorId,
   owned = false,
+  readOnly = false,
+  canEditKnowledge = false,
   visible = true,
   readScope,
   memoryScope,
@@ -583,6 +624,8 @@ export function Mind({
 }: {
   actorId: string;
   owned?: boolean;
+  readOnly?: boolean;
+  canEditKnowledge?: boolean;
   visible?: boolean;
   readScope?: string;
   memoryScope: string;
@@ -590,6 +633,7 @@ export function Mind({
   onDirtyChange?(dirty: boolean): void;
 }) {
   const [refreshRevision, setRefreshRevision] = useState(0);
+  const knowledgeWritable = !readOnly || canEditKnowledge;
   const snapshotKey = JSON.stringify([actorId, owned, readScope, evidenceEpoch, refreshRevision]);
   const [snapshot, setSnapshot] = useState<{ key: string; value: GodMindView } | null>(null),
     [error, setError] = useState(''),
@@ -738,22 +782,30 @@ export function Mind({
             )}
             <Section title="My understanding of people">
               {mind.notepads
-                ?.filter((doc) => doc.subjectId && doc.text)
+                ?.filter(
+                  (doc) =>
+                    doc.subjectId &&
+                    (doc.subjectId.kind === 'entity' || doc.subjectId.kind === 'individual') &&
+                    doc.text,
+                )
                 .map((doc) => (
-                  <details key={doc.subjectId}>
+                  <details key={JSON.stringify(doc.subjectId)}>
                     <summary>{doc.label}</summary>
                     <p className="ol-prose">{doc.text}</p>
-                    <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                    {knowledgeWritable && (
+                      <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                    )}
                   </details>
                 ))}
             </Section>
           </div>
           {/* Not keyed by the page cursor: a save changes it, and details load by subject. */}
           <KnowledgeEditor
-            key={`${mind.worldId}:${mind.generation}:${mind.actorId}`}
+            key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${knowledgeWritable}`}
             mind={mind}
             onSaved={setMind}
             owned={owned}
+            readOnly={!knowledgeWritable}
             visible={visible && currentSnapshot}
             readScope={snapshotKey}
             readCurrent={currentSnapshot}
@@ -767,7 +819,7 @@ export function Mind({
                   const cursor = mind.continuity!.cursor!;
                   void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
                     owned ? '/api/mind' : '/api/god/mind',
-                    { actorId, cursor },
+                    { actorId: mind.actorId, cursor },
                   )
                     .then((result) => {
                       if (latestSnapshotKey.current !== snapshotKey) return;
@@ -782,11 +834,13 @@ export function Mind({
                 More feelings and notes
               </Button>
             )}
-            <ActivityHistory
-              key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
-              actorId={mind.actorId}
-              owned={owned}
-            />
+            {!readOnly && (
+              <ActivityHistory
+                key={`${mind.worldId}:${mind.generation}:${mind.actorId}:${readScope}:${evidenceEpoch}`}
+                actorId={mind.actorId}
+                owned={owned}
+              />
+            )}
             {!owned && (
               <Section title="Memory and thought history">
                 <MemoryHistory
@@ -1880,11 +1934,72 @@ function CopyValue({ label, value }: { label: string; value: unknown }) {
 
 function BillingDetails({ value }: { value: unknown }) {
   const data = object(value);
+  const saved = object(data?.['saved']);
   const runs = Array.isArray(data?.['runs']) ? data['runs'] : [];
   const money = (value: unknown) =>
     typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value))
       ? `$${(Number(value) / 1e6).toFixed(6)}`
       : 'Not reported';
+  if (saved) {
+    const receipt = object(saved['receipt']);
+    const usage = object(receipt?.['usage']);
+    const status = valueText(saved['status']);
+    const provider = object(data?.['providerUsage']);
+    const observed = object(provider?.['usage']);
+    return (
+      <section className="ol-diagnostic-card">
+        <strong>Saved billing</strong>
+        <dl className="ol-diagnostic-metrics">
+          <Labeled label="Status">
+            {status === 'uncertain'
+              ? 'Uncertain completion or cost'
+              : status === 'reserved'
+                ? 'Reserved'
+                : status === 'settled'
+                  ? 'Settled'
+                  : 'Not recorded'}
+          </Labeled>
+          {status !== 'settled' && (
+            <Labeled label="Original reservation">{money(saved['reservedMicroUsd'])}</Labeled>
+          )}
+          <Labeled label={status === 'settled' ? 'Ledger amount' : 'Amount held against budget'}>
+            {money(
+              status === 'reserved' ? saved['reservedMicroUsd'] : saved['ledgerCommittedMicroUsd'],
+            )}
+          </Labeled>
+          <Labeled label="Provider estimate">
+            {typeof receipt?.['estimatedCostUsd'] === 'number'
+              ? usd(receipt['estimatedCostUsd'])
+              : 'Not reported'}
+          </Labeled>
+          <Labeled label="Tokens">
+            {usage
+              ? `${usage['inputTokens'] ?? '?'} in / ${usage['outputTokens'] ?? '?'} out`
+              : 'Not reported'}
+          </Labeled>
+          {receipt?.['macrofoldBillingMode'] != null && (
+            <Labeled label="Billing mode">{String(receipt['macrofoldBillingMode'])}</Labeled>
+          )}
+        </dl>
+        <p className="ol-caption">From the server’s saved spending record.</p>
+        {provider && (
+          <>
+            <strong>Provider usage</strong>
+            {observed ? (
+              <dl className="ol-diagnostic-metrics">
+                <Labeled label="Macrofold charge">{money(observed['chargedMicroUsd'])}</Labeled>
+                <Labeled label="Tokens">
+                  {`${valueText(observed['inputTokens']) ?? '?'} in / ${valueText(observed['outputTokens']) ?? '?'} out`}
+                </Labeled>
+              </dl>
+            ) : (
+              <p>No complete provider usage report is available.</p>
+            )}
+          </>
+        )}
+      </section>
+    );
+  }
   return (
     <section className="ol-diagnostic-card">
       <strong>Provider billing</strong>
@@ -2375,6 +2490,8 @@ function Stage({
   remote,
   setRemote,
   showJson,
+  onAccessLost,
+  visible,
   supporting = [],
 }: {
   call: IntelligenceCall;
@@ -2384,9 +2501,21 @@ function Stage({
   remote: unknown;
   setRemote(value: unknown): void;
   showJson(raw: RawView): void;
+  onAccessLost(): void;
+  visible: boolean;
 }) {
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [billingError, setBillingError] = useState('');
+  const [captureError, setCaptureError] = useState('');
+  const captureRead = useRef<AbortController | null>(null);
+  const billingRead = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      captureRead.current?.abort();
+      billingRead.current?.abort();
+    },
+    [visible],
+  );
   const supportingFailure = supporting.find(
     (c) => c.status === 'failed' || path(c.output, 'ok') === false,
   );
@@ -2400,7 +2529,68 @@ function Stage({
     (supportingFailure
       ? `${supportingFailure.kind} failed; inspect supporting details.`
       : undefined);
+  const savedBilling = path(call.output, 'savedBilling') === true;
+  const providerRefreshAvailable = path(call.output, 'providerRefreshAvailable') === true;
+  async function loadBilling(refresh = false) {
+    billingRead.current?.abort();
+    const controller = new AbortController();
+    billingRead.current = controller;
+    setLoadingBilling(true);
+    setBillingError('');
+    try {
+      const result = await postPrivateRead<{
+        ok: boolean;
+        details?: unknown;
+        message?: string;
+      }>(
+        '/api/god/intelligence-details',
+        refresh ? { id: call.id, refresh: true } : { id: call.id },
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      if (!result.ok) throw new Error(result.message ?? 'Billing details are unavailable.');
+      setRemote(result.details);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof AccessError) onAccessLost();
+      else setBillingError(error instanceof Error ? error.message : String(error));
+    } finally {
+      if (billingRead.current === controller) {
+        billingRead.current = null;
+        setLoadingBilling(false);
+      }
+    }
+  }
+
+  async function showStageJson() {
+    const title = `${call.kind}, request and response`;
+    const value = remote === undefined ? call : { ...call, providerDetails: remote };
+    if (!savedBilling || call.kind !== 'generate') {
+      showJson({ title, value });
+      return;
+    }
+    captureRead.current?.abort();
+    const controller = new AbortController();
+    captureRead.current = controller;
+    setCaptureError('');
+    try {
+      const result = await postPrivateRead<{
+        ok: boolean;
+        message?: string;
+        details?: { capture: unknown };
+      }>('/api/god/intelligence-stage', { id: call.id }, controller.signal);
+      if (controller.signal.aborted) return;
+      if (!result.ok || !result.details)
+        throw new Error(result.message ?? 'The recorded input is unavailable.');
+      showJson({ title, value: { ...value, capture: result.details.capture } });
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof AccessError) onAccessLost();
+      else setCaptureError(error instanceof Error ? error.message : String(error));
+    }
+  }
   const hasProviderDetails =
+    savedBilling ||
     !!path(call.output, 'receipt', 'providerRequestId') ||
     call.exchanges.some(
       (exchange) =>
@@ -2472,26 +2662,26 @@ function Stage({
               size="sm"
               variant="quiet"
               busy={loadingBilling}
-              onPress={async () => {
-                setLoadingBilling(true);
-                setBillingError('');
-                try {
-                  const result = await post<{ ok: boolean; details?: unknown; message?: string }>(
-                    '/api/god/intelligence-details',
-                    { id: call.id },
-                  );
-                  if (!result.ok)
-                    throw new Error(result.message ?? 'Provider details unavailable.');
-                  setRemote(result.details);
-                } catch (error) {
-                  setBillingError(error instanceof Error ? error.message : String(error));
-                } finally {
-                  setLoadingBilling(false);
-                }
-              }}
+              onPress={() => void loadBilling()}
             >
-              {remote === undefined ? 'Fetch billing details' : 'Refresh billing details'}
+              {savedBilling
+                ? remote === undefined
+                  ? 'Show saved billing'
+                  : 'Refresh saved billing'
+                : remote === undefined
+                  ? 'Fetch billing details'
+                  : 'Refresh billing details'}
             </Button>
+            {providerRefreshAvailable && (
+              <Button
+                size="sm"
+                variant="quiet"
+                busy={loadingBilling}
+                onPress={() => void loadBilling(true)}
+              >
+                Check provider usage
+              </Button>
+            )}
           </div>
         )}
         {billingError && (
@@ -2506,16 +2696,12 @@ function Stage({
           {reason ?? 'Stage failed; open the stage to inspect input and output.'}
         </p>
       )}
+      {captureError && <p role="alert">{captureError}</p>}
       <div className="ol-diagnostic-stage-json">
         <IconButton
           icon="ui.json"
           label={`Show ${call.kind} request and response JSON`}
-          onPress={() =>
-            showJson({
-              title: `${call.kind}, request and response`,
-              value: remote === undefined ? call : { ...call, providerDetails: remote },
-            })
-          }
+          onPress={() => void showStageJson()}
         />
       </div>
     </section>
@@ -2526,10 +2712,12 @@ function TraceDetail({
   row,
   showJson,
   visible,
+  clearRaw,
 }: {
   row: Row;
   showJson(raw: RawView): void;
   visible: boolean;
+  clearRaw(): void;
 }) {
   const [detail, setDetail] = useState<{
       root: IntelligenceCall;
@@ -2541,11 +2729,17 @@ function TraceDetail({
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
   const generation = useRef(0);
+  function clearPrivate() {
+    generation.current++;
+    setDetail(null);
+    setRemote({});
+    clearRaw();
+  }
   async function load() {
     const id = ++generation.current;
     setError('');
     try {
-      const result = await post<{
+      const result = await postPrivateRead<{
         ok: boolean;
         message?: string;
         details: NonNullable<typeof detail>;
@@ -2555,7 +2749,8 @@ function TraceDetail({
       setDetail(result.details);
     } catch (loadError) {
       if (id !== generation.current) return;
-      setDetail(null);
+      if (loadError instanceof AccessError) clearPrivate();
+      else setDetail(null);
       setError(String(loadError));
     }
   }
@@ -2702,6 +2897,11 @@ function TraceDetail({
               remote={remote[call.id]}
               setRemote={(value) => setRemote((current) => ({ ...current, [call.id]: value }))}
               showJson={showJson}
+              visible={visible}
+              onAccessLost={() => {
+                clearPrivate();
+                setError('Inspection permission changed. Refresh to continue.');
+              }}
             />
           ))}
         </>
@@ -2823,7 +3023,7 @@ export function Diagnostics({
     readAbort.current = controller;
     if (!peek) setLoading(true);
     try {
-      const result = await post<{
+      const result = await postPrivateRead<{
         ok: boolean;
         message?: string;
         worldId?: string;
@@ -2945,6 +3145,7 @@ export function Diagnostics({
           row={selection}
           showJson={showRaw}
           visible={visible}
+          clearRaw={() => setRaw((value) => (value?.key === rawKey ? null : value))}
         />
         {currentRaw && visible && <RawJsonPanel raw={currentRaw} onClose={() => setRaw(null)} />}
       </div>

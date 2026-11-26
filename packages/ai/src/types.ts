@@ -1,4 +1,4 @@
-import type { NetworkOwner } from '@open-legend/network';
+import type { NetworkOwner, HttpPublication } from '@open-legend/network';
 import type {
   MacrofoldDeploymentTarget,
   MacrofoldOutputMode,
@@ -52,6 +52,15 @@ export interface RequestControl {
   signal?: AbortSignal;
   /** Absolute Unix time in milliseconds. The client also enforces its configured timeout. */
   deadlineMs?: number;
+  /** The caller's real final disclosure lease, after all provider preparation. */
+  publication?: HttpPublication;
+  /** Application capacity only. This grants no evidence or execution authority. */
+  allocation?: {
+    reserveBytes(bytes: number): { release(): void };
+    /** Share existing immutable input custody, when this owner recognizes it. */
+    borrow?(value: object): { release(): void } | undefined;
+    retain(value: object, reservation: { release(): void }): void;
+  };
 }
 
 export interface JudgeRequest extends RequestControl {
@@ -159,6 +168,7 @@ export interface AiReceipt {
     deploymentId: string;
     infrastructureCostIncluded: false;
   };
+  /** Original paid worker attempt for later receipt observation. */
   sharedExecution?: {
     grantId: string;
     attemptId: string;

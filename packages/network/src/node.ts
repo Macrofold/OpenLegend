@@ -346,10 +346,12 @@ export function runRemoteProcess(
     'subprocess',
     () =>
       new Promise<RemoteProcessResult>((resolve, reject) => {
+        const ownsProcessGroup = process.platform !== 'win32';
         const child = spawn(options.command, [...options.args], {
           cwd: options.cwd,
           env: options.env,
           shell: false,
+          detached: ownsProcessGroup,
           stdio: ['ignore', 'pipe', 'pipe'],
         });
         let output = 0;
@@ -358,11 +360,25 @@ export function runRemoteProcess(
         let failure: NetworkError | undefined;
         let requested = false;
         let cancelKill: (() => void) | undefined;
+        const signalChild = (signal: NodeJS.Signals) => {
+          if (!ownsProcessGroup || child.pid === undefined) {
+            child.kill(signal);
+            return;
+          }
+          try {
+            // The process group is private to this spawn. Descendants can keep
+            // the captured pipes open after the direct child has exited.
+            process.kill(-child.pid, signal);
+          } catch (error) {
+            if (!(error instanceof Error && 'code' in error && error.code === 'ESRCH'))
+              child.kill(signal);
+          }
+        };
         const stop = () => {
           if (requested) return;
           requested = true;
-          child.kill('SIGTERM');
-          cancelKill = scope.scheduler.schedule(grace, () => child.kill('SIGKILL'));
+          signalChild('SIGTERM');
+          cancelKill = scope.scheduler.schedule(grace, () => signalChild('SIGKILL'));
         };
         const removeStop = scope.onStop(stop);
         const receive = (chunks: Uint8Array[], chunk: Buffer) => {

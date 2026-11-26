@@ -7,14 +7,22 @@ import { validateSocialOfferPolicy } from '../../packages/domain/src/social-offe
 import socialOffers from '../../packages/domain/src/worlds/base/config/social-offers.generated.json' with { type: 'json' };
 import type { WorldState } from '../../packages/domain/src/types.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
+import { prepareBaseInitialWorldState } from '../../packages/domain/src/worlds/base/initial-opening.js';
 
 // Browser fixtures construct their opening before the server can initialize physics.
 await initializeCollisionRuntime();
 
 /** Explicit supplied camp for isolated native-action examples. The real ordinary
- * Main is empty handed; these specimens need chosen stock and no roaming ecology. */
+ * Main is empty handed; these specimens need chosen stock and the small diagnostic opening. */
 export function stockedCamp(seed = 73, accounts?: WorldCreationAccounts) {
-  return createBaseDiagnosticWorld(seed, accounts);
+  const world = createBaseDiagnosticWorld(seed, accounts);
+  // This is fresh authored state, not a restored world. Stored fixtures need the
+  // same actual starting reception and bodily concerns as ordinary creation.
+  prepareBaseInitialWorldState(world);
+  // These isolated action specimens start running rather than awaiting review
+  // of a newly created playable opening.
+  world.paused = false;
+  return world;
 }
 
 /** Selected authored cooperation in the small native fixture, without the full Main

@@ -1,3 +1,5 @@
+import { workspaceStoragePrefix } from './lab-location';
+
 export type RetainedRequest<T> =
   | { status: 'empty' }
   | { status: 'pending'; request: T }
@@ -63,7 +65,8 @@ export function boundedText(value: unknown, maximum: number): value is string {
 }
 
 /** One retained checkpoint operation for the native account/session/grant/character scope. */
-export const checkpointRequestKey = (scope: string) => `open-legend:checkpoint-request:${scope}`;
+export const checkpointRequestKey = (scope: string) =>
+  `${workspaceStoragePrefix}checkpoint-request:${scope}`;
 export const assetSelectionRequestKey = (scope: string) => `open-legend:asset-selection:${scope}`;
 
 /** Scope adoption is independent of unrelated draft markers or storage areas. */
@@ -74,7 +77,7 @@ export function pruneWorldRequests(scope: string | undefined): void {
       : new Set<string>();
     for (const key of Object.keys(sessionStorage))
       if (
-        (key.startsWith('open-legend:checkpoint-request:') ||
+        (key.startsWith(workspaceStoragePrefix + 'checkpoint-request:') ||
           key.startsWith('open-legend:asset-selection:')) &&
         !keep.has(key)
       )

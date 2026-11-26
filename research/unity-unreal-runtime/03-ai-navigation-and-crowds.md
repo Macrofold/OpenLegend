@@ -6,7 +6,7 @@
 
 The central distinction in this chapter is between choosing an intention, finding an available interaction or route, and executing movement or an action. A system can accelerate one of these without solving the others. This research examines Unreal Engine 5.8 and Unity 6.6, with **Behavior 1.0.16**, **AI Navigation 2.0.16**, **ML-Agents 4.1.0**, and **com.unity.ai.inference 2.6.1**. The last package's current display name is **Sentis**. Package identities matter: similarly named older packages are not interchangeable evidence. [Unity package metadata][S03-09] [S03-12] [S03-15] [S03-24]
 
-The chapter contains no OpenLegend feature designs, adoption recommendations, or benchmark claims. It uses OpenLegend's broad concern with authored character behavior and persistent simulation as a research lens, while preserving the boundary between engine mechanisms and game-specific meaning.
+The chapter contains no Open Legend feature designs, adoption recommendations, or benchmark claims. It uses Open Legend's broad concern with authored character behavior and persistent simulation as a research lens, while preserving the boundary between engine mechanisms and game-specific meaning.
 
 ## 1. Behavior execution: avoiding unchanged decisions while retaining active work
 
@@ -100,7 +100,7 @@ Unity distinguishes a moving local obstruction from a hole carved into the route
 | Underlying geometry changes                           | Dirty-region rebuild             | Recalculates affected traversability                                       |
 | Construction uses coarser geometry                    | Mesh-resolution change           | Can remove a passage that the detailed geometry permits                    |
 
-The table is an analytical separation of the documented mechanisms, not a proposed policy for when OpenLegend should use them.
+The table is an analytical separation of the documented mechanisms, not a proposed policy for when Open Legend should use them.
 
 ### Links connect route segments; execution still has a separate contract
 
@@ -154,11 +154,11 @@ Unreal Smart Objects register searchable interaction slots in a spatially partit
 
 ## 6. Research conclusions and unresolved evidence
 
-The strongest common mechanisms in these sources are dependency-directed execution, explicit running/pending states, candidate filtering before expensive tests, regional rebuilding, shared immutable definitions, and separation of search from execution. These are comparative observations, not a selection of components for OpenLegend.
+The strongest common mechanisms in these sources are dependency-directed execution, explicit running/pending states, candidate filtering before expensive tests, regional rebuilding, shared immutable definitions, and separation of search from execution. These are comparative observations, not a selection of components for Open Legend.
 
 Their tradeoffs differ. An event observer avoids an unchanged decision; an asynchronous path request delays an answer; coarser navigation can change reachability; a crowd approximation changes local motion; a queued behavior event retains future obligations. A claim that all of them simply “make AI cheaper” would hide the behavior that changes or the work that moves elsewhere.
 
-The inspected sources do not establish worst-case queue latency, global deadlock-free crowd navigation, complete whole-world route availability under streaming, policy quality after training, or measured OpenLegend speedups. Custom callbacks, observation collection, and environment-query generation remain application work. Runtime diagrams and package samples are not substitutes for those missing measurements, and this study does not invent them.
+The inspected sources do not establish worst-case queue latency, global deadlock-free crowd navigation, complete whole-world route availability under streaming, policy quality after training, or measured Open Legend speedups. Custom callbacks, observation collection, and environment-query generation remain application work. Runtime diagrams and package samples are not substitutes for those missing measurements, and this study does not invent them.
 
 ## Source and provenance register
 

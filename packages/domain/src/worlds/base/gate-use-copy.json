@@ -1,0 +1,16 @@
+{
+  "unavailable": { "code": "gate-unavailable", "message": "Choose a current supported gate and a person able to handle it." },
+  "changed": { "code": "gate-changed", "message": "The gate or its current permission changed during preparation." },
+  "permission": { "code": "gate-permission", "message": "There is no current public-use permission for this exact gate and operation." },
+  "notVisible": { "code": "not-visible", "message": "Move close enough to perceive the actual structure." },
+  "competing": { "code": "competing-edit", "message": "Another operation is in progress on this structure." },
+  "open": { "code": "gate-open", "message": "Close the gate before using its inside bar." },
+  "barred": { "code": "gate-barred", "message": "The closed gate must be unbarred from inside first." },
+  "blocked": { "code": "gate-blocked", "message": "The gate and its hanging cords need their complete movement space clear." },
+  "access": { "code": "gate-access", "message": "No clear supported route reaches the selected handle." },
+  "unchanged": { "code": "gate-unchanged", "message": "The gate is already in the requested state; no operation was needed." },
+  "operatedEvent": "gate-operated",
+  "checkedEvent": "gate-checked",
+  "checkedClause": "checked the gate; it was already in the requested state.",
+  "completedPrefix": "completed: "
+}

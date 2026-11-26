@@ -15,6 +15,7 @@ The detailed chapters own their requirements; these links are conditional, not a
 - [Storage execution and transactional persistence](performance/storage.md): queries, schemas/indexes, snapshots and persistence preparation.
 - [Spatial, navigation and sensory performance](performance/spatial.md): movement, geometry, navigation preparation and sensory candidates.
 - [Performance measurement and interpretation](performance/measurement.md): instrumentation, benchmarks and interpretation of complete-path results.
+- [Hierarchical profiling](performance/hierarchical-profiling.md) and [simulation inventory](performance/simulation-inventory.md): reusable campaign design and source-mapped per-operation coverage, including tooling still to deliver.
 
 ## Maintained records
 

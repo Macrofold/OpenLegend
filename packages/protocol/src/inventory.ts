@@ -52,7 +52,7 @@ export interface InventoryDestinationRequest {
 export interface InventoryDestination extends Named {
   id: string;
   location: string;
-  revision: number;
+  revision?: number;
   kind: 'container' | 'recipient';
   openable: boolean;
   accessible?: boolean;

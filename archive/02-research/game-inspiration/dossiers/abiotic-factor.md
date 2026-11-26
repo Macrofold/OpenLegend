@@ -1,6 +1,6 @@
 # G148 — Abiotic Factor
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Abiotic Factor is most useful as a study of **survival through scientific improvisation inside an authored place**. Instead of spawning naked in a wilderness and converting trees into an abstract tech tree, players begin as specialized researchers trapped inside the GATE Cascade Research Facility. Office furniture becomes raw material, wall outlets become infrastructure, nighttime power outages make batteries meaningful, portal worlds become renewable expeditions, strange entities become pets or research problems, and skills improve through doing. The strongest loop is: **understand a place → repurpose it → invent around a constraint → open another impossible place**.
 
@@ -909,13 +909,13 @@ These are qualitative samples, not prevalence estimates.
 
 **Mystery buildup versus ending payoff.** Environmental narrative creates very high expectations for the finale.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Let professions be starting histories, not cages
 
 Abiotic Factor's Jobs answer "who were you before this happened?" and then use-based skills answer "what have you become?"
 
-OpenLegend can do the same:
+Open Legend can do the same:
 - background gives asymmetric competence/relationships/resources;
 - actual lived behavior reshapes ability;
 - no artificial prohibition stops a physicist from learning to cook.
@@ -930,13 +930,13 @@ The cafeteria is:
 - landmark;
 - later social memory.
 
-OpenLegend should prefer places where **fiction, navigation, resources and interaction share one owner** rather than creating a separate "base-building zone" disconnected from the world.
+Open Legend should prefer places where **fiction, navigation, resources and interaction share one owner** rather than creating a separate "base-building zone" disconnected from the world.
 
 ### 3. Turn infrastructure failure into world rhythm
 
 Day/night matters because the institution's electricity goes out. This is much more fictionally grounded than a generic "night monsters get +30% damage."
 
-For OpenLegend, schedules can change:
+For Open Legend, schedules can change:
 - utilities;
 - transport;
 - staffing;
@@ -950,7 +950,7 @@ Time should transform the world's systems.
 
 Portal Worlds can replenish resources while the primary authored facility remains stable.
 
-For OpenLegend:
+For Open Legend:
 - persistent reality can preserve consequential history;
 - renewable/instanced/remote spaces can absorb repeatable extraction;
 - resource refresh does not require "the destroyed office magically respawned."
@@ -969,7 +969,7 @@ The social system emerges from capability history rather than MMO labels.
 
 Toilet/fatigue/food systems are memorable because they affect behavior and produce funny/specific consequences. A generic hunger bar is not inherently valuable.
 
-OpenLegend should model needs where they:
+Open Legend should model needs where they:
 - change choices;
 - create care/social roles;
 - produce readable behavior;
@@ -980,13 +980,13 @@ OpenLegend should model needs where they:
 Office items remain recognizable even as ingredients. This lets players invent mentally:
 "Could I use *that*?"
 
-OpenLegend's object system should preserve semantic affordances/material/history rather than reducing everything immediately to "5 scrap."
+Open Legend's object system should preserve semantic affordances/material/history rather than reducing everything immediately to "5 scrap."
 
 ### 8. Creator support needs a deliberate extension boundary
 
 Deep Field's announced Mod Editor exposes many data-level systems but explicitly does **not** initially permit new levels/portal worlds. The team says that authoring support is much harder.
 
-This is directly relevant to OpenLegend:
+This is directly relevant to Open Legend:
 - expose high-value safe semantic extension points first;
 - don't pretend every internal authoring tool can become a stable public API;
 - expand when the tool/contract quality is ready.
@@ -995,7 +995,7 @@ This is directly relevant to OpenLegend:
 
 If the early game teaches "scientists solve problems cleverly" but the finale requires mostly conventional shooting, the game risks betraying its own strongest promise.
 
-OpenLegend should test every late-game escalation:
+Open Legend should test every late-game escalation:
 **does it deepen the thing people learned to love, or replace it with a generic prestige encounter?**
 
 ### 10. Sandbox laws can widen the audience without fragmenting the engine
@@ -1018,7 +1018,7 @@ That is a strong authored-reality principle: expose **world-law parameters** whi
 
 ### Prior-owner / preservation check
 
-Repository-wide code search for **"Abiotic Factor"** returned no prior dedicated OpenLegend owner on the searchable baseline. The inspected canonical roster/README likewise identify G148 as a new September 27 survival-expansion subject. This dossier is additive; it does not replace an earlier game chapter/mechanics study.
+Repository-wide code search for **"Abiotic Factor"** returned no prior dedicated Open Legend owner on the searchable baseline. The inspected canonical roster/README likewise identify G148 as a new September 27 survival-expansion subject. This dossier is additive; it does not replace an earlier game chapter/mechanics study.
 
 The roster's required boundary is preserved:
 - professions/skills;

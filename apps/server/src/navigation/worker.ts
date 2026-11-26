@@ -86,6 +86,11 @@ parentPort.on('message', (message: NavigationMessage) => {
         if (timing && start !== undefined) timing.queryMs = performance.now() - start;
       }
     }
+    if (message.requests) {
+      const start = profiling ? performance.now() : undefined;
+      reply.results = message.requests.map((request) => planner!.route(request));
+      if (timing && start !== undefined) timing.queryMs = performance.now() - start;
+    }
   } catch {
     reply.error = 'Navigation preparation failed.';
     reply.result = { status: 'unavailable', path: [] };

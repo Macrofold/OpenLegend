@@ -1,0 +1,928 @@
+//! Admit spending before starting one prepared provider exchange. The native
+//! evidence and live player grant own the synchronous start. Settlement is
+//! durable even if the caller no longer wants the output.
+
+use crate::{
+    authority::{AccessError, Authority, AuthorizedScope, Capability},
+    boot::CurrentServer,
+    network::{NetworkError, NetworkOwner},
+    provider_transport::{
+        ActiveRun, FundedReply, HttpEvidence, InferenceEvent, InferenceEvents,
+        PreparedProviderRequest, ProviderDestination, ProviderExchange, ProviderReply,
+        deployment::ModelExecutionProof,
+    },
+    store::{
+        AttemptAdmission, AttemptRequest, CommitError, ModelReceipt, ModelUsage, ReservedAttempt,
+    },
+    world::{NpcDisclosure, NpcDisclosureTurn, WorldError},
+};
+use chrono::{SecondsFormat, Utc};
+use openlegend_simulation::{encoding::hex_bytes, runtime::RuntimeNpcResponseTicket};
+use openlegend_world_host::pool::HostError;
+use std::{
+    fmt,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
+use tokio::{sync::watch, time::Instant};
+
+mod previews;
+pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
+mod response;
+pub(crate) use response::{decode_embeddings, decode_provider, decode_provider_bound};
+mod stage_capture;
+pub(crate) use stage_capture::{DirectStageCapture, StageCaptures};
+
+pub(crate) struct PreparedCall {
+    pub request: PreparedProviderRequest,
+    pub allowance: AttemptRequest,
+    pub requested_model: String,
+    pub context_digest: String,
+    pub macrofold_billing_mode: Option<&'static str>,
+    pub deadline: Instant,
+    pub evidence_cut: u64,
+    pub preview: Option<crate::npc::preview::PreviewAttempt>,
+}
+
+pub(crate) struct CallAuthority {
+    pub lab_fields: Option<Arc<crate::lab::fields::Context>>,
+    pub hold_time: Option<crate::lab::decisions::HoldTime>,
+    pub source: Arc<RuntimeNpcResponseTicket>,
+    pub speaker: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    pub discovery: Option<Arc<crate::npc::discovery::DiscoveryDispatch>>,
+    pub stage_capture: Option<Arc<DirectStageCapture>>,
+    pub remembered_places: bool,
+}
+
+pub(crate) struct ProviderObservation<T> {
+    pub value: Result<T, CallFailure>,
+    pub provider_request_id: Option<String>,
+    pub macrofold_run: Option<uuid::Uuid>,
+    pub model: Option<String>,
+    pub usage: Option<ModelUsage>,
+    pub charged_microusd: Option<u64>,
+    pub completion_uncertain: bool,
+    pub proof: ModelExecutionProof,
+    pub unsupported_deployment: bool,
+}
+
+#[derive(Debug)]
+pub(crate) enum CallFailure {
+    Admission,
+    Existing,
+    Cancelled,
+    Stale(&'static str),
+    Authority(AccessError),
+    World(WorldError),
+    DecodeBusy,
+    ContextLimit,
+    ProviderInputLimit,
+    Transport(NetworkError),
+    Refused(u16),
+    Deployment(&'static str),
+    CompletionUnconfirmed,
+    Invalid,
+    Commit(CommitError),
+    At {
+        stage: &'static str,
+        failed: Box<CallFailure>,
+    },
+}
+
+impl fmt::Display for CallFailure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Admission => f.write_str("The provider allowance is already committed"),
+            Self::Existing => f.write_str("This exact provider attempt already exists"),
+            Self::Cancelled => f.write_str("This request was cancelled"),
+            Self::Stale(reason) => {
+                write!(f, "The provider request lost its current source: {reason}")
+            }
+            Self::Authority(error) => error.fmt(f),
+            Self::World(error) => error.fmt(f),
+            Self::DecodeBusy => f.write_str("Compute capacity remained busy for the funded reply"),
+            Self::ContextLimit => f.write_str("The complete decision context exceeds its limit"),
+            Self::ProviderInputLimit => {
+                f.write_str("The provider refused its inline input before invocation")
+            }
+            Self::Transport(error) => error.fmt(f),
+            Self::Refused(status) => write!(f, "The provider refused the request ({status})"),
+            Self::Deployment(code) => write!(
+                f,
+                "The selected deployment could not prepare the request ({code})"
+            ),
+            Self::CompletionUnconfirmed => f.write_str("The provider did not confirm completion"),
+            Self::Invalid => f.write_str("The provider returned an invalid response"),
+            Self::Commit(error) => error.fmt(f),
+            Self::At { stage, failed } => write!(f, "{stage}: {failed}"),
+        }
+    }
+}
+impl std::error::Error for CallFailure {}
+
+impl CallFailure {
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_outcome<T>(
+        result: &Result<T, Self>,
+    ) -> openlegend_simulation::profile::Outcome {
+        use openlegend_simulation::profile::Outcome;
+        match result {
+            Ok(_) => Outcome::Completed,
+            Err(error) => match error.cause().1 {
+                Self::Cancelled => Outcome::Cancelled,
+                Self::World(error) if error.is_admission_refusal() => Outcome::Refused,
+                Self::Admission
+                | Self::Existing
+                | Self::Stale(_)
+                | Self::Authority(_)
+                | Self::Refused(_)
+                | Self::ProviderInputLimit
+                | Self::Deployment(_)
+                | Self::DecodeBusy => Outcome::Refused,
+                _ => Outcome::Failed,
+            },
+        }
+    }
+
+    pub(crate) fn at(self, stage: &'static str) -> Self {
+        match self {
+            Self::At { .. } => self,
+            failed => Self::At {
+                stage,
+                failed: Box::new(failed),
+            },
+        }
+    }
+
+    pub(crate) fn cause(&self) -> (&'static str, &Self) {
+        match self {
+            Self::At { stage, failed } => (stage, failed),
+            failed => ("decision", failed),
+        }
+    }
+}
+
+impl From<NetworkError> for CallFailure {
+    fn from(error: NetworkError) -> Self {
+        Self::Transport(error)
+    }
+}
+
+/// One bounded synchronous authorization of the outgoing request. The
+/// caller owns the exact sources and cannot defer the transport callback.
+pub(crate) trait ProviderDisclosure: Send + Sync + 'static {
+    fn allows_stream(&self) -> bool { false }
+
+    /// A signed disclosure locks this original grant through the native transport handoff.
+    /// The Lab must use the same controller to avoid recursively locking its authority.
+    fn signed_source(&self) -> Option<&AuthorizedScope> {
+        None
+    }
+
+    fn ordinary(&self) -> Option<&CallAuthority> {
+        None
+    }
+    fn ordinary_mut(&mut self) -> Option<&mut CallAuthority> {
+        None
+    }
+
+    /// A specialized source claim can join the existing spending transaction.
+    /// Ordinary provider calls use the same unmodified reservation owner.
+    fn reserve<'a>(
+        &'a self,
+        store: &'a crate::store::Store,
+        request: AttemptRequest,
+    ) -> impl std::future::Future<Output = Result<AttemptAdmission, CommitError>> + Send + 'a {
+        store.reserve_model(request)
+    }
+
+    /// A durable consumer may need to check a saved grant after reserving
+    /// spending. The guard ends when the synchronous transport start returns.
+    fn grant_for_send(
+        &self,
+    ) -> impl std::future::Future<
+        Output = Result<Option<tokio::sync::OwnedMutexGuard<()>>, CallFailure>,
+    > + Send {
+        async { Ok(None) }
+    }
+
+    fn discovery(&self) -> Option<&crate::npc::discovery::DiscoveryDispatch> {
+        None
+    }
+
+    fn start(
+        &self,
+        turn: NpcDisclosureTurn<'_>,
+        stopped: &watch::Receiver<bool>,
+        start: &mut dyn FnMut(),
+    ) -> Result<(), CallFailure>;
+}
+
+impl ProviderDisclosure for CallAuthority {
+    fn signed_source(&self) -> Option<&crate::authority::AuthorizedScope> {
+        self.speaker.as_ref().map(|(_, scope)| scope.as_ref())
+    }
+
+    fn ordinary(&self) -> Option<&CallAuthority> {
+        Some(self)
+    }
+    fn ordinary_mut(&mut self) -> Option<&mut CallAuthority> {
+        Some(self)
+    }
+
+    fn discovery(&self) -> Option<&crate::npc::discovery::DiscoveryDispatch> {
+        self.discovery.as_deref()
+    }
+
+    fn start(
+        &self,
+        turn: NpcDisclosureTurn<'_>,
+        stopped: &watch::Receiver<bool>,
+        start: &mut dyn FnMut(),
+    ) -> Result<(), CallFailure> {
+        let eligible_capture = self.stage_capture.as_ref().and_then(|capture| {
+            let (authority, scope) = self.speaker.as_ref()?;
+            authority
+                .view_access(scope)
+                .ok()?
+                .can_inspect
+                .then_some((capture.witness(), &scope.scope))
+        });
+        if self.lab_fields.as_ref().is_some_and(|fields|!fields.current()) { return Err(CallFailure::Stale("lab-context-replaced")); }
+        let send = || {
+            if *stopped.borrow() {
+                return Err(CallFailure::Cancelled);
+            }
+            match turn
+                .disclose(&self.source, eligible_capture, self.remembered_places, self.lab_fields.as_deref(), |life| {
+                    start();
+                    if let Some((life, capture)) = life.zip(self.stage_capture.as_ref()) {
+                        capture.started(life);
+                    }
+                })
+                .map_err(CallFailure::World)?
+            {
+                Ok(()) => Ok(()),
+                Err(NpcDisclosure::Busy) => Err(CallFailure::Stale("world-publication-busy")),
+                Err(NpcDisclosure::Refused(reason)) => Err(CallFailure::Stale(reason)),
+            }
+        };
+        match &self.speaker {
+            Some((authority, scope)) => authority
+                .current(scope, Capability::Play, true, |_, _| send())
+                .map_err(CallFailure::Authority)?,
+            None => send(),
+        }
+    }
+}
+
+pub(crate) struct DecisionDispatch {
+    game: Arc<CurrentServer>,
+    network: NetworkOwner,
+    previews: Arc<ReplyPreviews>,
+    stage_captures: Option<StageCaptures>,
+    pub(crate) lab: Option<Arc<crate::lab::decisions::DecisionControl>>,
+}
+
+impl DecisionDispatch {
+    pub(crate) fn new(
+        game: Arc<CurrentServer>,
+        worker_capacity: usize,
+        capture_direct_stages: bool,
+        game_network: Option<(&NetworkOwner, &str)>,
+    ) -> Result<Self, NetworkError> {
+        let network = match game_network {
+            Some((shared, _)) => shared.for_world(game.host.budget().clone()),
+            None => NetworkOwner::new(worker_capacity, game.host.budget().clone(), false)?,
+        };
+        let lab = game_network
+            .map(|(_, namespace)| Arc::new(crate::lab::decisions::DecisionControl::new(namespace)));
+        let stage_captures = capture_direct_stages.then(|| {
+            StageCaptures::new(
+                game.store.clone(),
+                game.world.clone(),
+                game.host.budget().clone(),
+            )
+        });
+        Ok(Self {
+            game,
+            network,
+            lab,
+            previews: Arc::new(ReplyPreviews::new()),
+            stage_captures,
+        })
+    }
+
+    pub(crate) fn previews(&self) -> &Arc<ReplyPreviews> {
+        &self.previews
+    }
+
+    pub(crate) fn stage_captures(&self) -> Option<&StageCaptures> {
+        self.stage_captures.as_ref()
+    }
+
+    pub(crate) async fn stop_stage_captures(&self) {
+        if let Some(captures) = &self.stage_captures {
+            captures.stop().await;
+        }
+    }
+
+    pub(crate) fn network(&self) -> &NetworkOwner {
+        &self.network
+    }
+
+    /// The admitted decoder inspects precisely one response for this phase.
+    /// It runs off the writer lane and returns a usable value and independent
+    /// charge facts even if one of those observations fails.
+    pub(crate) async fn submit<T, Decode>(
+        self: &Arc<Self>,
+        call: PreparedCall,
+        permit: impl ProviderDisclosure,
+        stopped: watch::Receiver<bool>,
+        decode: Decode,
+    ) -> Result<T, CallFailure>
+    where
+        T: Send + 'static,
+        Decode: FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T> + Send + 'static,
+    {
+        self.submit_with_capture(call, permit, stopped, decode)
+            .await
+            .map(|(value, _)| value)
+    }
+
+    /// Return the capture actually bound to first disclosure. An operator may
+    /// have edited the prepared input before native dispatch and settlement.
+    pub(crate) async fn submit_with_capture<T, Decode>(
+        self: &Arc<Self>,
+        call: PreparedCall,
+        mut permit: impl ProviderDisclosure,
+        stopped: watch::Receiver<bool>,
+        decode: Decode,
+    ) -> Result<(T, Option<Arc<DirectStageCapture>>), CallFailure>
+    where
+        T: Send + 'static,
+        Decode: FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T> + Send + 'static,
+    {
+        let mut call = call;
+        let stage = call.allowance.stage;
+        // Waiting for an operator holds neither a provider slot nor a spending reservation.
+        let operator = match &self.lab {
+            Some(lab) => Some(
+                lab.admit(&mut call, permit.ordinary(), &stopped)
+                    .await
+                    .map_err(|error| error.at(stage))?,
+            ),
+            None => None,
+        };
+        if self.lab.is_some()
+            && let Some(authority) = permit.ordinary_mut()
+            && let Some(original) = &authority.stage_capture
+            && !original.matches(&call.request)
+        {
+            authority.stage_capture = self
+                .stage_captures()
+                .and_then(|owner| owner.edited(original, &call.request, self.game.host.budget()));
+        }
+        let capture = (stage == "generate")
+            .then(|| permit.ordinary()?.stage_capture.clone())
+            .flatten();
+        let owner = self.clone();
+        let operation = async move {
+            openlegend_simulation::profile_body!(
+                PROVIDER,
+                { owner.run(call, permit, stopped, decode, operator).await },
+                CallFailure::profile_outcome
+            )
+        };
+        #[cfg(feature = "profile-campaign")]
+        let operation = openlegend_simulation::profile::carry(
+            openlegend_simulation::profile::current(),
+            operation,
+        );
+        tokio::spawn(operation)
+            .await
+            .map_err(|_| CallFailure::Invalid.at(stage))?
+            .map(|value| (value, capture))
+            .map_err(|error| error.at(stage))
+    }
+
+    /// One explicitly requested Lab comparison uses ordinary network admission,
+    /// reservations and settlement. It neither enters an NPC decision nor changes
+    /// its run interval. The caller owns tracking and the current signed source.
+    pub(crate) async fn compare<T: Send + 'static>(
+        &self, mut call: PreparedCall, permit: impl ProviderDisclosure, operator: crate::lab::LabOperator,
+        stop: watch::Receiver<bool>, decode: impl FnOnce(FundedReply,&HttpEvidence)->ProviderObservation<T> + Send + 'static,
+    ) -> Result<T, CallFailure> {
+        let lab = self.lab.as_ref().ok_or(CallFailure::Admission)?;
+        call.request.namespace(&lab.namespace)?;
+        self.run(call, permit, stop, decode, Some(crate::lab::decisions::runs::DispatchGrant::single(operator))).await
+    }
+
+    async fn run<T, Decode>(
+        &self,
+        call: PreparedCall,
+        permit: impl ProviderDisclosure,
+        mut stopped: watch::Receiver<bool>,
+        decode: Decode,
+        operator: Option<crate::lab::decisions::runs::DispatchGrant>,
+    ) -> Result<T, CallFailure>
+    where
+        T: Send + 'static,
+        Decode: FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T> + Send + 'static,
+    {
+        if *stopped.borrow() {
+            return Err(CallFailure::Cancelled);
+        }
+        let PreparedCall {
+            request,
+            allowance,
+            requested_model,
+            context_digest,
+            macrofold_billing_mode,
+            deadline,
+            evidence_cut,
+            mut preview,
+        } = call;
+        let stage = allowance.stage;
+        let waiting = self.game.world.when_durable(evidence_cut, deadline);
+        tokio::select! {
+            biased;
+            _ = cancelled(&mut stopped) => return Err(CallFailure::Cancelled),
+            result = waiting => result.map_err(CallFailure::World)?,
+        }
+        let route = request.route();
+        let worker = request.worker.clone();
+        let worker_cleanup = worker.clone();
+        let worker_identity = worker.as_ref().map(|binding| binding.reference.clone());
+        let deployment = request.deployment();
+        let requested = deployment.as_ref().map(|target| target.selection);
+        let observer = request.observer();
+        let operation = self.network.admit(deadline, 32768)?;
+        let provider = allowance.provider;
+        let digest = hex_bytes(&request.digest);
+        let attempt = match permit
+            .reserve(&self.game.store, allowance)
+            .await
+            .map_err(CallFailure::Commit)?
+        {
+            AttemptAdmission::Exhausted => return Err(CallFailure::Admission),
+            AttemptAdmission::Existing => return Err(CallFailure::Existing),
+            AttemptAdmission::Reserved(attempt) => attempt,
+        };
+        let started_at = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
+        let started = Instant::now();
+        let mut evidence = None;
+        let mut body_received = false;
+        let transmitted = AtomicBool::new(false);
+        let mut observation = None;
+        let mut accepted_run = None;
+        let intent = if *stopped.borrow() {
+            Err(CallFailure::Cancelled)
+        } else {
+            match self.game.store.model_dispatch_intent(&attempt).await {
+                Ok(true) => Ok(()),
+                Ok(false) => return Err(CallFailure::Existing),
+                Err(error @ CommitError::RolledBack(_)) => Err(CallFailure::Commit(error)),
+                Err(error) => return Err(CallFailure::Commit(error)),
+            }
+        };
+        let remember =
+            |attempt: &ReservedAttempt, run: &ActiveRun, http: &HttpEvidence| ModelReceipt {
+                request_id: attempt.id().to_owned(),
+                provider,
+                requested_model: requested_model.clone(),
+                model: requested_model.clone(),
+                model_version_status: "unavailable",
+                provider_request_id: Some(run.id.clone()),
+                context_digest: context_digest.clone(),
+                provider_request_digest: digest.clone(),
+                started_at: started_at.clone(),
+                completed_at: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+                latency_ms: started.elapsed().as_secs_f64() * 1000.0,
+                dispatched: true,
+                transport_started: true,
+                response_received: false,
+                completion_uncertain: true,
+                http_status: Some(http.status),
+                provider_error_code: None,
+                retry_after_ms: http.retry_after_ms,
+                macrofold_billing_mode,
+                usage: None,
+                estimated_cost_usd: None,
+                proof: ModelExecutionProof {
+                    macrofold_run: observer
+                        .as_ref()
+                        .and_then(|destination| destination.macrofold_run(run.inference_id?)),
+                    macrofold_requested_deployment: requested,
+                    ..ModelExecutionProof::default()
+                },
+            };
+        let result = if intent.is_ok() {
+            let permit = &permit;
+            let discovery = permit
+                .discovery()
+                .filter(|ticket| ticket.first_send_pending());
+            let (first, settlement) = match discovery {
+                Some(ticket) => {
+                    let (first, notified) = tokio::sync::oneshot::channel();
+                    (Some(first), Some((ticket, notified)))
+                }
+                None => (None, None),
+            };
+            let transfer = async {
+                let grant = tokio::time::timeout_at(deadline, permit.grant_for_send())
+                    .await
+                    .map_err(|_| CallFailure::Transport(NetworkError::Deadline))??;
+                let turn = tokio::time::timeout_at(deadline, self.game.world.npc_disclosure_turn())
+                    .await
+                    .map_err(|_| CallFailure::Transport(NetworkError::Deadline))?
+                    .map_err(CallFailure::World)?;
+                let mut first = first;
+                let timeout = deadline.saturating_duration_since(Instant::now());
+                let stop = &stopped;
+                let did_transmit = &transmitted;
+                let stream = preview.is_some() || permit.allows_stream();
+                let exchange =
+                    ProviderExchange::start(&operation, request, stream, timeout, move |start| {
+                        if let Some(operator) = &operator {
+                            if !operator.operator.present().map_err(CallFailure::Authority)? {
+                                return Err(CallFailure::Stale("lab-operator-disconnected"));
+                            }
+                            if let Some(signed) = permit.signed_source() {
+                                if signed.scope != operator.operator.scope.scope {
+                                    return Err(CallFailure::Stale("lab-operator-changed"));
+                                }
+                                // The original source rechecks this exact grant revision with
+                                // Play under the same controller lock through transfer.
+                                operator.operator.current(Capability::Create, || ()).map_err(CallFailure::Authority)?;
+                            }
+                        }
+                        if let Some(ticket) = discovery
+                            && !ticket.current(&turn).map_err(CallFailure::World)?
+                        {
+                            return Err(CallFailure::Stale("discovery-free-interval"));
+                        }
+                        let mut refused = None;
+                        let admitted = permit.start(turn, stop, &mut || {
+                            let mut send = || {
+                                did_transmit.store(true, Ordering::Release);
+                                start();
+                                if let Some((ticket, notify)) = discovery.zip(first.take()) {
+                                    ticket.mark_sent();
+                                    let _ = notify.send(());
+                                }
+                            };
+                            if let Some((lab, grant)) = self.lab.as_ref().zip(operator.as_ref()) {
+                                let transfer = || lab.transfer(grant, permit.ordinary().and_then(|p| p.lab_fields.as_deref()), send);
+                                let result = if permit.signed_source().is_some() {
+                                    Ok(transfer())
+                                } else {
+                                    grant.operator.current(Capability::Create, transfer)
+                                };
+                                refused = match result {
+                                    Ok(true) => None,
+                                    Ok(false) => Some(CallFailure::Stale("lab-run-ended")),
+                                    Err(error) => Some(CallFailure::Authority(error)),
+                                };
+                            } else { send(); }
+                        });
+                        if let Some(reason) = refused { return Err(reason); }
+                        drop(grant);
+                        admitted
+                    })
+                    .await?;
+                evidence = Some(exchange.evidence().clone());
+                Ok(exchange)
+            };
+            let mut cancel = stopped.clone();
+            let transfer = async {
+                tokio::select! {
+                    biased;
+                    result = transfer => result,
+                    _ = cancelled(&mut cancel) => Err(CallFailure::Cancelled),
+                }
+            };
+            let response = if let Some((ticket, notified)) = settlement {
+                // Publish the ordinary spent state as soon as the client has
+                // the request, while the remote headers/body can still wait.
+                let (response, ()) = tokio::join!(transfer, async {
+                    if notified.await.is_ok() {
+                        ticket.publish_sent().await;
+                    }
+                });
+                response
+            } else {
+                transfer.await
+            };
+            let budget = self.game.host.budget();
+            let response = match response {
+                Ok(exchange) if exchange.streaming() => {
+                    let http = exchange.evidence().clone();
+                    let mut display = None;
+                    let streamed = async {
+                        let mut events = InferenceEvents::new(exchange, budget)?;
+                        loop {
+                            let next = tokio::select! {
+                                biased;
+                                result = events.next(budget) => result?,
+                                _ = cancelled(&mut stopped) => return Err(CallFailure::Cancelled),
+                            };
+                            match next {
+                                Some(InferenceEvent::Accepted { run: _, data }) => {
+                                    let observer =
+                                        observer.as_ref().ok_or(NetworkError::Transfer)?;
+                                    let run = Arc::new(
+                                        observer
+                                            .admitted_run(data.value.get().as_bytes(), budget)?,
+                                    );
+                                    accepted_run = Some(run.clone());
+                                    drop(data);
+                                    self.game
+                                        .store
+                                        .record_model_run(&attempt, remember(&attempt, &run, &http))
+                                        .await
+                                        .map_err(CallFailure::Commit)?;
+                                }
+                                Some(InferenceEvent::Text { .. }) => {
+                                    if let Some(preview) = &mut preview
+                                        && !preview.prefix_ended()
+                                    {
+                                        if let Ok(Some(speech)) =
+                                            preview.inspect(events.prefix(), budget)
+                                        {
+                                            display = self
+                                                .previews
+                                                .begin(&self.game, preview, speech)
+                                                .await;
+                                        }
+                                    }
+                                }
+                                Some(InferenceEvent::Terminal {
+                                    data,
+                                    preview_matches,
+                                }) => {
+                                    if preview_matches && let Some(display) = display.take() {
+                                        display.complete();
+                                    }
+                                    return Ok(data.into_reply());
+                                }
+                                None => return Err(CallFailure::Transport(NetworkError::Transfer)),
+                            }
+                        }
+                    }
+                    .await;
+                    drop(display);
+                    let body = match streamed {
+                        Err(CallFailure::Transport(NetworkError::Transfer))
+                            if accepted_run.is_some() && observer.is_some() =>
+                        {
+                            let run = accepted_run.clone().expect("known admitted Run");
+                            let observer = observer.as_ref().expect("bound Macrofold destination");
+                            tokio::select! {
+                                biased;
+                                result = observer.follow_run(&operation, run, deadline, budget) => result.map_err(CallFailure::Transport),
+                                _ = cancelled(&mut stopped) => Err(CallFailure::Cancelled),
+                            }
+                        }
+                        outcome => outcome,
+                    };
+                    body.map(|body| ProviderReply::Json {
+                        evidence: http,
+                        body,
+                    })
+                }
+                Ok(exchange) => tokio::select! {
+                    biased;
+                    result = exchange.json(budget) => result.map_err(CallFailure::Transport),
+                    _ = cancelled(&mut stopped) => Err(CallFailure::Cancelled),
+                },
+                Err(error) => Err(error),
+            };
+            match response {
+                Ok(ProviderReply::Refused(http)) => {
+                    let failure = if http.macrofold_input_limit(route) {
+                        CallFailure::ProviderInputLimit
+                    } else {
+                        CallFailure::Refused(http.status)
+                    };
+                    evidence = Some(http);
+                    // Return the typed failure only after the same original
+                    // spending settlement as any refusal.
+                    Err(failure)
+                }
+                Ok(ProviderReply::Json {
+                    evidence: http,
+                    body,
+                }) => {
+                    evidence = Some(http.clone());
+                    let body = match (http.status, observer.as_ref()) {
+                        (202, Some(observer)) => match observer.admitted_run(&body.bytes, budget) {
+                            Ok(run) => {
+                                let run = Arc::new(run);
+                                accepted_run = Some(run.clone());
+                                drop(body);
+                                let recorded = self
+                                    .game
+                                    .store
+                                    .record_model_run(&attempt, remember(&attempt, &run, &http))
+                                    .await;
+                                match recorded {
+                                    Ok(()) => tokio::select! {
+                                        biased;
+                                        result = observer.follow_run(&operation, run, deadline, budget) => result.map_err(CallFailure::Transport),
+                                        _ = cancelled(&mut stopped) => Err(CallFailure::Cancelled),
+                                    },
+                                    Err(error) => Err(CallFailure::Commit(error)),
+                                }
+                            }
+                            Err(error) => Err(CallFailure::Transport(error)),
+                        },
+                        _ => Ok(body),
+                    };
+                    match body {
+                        Ok(body) => {
+                            body_received = true;
+                            // Retain any observable charge even when caller
+                            // cancellation wins before the gameplay effect.
+                            match self
+                                .game
+                                .host
+                                .compute_before(deadline, move || {
+                                    let mut body = body;
+                                    body.worker = worker;
+                                    decode(body, &http)
+                                })
+                                .await
+                            {
+                                Ok(decoded) => {
+                                    observation = Some(decoded);
+                                    Ok(())
+                                }
+                                Err(WorldError::Host(HostError::Busy)) => {
+                                    Err(CallFailure::DecodeBusy.at("response-decode"))
+                                }
+                                Err(error) => Err(CallFailure::World(error).at("response-decode")),
+                            }
+                        }
+                        Err(error) => Err(error),
+                    }
+                }
+                Err(error) => Err(error),
+            }
+        } else {
+            intent
+        };
+        let dispatched = observation.as_ref().and_then(|out| out.proof.shared_dispatched)
+            .unwrap_or_else(|| transmitted.load(Ordering::Acquire)
+                && !evidence.as_ref().is_some_and(|http| http.admission_rejected(route)));
+        let charged = observation.as_ref().and_then(|out| out.charged_microusd);
+        let uncertain = dispatched
+            && observation
+                .as_ref()
+                .is_none_or(|out| out.completion_uncertain);
+        let model = observation.as_mut().and_then(|out| out.model.take());
+        let provider_request_id = observation
+            .as_mut()
+            .and_then(|out| out.provider_request_id.take())
+            .or_else(|| accepted_run.as_ref().map(|run| run.id.clone()))
+            .or_else(|| evidence.as_mut().and_then(|http| http.trace_id.take()));
+        let mut proof = observation
+            .as_mut()
+            .map(|value| std::mem::take(&mut value.proof))
+            .unwrap_or_default();
+        let run = accepted_run
+            .as_ref()
+            .and_then(|run| run.inference_id)
+            .or_else(|| observation.as_ref().and_then(|result| result.macrofold_run));
+        proof.shared_execution = worker_identity;
+        proof.macrofold_run = observer
+            .as_ref()
+            .and_then(|destination| destination.macrofold_run(run?));
+        proof.macrofold_requested_deployment = requested;
+        if let Some(deployment) = deployment {
+            deployment.observe(
+                proof.macrofold_deployment,
+                evidence.as_ref().is_some_and(|http| {
+                    http.error_code.as_deref() == Some("unsupported_model_capability")
+                }) || observation
+                    .as_ref()
+                    .is_some_and(|value| value.unsupported_deployment),
+            );
+        }
+        let receipt = ModelReceipt {
+            request_id: attempt.id().to_owned(),
+            provider,
+            model_version_status: if model.is_some() {
+                "reported"
+            } else {
+                "unavailable"
+            },
+            model: model.unwrap_or_else(|| requested_model.clone()),
+            requested_model,
+            provider_request_id,
+            context_digest,
+            provider_request_digest: digest.clone(),
+            started_at,
+            completed_at: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+            latency_ms: started.elapsed().as_secs_f64() * 1000.0,
+            dispatched,
+            transport_started: transmitted.load(Ordering::Acquire),
+            response_received: body_received,
+            completion_uncertain: uncertain,
+            http_status: evidence.as_ref().map(|http| http.status),
+            provider_error_code: evidence.as_mut().and_then(|http| http.error_code.take()),
+            retry_after_ms: evidence.as_ref().and_then(|http| http.retry_after_ms),
+            macrofold_billing_mode,
+            usage: observation.as_mut().and_then(|out| out.usage.take()),
+            estimated_cost_usd: charged.map(|value| value as f64 / 1_000_000.0),
+            proof,
+        };
+        let settled = self.game.store.settle_model(attempt, receipt).await;
+        if transmitted.load(Ordering::Acquire)
+            && uncertain
+            && let Some(worker) = worker_cleanup
+        {
+            drop(operation);
+            if let Ok(cancel) = worker.cancel(self.game.host.budget()) {
+                self.send_cancellation(cancel).await;
+            }
+        } else if matches!(
+            &result,
+            Err(CallFailure::Cancelled
+                | CallFailure::Transport(NetworkError::Deadline)
+                | CallFailure::Commit(_))
+        ) && let Some((observer, run)) = observer.as_ref().zip(accepted_run.as_deref())
+        {
+            drop(operation);
+            self.cancel_known_run(observer, run, &digest).await;
+        }
+        settled.map_err(CallFailure::Commit)?;
+        // An inspected addressed route has its own settled receipt. Later
+        // generation/query inputs still need their independent source proof.
+        if self.lab.is_some()
+            && stage == "route"
+            && let Some((sink, capture)) = self
+                .stage_captures()
+                .zip(permit.ordinary().and_then(|p| p.stage_capture.as_ref()))
+        {
+            sink.accepted(capture.clone(), evidence_cut);
+        }
+        if *stopped.borrow_and_update()
+            && (result.is_ok()
+                || matches!(&result, Err(error) if matches!(error.cause().1, CallFailure::DecodeBusy)))
+        {
+            return Err(CallFailure::Cancelled.at("response-decode"));
+        }
+        result?;
+        let value = observation.ok_or(CallFailure::Invalid)?.value;
+        // Completing accounting preserves the provider result without
+        // extending the original deadline for delivering its value.
+        if value.is_ok() && Instant::now() >= deadline {
+            return Err(CallFailure::Stale("decision-deadline").at("response-delivery"));
+        }
+        // A language reply can report uncertain execution without an answer.
+        // Embedding observations also use this flag when only pricing is unknown.
+        if route != crate::provider_transport::ProviderRoute::Embedding
+            && uncertain
+            && matches!(&value, Err(CallFailure::Invalid))
+        {
+            return Err(CallFailure::CompletionUnconfirmed);
+        }
+        value
+    }
+
+    async fn cancel_known_run(
+        &self,
+        observer: &ProviderDestination,
+        run: &ActiveRun,
+        digest: &str,
+    ) {
+        // Provider cleanup addresses one already recorded Run. It cannot
+        // purchase another reply, and an unsuccessful notice leaves its
+        // funded unknown outcome in the durable ledger.
+        let cancel_id = format!("cancel:{digest}");
+        if let Ok(request)=observer.cancel(&run.id,&cancel_id,self.game.host.budget()) {self.send_cancellation(request).await;}
+    }
+
+    async fn send_cancellation(&self,request:crate::provider_transport::PreparedProviderRequest) {
+        let timeout=Duration::from_secs(5);
+        let budget=self.game.host.budget();
+        let Ok(operation)=self.network.admit(Instant::now()+timeout,32768) else {return;};
+        if let Ok(exchange) =
+            ProviderExchange::start::<NetworkError>(&operation, request, false, timeout, |start| {
+                start();
+                Ok(())
+            })
+            .await
+        {
+            let _ = exchange.json(budget).await;
+        }
+    }
+}
+
+async fn cancelled(stop: &mut watch::Receiver<bool>) {
+    while !*stop.borrow() && stop.changed().await.is_ok() {}
+}

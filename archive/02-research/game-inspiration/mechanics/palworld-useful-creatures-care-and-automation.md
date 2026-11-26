@@ -1,6 +1,6 @@
 # Palworld: useful creatures, care, and automation
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Palworld chapter](../games/palworld.md). It preserves historical launch criticism as historical, distinguishes documented abilities from developer aspirations, and creates no OpenLegend task or policy. No proprietary implementation or gameplay session was tested.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Palworld chapter](../games/palworld.md). It preserves historical launch criticism as historical, distinguishes documented abilities from developer aspirations, and creates no Open Legend task or policy. No proprietary implementation or gameplay session was tested.
 
 ## 1. The creature is part of the production system
 
@@ -40,7 +40,7 @@ Several named abilities make the reference concrete. Lamball can serve as a shie
 
 It also makes a capability visually communicable. A viewer can understand an unusual partnership without reading a stat sheet. But the imagery carries an emotional meaning: a companion used as equipment may appear affectionate, absurd, or exploitative depending on the player. That response is part of the experience, not merely a technical implementation detail.
 
-These named creatures and moves are reference examples. Their design patterns can inspire original mechanics; their fictional identity and assets are not proposed OpenLegend content.
+These named creatures and moves are reference examples. Their design patterns can inspire original mechanics; their fictional identity and assets are not proposed Open Legend content.
 
 ## 5. A weak fighter can still have a place
 
@@ -68,7 +68,7 @@ A substantive Steam review by Relax praises attractive creatures, useful base wo
 
 **Interpretation:** people may enjoy the same creature for appearance, companionship, collection, efficiency, or spectacle. Those motives need not align. A player can want a kind settlement even when the game permits harsh treatment. The experience should make the consequences of each approach comprehensible rather than assume that every player wants to optimize labor output.
 
-For OpenLegend inspiration, the useful question is not how many emotional variables a worker possesses. It is whether a player's treatment, the worker's condition, and the resulting behavior form a recognizable causal relationship.
+For Open Legend inspiration, the useful question is not how many emotional variables a worker possesses. It is whether a player's treatment, the worker's condition, and the resulting behavior form a recognizable causal relationship.
 
 ## 8. Animation and production are part of the ambitious promise
 
@@ -84,7 +84,7 @@ In that historical interview, Mizobe describes discovering that adding PvP later
 
 **Interpretation:** a persistent cooperative home and a competitive raiding arena make different promises about safety, ownership, loss, and fairness. A world that permits both needs to make their boundary intelligible. Merely allowing characters to damage one another does not establish a satisfying competitive game.
 
-This is not a mandate for or against PvP in OpenLegend. It is a reminder that social permissions and the meaning of player investment are gameplay design, not last-minute networking options.
+This is not a mandate for or against PvP in Open Legend. It is a reminder that social permissions and the meaning of player investment are gameplay design, not last-minute networking options.
 
 ## 10. Growth and the difference between a memorable pitch and sustained play
 

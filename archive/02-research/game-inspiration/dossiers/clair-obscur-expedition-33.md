@@ -564,7 +564,7 @@ The following body retains the original dates, section anchors and C1–C34 sour
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full-category research pass: September 26, 2026; follow-up audit September 27, 2026.** This dossier completes the earlier G77 checkpoint; it preserves its review disagreements, production evidence and source-access limits. Research and transferable hypotheses are not accepted OpenLegend designs. Story and late-party spoilers are flagged below. No hands-on play, source-code inspection or full-video viewing is claimed.
+**Full-category research pass: September 26, 2026; follow-up audit September 27, 2026.** This dossier completes the earlier G77 checkpoint; it preserves its review disagreements, production evidence and source-access limits. Research and transferable hypotheses are not accepted Open Legend designs. Story and late-party spoilers are flagged below. No hands-on play, source-code inspection or full-video viewing is claimed.
 
 ## 1. Identity, scope and the playable promise — R01
 

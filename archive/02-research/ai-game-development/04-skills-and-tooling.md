@@ -1,10 +1,10 @@
-# Skills and tooling worth evaluating for OpenLegend
+# Skills and tooling worth evaluating for Open Legend
 
 **Research date:** 17 October 2026. **Reviewed:** 17 October 2026. **Status:** proposed adoption plan. No skill, plugin, executable, model service, or editor integration was installed or activated during this review.
 
 ## What is most useful now
 
-The best immediate candidates are the official PlayCanvas asset/lighting/animation skills, Adobe's React Aria documentation skill, Microsoft's browser inspection workflow, a disciplined asset-family workflow, and a small Blender preparation/verification pipeline. ComfyUI and Scenario also merit targeted trials for saving and repeating image transformations. These candidates address the stack and production problems OpenLegend already has; broader tooling changes should answer a specific authoring or player-experience question.
+The best immediate candidates are the official PlayCanvas asset/lighting/animation skills, Adobe's React Aria documentation skill, Microsoft's browser inspection workflow, a disciplined asset-family workflow, and a small Blender preparation/verification pipeline. ComfyUI and Scenario also merit targeted trials for saving and repeating image transformations. These candidates address the stack and production problems Open Legend already has; broader tooling changes should answer a specific authoring or player-experience question.
 
 The selection follows the [current UI brief](../../../docs/ui-design-brief.md), [art direction](../../../docs/maintainers/art-direction.md), [world presentation](../../../docs/world-presentation.md), [3D asset proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md), and [gameplay priorities](../../../docs/repertoires/gameplay-priorities.md). The target is a convincing survival-adventure slice and a repeatable supply of coherent assets, not the largest possible tool installation.
 
@@ -25,7 +25,7 @@ A strong workflow combines these deliberately. For example, a skill can direct B
 
 | Source                                                                                             | Provenance and inspected freshness                                                                | Evidence and limits                                                                                                                                                               |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [playcanvas/skills](https://api.github.com/repos/playcanvas/skills)                                | PlayCanvas; created 4 Aug 2026, pushed 13 Oct; MIT. Inspected tree `38d8fa7`.                     | First-party, precise engine conventions and scripts; 16 current skills. No OpenLegend execution performed.                                                                        |
+| [playcanvas/skills](https://api.github.com/repos/playcanvas/skills)                                | PlayCanvas; created 4 Aug 2026, pushed 13 Oct; MIT. Inspected tree `38d8fa7`.                     | First-party, precise engine conventions and scripts; 16 current skills. No Open Legend execution performed.                                                                        |
 | [gamedev-skills catalog](https://api.github.com/repos/gamedev-skills/awesome-gamedev-agent-skills) | Abhishek Barali's community collection; created 24 Jun, pushed 9 Oct; Apache-2.0. Tree `0a70cfc`. | 74 skills, about 1,575 stars at inspection. Broad useful guidance; no verified shipped-game record established for the maintainer.                                                |
 | [EL4CTEO/blender-skills](https://api.github.com/repos/EL4CTEO/blender-skills)                      | Community, created 14 Oct and pushed 16 Oct; MIT; 59 stars. Tree `71d031d`.                       | Concrete scripts and 22 skills, but only days old. Author claims are not our qualification results.                                                                               |
 | [dcc-mcp Blender](https://api.github.com/repos/dcc-mcp/dcc-mcp-blender)                            | Independent DCC-MCP community; created 12 Apr, pushed 17 Oct; 47 stars.                           | Detailed typed operations and editable examples. Source/PyPI MIT; Blender Extensions distribution GPL-3.0-or-later, per its [README](https://github.com/dcc-mcp/dcc-mcp-blender). |
@@ -46,7 +46,7 @@ These are candidate workflows rather than 27 installations. Several combine neig
 
 The actual [build-app](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/build-app/SKILL.md) and [apply-conventions](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/apply-conventions/SKILL.md) skills start from the code's existing surface and lifecycle. [find-examples](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/find-examples/SKILL.md) uses examples from the installed engine's exact version, and [reuse-scripts](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/reuse-scripts/SKILL.md) points to shipped camera, water, sky, picker, outline, and statistics utilities.
 
-For OpenLegend, use these before creating another camera, sky, or picking subsystem. Preserve our accepted input mappings and renderer interface. Generic sample physics and application-owned game-state patterns do not override our server authority. The important saving is locating a supported implementation and adapting its public contract, not copying a tutorial scene wholesale.
+For Open Legend, use these before creating another camera, sky, or picking subsystem. Preserve our accepted input mappings and renderer interface. Generic sample physics and application-owned game-state patterns do not override our server authority. The important saving is locating a supported implementation and adapting its public contract, not copying a tutorial scene wholesale.
 
 ### 2. Inspect and calibrate GLB assets before placing them
 
@@ -70,7 +70,7 @@ This maps directly to mercenary presentation and the staged character pipeline. 
 
 [light-scene](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/light-scene/SKILL.md) works through illumination, exposure, environment, shadows, and postprocessing with screenshot feedback. [bake-lighting](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/bake-lighting/SKILL.md) requires appropriate static objects and UVs.
 
-OpenLegend needs daytime and nighttime readability across sprites and meshes, driven by its actual public world clock. Establish a small day/night reference set and tune one class of parameter at a time. Blanket baked sunlight is a poor default for movable objects, construction, and a changing sun. Offline asset previews should reveal material defects; they must not substitute a flattering studio render for in-game acceptance.
+Open Legend needs daytime and nighttime readability across sprites and meshes, driven by its actual public world clock. Establish a small day/night reference set and tune one class of parameter at a time. Blanket baked sunlight is a poor default for movable objects, construction, and a changing sun. Offline asset previews should reveal material defects; they must not substitute a flattering studio render for in-game acceptance.
 
 ### 5. Build effects within the existing material/rendering path
 
@@ -78,7 +78,7 @@ OpenLegend needs daytime and nighttime readability across sprites and meshes, dr
 
 [add-effects](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/add-effects/SKILL.md) distinguishes particles, shader modifications, meshes, and screen effects. [override-shader-chunks](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/override-shader-chunks/SKILL.md) preserves existing lighting, shadows, skinning, and fog instead of rebuilding an entire material.
 
-That suits restrained water, dust, fire, highlight, and invention feedback. Reuse emitters where appropriate, and measure first-use compilation hitches. Chunk names and GLSL/WGSL interfaces are version-sensitive: current examples must be checked against OpenLegend's pinned 2.22.2. An effect should represent an observable world outcome, not expose hidden state.
+That suits restrained water, dust, fire, highlight, and invention feedback. Reuse emitters where appropriate, and measure first-use compilation hitches. Chunk names and GLSL/WGSL interfaces are version-sensitive: current examples must be checked against Open Legend's pinned 2.22.2. An effect should represent an observable world outcome, not expose hidden state.
 
 ### 6. Optimize loading and draw calls after identifying the bottleneck
 
@@ -86,7 +86,7 @@ That suits restrained water, dust, fire, highlight, and invention feedback. Reus
 
 [load-assets](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/load-assets/SKILL.md) covers container loading and decoder/texture-compression setup. [reduce-draw-calls](https://github.com/playcanvas/skills/blob/38d8fa75ab56d628dc2dac7daea5383aee783903/skills/reduce-draw-calls/SKILL.md) distinguishes fill cost from submission cost and considers hidden rendering, batching, instancing, and spatial organization.
 
-OpenLegend's repeated props and sprite/mesh populations make this relevant. Reduce texture memory or unnecessary draws when the measured scene needs it. Avoid importing universal polygon budgets or merging the entire world into one batch that frustrates visibility and updates. Decoder availability and download overhead belong in the observed result.
+Open Legend's repeated props and sprite/mesh populations make this relevant. Reduce texture memory or unnecessary draws when the measured scene needs it. Avoid importing universal polygon budgets or merging the entire world into one batch that frustrates visibility and updates. Decoder availability and download overhead belong in the observed result.
 
 ### 7. Inspect a live scene and compare repeatable captures
 
@@ -102,7 +102,7 @@ OpenLegend's repeated props and sprite/mesh populations make this relevant. Redu
 
 The [official server](https://developer.playcanvas.com/user-manual/editor/mcp-server/) requires Node 22.18+ and an open, connected PlayCanvas Editor project. It operates on that project and can inspect/edit assets and scenes, capture the viewport, launch the application, inject input, and inspect runtime logs.
 
-OpenLegend currently uses standalone Engine source. This bridge does not automatically control that source-owned scene. Any pilot must decide where edited assets/scenes live and how their output enters the repository. Its Editor mutations are direct; a local Git branch alone is not a checkpoint of the connected Editor project.
+Open Legend currently uses standalone Engine source. This bridge does not automatically control that source-owned scene. Any pilot must decide where edited assets/scenes live and how their output enters the repository. Its Editor mutations are direct; a local Git branch alone is not a checkpoint of the connected Editor project.
 
 ### 9. The catalog's asset-family workflow
 
@@ -110,7 +110,7 @@ OpenLegend currently uses standalone Engine source. This bridge does not automat
 
 [create-game-assets](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/main/skills/disciplines/create-game-assets/SKILL.md) is the supplied catalog's strongest direct fit. It includes `asset_report.py`, `build_preview_sheet.py`, an art-direction template, and asset-manifest examples. Its [art-direction reference](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/main/skills/disciplines/create-game-assets/references/art-direction.md) makes shape, value, palette, material, edge, and motion choices explicit.
 
-For OpenLegend, approve one representative item family before expanding it. Keep camera, scale, silhouettes, and material treatment stable. Its [raster guidance](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/main/skills/disciplines/create-game-assets/references/raster-pipeline.md) supports deterministic alpha/crop/anchor normalization, native-size checks, nine-slice frames, and repeat testing for tiles. This directly addresses attractive isolated images that fail together in an inventory or landscape. Helpers require Python 3.10+ and Pillow; they are not an image generator.
+For Open Legend, approve one representative item family before expanding it. Keep camera, scale, silhouettes, and material treatment stable. Its [raster guidance](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/main/skills/disciplines/create-game-assets/references/raster-pipeline.md) supports deterministic alpha/crop/anchor normalization, native-size checks, nine-slice frames, and repeat testing for tiles. This directly addresses attractive isolated images that fail together in an inventory or landscape. Helpers require Python 3.10+ and Pillow; they are not an image generator.
 
 ### 10. Catalog UI, procedural generation, and shader references
 
@@ -126,7 +126,7 @@ Adapt the relevant ideas to our existing UI and deterministic domain. Do not ado
 
 Adobe [publishes an agent skill and Markdown documentation](https://react-aria.adobe.com/ai). We inspected its [actual generator](https://github.com/adobe/react-spectrum/blob/261344335e54265b2d02dc57a43b911a718de707/packages/dev/s2-docs/scripts/generateAgentSkills.mjs): the React Aria skill is Apache-2.0, bundles component and interaction references, and targets projects using `react-aria-components`. It is distinct from Adobe's Spectrum S2 styling, audit, and migration skills.
 
-Use it to preserve selection, focus, menus, overlays, and keyboard behavior while giving controls OpenLegend's artwork. Its [test guidance](https://github.com/adobe/react-spectrum/blob/261344335e54265b2d02dc57a43b911a718de707/packages/dev/s2-docs/skills/react-aria/test-utils-guidance.md) explains pattern testers and explicit exceptions for focus order, dismissal, and drag behavior. Those are targeted tools for actual interaction risks, not a requirement to add tests to every cosmetic change. The generated website package was not downloaded; the generator and embedded guidance were inspected.
+Use it to preserve selection, focus, menus, overlays, and keyboard behavior while giving controls Open Legend's artwork. Its [test guidance](https://github.com/adobe/react-spectrum/blob/261344335e54265b2d02dc57a43b911a718de707/packages/dev/s2-docs/skills/react-aria/test-utils-guidance.md) explains pattern testers and explicit exceptions for focus order, dismissal, and drag behavior. Those are targeted tools for actual interaction risks, not a requirement to add tests to every cosmetic change. The generated website package was not downloaded; the generator and embedded guidance were inspected.
 
 ### 12. Anthropic's frontend-design skill
 
@@ -134,7 +134,7 @@ Use it to preserve selection, focus, menus, overlays, and keyboard behavior whil
 
 The actual [skill](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) asks for subject-specific visual direction, intentional typography, a compact token system, design review before implementation, screenshots, and restraint.
 
-This is evidence that a useful design process is packaged with an agent, not proof that Claude is inherently better at all game UI. Its web-page examples and novelty-seeking defaults require adaptation: OpenLegend already has a brief, established fonts, and a world-first layout. Do not add a marketing hero, replace its visual identity, or prioritize novelty over recognizable item interaction.
+This is evidence that a useful design process is packaged with an agent, not proof that Claude is inherently better at all game UI. Its web-page examples and novelty-seeking defaults require adaptation: Open Legend already has a brief, established fonts, and a world-first layout. Do not add a marketing hero, replace its visual identity, or prioritize novelty over recognizable item interaction.
 
 ### 13. Coherent Labs' Game UI Conductor
 
@@ -150,13 +150,13 @@ Apply those questions to an inventory spec using our current docs and reasonable
 
 The actual [CLI skill](https://github.com/microsoft/playwright-cli/blob/main/skills/playwright-cli/SKILL.md) provides snapshots, interactions, screenshots, console/network inspection, tracing, motion/media settings, and annotated review. Microsoft's [MCP README](https://github.com/microsoft/playwright-mcp) recommends CLI+skills for some code-agent workflows to reduce context overhead; persistent MCP sessions remain useful for richer exploration.
 
-For OpenLegend, perform real inventory and world interactions, then inspect the full rendered image. Accessibility trees cannot reveal muddy lighting, bad silhouettes, inconsistent icons, or a panel obscuring the scene. Use only authorized development sessions; the skill's storage-state and cookie utilities are capabilities, not a reason to inspect unrelated accounts. Existing browser tooling may already cover the task, so no duplicate installation is presumed.
+For Open Legend, perform real inventory and world interactions, then inspect the full rendered image. Accessibility trees cannot reveal muddy lighting, bad silhouettes, inconsistent icons, or a panel obscuring the scene. Use only authorized development sessions; the skill's storage-state and cookie utilities are capabilities, not a reason to inspect unrelated accounts. Existing browser tooling may already cover the task, so no duplicate installation is presumed.
 
 ### 15. Blender Foundation's Blender Lab MCP
 
 **Kind:** first-party standalone authoring integration, published through Blender Lab. **Proposal:** evaluate as one possible Blender bridge.
 
-The [official Blender Lab page](https://www.blender.org/lab/mcp-server/) describes a Python-API connection requiring Blender 5.1+, an add-on, a separate MCP server, and an LLM client. It explicitly says model-written Python executes without a data-protection sandbox. [Blender Lab's catalog](https://www.blender.org/lab/) labels the project **Released**; that publication status does not qualify an OpenLegend installation. Its documented mesh-complexity-versus-screen-space inspection suggests a useful trial: find costly details that scarcely contribute at our actual camera distance.
+The [official Blender Lab page](https://www.blender.org/lab/mcp-server/) describes a Python-API connection requiring Blender 5.1+, an add-on, a separate MCP server, and an LLM client. It explicitly says model-written Python executes without a data-protection sandbox. [Blender Lab's catalog](https://www.blender.org/lab/) labels the project **Released**; that publication status does not qualify an Open Legend installation. Its documented mesh-complexity-versus-screen-space inspection suggests a useful trial: find costly details that scarcely contribute at our actual camera distance.
 
 This is distinct from Ahuja's popular community repository. A disposable asset workspace and explicit export destinations are appropriate for a future trial because the actual operation is arbitrary Python inside Blender. Source hosting was inaccessible in this research environment; only official documentation was verified, so no package-level license or implementation-security claim is made. Start by inspecting an existing scene, not by granting a generator unrestricted work over important source files.
 
@@ -198,7 +198,7 @@ This is a concrete way to reproduce the supplied video's “build a recipe” pr
 
 [asset-qa](https://github.com/EL4CTEO/blender-skills/blob/main/skills/blender-asset-qa/SKILL.md) creates multi-angle and wireframe evidence; [game-optimization](https://github.com/EL4CTEO/blender-skills/blob/main/skills/blender-game-optimization/SKILL.md) examines geometry, material count, texture footprint, and level-of-detail choices.
 
-For OpenLegend, report floating pieces, normals, UV defects, silhouette loss, and costs that affect the actual camera. Do not copy universal platform budgets or automatically repair every non-watertight object: leaf cards, deliberate overlaps, and socket offsets may be correct. Work on output copies, keep the editable source, and compare the result in PlayCanvas. More LODs are not automatically more efficient.
+For Open Legend, report floating pieces, normals, UV defects, silhouette loss, and costs that affect the actual camera. Do not copy universal platform budgets or automatically repair every non-watertight object: leaf cards, deliberate overlaps, and socket offsets may be correct. Work on output copies, keep the editable source, and compare the result in PlayCanvas. More LODs are not automatically more efficient.
 
 ### 21. EL4CTEO rigging and deformation checks
 
@@ -214,7 +214,7 @@ That is a valuable antidote to accepting an “auto-rigged” label. Use a singl
 
 The [actual SPA skill](https://github.com/aigengame/aseprite-automation/blob/main/skills/spa/SKILL.md) uses installed command schemas, explicit source/output paths, native editable files, checked batch plans, frame validation, and export inspection. It distinguishes “the validation command succeeded” from “the asset is valid,” and handles partial publication explicitly.
 
-The [project](https://github.com/aigengame/aseprite-automation) requires Python 3.13+, uv, and a separate Aseprite installation; its examples retain editable sources and exported components. For OpenLegend, use it to normalize a coherent icon family, repair alpha/anchors, assemble deliberate motion, and export sheets. Independent generation of every animation frame remains liable to identity and pose drift; SPA supplies editing and export, not automatic artistic continuity.
+The [project](https://github.com/aigengame/aseprite-automation) requires Python 3.13+, uv, and a separate Aseprite installation; its examples retain editable sources and exported components. For Open Legend, use it to normalize a coherent icon family, repair alpha/anchors, assemble deliberate motion, and export sheets. Independent generation of every animation frame remains liable to identity and pose drift; SPA supplies editing and export, not automatic artistic continuity.
 
 ### 23. DCC-MCP Substance 3D Designer graph and offline workflows
 
@@ -228,7 +228,7 @@ The [editable crate study](https://github.com/dcc-mcp/dcc-mcp-substance3d-design
 
 **Kind:** procedural material application plus community bridges. **Proposal:** evaluate the authoring method; do not rely on the original bridge.
 
-Material Maker is a Godot-built node-based texture authoring application. Its output can be exported for other engines: using it does not imply migrating OpenLegend to Godot. [Upstream project and documentation](https://github.com/RodZill4/material-maker).
+Material Maker is a Godot-built node-based texture authoring application. Its output can be exported for other engines: using it does not imply migrating Open Legend to Godot. [Upstream project and documentation](https://github.com/RodZill4/material-maker).
 
 The promising name `schemann/material-maker-mcp` hides an important gap: its inspected [bridge README](https://github.com/schemann/material-maker-mcp/blob/3a0a4bbd2662fd647f08767fe36d03024fd0d0c0/addons/mcp_bridge/README.md) lists graph mutation, rendering, and export actions as skeletons returning “not implemented yet.” It is **not a complete automation recommendation**.
 
@@ -248,7 +248,7 @@ The newer [Tigertycoon descendant](https://github.com/Tigertycoon/material-maker
 
 ComfyUI separates the [editable visual graph from its API execution export](https://github.com/Comfy-Org/docs/blob/main/development/api-development/workflow-api-format.mdx). Its [official image-generation command](https://github.com/Comfy-Org/comfy-skills/blob/main/claude-code/commands/generate-image.md) discovers templates, substitutes inputs, and checks that the requested result connects to a retrievable output. The [official skills repository](https://github.com/Comfy-Org/comfy-skills) keeps stable operating methods separate from model/template discovery.
 
-For OpenLegend, try an approved reference → controlled edit → alpha cleanup → normalized icon export workflow, using supported nodes or templates. Keep the editable graph, execution export, model/node versions, source inputs, and accepted files together. Reuse it on another family member and judge both in the inventory. Select execution explicitly: the [CLI](https://docs.comfy.org/agent-tools/cli) can choose cloud when signed in; its cloud routes have subscription/credit requirements. Adapt client-specific retrieval instructions to our existing tooling. This is an authoring candidate, with no installation or execution performed here.
+For Open Legend, try an approved reference → controlled edit → alpha cleanup → normalized icon export workflow, using supported nodes or templates. Keep the editable graph, execution export, model/node versions, source inputs, and accepted files together. Reuse it on another family member and judge both in the inventory. Select execution explicitly: the [CLI](https://docs.comfy.org/agent-tools/cli) can choose cloud when signed in; its cloud routes have subscription/credit requirements. Adapt client-specific retrieval instructions to our existing tooling. This is an authoring candidate, with no installation or execution performed here.
 
 ### 27. Scenario managed asset workflows
 
@@ -256,16 +256,16 @@ For OpenLegend, try an approved reference → controlled edit → alpha cleanup 
 
 Scenario documents [reference editing, style/subject training, paired before/after editor training, and asset collections](https://docs.scenario.com/get-started/documentation/key-capabilities-at-a-glance), plus [reusable multi-step workflows](https://docs.scenario.com/get-started/documentation/workflows-and-apps). These capabilities give a concrete route to investigate beyond the vendor-hosted customer accounts in the [case studies](02-developer-case-studies.md).
 
-Use approved OpenLegend source art to produce a coherent icon or material family. Save the workflow definition/settings, inputs, chosen model, edits, and final exports with the existing asset owner. Compare repeat editing effort and in-game coherence with a direct API route. Custom training is optional when its expected consistency or editing benefit justifies setup. Assess workflow convenience separately from generator quality; published operations and customer anecdotes do not establish an OpenLegend quality advantage.
+Use approved Open Legend source art to produce a coherent icon or material family. Save the workflow definition/settings, inputs, chosen model, edits, and final exports with the existing asset owner. Compare repeat editing effort and in-game coherence with a direct API route. Custom training is optional when its expected consistency or editing benefit justifies setup. Assess workflow convenience separately from generator quality; published operations and customer anecdotes do not establish an Open Legend quality advantage.
 
 ## Candidates deliberately not adopted
 
 | Candidate or temptation                                                                          | Reason                                                                                                                                                                                                                                                                                                                   |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Installing the entire supplied catalog/router                                                    | Its default favors the engine it covers most deeply. OpenLegend already has an engine, project routing, and stronger domain constraints. Select useful discipline files instead. [Router](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/0a70cfc64672d512c5b5b6006b5dcb5cf90dbdbd/router/SKILL.md). |
+| Installing the entire supplied catalog/router                                                    | Its default favors the engine it covers most deeply. Open Legend already has an engine, project routing, and stronger domain constraints. Select useful discipline files instead. [Router](https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/0a70cfc64672d512c5b5b6006b5dcb5cf90dbdbd/router/SKILL.md). |
 | [chongdashu/unreal-mcp](https://github.com/chongdashu/unreal-mcp) as a production recommendation | Its README labels it experimental and unsuitable for production; metadata last push was April 2025. It requires an Unreal native editor plugin plus Python. A MIT badge was visible, but a matching license file was not established.                                                                                    |
 | Combining several Blender bridges immediately                                                    | Overlapping scene mutation and execution surfaces make the workflow harder to understand. Select one based on the single task's required operations and feedback.                                                                                                                                                        |
-| Copying generic physics, save-state, or agent-behavior patterns                                  | They can conflict with OpenLegend's server authority, persisted world, deterministic rules, and permitted observer view. The local [boundaries](../../../docs/engine-and-world-boundaries.md) remain authoritative.                                                                                                      |
+| Copying generic physics, save-state, or agent-behavior patterns                                  | They can conflict with Open Legend's server authority, persisted world, deterministic rules, and permitted observer view. The local [boundaries](../../../docs/engine-and-world-boundaries.md) remain authoritative.                                                                                                      |
 | Treating videos or text-to-video as rigged animation                                             | A video is not a reusable skeleton, weight map, animation clip, or engine-tested motion set. Require the actual output contract.                                                                                                                                                                                         |
 | Treating a first-party source as universally compatible                                          | PlayCanvas 2.23 inspector versus our 2.22.2 dependency, Blender-version differences, and Adobe Spectrum versus React Aria demonstrate why exact context matters.                                                                                                                                                         |
 
@@ -275,7 +275,7 @@ Audio and model-specific asset generators belong with the separate model/product
 
 Start with methods that can improve the next deliverable. These trials can proceed independently where they do not share a required input or design decision:
 
-1. **One inventory family:** use current OpenLegend art direction, the catalog's asset-family process, React Aria references, and complete-screen browser review. Retain icons, border assets, component states, and the accepted screenshot together.
+1. **One inventory family:** use current Open Legend art direction, the catalog's asset-family process, React Aria references, and complete-screen browser review. Retain icons, border assets, component states, and the accepted screenshot together.
 2. **One 3D asset round trip:** inspect/calibrate the model, fix only observed Blender problems, verify clips, load in the current PlayCanvas scene, and record source/export conventions. Use one Blender execution path.
 3. **One lighting comparison:** establish reproducible noon, dusk, and night views with the public clock; review sprites, models, UI legibility, and contact shadows together.
 4. **One procedural material or foliage recipe:** retain graph, inputs, seed, exports, and preview. Choose Designer if available and suitable, or Material Maker/Blender based on actual setup cost. Compare the effort to make another variant and whether it preserves coherence while offering useful visual range.
@@ -283,4 +283,4 @@ Start with methods that can improve the next deliverable. These trials can proce
 
 For each pilot, record hands-on setup, agent correction rounds, broken exports, visual defects found, reuse effort, and the final in-game result. Compare with the prior way of producing the same asset family. Assess expressive range, readability, and the intended player experience separately from throughput: a useful tool may enable a more distinctive result as well as save effort. Tool counts, generated lines, and uninterrupted agent hours do not answer whether we improved production.
 
-The research supports these candidates because their actual instructions address observable OpenLegend problems. It does not claim that any unrun integration is installed, tested, safe by inspection alone, or better than every alternative. A small, successful end-to-end pilot supplies the missing evidence needed to adopt it with confidence.
+The research supports these candidates because their actual instructions address observable Open Legend problems. It does not claim that any unrun integration is installed, tested, safe by inspection alone, or better than every alternative. A small, successful end-to-end pilot supplies the missing evidence needed to adopt it with confidence.

@@ -1,6 +1,7 @@
+import { selectedAgreementEvent } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { seesEntity, hearsEntity } from './perception.js';
-import { hasRecordFields, isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { isOfferLot } from './handover.js';
@@ -14,12 +15,13 @@ import type { Awareness } from './experience.js';
 /** Derived lookup facts only. Exact acquired terms remain in their original
  * personal evidence, independently of whether live assent still exists. */
 export function personalAgreementMetadata(
+  world: Pick<WorldState, 'profile'>,
   entry: Awareness,
 ): { key: string; open: boolean; until?: number } | undefined {
   if (
     entry.retentionClass !== 'memory' ||
     typeof entry.eventData?.agreement !== 'string' ||
-    (!['cooperation', 'social-compact'].includes(entry.eventType ?? '') &&
+    (!selectedAgreementEvent(world, entry.eventType ?? '') &&
       entry.eventData.personalAgreement !== true)
   )
     return;
@@ -54,7 +56,7 @@ export function retainedAgreementEvidence(world: WorldState, actorId: string): S
     latest = new Map<string, { id: string; open: boolean; until?: number }>();
   for (const entry of world.experience?.awareness[actorId] ?? []) {
     if (omitted.has(entry.eventId) || corrections?.[entry.eventId]) continue;
-    const metadata = personalAgreementMetadata(entry);
+    const metadata = personalAgreementMetadata(world, entry);
     if (metadata) latest.set(metadata.key, { ...metadata, id: entry.eventId });
   }
   return new Set(
@@ -219,8 +221,10 @@ export function validatePersonalSocial(
       !isSafeRecordId(record.recipientId) ||
       ![record.proposerId, record.recipientId].includes(actorId) ||
       record.proposerId === record.recipientId ||
-      !['travel', 'combat-help'].includes(String(record.kind)) ||
-      !['pending', 'traveling', 'helping', 'ended'].includes(String(record.status)) ||
+      typeof record.kind !== 'string' ||
+      !['travel', 'combat-help'].includes(record.kind) ||
+      typeof record.status !== 'string' ||
+      !['pending', 'traveling', 'helping', 'ended'].includes(record.status) ||
       typeof record.ownArrived !== 'boolean' ||
       !hasRecordFields(record.destination, ['label'], record.kind === 'travel' ? ['point'] : []) ||
       typeof record.destination.label !== 'string' ||
@@ -271,7 +275,8 @@ export function validatePersonalSocial(
       !Array.isArray(record.descriptions.requested) ||
       record.descriptions.requested.length !== record.requested.length ||
       (record.cause !== undefined && typeof record.cause !== 'string') ||
-      !['pending', 'ended'].includes(String(record.status)) ||
+      typeof record.status !== 'string' ||
+      !['pending', 'ended'].includes(record.status) ||
       (record.status === 'ended') !== (typeof record.cause === 'string') ||
       (record.constructionUse !== undefined &&
         (record.offered.length !== 1 ||
@@ -303,7 +308,9 @@ function personallyReceived(world: WorldState, actorId: string): Received {
   const entries = world.experience?.awareness[actorId] ?? [],
     forgotten = world.experience?.forgotten[actorId],
     corrections = world.experience?.corrections?.[actorId],
-    cached = Object.isFrozen(entries) ? received.get(entries) : undefined;
+    immutable =
+      isImmutableData(entries) && isImmutableData(forgotten) && isImmutableData(corrections),
+    cached = immutable ? received.get(entries) : undefined;
   if (cached && cached.forgotten === forgotten && cached.corrections === corrections)
     return cached.value;
   const omitted = new Set(forgotten ?? []),
@@ -343,7 +350,7 @@ function personallyReceived(world: WorldState, actorId: string): Received {
     }
   }
   const value = { movement: [...movement.values()], offers: [...offers.values()], disclosures };
-  if (Object.isFrozen(entries)) received.set(entries, { forgotten, corrections, value });
+  if (immutable) received.set(entries, { forgotten, corrections, value });
   return value;
 }
 export function perceivedMovementOutings(
@@ -392,12 +399,12 @@ export function rememberedTradeLotReferences(
   actorId: string,
   otherId: string,
   itemIds: readonly string[],
-): ReadonlyMap<string, KnownTradeLot> {
+): ReadonlyMap<string, OfferLot> {
   const disclosed = rememberedTradeDisclosureIndex(world, actorId, otherId);
-  const selected = new Map<string, KnownTradeLot>();
+  const selected = new Map<string, OfferLot>();
   for (const id of itemIds) {
     const entry = disclosed.get(id);
-    if (entry) selected.set(id, entry);
+    if (entry) selected.set(id, entry.lot);
   }
   return selected;
 }

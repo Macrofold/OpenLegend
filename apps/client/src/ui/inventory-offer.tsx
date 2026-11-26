@@ -6,7 +6,7 @@ import type {
   InventoryDestinationPage,
   InventoryTransferSource,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { postContactRead, currentContactAvailable } from '../api';
 import { Button } from '../design-system/components';
 
 /** Offers ask a person for consent. Ordinary moves never enter this recipient list. */
@@ -46,9 +46,10 @@ export function InventoryOffer({
     const controller = new AbortController();
     const timer = window.setTimeout(
       () => {
-        void post<InventoryDestinationPage>(
+        void postContactRead<InventoryDestinationPage>(
           '/api/inventory/destinations',
           { source, query, cursor },
+          [source.containerId, source.itemId],
           controller.signal,
         )
           .then((page) => {
@@ -76,7 +77,10 @@ export function InventoryOffer({
     };
   }, [key, active]);
   const current = result?.key === key && active ? result : undefined;
-  const people = current?.page?.destinations.filter((entry) => entry.kind === 'recipient') ?? [];
+  const people =
+    current?.page?.destinations.filter(
+      (entry) => entry.kind === 'recipient' && currentContactAvailable(entry.id),
+    ) ?? [];
   const existingIds = new Set(existingTrades.map((person) => person.id));
   const existing = existingTrades.filter((person) =>
     person.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),

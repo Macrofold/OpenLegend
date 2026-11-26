@@ -1,3 +1,4 @@
+import inspectionCopy from './inventory-inspection-copy.json' with { type: 'json' };
 import { entityGet } from './entity-collection.js';
 import { accessiblePossession, canAccessContainer, possessionItems } from './object-access.js';
 import { acquireExposure } from './events.js';
@@ -9,6 +10,7 @@ import { worldPosition, worldSupport } from './spatial-state.js';
 import { observerName } from './worlds/base/knowledge.js';
 import type { ObservedItemLocation } from './places.js';
 import type { ItemDefinition, ItemInstance, WorldState, WorldEvent } from './types.js';
+import type { Named } from '@open-legend/language';
 
 export interface InventoryInspection {
   revision: number;
@@ -16,9 +18,15 @@ export interface InventoryInspection {
   scope: string;
   /** Absent selects the actor's accessible possessions, including admitted nested bags. */
   containerId?: string;
+  /** Exact received label; choosing a nested bag must not erase its earlier name
+   * or refresh it from later private object/definition fields. */
+  containerName: Named;
   after: string;
   more: boolean;
   itemIds: string[];
+  itemNames: Named[];
+  /** Exact personal acquisitions for this page; correction/forgetting revokes its roles. */
+  evidenceIds: string[];
 }
 
 const descriptions = new WeakMap<ItemDefinition, string>();
@@ -36,9 +44,13 @@ export function describePossession(
     const melee = definition.melee;
     facts = [
       definition.description,
-      definition.properties.length ? `Properties: ${definition.properties.join(', ')}.` : '',
-      definition.nutrition ? `Edible now; restores ${definition.nutrition} nourishment.` : '',
-      melee ? 'Can be equipped for close-range attacks.' : '',
+      definition.properties.length
+        ? `${inspectionCopy.properties}${definition.properties.join(', ')}.`
+        : '',
+      definition.nutrition
+        ? inspectionCopy.edible.replace('{quantity}', String(definition.nutrition))
+        : '',
+      melee ? inspectionCopy.melee : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -49,11 +61,9 @@ export function describePossession(
     )
       descriptions.set(definition, facts);
   }
-  const inscriptionText =
-    includeInscription && definition.inscription
-      ? ` Written text: “${definition.inscription}”`
-      : '';
-  return `${item.quantity} × ${definition.name}${equipped ? ', equipped' : `, ${location}`}. ${facts}${inscriptionText}`;
+  const words = includeInscription && definition.inscription;
+  const inscriptionText = words ? inspectionCopy.written.replace('{words}', () => words) : '';
+  return `${item.quantity} × ${definition.name}${equipped ? inspectionCopy.equipped : `, ${location}`}. ${facts}${inscriptionText}`;
 }
 
 function observedOwnerLocation(
@@ -69,8 +79,11 @@ function observedOwnerLocation(
       kind: 'possession',
       label:
         ownerId === actorId
-          ? 'in my carried possessions'
-          : `in my carried ${observerName(world, actorId, ownerId).name}`,
+          ? inspectionCopy.carried
+          : inspectionCopy.inCarried.replace(
+              '{container}',
+              () => observerName(world, actorId, ownerId).name,
+            ),
     };
   }
   if (root.actor && !root.remains) {
@@ -165,6 +178,32 @@ export function currentInventoryInspection(world: WorldState, actorId: string) {
   }
 }
 
+/** Names have the same custody/revision/access lifetime as the selected received page. */
+export function inspectedItemName(
+  world: WorldState,
+  actorId: string,
+  itemId: string,
+): Named | undefined {
+  const selected = entityGet(world.entities, actorId)?.actor?.inventoryInspection;
+  if (!selected) return;
+  const container = (selected.containerId ?? actorId) === itemId;
+  const index = selected.itemIds.indexOf(itemId);
+  if (!container && index < 0) return;
+  const inspection = currentInventoryInspection(world, actorId);
+  if (!inspection) return;
+  return container ? inspection.containerName : inspection.itemNames[index];
+}
+
+export function revokeInventoryInspection(
+  world: WorldState,
+  actorId: string,
+  affected: ReadonlySet<string>,
+): void {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (actor?.inventoryInspection?.evidenceIds.some((id) => affected.has(id)))
+    delete actor.inventoryInspection;
+}
+
 /** Prepared permitted facts shared by decision options and finite-method rebinding.
  * This reads only the exact page the actor chose; `more` never means complete stock. */
 export function inspectedContainer(world: WorldState, actorId: string) {
@@ -208,13 +247,23 @@ export function inspectPossessions(
   containerId?: string,
   expectedScope?: string,
   selectedItemId?: string,
-) {
+): InventoryInspection & { page: string[] } {
   const entity = entityGet(world.entities, actorId);
   if (!entity?.actor) throw new Error('Actor unavailable.');
   const selected = entityGet(world.entities, containerId ?? actorId)!;
   const scope = inventoryInspectionScope(world, actorId, containerId);
   const revision = selected.inventoryRevision ?? 0;
   const locationForOwner = ownerLocationLookup(world, actorId);
+  const itemName = (definition: ItemDefinition): Named => ({
+    name: definition.name,
+    ...(definition.nameForm ? { nameForm: definition.nameForm } : {}),
+    ...(definition.indefiniteArticle ? { indefiniteArticle: definition.indefiniteArticle } : {}),
+  });
+  // This deliberate native inspection receives the selected item's installed name
+  // independently. Later reads use this capture, never a private live-name fallback.
+  const containerName = selected.item
+    ? itemName(world.itemDefinitions[selected.item.definitionPin.id]!)
+    : { ...observerName(world, actorId, selected.id) };
   if (selectedItemId) {
     const item = itemFor(world, selectedItemId);
     if (
@@ -224,9 +273,7 @@ export function inspectPossessions(
         : !accessiblePossession(world, actorId, item.id)) ||
       (expectedRevision !== undefined && expectedRevision !== revision)
     )
-      throw new Error(
-        'This item or its access changed. Refresh the contents before inspecting it.',
-      );
+      throw new Error(inspectionCopy.changed);
     const description = describePossession(
       item,
       world.itemDefinitions[item.definitionId]!,
@@ -240,9 +287,12 @@ export function inspectPossessions(
       revision,
       scope,
       ...(containerId ? { containerId } : {}),
+      containerName,
       after: item.id,
       more: false,
       itemIds: [item.id],
+      itemNames: [itemName(world.itemDefinitions[item.definitionId]!)],
+      evidenceIds: [],
       page: [description],
     };
   }
@@ -274,6 +324,7 @@ export function inspectPossessions(
       : [...possessionItems(world, actorId)].sort((a, b) => a.id.localeCompare(b.id, 'en'));
   const page: string[] = [];
   const itemIds: string[] = [];
+  const itemNames: Named[] = [];
   let bytes = 0,
     last = after,
     more = false;
@@ -293,6 +344,7 @@ export function inspectPossessions(
     }
     page.push(text);
     itemIds.push(item.id);
+    itemNames.push(itemName(world.itemDefinitions[item.definitionId]!));
     bytes += size;
     last = item.id;
   }
@@ -302,9 +354,12 @@ export function inspectPossessions(
     revision,
     scope,
     ...(containerId ? { containerId } : {}),
+    containerName,
     after: last,
     more,
     itemIds,
+    itemNames,
+    evidenceIds: [],
     page,
   };
 }
@@ -316,9 +371,10 @@ export function recordInspectedItems(
   events: WorldEvent[],
   actorId: string,
   inspection: Pick<InventoryInspection, 'itemIds'> & { page: string[] },
-): void {
+): string[] {
   const observer = entityGet(world.entities, actorId)!;
   const locationForOwner = ownerLocationLookup(world, actorId);
+  const evidenceIds: string[] = [];
   for (const [index, id] of inspection.itemIds.entries()) {
     const item = itemFor(world, id)!;
     const definition = world.itemDefinitions[item.definitionId]!;
@@ -326,7 +382,7 @@ export function recordInspectedItems(
 
     if (definition.placeReport)
       acquireExposure(world, events, observer, id, cloneValue(definition.placeReport));
-    acquireExposure(world, events, observer, id, {
+    const event = acquireExposure(world, events, observer, id, {
       kind: 'inventory-item',
       id,
       definition: { id: definition.id, version: definition.version },
@@ -342,5 +398,7 @@ export function recordInspectedItems(
         ? { mechanismFields: cloneValue(definition.mechanismFields) }
         : {}),
     });
+    evidenceIds.push(event.id);
   }
+  return evidenceIds;
 }

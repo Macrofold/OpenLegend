@@ -93,7 +93,7 @@ Players now expect to own their worlds: the European "Stop Killing Games" citize
 - **Trust.** After the 2025–26 companion-chatbot lawsuits and platform retreats, a visibly safe AI world is something parents, schools, libraries and regulators actively prefer.
 - **Regulation-readiness.** Companion laws in New York and California (in force) and Oregon and Washington (from 2027), the EU AI Act and the expected Digital Fairness Act all target practices this vision already avoids.
 - **Word of mouth.** Manipulative goodbyes raised engagement, but the coercive and needy ones also raised intent to quit and negative word of mouth.
-- **Market signals.** Co-op games (*Peak*, *Split Fiction*), the tabletop boom, "meet strangers for dinner" services and autonomous-resident games without language models (*Tomodachi Life*) all grew in 2025–26, while an AI-friend pendant's subway ads were defaced as "exploiting loneliness." Connection sells; loneliness-exploitation increasingly doesn't.
+- **Market signals.** Co-op games (*Peak*, *Split Fiction*), the tabletop boom, "meet strangers for dinner" services and NPC games without language models (*Tomodachi Life*) all grew in 2025–26, while an AI-friend pendant's subway ads were defaced as "exploiting loneliness." Connection sells; loneliness-exploitation increasingly doesn't.
 
 ---
 

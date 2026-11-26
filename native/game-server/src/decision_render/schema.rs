@@ -1,0 +1,708 @@
+use super::{DecisionPolicy, RenderError};
+use openlegend_simulation::{
+    host::{ByteBudget, ByteReservation},
+    records::SqlCell,
+};
+use serde_json::{Value, json};
+
+/// These aliases must come from the corresponding native response binding.
+/// The published schema lists them, but only that binding can execute them.
+#[derive(Clone, Copy)]
+pub(crate) struct ResponseReferences<'a> {
+    pub(crate) entity: &'a [String],
+    pub(crate) action: &'a [String],
+    pub(crate) knowledge: &'a [String],
+    pub(crate) identity: &'a [String],
+    pub(crate) thought: &'a [&'a str],
+    pub(crate) physical: &'a [String],
+    pub(crate) attention: &'a [String],
+    pub(crate) retention: &'a [String],
+    pub(crate) appraisal: Option<&'a Value>,
+    pub(crate) remembered_places: &'a [&'a str],
+}
+
+impl ResponseReferences<'_> {
+    fn values(&self, key: &str) -> &[String] {
+        match key {
+            "entity" => self.entity,
+            "action" => self.action,
+            "knowledge" => self.knowledge,
+            "identity" => self.identity,
+            "physical" => self.physical,
+            "attention" => self.attention,
+            "retention" => self.retention,
+            _ => &[],
+        }
+    }
+}
+
+pub(crate) struct BoundSchema {
+    value: Value,
+    _custody: ByteReservation,
+    remembered_places: bool,
+}
+
+impl BoundSchema {
+    pub(crate) fn value(&self) -> &Value {
+        &self.value
+    }
+
+    pub(crate) fn discloses_remembered_places(&self) -> bool {
+        self.remembered_places
+    }
+
+    pub(crate) fn preview_root_fields(&self) -> &serde_json::Map<String, Value> {
+        self.value["properties"]
+            .as_object()
+            .expect("bound response schema has an object root")
+    }
+
+    /// The body decoder and preview path use the same materialized provider
+    /// schema. Converting received coordinates and current effect validation
+    /// stay with the native response owner and its retained read.
+    pub(crate) fn validate(&self, value: &SqlCell) -> Result<(), RenderError> {
+        if matches_schema(&self.value, value) {
+            let requests = value
+                .get("queries")
+                .and_then(SqlCell::as_array)
+                .is_some_and(|queries| !queries.is_empty());
+            if !requests
+                || value
+                    .get("operations")
+                    .and_then(SqlCell::as_array)
+                    .is_some_and(<[SqlCell]>::is_empty)
+            {
+                return Ok(());
+            }
+        }
+        Err(RenderError::InvalidResponse)
+    }
+
+    /// An unavailable optional thought reference leaves its literal wording
+    /// intact. The published schema still constrains references to offers, and
+    /// malformed annotations or other invalid operations still fail.
+    pub(crate) fn validate_generation(&self, value: &mut SqlCell) -> Result<(), RenderError> {
+        let strict = self.validate(value);
+        if strict.is_ok() || !self.discard_unoffered_thought_references(value) {
+            return strict;
+        }
+        self.validate(value)
+    }
+
+    fn discard_unoffered_thought_references(&self, value: &mut SqlCell) -> bool {
+        let Some(references) = self.value["properties"]["operations"]["items"]["anyOf"]
+            .as_array()
+            .and_then(|operations| {
+                operations.iter().find_map(|operation| {
+                    operation["properties"]["think"]["anyOf"]
+                        .as_array()?
+                        .iter()
+                        .find_map(|think| think.pointer("/properties/references"))
+                })
+            })
+        else {
+            return false;
+        };
+        let item = &references["items"];
+        let handle = &item["properties"]["subjectId"];
+        if references["type"] != "array" || item["type"] != "object" || handle["type"] != "string" {
+            return false;
+        }
+        let SqlCell::Object(root) = value else {
+            return false;
+        };
+        let Some(SqlCell::Array(operations)) = root.get_mut("operations") else {
+            return false;
+        };
+        let mut changed = false;
+        for operation in operations {
+            let SqlCell::Object(operation) = operation else {
+                continue;
+            };
+            let Some(SqlCell::Object(think)) = operation.get_mut("think") else {
+                continue;
+            };
+            let Some(SqlCell::Array(entries)) = think.get_mut("references") else {
+                continue;
+            };
+            let before = entries.len();
+            if !within_count(before, &references["minItems"], &references["maxItems"]) {
+                continue;
+            }
+            entries.retain(|entry| {
+                let unoffered = entry
+                    .get("subjectId")
+                    .is_some_and(|value| !matches_schema(handle, value));
+                !unoffered
+                    || !matches_object(item, entry, |key, schema, value| {
+                        if key == "subjectId" {
+                            matches_type("string", schema, value)
+                        } else {
+                            matches_schema(schema, value)
+                        }
+                    })
+            });
+            changed |= entries.len() != before;
+        }
+        changed
+    }
+
+    /// A provisional first operation must be a complete, independent speech
+    /// offer using this request's own entity alias. The final response still
+    /// needs complete schema and native effect validation.
+    pub(crate) fn preview_talk<'a>(&self, operation: &'a Value, player: &str) -> Option<&'a Value> {
+        let talk = operation.get("talk")?;
+        if talk["addresseeEntityId"] != player
+            || !operation["requiresAccepted"]
+                .as_array()
+                .is_some_and(Vec::is_empty)
+            || !matches_schema(&self.value["properties"]["operations"]["items"], operation)
+        {
+            return None;
+        }
+        Some(talk)
+    }
+}
+
+impl DecisionPolicy {
+    pub(crate) fn reflection_schema(
+        &self,
+        subjects: &[String],
+        evidence: &[String],
+        budget: &ByteBudget,
+    ) -> Result<BoundSchema, RenderError> {
+        let references = ResponseReferences {
+            entity: &[],
+            action: &[],
+            knowledge: &[],
+            identity: subjects,
+            thought: &[],
+            physical: &[],
+            attention: &[],
+            retention: evidence,
+            appraisal: None,
+            remembered_places: &[],
+        };
+        let template = &self.reflection.schema;
+        let custody = budget
+            .reserve(bound_bytes(template, &references, self))
+            .map_err(|_| RenderError::Capacity)?;
+        let mut value = template.clone();
+        if !bind_references(&mut value, &references, self) {
+            return Err(RenderError::Contract);
+        }
+        Ok(BoundSchema {
+            value,
+            _custody: custody,
+            remembered_places: false,
+        })
+    }
+
+    pub(crate) fn can_offer_remembered_places(&self, speech: bool, expressions: bool) -> bool {
+        self.schemas.iter().find(|variant| {
+            variant.speech == speech && variant.expressions == expressions
+        }).is_some_and(|variant| variants_with_actions(&variant.schema) != 0)
+    }
+
+    pub(crate) fn response_schema(
+        &self,
+        speech: bool,
+        expressions: bool,
+        queries: bool,
+        references: &ResponseReferences<'_>,
+        budget: &ByteBudget,
+    ) -> Result<BoundSchema, RenderError> {
+        if references.entity.is_empty() {
+            return Err(RenderError::Contract);
+        }
+        let template = &self
+            .schemas
+            .iter()
+            .find(|variant| variant.speech == speech && variant.expressions == expressions)
+            .ok_or(RenderError::Contract)?
+            .schema;
+        let remembered_bytes = references.remembered_places.iter().fold(0usize, |size, id| {
+            size.saturating_add(id.len().saturating_add(64))
+        });
+        // These aliases can annotate a thought but never target an action.
+        let thought_aliases = || {
+            references
+                .identity
+                .iter()
+                .filter(|alias| !references.entity.contains(alias))
+                .map(String::as_str)
+                .chain(references.thought.iter().copied())
+        };
+        let thought_reference_bytes = thought_aliases().fold(0usize, |size, alias| {
+            size.saturating_add(alias.len().saturating_add(64))
+        });
+        let additional = references
+            .appraisal
+            .map_or(0, tree_bytes)
+            .saturating_add(thought_reference_bytes)
+            .saturating_add(if remembered_bytes == 0 {
+                0
+            } else {
+                remembered_bytes
+                    .saturating_add(1024)
+                    .saturating_mul(variants_with_actions(template))
+            });
+        let bytes = bound_bytes(template, references, self).saturating_add(additional);
+        let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
+        let mut value = template.clone();
+        if !queries {
+            let root = value.as_object_mut().ok_or(RenderError::Contract)?;
+            root.get_mut("properties")
+                .and_then(Value::as_object_mut)
+                .ok_or(RenderError::Contract)?
+                .shift_remove("queries");
+            root.get_mut("required")
+                .and_then(Value::as_array_mut)
+                .ok_or(RenderError::Contract)?
+                .retain(|name| name != "queries");
+        }
+        let variants = value["properties"]["operations"]["items"]["anyOf"]
+            .as_array_mut()
+            .ok_or(RenderError::Contract)?;
+        let remembered_places = !references.remembered_places.is_empty();
+        if remembered_places {
+            for action in variants.iter_mut().filter_map(|variant| {
+                variant["properties"].as_object_mut()?.get_mut("act")
+            }).filter(|action| proposal_branch(action)) {
+                action["properties"]["rememberedPlaceId"] = json!({
+                    "anyOf": [{"type":"string","enum":references.remembered_places},{"type":"null"}],
+                });
+                action["required"].as_array_mut().ok_or(RenderError::Contract)?
+                    .push("rememberedPlaceId".into());
+            }
+        }
+        variants.retain_mut(|variant| {
+            let Some(properties) = variant["properties"].as_object_mut() else {
+                return false;
+            };
+            if let Some(template) = properties
+                .get_mut("appraise")
+                .filter(|value| value["type"] != "null")
+            {
+                let Some(appraisal) = references.appraisal else {
+                    return false;
+                };
+                *template = appraisal.clone();
+            }
+            if let Some(name) = properties
+                .get_mut("name")
+                .filter(|value| value["type"] != "null")
+            {
+                if references.identity.is_empty() {
+                    return false;
+                }
+                name["properties"]["subjectId"] =
+                    json!({"type":"string","enum":references.identity});
+            }
+            if thought_reference_bytes != 0
+                && let Some(branches) = properties
+                    .get_mut("think")
+                    .and_then(|think| think.get_mut("anyOf"))
+                    .and_then(Value::as_array_mut)
+            {
+                for branch in branches {
+                    if let Some(aliases) = branch
+                        .pointer_mut("/properties/references/items/properties/subjectId/enum")
+                        .and_then(Value::as_array_mut)
+                    {
+                        aliases.extend(thought_aliases().map(|alias| Value::String(alias.into())));
+                    }
+                }
+            }
+            !(references.attention.is_empty() && properties["observe"]["type"] != "null"
+                || references.retention.is_empty() && properties["remember"]["type"] != "null")
+        });
+        // Naming references do not enter the other operation schemas.
+        let ordinary = ResponseReferences {
+            identity: &[],
+            ..*references
+        };
+        if !bind_references(&mut value, &ordinary, self) {
+            return Err(RenderError::Contract);
+        }
+        Ok(BoundSchema {
+            value,
+            _custody: custody,
+            remembered_places,
+        })
+    }
+}
+
+fn proposal_branch(action: &Value) -> bool {
+    let kind = &action["properties"]["kind"];
+    action["type"] == "object"
+        && (kind["const"] == "proposal" || kind["enum"].as_array()
+            .is_some_and(|kinds| kinds.iter().any(|kind| kind == "proposal")))
+}
+
+fn variants_with_actions(template: &Value) -> usize {
+    template["properties"]["operations"]["items"]["anyOf"].as_array().map_or(0, |variants| {
+        variants.iter().filter(|variant| proposal_branch(&variant["properties"]["act"])).count()
+    })
+}
+
+fn alias_group<'a>(policy: &'a DecisionPolicy, value: &Value) -> Option<&'a str> {
+    let token = value.as_str()?;
+    if !token.starts_with("@rgs:") {
+        return None;
+    }
+    policy
+        .references
+        .iter()
+        .find_map(|(kind, marker)| (marker == token).then_some(kind.as_str()))
+}
+
+fn bind_references(
+    value: &mut Value,
+    references: &ResponseReferences<'_>,
+    policy: &DecisionPolicy,
+) -> bool {
+    if let Some(object) = value.as_object_mut() {
+        if let Some(group) = object
+            .get("const")
+            .and_then(|value| alias_group(policy, value))
+        {
+            let offered = references.values(group);
+            if offered.is_empty() {
+                return false;
+            }
+            if let [only] = offered {
+                object["const"] = Value::String(only.clone());
+            } else {
+                object.shift_remove("const");
+                object.insert(
+                    "enum".into(),
+                    Value::Array(offered.iter().cloned().map(Value::String).collect()),
+                );
+            }
+        }
+        if let Some(enumerated) =
+            object
+                .get_mut("enum")
+                .and_then(Value::as_array_mut)
+                .filter(|choices| {
+                    choices
+                        .iter()
+                        .any(|value| alias_group(policy, value).is_some())
+                })
+        {
+            let old = std::mem::take(enumerated);
+            for choice in old {
+                if let Some(group) = alias_group(policy, &choice) {
+                    enumerated.extend(references.values(group).iter().cloned().map(Value::String));
+                } else {
+                    enumerated.push(choice);
+                }
+            }
+            if enumerated.is_empty() {
+                return false;
+            }
+            if enumerated.len() == 1 {
+                let only = enumerated.pop().expect("one value");
+                object.shift_remove("enum");
+                object.insert("const".into(), only);
+            }
+        }
+        if let Some(alternatives) = object.get_mut("anyOf").and_then(Value::as_array_mut) {
+            alternatives.retain_mut(|choice| bind_references(choice, references, policy));
+            if alternatives.is_empty() {
+                return false;
+            }
+            if alternatives.len() == 1 {
+                *value = alternatives.pop().expect("one alternative");
+            }
+            return true;
+        }
+        if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
+            return properties
+                .values_mut()
+                .all(|child| bind_references(child, references, policy));
+        }
+        if let Some(items) = object.get_mut("items") {
+            return bind_references(items, references, policy);
+        }
+    }
+    true
+}
+
+fn bound_bytes(
+    value: &Value,
+    references: &ResponseReferences<'_>,
+    policy: &DecisionPolicy,
+) -> usize {
+    if let Some(key) = alias_group(policy, value) {
+        return references
+            .values(key)
+            .iter()
+            .map(|value| 64usize.saturating_add(value.len()))
+            .fold(0, usize::saturating_add)
+            .saturating_add(128);
+    }
+    match value {
+        Value::Array(items) => size_sum(
+            64,
+            items
+                .iter()
+                .map(|item| bound_bytes(item, references, policy)),
+        ),
+        Value::Object(fields) => size_sum(
+            128,
+            fields.iter().map(|(key, item)| {
+                128usize
+                    .saturating_add(key.len())
+                    .saturating_add(bound_bytes(item, references, policy))
+            }),
+        ),
+        _ => tree_bytes(value),
+    }
+}
+
+pub(crate) fn tree_bytes(value: &Value) -> usize {
+    match value {
+        Value::String(value) => 32usize.saturating_add(value.len()),
+        Value::Array(items) => size_sum(64, items.iter().map(tree_bytes)),
+        Value::Object(fields) => size_sum(
+            128,
+            fields.iter().map(|(key, item)| {
+                128usize
+                    .saturating_add(key.len())
+                    .saturating_add(tree_bytes(item))
+            }),
+        ),
+        _ => 32,
+    }
+}
+
+fn size_sum(base: usize, values: impl Iterator<Item = usize>) -> usize {
+    values.fold(base, usize::saturating_add)
+}
+
+/// Validate an incremental preview and a complete exact-text response against
+/// the same schema without rebuilding either input as the other value type.
+trait SchemaValue: PartialEq<Value> + Sized {
+    fn null(&self) -> bool;
+    fn boolean(&self) -> bool;
+    fn string(&self) -> Option<&str>;
+    fn string_length(&self) -> Option<usize>;
+    fn number(&self) -> Option<f64>;
+    fn array(&self) -> Option<&[Self]>;
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>>;
+    fn field(&self, name: &str) -> Option<&Self>;
+}
+
+impl SchemaValue for Value {
+    fn null(&self) -> bool {
+        self.is_null()
+    }
+
+    fn boolean(&self) -> bool {
+        self.is_boolean()
+    }
+
+    fn string(&self) -> Option<&str> {
+        self.as_str()
+    }
+
+    fn string_length(&self) -> Option<usize> {
+        Some(self.as_str()?.chars().count())
+    }
+
+    fn number(&self) -> Option<f64> {
+        self.as_f64()
+    }
+
+    fn array(&self) -> Option<&[Self]> {
+        self.as_array().map(Vec::as_slice)
+    }
+
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>> {
+        Some(
+            self.as_object()?
+                .iter()
+                .map(|(key, value)| (key.as_str(), value)),
+        )
+    }
+
+    fn field(&self, name: &str) -> Option<&Self> {
+        self.get(name)
+    }
+}
+
+impl SchemaValue for SqlCell {
+    fn null(&self) -> bool {
+        self.is_null()
+    }
+
+    fn boolean(&self) -> bool {
+        self.as_bool().is_some()
+    }
+
+    fn string(&self) -> Option<&str> {
+        self.as_str()
+    }
+
+    fn string_length(&self) -> Option<usize> {
+        let text = self.as_text()?;
+        Some(
+            text.as_unicode()
+                .map_or_else(|| text.character_count(), |text| text.chars().count()),
+        )
+    }
+
+    fn number(&self) -> Option<f64> {
+        self.as_f64()
+    }
+
+    fn array(&self) -> Option<&[Self]> {
+        self.as_array()
+    }
+
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>> {
+        Some(
+            self.as_object()?
+                .iter()
+                .map(|(key, value)| (key.as_str(), value)),
+        )
+    }
+
+    fn field(&self, name: &str) -> Option<&Self> {
+        self.get(name)
+    }
+}
+
+/// Validate the finite, reference-free shapes from the pinned schema producer.
+/// A schema outside that subset is refused rather than partially validated.
+fn matches_schema(schema: &Value, value: &impl SchemaValue) -> bool {
+    let Some(fields) = schema.as_object() else {
+        return false;
+    };
+    if !fields.keys().all(|key| {
+        matches!(
+            key.as_str(),
+            "$schema"
+                | "description"
+                | "type"
+                | "anyOf"
+                | "const"
+                | "enum"
+                | "properties"
+                | "required"
+                | "additionalProperties"
+                | "items"
+                | "minItems"
+                | "maxItems"
+                | "minLength"
+                | "maxLength"
+                | "minimum"
+                | "maximum"
+                | "pattern"
+        )
+    }) {
+        return false;
+    }
+    if let Some(expected) = schema.get("const") {
+        if value != expected {
+            return false;
+        }
+    }
+    if let Some(allowed) = schema.get("enum").and_then(Value::as_array) {
+        if !allowed.iter().any(|expected| value == expected) {
+            return false;
+        }
+    }
+    if let Some(alternatives) = schema.get("anyOf").and_then(Value::as_array) {
+        if !alternatives
+            .iter()
+            .any(|option| matches_schema(option, value))
+        {
+            return false;
+        }
+    }
+    match &schema["type"] {
+        Value::String(kind) => matches_type(kind, schema, value),
+        Value::Array(kinds) => kinds
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|kind| matches_type(kind, schema, value)),
+        Value::Null => fields.contains_key("anyOf"),
+        _ => false,
+    }
+}
+
+fn matches_type(kind: &str, schema: &Value, value: &impl SchemaValue) -> bool {
+    match kind {
+        "null" => value.null(),
+        "boolean" => value.boolean(),
+        "string" => value.string_length().is_some_and(|length| {
+            let pattern = schema.get("pattern").and_then(Value::as_str);
+            within_count(length, &schema["minLength"], &schema["maxLength"])
+                && match pattern {
+                    None => true,
+                    Some("^[a-z][a-z0-9_]{0,23}$") => value.string().is_some_and(|value| {
+                        let mut bytes = value.bytes();
+                        value.len() <= 24
+                            && bytes.next().is_some_and(|byte| byte.is_ascii_lowercase())
+                            && bytes.all(|byte| {
+                                byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_'
+                            })
+                    }),
+                    _ => false,
+                }
+        }),
+        "integer" | "number" => value.number().is_some_and(|number| {
+            number.is_finite()
+                && (kind != "integer" || number.fract() == 0.0)
+                && schema["minimum"]
+                    .as_f64()
+                    .is_none_or(|minimum| number >= minimum)
+                && schema["maximum"]
+                    .as_f64()
+                    .is_none_or(|maximum| number <= maximum)
+        }),
+        "array" => value.array().is_some_and(|array| {
+            within_count(array.len(), &schema["minItems"], &schema["maxItems"])
+                && array
+                    .iter()
+                    .all(|item| matches_schema(&schema["items"], item))
+        }),
+        "object" => matches_object(schema, value, |_, schema, value| matches_schema(schema, value)),
+        _ => false,
+    }
+}
+
+fn matches_object<T: SchemaValue>(
+    schema: &Value,
+    value: &T,
+    mut matches_member: impl FnMut(&str, &Value, &T) -> bool,
+) -> bool {
+    let (Some(mut members), Some(properties), Some(required)) = (
+        value.members(),
+        schema["properties"].as_object(),
+        schema["required"].as_array(),
+    ) else {
+        return false;
+    };
+    schema["additionalProperties"] == json!(false)
+        && required
+            .iter()
+            .all(|key| key.as_str().is_some_and(|key| value.field(key).is_some()))
+        && members.all(|(key, value)| {
+            properties
+                .get(key)
+                .is_some_and(|schema| matches_member(key, schema, value))
+        })
+}
+
+fn within_count(count: usize, minimum: &Value, maximum: &Value) -> bool {
+    minimum
+        .as_u64()
+        .is_none_or(|minimum| count as u64 >= minimum)
+        && maximum
+            .as_u64()
+            .is_none_or(|maximum| count as u64 <= maximum)
+}

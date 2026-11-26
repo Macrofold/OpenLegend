@@ -4,9 +4,9 @@
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Complete source synthesis; no engine benchmark performed | 2026-10-23; Unreal Engine 5.8 documentation and Unity 6.6 documentation, with package versions identified below | Mechanisms, work avoided or moved, fidelity limits, platform conditions, and the boundary between presentation and persistent simulation |
 
-This chapter examines how the engines produce images, movement, effects, and sound from an already meaningful world. It does not select an engine or propose an OpenLegend implementation. The [version baseline](01-evidence-and-version-baseline.md) owns release and support-channel verification. References to a current documentation branch do not turn its older examples into current measurements.
+This chapter examines how the engines produce images, movement, effects, and sound from an already meaningful world. It does not select an engine or propose an Open Legend implementation. The [version baseline](01-evidence-and-version-baseline.md) owns release and support-channel verification. References to a current documentation branch do not turn its older examples into current measurements.
 
-OpenLegend's engine/world and authority boundaries make one distinction particularly relevant: making a character cheaper to draw or hear does not establish that the character stopped moving, noticing things, speaking, or affecting the world. That is a research interpretation of the mechanisms below, grounded in the repository's [engine and world boundaries](../../docs/engine-and-world-boundaries.md) and [architecture](../../docs/architecture.md), rather than a proposed change.
+Open Legend's engine/world and authority boundaries make one distinction particularly relevant: making a character cheaper to draw or hear does not establish that the character stopped moving, noticing things, speaking, or affecting the world. That is a research interpretation of the mechanisms below, grounded in the repository's [engine and world boundaries](../../docs/engine-and-world-boundaries.md) and [architecture](../../docs/architecture.md), rather than a proposed change.
 
 ## 1. Frame scheduling: declare dependencies, then execute
 
@@ -50,7 +50,7 @@ The relevant distinction is between _draw visibility_ and _knowledge_. A GPU vis
 
 Lumen first traces against the screen, then uses a hardware ray-tracing scene or software distance-field representation. Its Surface Cache stores material and lighting information sampled from surface “cards,” avoiding full material evaluation at every ray hit. Lighting updates are spread across frames; camera movement and scene changes can expose incomplete or lagging coverage. Hardware ray tracing adds the cost of maintaining acceleration structures, including animated geometry. Current 5.8 documentation enables skeletal Surface Cache support, but only six cards around pre-skinned bounds, so heavy deformation has limited coverage. “Lumen does not support skeletal Surface Cache” is therefore obsolete; “support has no deformation limitations” is also wrong. [R08]
 
-Lumen Lite uses an irradiance-field final gather on Medium GI quality: world-space probes near pixels precompute irradiance, then interpolation includes probe occlusion. Medium reflection quality uses screen-space reflections for smooth surfaces rather than full Lumen reflections. The guide targets lower-end PCs and Switch 2 and describes a lower-quality/faster tradeoff. Its 30/60 fps console settings and lighting budgets are targets under stated resolution assumptions, not guarantees for arbitrary scenes or OpenLegend. [R09]
+Lumen Lite uses an irradiance-field final gather on Medium GI quality: world-space probes near pixels precompute irradiance, then interpolation includes probe occlusion. Medium reflection quality uses screen-space reflections for smooth surfaces rather than full Lumen reflections. The guide targets lower-end PCs and Switch 2 and describes a lower-quality/faster tradeoff. Its 30/60 fps console settings and lighting budgets are targets under stated resolution assumptions, not guarantees for arbitrary scenes or Open Legend. [R09]
 
 **Research interpretation.** Several different freshness questions coexist. A mesh can be visible now while its lighting cache is still catching up; a ray can hit simplified geometry while the rasterized surface has more detail. Image plausibility often tolerates these differences. Whether an action is blocked, a room is private, or a character witnessed an event is a different question and cannot be inferred from the lighting result alone.
 
@@ -120,7 +120,7 @@ Unreal's Temporal Super Resolution (TSR) reconstructs a higher-resolution image 
 
 Unreal Motion Matching uses Pose Search to compare the current query against indexed motion examples. A schema defines features such as bone position, velocity, and trajectory, with weights describing their significance. The search selects matching poses from a database and can blend into the chosen motion. Its content coverage, feature selection, sample density, and weights shape both the motion and the search workload. It is a data-driven alternative to expressing every transition as an animation-state-machine rule; it does not synthesize arbitrary missing skills or decide what the character wants. [R15]
 
-For an autonomous character, deciding to reach a doorway, selecting a plausible locomotion segment, adapting feet to the ground, and moving the collision body are distinct computations. Motion matching primarily addresses the motion-selection part. A plausible pose does not certify that the chosen path is navigable, that the action is allowed, or that another character observed it. Those are analytical distinctions rather than proposed OpenLegend interfaces.
+For an autonomous character, deciding to reach a doorway, selecting a plausible locomotion segment, adapting feet to the ground, and moving the collision body are distinct computations. Motion matching primarily addresses the motion-selection part. A plausible pose does not certify that the chosen path is navigable, that the action is allowed, or that another character observed it. Those are analytical distinctions rather than proposed Open Legend interfaces.
 
 ### Unreal animation execution and budgets
 
@@ -203,7 +203,7 @@ The table is a synthesis of the cited mechanisms, not an engine ranking or propo
 | Stateless visual effects         | Retaining and stepping arbitrary particle histories                  | Restricted effect behavior; image work still exists                         |
 | Audio concurrency/virtualization | Mixing every active sound at full cost                               | Voice-selection loss; no automatic change to the underlying event           |
 
-The common pattern is a bounded, observable output contract with explicit approximations or lifetime rules. Whether that contract is acceptable for a different system is a separate semantic question. None of the documentation establishes an OpenLegend population capacity, frame budget, or character-behavior speedup; no such benchmark was performed.
+The common pattern is a bounded, observable output contract with explicit approximations or lifetime rules. Whether that contract is acceptable for a different system is a separate semantic question. None of the documentation establishes an Open Legend population capacity, frame budget, or character-behavior speedup; no such benchmark was performed.
 
 ## 10. Provenance and source register
 

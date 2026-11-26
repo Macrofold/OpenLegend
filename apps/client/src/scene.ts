@@ -29,7 +29,7 @@ import {
   setVisibilityStencil,
 } from './visibility-stencil';
 import { StatusIndicators } from './status-indicators';
-import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
+import type { EntityView, GameView, PlayerProfile, SurfacePoint } from '@open-legend/protocol';
 import {
   intersectBox,
   panelRayFraction,
@@ -262,6 +262,7 @@ export class WildernessScene implements WorldRenderer {
   private markerUntil = 0;
   private elapsed = 0;
   private view: GameView | null = null;
+  private playerPreferences: PlayerProfile['preferences'] | undefined;
   private mapKey = '';
   private terrain?: GameView['map']['terrain'];
   private terrainKey = '';
@@ -721,11 +722,7 @@ export class WildernessScene implements WorldRenderer {
     } else this.sceneryPreparation = undefined;
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
-    if (relight && this.view)
-      this.presentation.lighting(
-        this.view,
-        [...this.actors.values()].map((entry) => entry.view),
-      );
+    if (relight && this.view) this.presentation.lighting(this.view);
     this.app.renderNextFrame = true;
     if (rebuild && this.view) {
       this.buildLandscape(this.view.map);
@@ -847,10 +844,10 @@ export class WildernessScene implements WorldRenderer {
   }
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
-      this.presentation.lighting(
-        this.view,
-        [...this.actors.values()].map((entry) => entry.view),
-      );
+      this.presentation.lighting(this.view);
+  }
+  setPlayerPreferences(preferences: PlayerProfile['preferences'] | undefined): void {
+    this.playerPreferences = preferences;
   }
   setPerceptionOptions(options: PerceptionOptions): void {
     this.perception.setOptions(options);
@@ -900,7 +897,6 @@ export class WildernessScene implements WorldRenderer {
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
-      this.knownEvents.clear();
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
@@ -946,7 +942,6 @@ export class WildernessScene implements WorldRenderer {
       // Resume retains current public assets/camera, never an old observer's ghosts
       // or transient events. The new snapshot alone establishes current disclosure.
       this.resetTransientCaptions();
-      this.knownEvents = new Set(view.events.map((event) => event.id));
       this.clearHover();
       this.setModifiers(false, false);
       for (const [id, entry] of this.actors)
@@ -959,48 +954,32 @@ export class WildernessScene implements WorldRenderer {
         this.callbacks.select(null);
       }
     }
-    const departed = new Set(
-      view.events
-        .filter(
-          (event) =>
-            (event.type === 'departed' || event.type === 'body-removed') &&
-            !this.knownEvents.has(event.id),
-        )
-        .map((event) => event.actorId),
-    );
-    this.knownEvents = new Set(view.events.map((event) => event.id));
+    // Omission is not a memory grant. Explicit personal history remains available
+    // through its source reader; a removed contact loses all live rendering now.
     for (const [id, entry] of this.actors)
-      if (!visible.has(entry.view.id)) {
-        // Loose piles have no renderer ghost: occlusion and collection both hide the heap.
-        // docs/worlds/base/items.md#ground-piles
-        if (
-          entry.view.kind === 'item-pile' ||
-          (entry.view.id === view.player.id && playerAbsent) ||
-          (departed.has(id) && document.documentElement.dataset.reduceMotion === 'true')
-        ) {
-          this.releaseEntity(entry);
-          this.actors.delete(id);
-          continue;
-        }
-        // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
-        // an unobserved ghost has no interaction or current-state knowledge.
-        if (departed.has(id)) entry.departedAt = this.elapsed;
-        entry.observed = false;
-        entry.root.setPosition(entry.view.position.x, entry.view.position.y, entry.view.position.z);
+      if (!visible.has(id)) {
+        this.releaseEntity(entry);
+        this.actors.delete(id);
+        this.movingEntries.delete(id);
       }
+    if (this.selected && !visible.has(this.selected)) {
+      this.selected = null;
+      this.callbacks.select(null);
+    }
     for (const entity of entities) {
       let entry = this.actors.get(entity.id);
       if (entry?.observed && entry.view === entity) {
         entry.motion.confirm(view.clock.seconds);
         continue;
       }
-      this.movingEntries.add(entity.id);
+      if (entity.observation?.kind === 'current') this.movingEntries.delete(entity.id);
+      else this.movingEntries.add(entity.id);
       const baseSignature = `${
         entity.contents
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${!entity.modularAppearance && entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}:${entity.modularAppearance ? JSON.stringify([entity.modularAppearance.recipe.family, entity.modularAppearance.compiled, entity.modularAppearance.compiledPath]) : ''}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${!entity.modularAppearance && entity.kind === 'actor' && entity.id === view.player.id && view.player.equipmentPorts.some((port) => !!port.item)}:${entity.modularAppearance ? JSON.stringify([entity.modularAppearance.recipe.family, entity.modularAppearance.compiled, entity.modularAppearance.compiledPath]) : ''}`;
       // Restoring another valid construction branch can retain the same edit
       // count. The actual permitted pieces/palette decide appearance and picking.
       const signature = entity.assembly
@@ -1088,20 +1067,14 @@ export class WildernessScene implements WorldRenderer {
       }
       this.admitMotionSample(entry, entity, view);
       entry.view = entity;
+      if (entity.observation?.kind === 'current') {
+        entry.root.setPosition(entity.position.x, entity.position.y, entity.position.z);
+      }
       entry.observed = true;
       delete entry.departedAt;
     }
-    // A bounded, session-only visual memory; never a second source of live facts.
-    const remembered = [...this.actors].filter(([, entry]) => !entry.observed);
-    for (const [id, entry] of remembered.slice(0, Math.max(0, remembered.length - 128))) {
-      this.releaseEntity(entry);
-      this.actors.delete(id);
-    }
     this.updateEntityPresentation();
-    this.presentation.lighting(
-      view,
-      [...this.actors.values()].map((entry) => entry.view),
-    );
+    this.presentation.lighting(view);
     if (this.options.notices !== false) this.statuses.observe(view);
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
@@ -1239,7 +1212,7 @@ export class WildernessScene implements WorldRenderer {
         return { x: p.x, y: p.y - 54, source: p };
       },
       direction: (speech, captionWidth, captionHeight, sourceId) => {
-        const speaker = sourceId ? this.actors.get(sourceId) : undefined;
+        const speaker = speech.speakerContact ? this.actors.get(speech.speakerContact) : undefined;
         let dx: number,
           dy: number,
           approximate = false;
@@ -1880,7 +1853,7 @@ export class WildernessScene implements WorldRenderer {
     const lit = !!view.heat?.lit;
     const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
-      view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
+      view.id === game.player.id && game.player.equipmentPorts.some((port) => !!port.item);
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
       wolf = view.subtype === 'wolf',
@@ -2705,6 +2678,9 @@ export class WildernessScene implements WorldRenderer {
       // A halted world freezes presentation once its playback has caught up.
       const paused = this.motionClock.halted && this.motionClock.pace === 0;
       // Displayed speed drives gait and sprite steps; it is what the player sees, not a fact.
+      if (entry.view.observation?.kind === 'current' && entry.view.observedMoving && this.view) {
+        speed = entry.motion.speed(this.motionClock.shown, MOTION_EASE_SECONDS * this.motionClock.rate);
+      }
       entry.speed = paused ? 0 : speed;
       const moving = entry.speed > 0.25;
       if (Math.abs(screenMotion) > 0.004) entry.facing = screenMotion < 0 ? -1 : 1;
@@ -2933,8 +2909,9 @@ export class WildernessScene implements WorldRenderer {
     // The modifier broadens presentation only to this already-permitted projection.
     // Reuse the same GPU scenery mask; never discover targets or scan target × blocker pairs.
     if (this.revealHeld) return 0.95;
-    const prefs = view.profile.preferences,
-      mode = prefs.revealMode ?? 'nearby';
+    const prefs = this.playerPreferences;
+    if (!prefs) return 0;
+    const mode = prefs.revealMode ?? 'nearby';
     if (mode === 'off') return 0;
     if (entry.view.id === view.player.id) return prefs.revealStrength ?? 0.7;
     if (mode !== 'nearby') return 0;

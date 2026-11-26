@@ -15,7 +15,9 @@ The initial assignment covered seven connected phases, multiple subsystems, live
 - Complete root instructions, scoped domain/server/client/AI/spatial/protocol instructions, policy owners for documentation and verification, review/design/guidance/performance/rebase skills, the guidance-system guide, contributor and feature-documentation instructions, and the relevant routes in other skills.
 - Structural source for `scripts/check-agent-guidance.mjs`; no checker or game runtime changes were made.
 - Targeted current sections of performance contracts, maintainers, first-playable plans, and evidence. This was an instruction-system audit, not another full gameplay/documentation reconciliation.
-- Both attached logs: [continuation/performance log](</Users/mzw/.codex/attachments/ed570895-e19d-4d45-b5ff-bbbeefb7e432/Pasted text.txt>) and [implementation review log](</Users/mzw/.codex/attachments/290c28e0-6e38-4649-b465-1a5e0177ffb9/Pasted text.txt>), together 1,327 lines and 49,182 bytes. These are visible activity reports, not a complete timing trace or proof of unreported actions.
+- The two original transcripts are retained in private S3. Access requires permission in the Open Legend AWS project. Their [observations and limits](#what-the-logs-support) are recorded below. Together they contain 1,327 lines and 49,182 bytes. They record visible activity, with no complete timing trace or evidence for unreported actions.
+  - [Continuation and performance log](https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=evidence%2Fdocumentation%2F2026-10-21-workflow-audit%2Fsha256%2F1b23ba6a53b3c18af39420068dbc5ae3ed8d8c4180321729f4b84b49a1d04873%2Fcontinuation-performance-log.txt&versionId=OB9Mc_fs_1G0jlrKbyVqzx02p0Tf5w61), S3 version `OB9Mc_fs_1G0jlrKbyVqzx02p0Tf5w61`, 14,974 bytes. SHA-256 `1b23ba6a53b3c18af39420068dbc5ae3ed8d8c4180321729f4b84b49a1d04873`.
+  - [Implementation review log](https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=evidence%2Fdocumentation%2F2026-10-21-workflow-audit%2Fsha256%2Fd9ea60a2ada38292a5bd2bd37eefd54c8eefb814f6256db641f83c5057798adc%2Fimplementation-review-log.txt&versionId=b9qPIjDUpvPZH0Pw_ZKeaapPa5T6QRRH), S3 version `b9qPIjDUpvPZH0Pw_ZKeaapPa5T6QRRH`, 34,208 bytes. SHA-256 `d9ea60a2ada38292a5bd2bd37eefd54c8eefb814f6256db641f83c5057798adc`.
 - Read-only inspection of the active thread titled **Implement complete first playable**, ID `01a14d83-1897-7b01-82f1-8dd103f505c2`. No messages were sent to it and no process or agent was controlled.
 - Original accepted combat design retrieved directly from Git commit `d261c94f50875edd88e8eb4a69cf8f4a413563cb`.
 - Primary research and official documentation below. No paid game-provider experiments, coding-agent trials, benchmark runs, or dependency installations were performed for this design.
@@ -93,7 +95,7 @@ Recommended intervention: shorten universal instructions, route specialty detail
 
 ## Primary research and applicability
 
-Research retrieved October 21, 2026, America/New_York. Recommendations below are our application to OpenLegend; vendor examples are not universal mandates. The proposals deliberately avoid copying a complex multi-agent harness into this one-agent workflow.
+Research retrieved October 21, 2026, America/New_York. Recommendations below are our application to Open Legend; vendor examples are not universal mandates. The proposals deliberately avoid copying a complex multi-agent harness into this one-agent workflow.
 
 ### A. Codex instruction discovery
 
@@ -105,7 +107,7 @@ Application: preserve root/local guarantees while shrinking the entry point and 
 
 [OpenAI, “Harness engineering”](https://openai.com/index/harness-engineering/) describes replacing a large instruction manual with a short entry point and structured repository knowledge. It also emphasizes machine-visible application behavior and architectural boundaries.
 
-Application: keep authoritative knowledge discoverable instead of duplicating it into every task. Do not import the article's agent-review loops or merge practices wholesale; their experiment and economics differ from OpenLegend's restrictions. Its reported productivity is not an estimate of our potential gain.
+Application: keep authoritative knowledge discoverable instead of duplicating it into every task. Do not import the article's agent-review loops or merge practices wholesale; their experiment and economics differ from Open Legend's restrictions. Its reported productivity is not an estimate of our potential gain.
 
 ### C. Context engineering
 
@@ -129,13 +131,13 @@ Application: choose verification timing according to the task's uncertainty and 
 
 [Gloaguen et al., “Evaluating AGENTS.md,” arXiv v1](https://arxiv.org/html/2602.11988v1) studies SWE-bench Lite and 138 AGENTbench issues from 12 Python repositories. Generated context reduced average resolution in the reported settings and raised cost by about 20–23%; developer-written files generally helped success but also increased effort/cost. Trace analysis found more testing and exploration.
 
-Application: audit obligations and redundant content rather than assuming more instructions improve results. This does **not** show that removing OpenLegend's authority or world contracts would help: the tasks, languages, models, and quality criteria differ. The paper's nuanced human-written result is more useful than the headline “AGENTS.md is harmful.”
+Application: audit obligations and redundant content rather than assuming more instructions improve results. This does **not** show that removing Open Legend's authority or world contracts would help: the tasks, languages, models, and quality criteria differ. The paper's nuanced human-written result is more useful than the headline “AGENTS.md is harmful.”
 
 ### G. Environment is part of measurement
 
 [Anthropic, “Quantifying infrastructure noise in agentic coding evals”](https://www.anthropic.com/research/infrastructure-noise) demonstrates that resource allocations and enforcement can alter benchmark reliability and results, and discusses other infrastructure confounders.
 
-Application: keep resource/setup facts with measurements, avoid interfering workloads, and classify environment failures. It does not establish that Docker or memory pressure caused the OpenLegend delay. Repeating an unchanged failed environment is not a useful correctness test.
+Application: keep resource/setup facts with measurements, avoid interfering workloads, and classify environment failures. It does not establish that Docker or memory pressure caused the Open Legend delay. Repeating an unchanged failed environment is not a useful correctness test.
 
 ### H. Grade the intended behavior, not a brittle fixture
 

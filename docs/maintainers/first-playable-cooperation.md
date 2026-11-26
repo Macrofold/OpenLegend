@@ -40,7 +40,7 @@ native checks do not close those gates.
 - [x] Implement revision-bound counterproposals, accepted-term replacement and expiry with truthful causes. Pending amendment expiry/refusal leaves previously accepted terms/work intact.
 - [ ] Verify identical receipt replay, conflicting replay, changed terms/item/life, hidden references, local reception loss, expiry versus deliberate refusal, alternate world defaults and existing travel/trade regressions.
 
-**Exit:** real human and NPC commands can offer/review/accept/decline exact current terms, and every refused attempt preserves costs/work/stock. Existing outgoing cap alone is not sufficient.
+**Exit:** commands from players and NPCs can offer/review/accept/decline exact current terms, and every refused attempt preserves costs/work/stock. Existing outgoing cap alone is not sufficient.
 
 Shared installed pending lifetimes and outgoing/incoming admission are connected
 for existing gift, travel and combat-help offers. Native cross-family admission,

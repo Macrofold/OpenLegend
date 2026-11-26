@@ -17,7 +17,7 @@ The delivered change affects roughly 1,600 logic lines plus documentation. Plann
 ## Review sequence and owners
 
 1. Inspect the full runtime and documentation diff, tracing input/admission → exact work → resource/item effects → records → save/load → actor-safe projections. Check source/tool/heat/input movement, removal, replacement, stock competition, cancellation and malformed current-format data against owning contracts.
-2. Examine deterministic cast timing/RNG and general cooking/learned-method bindings. Fix reproduced in-scope defects through the current owner; retain precise completed history and unsupported-state distinctions.
+2. Examine deterministic cast timing/RNG and general cooking/learned activity bindings. Fix reproduced in-scope defects through the current owner; retain precise completed history and unsupported-state distinctions.
 3. Check choice/search work through actual catalogue, view and NPC callers. Reuse permitted request-local calculations and existing invalidation; measure any demonstrated scaling hole before/after without weakening complete choices or native revalidation.
 4. Use selected existing checks and a small adaptive downstream scenario for concrete new findings. Reuse unchanged native/browser/live evidence. Run relevant TypeScript/build/format/link checks; no new automated suite or paid provider call is planned. Any UI behavior change gets actual interaction and visual verification.
 5. Review the full resulting diff; reconcile the current contracts, AV05 and focused limits/performance trackers, verification report and completed plan status. Commit all task changes locally and confirm a clean task diff.

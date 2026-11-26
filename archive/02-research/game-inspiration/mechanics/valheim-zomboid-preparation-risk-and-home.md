@@ -1,6 +1,6 @@
 # Valheim and Project Zomboid: preparation, risk, and the meaning of home
 
-**Gameplay reference; researched September 25, 2026.** Read alongside the [Valheim chapter](../games/valheim.md) and [Project Zomboid chapter](../games/project-zomboid.md). This adds granular interactions and contrasting player experiences without replacing earlier reviews, videos, economics, or conclusions. It does not prescribe OpenLegend mechanics.
+**Gameplay reference; researched September 25, 2026.** Read alongside the [Valheim chapter](../games/valheim.md) and [Project Zomboid chapter](../games/project-zomboid.md). This adds granular interactions and contrasting player experiences without replacing earlier reviews, videos, economics, or conclusions. It does not prescribe Open Legend mechanics.
 
 ## 1. Survival is not one difficulty setting
 

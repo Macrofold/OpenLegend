@@ -1,6 +1,19 @@
-import type { SqlDatabase } from './store.js';
-import { countMetric, gaugeMetric } from './performance.js';
+import type { SqlDatabase } from './sql-database.js';
+import { countMetric, gaugeMetric, withGroupedWriteAttribution } from './performance.js';
 import { toUSVString } from 'node:util';
+
+/** Derived JSONB selectors compare exact JavaScript text without asking
+ * PostgreSQL to decode isolated UTF-16 units or conflating identity keys. */
+export const sqlTextKey = (value: string) => JSON.stringify(value);
+
+const unsupportedPostgresText = /[\u0000\uD800-\uDFFF]/gu;
+
+/** Exact raw text references must match a representable PostgreSQL TEXT key. */
+export const isPostgresText = (value: string) => value.search(unsupportedPostgresText) === -1;
+
+/** Derived word searches use ordinary separators for code units PostgreSQL
+ * cannot store. Read the original wording from the canonical record. */
+export const sqlSearchText = (value: string) => value.replace(unsupportedPostgresText, ' ');
 
 // Bound PostgreSQL parameters and bytes so a batch cannot grow without limit.
 export const parameterBatchLimit = 10000;
@@ -75,7 +88,7 @@ export class SqlWriteBatch {
             .join(',')
         : '1';
       const sql = `WITH ${this.writes.map((write, index) => `write_${index} AS (${write})`).join(',')} SELECT ${projection}`;
-      const row = await this.db.prepare(sql).get(...this.params);
+      const row = await withGroupedWriteAttribution(() => this.db.prepare(sql).get(...this.params));
       for (const check of this.checks)
         if (Number(row?.[`check_${check.index}`]) !== check.rows) throw new Error(check.message);
     }
@@ -90,17 +103,21 @@ export class SqlWriteBatch {
 /** Trusted repository identifiers only. Bound both bind count and encoded batch size
  * for predictable PostgreSQL transaction/network work.
  */
-export function* sqlRowBatches(rows: Iterable<unknown[]>): Generator<unknown[][]> {
+export function* sqlRowBatches(
+  rows: Iterable<unknown[]>,
+  fixedBindings: readonly unknown[] = [],
+): Generator<unknown[][]> {
+  const fixedBytes = fixedBindings.length ? Buffer.byteLength(JSON.stringify(fixedBindings)) : 0;
   let batch: unknown[][] = [],
-    parameters = 0,
-    bytes = 0;
+    parameters = fixedBindings.length,
+    bytes = fixedBytes;
   for (const row of rows) {
     const size = Buffer.byteLength(JSON.stringify(row));
     if (batch.length && (parameters + row.length > parameterBatchLimit || bytes + size > 262144)) {
       yield batch;
       batch = [];
-      parameters = 0;
-      bytes = 0;
+      parameters = fixedBindings.length;
+      bytes = fixedBytes;
     }
     batch.push(row);
     parameters += row.length;
@@ -112,35 +129,35 @@ export function* sqlRowBatches(rows: Iterable<unknown[]>): Generator<unknown[][]
 /** Table-typed JSON transport shares exact value conversion and complete encoded-byte
  * accounting across canonical records and derived source inserts. Keep the original
  * bind-count row ceiling as well, even though each encoded batch uses one parameter. */
-export function* sqlRecordBatches(
+export function* sqlRecordBatchesWithCount(
   columns: readonly string[],
   rows: Iterable<unknown[]>,
-): Generator<string> {
+): Generator<{ payload: string; rows: number; bytes: number }> {
   let batch: string[] = [],
     bytes = 2;
+  // Only encoded text escapes; trusted fixed-column rows reuse one transport object.
+  let record: Record<string, unknown> | undefined;
   for (const row of rows) {
-    const encoded = JSON.stringify(
-      Object.fromEntries(
-        columns.map((column, index) => {
-          const value = row[index];
-          // Match pg's text encoding before JSON would escape an isolated surrogate.
-          return [column, typeof value === 'string' ? toUSVString(value) : (value ?? null)];
-        }),
-      ),
-    );
+    record ??= Object.fromEntries(columns.map((column) => [column, null]));
+    for (let index = 0; index < columns.length; index++) {
+      const value = row[index];
+      // Match pg's text encoding before JSON would escape an isolated surrogate.
+      record[columns[index]!] = typeof value === 'string' ? toUSVString(value) : (value ?? null);
+    }
+    const encoded = JSON.stringify(record);
     const size = Buffer.byteLength(encoded);
     if (
       batch.length &&
       ((batch.length + 1) * columns.length > parameterBatchLimit || bytes + size + 1 > 262144)
     ) {
-      yield `[${batch.join(',')}]`;
+      yield { payload: `[${batch.join(',')}]`, rows: batch.length, bytes };
       batch = [];
       bytes = 2;
     }
     bytes += size + (batch.length ? 1 : 0);
     batch.push(encoded);
   }
-  if (batch.length) yield `[${batch.join(',')}]`;
+  if (batch.length) yield { payload: `[${batch.join(',')}]`, rows: batch.length, bytes };
 }
 
 export async function insertRows(
@@ -156,4 +173,12 @@ export async function insertRows(
       )
       .run(...batch.flat());
   }
+}
+
+/** Same encoder, for owners that do not need exact affected-row checks. */
+export function* sqlRecordBatches(
+  columns: readonly string[],
+  rows: Iterable<unknown[]>,
+): Generator<string> {
+  for (const batch of sqlRecordBatchesWithCount(columns, rows)) yield batch.payload;
 }

@@ -1,7 +1,7 @@
 ---
 name: create-parallel-tasks
 description: >-
-  Prioritize OpenLegend work from plans, TODOs and current code; define independently
+  Prioritize Open Legend work from plans, TODOs and current code; define independently
   completable parallel assignments and standalone prompts, defaulting to five tasks.
 ---
 
@@ -39,6 +39,6 @@ Read [standalone task prompts](references/task-prompts.md) when writing the copy
 
 The assignments **must not communicate with one another or stop to await another assignment**. Settle shared contracts in the planning documents; do not instruct workers to negotiate interfaces, message peers, poll chats/branches/shared files, exchange partial implementations through the owner, or orchestrate sibling tasks. Shared files and later merge-conflict resolution are acceptable; unfinished required behavior from another assignment is not.
 
-Prompts define work and point to helpful evidence. Every copyable task prompt must instruct creation of a specifically named new branch describing its changes, under [the prompt branch rule](references/task-prompts.md#name-a-new-branch-in-each-prompt). Beyond that requested branch instruction, do not invent Git/integration powers or development procedures, tell agents to write tests, or grant spending. Defer those matters to current `AGENTS.md` and explicit user instructions. Include the concrete results that need demonstrating, without turning them into a new testing policy.
+Prompts define work and point to helpful evidence. Apply [the prompt branch rule](references/task-prompts.md#name-a-new-branch-in-each-prompt) to edit-authorized assignments and honor explicit branch or read-only instructions. Beyond that requested branch instruction, do not invent Git/integration powers or development procedures, tell agents to write tests, or grant spending. Defer those matters to current `AGENTS.md` and explicit user instructions. Include the concrete results that need demonstrating, without turning them into a new testing policy.
 
 Check count, focus, priorities, prerequisites, acceptance and links, and apply the independent-completion check to every assignment. Reconcile affected records under the documentation policy. Report unresolved design or unavailable dependencies rather than claim readiness.

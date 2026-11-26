@@ -32,7 +32,7 @@ Package boundaries remain unchanged: domain computes deterministic serializable 
 ## Data flow and comparison boundary
 
 1. Select a scoped existing scenario under CE05/AG12/CR12 and an observed failure or full-path cost. Name the pre-change source commit and current semantic contracts.
-2. Prepare matched independent worlds using existing authored fixtures and disposable PostgreSQL tools. Preserve initial definitions, people, learned methods, accepted purposes, permitted evidence and saved randomness. Never use the developer's live database or private save as a benchmark fixture.
+2. Prepare matched independent worlds using existing authored fixtures and disposable PostgreSQL tools. Preserve initial definitions, people, learned activities, accepted purposes, permitted evidence and saved randomness. Never use the developer's live database or private save as a benchmark fixture.
 3. Admit the ordinary player/NPC opportunity. Its existing root identity links intake, context, attention, recall, route, selected proposal, provider attempts, validation and accepted effects. Native-only, deferred and unavailable cases remain visible roots without invented calls.
 4. Record selected-source coverage and exact supplied choices before provider dispatch. Record newly arriving relevant evidence and the real freshness result after asynchronous work.
 5. Let existing admission and execution owners act normally. Observe accepted steps, costs, interruption, remaining work and satisfaction; do not force continuation to make the episode finish.

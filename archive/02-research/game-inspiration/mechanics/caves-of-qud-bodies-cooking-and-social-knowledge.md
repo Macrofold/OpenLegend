@@ -58,7 +58,7 @@ The authors explicitly prefer surprising combinations with rough edges smoothed 
 
 **Interpretation:** an objective can feel particular when the requester, valued object, place, and explanation fit together. The paper also exposes a useful implementation-level concern with a visible gameplay consequence: a quest object should not become impossible or duplicate merely because exploration occurred in an unexpected order.
 
-This does not prescribe a quest generator for OpenLegend. It is evidence that authored templates and generated context can create meaningful variation without handing every layer of narrative construction to an unconstrained generator.
+This does not prescribe a quest generator for Open Legend. It is evidence that authored templates and generated context can create meaningful variation without handing every layer of narrative construction to an unconstrained generator.
 
 ## 7. Reception: strangeness is a strength, but understanding has a cost
 
@@ -80,7 +80,7 @@ The prior chapter and source register retain the wider production and reception 
 
 Use the [existing Qud field guide](../games/caves-of-qud.md) for the selected video and broader overview. Then compare the Multiple Arms, Cooking, and reputation references: each changes a different relationship among character, item, and world. The developer paper is only two pages and is particularly useful for separating an evocative quest from assumptions about a fully simulated historical cause.
 
-**Questions for inspiration:** does an added capability create a new decision? Can a discovered combination be named, retained, and shared? Can social knowledge change a practical encounter? Does generated history become relevant to exploration? Can the player recognize a meaningful alternative before destroying it? These are research questions, not maintainer tasks or accepted OpenLegend behavior.
+**Questions for inspiration:** does an added capability create a new decision? Can a discovered combination be named, retained, and shared? Can social knowledge change a practical encounter? Does generated history become relevant to exploration? Can the player recognize a meaningful alternative before destroying it? These are research questions, not maintainer tasks or accepted Open Legend behavior.
 
 ## Sources and scope
 

@@ -1,0 +1,5 @@
+{
+  "materialOrigins": 2048,
+  "changed": "The material-use permission or selected source changed during gathering.",
+  "full": "Current construction permission cannot include another independent material origin."
+}

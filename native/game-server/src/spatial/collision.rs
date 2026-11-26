@@ -1,0 +1,180 @@
+//! Shape queries from the same Parry implementation used by Rapier JS 0.20.0.
+//! Positions and velocities are computed in f64 then handed to the f32 solver
+//! at the same boundary as the pinned JavaScript adapter.
+
+use parry3d::{
+    math::{Pose, Vector},
+    query::{self, ShapeCastOptions},
+    shape::{Capsule, Cuboid, Cylinder, Shape, SharedShape},
+};
+
+use super::{Bounds, EPS, Point, SKIN, SpatialError, add, scale, sub};
+use openlegend_simulation::state::BodyProfile;
+
+fn vector(p: Point) -> Vector {
+    Vector::new(p.x as f32, p.y as f32, p.z as f32)
+}
+
+pub(super) struct Solid {
+    pose: Pose,
+    shape: SharedShape,
+}
+
+impl Solid {
+    pub(super) fn new(bounds: &Bounds, convex: Option<&[Point]>) -> Result<Self, SpatialError> {
+        let centre = scale(add(bounds.min, bounds.max), 0.5);
+        let shape = match convex {
+            Some(points) => SharedShape::convex_hull(
+                &points
+                    .iter()
+                    .map(|p| vector(sub(*p, centre)))
+                    .collect::<Vec<_>>(),
+            )
+            .ok_or(SpatialError::InvalidMap)?,
+            None => {
+                let half = scale(sub(bounds.max, bounds.min), 0.5);
+                SharedShape::cuboid(half.x as f32, half.y as f32, half.z as f32)
+            }
+        };
+        Ok(Self {
+            pose: Pose::from_translation(vector(centre)),
+            shape,
+        })
+    }
+
+    pub(super) fn intersects_upright(&self, foot: Point, radius: f64, height: f64) -> bool {
+        upright_contact(&self.pose, self.shape.as_ref(), foot, radius, height)
+    }
+
+    pub(super) fn intersects_box(&self, bounds: &Bounds) -> bool {
+        let centre = scale(add(bounds.min, bounds.max), 0.5);
+        let shape = Cuboid::new(vector(scale(sub(bounds.max, bounds.min), 0.5)));
+        query::contact(
+            &Pose::from_translation(vector(centre)), &shape,
+            &self.pose, self.shape.as_ref(), 0.0,
+        ).expect("supported box contact").is_some_and(|contact| f64::from(contact.dist) < -EPS)
+    }
+
+    pub(super) fn sweep(&self, from: Point, to: Point, body: &BodyProfile) -> Option<f64> {
+        sweep(&self.pose, self.shape.as_ref(), from, to, body, false)
+    }
+}
+
+pub(super) fn box_intersects_upright(bounds: &Bounds, foot: Point, radius: f64, height: f64) -> bool {
+    let centre = scale(add(bounds.min, bounds.max), 0.5);
+    let shape = Cuboid::new(vector(scale(sub(bounds.max, bounds.min), 0.5)));
+    upright_contact(&Pose::from_translation(vector(centre)), &shape, foot, radius, height)
+}
+
+fn upright_contact(other_pose: &Pose, other: &dyn Shape, foot: Point, radius: f64, height: f64) -> bool {
+    let centre = Point { y: foot.y + height / 2.0, ..foot };
+    let cylinder = Cylinder::new((height / 2.0) as f32, radius as f32);
+    query::contact(&Pose::from_translation(vector(centre)), &cylinder, other_pose, other, 0.0)
+        .expect("supported upright placement contact")
+        .is_some_and(|contact| f64::from(contact.dist) < -1e-5)
+}
+
+pub(super) fn sweep_box(
+    bounds: &Bounds,
+    from: Point,
+    to: Point,
+    body: &BodyProfile,
+) -> Option<f64> {
+    if disjoint_box(bounds, from, to, body) {
+        return None;
+    }
+    let centre = scale(add(bounds.min, bounds.max), 0.5);
+    let shape = Cuboid::new(vector(scale(sub(bounds.max, bounds.min), 0.5)));
+    sweep(
+        &Pose::from_translation(vector(centre)),
+        &shape,
+        from,
+        to,
+        body,
+        true,
+    )
+}
+
+fn sweep(
+    other_pos: &Pose,
+    other: &dyn Shape,
+    from: Point,
+    to: Point,
+    body: &BodyProfile,
+    can_leave_skin: bool,
+) -> Option<f64> {
+    let centre = Point {
+        y: from.y + body.height / 2.0,
+        ..from
+    };
+    let pos = Pose::from_translation(vector(centre));
+    let velocity = sub(to, from);
+    let radius = (body.radius + SKIN) as f32;
+    let capsule;
+    let cylinder;
+    let shape: &dyn Shape = if body.height >= 2.0 * body.radius {
+        capsule = Capsule::new_y((body.height / 2.0 - body.radius) as f32, radius);
+        &capsule
+    } else {
+        cylinder = Cylinder::new((body.height / 2.0 + SKIN) as f32, radius);
+        &cylinder
+    };
+    // The finite shapes here implement both queries through Parry's support maps.
+    if velocity.x.abs() + velocity.y.abs() + velocity.z.abs() < 1e-9 {
+        let contact =
+            query::contact(&pos, shape, other_pos, other, 0.0).expect("supported shape contact")?;
+        (f64::from(contact.dist) < -1e-5).then_some(0.0)
+    } else {
+        let velocity = vector(velocity);
+        let hit = query::cast_shapes(
+            &pos,
+            velocity,
+            shape,
+            other_pos,
+            Vector::ZERO,
+            other,
+            ShapeCastOptions {
+                max_time_of_impact: 1.0,
+                target_distance: 0.0,
+                stop_at_penetration: true,
+                compute_impact_geometry_on_penetration: true,
+            },
+        )
+        .expect("supported shape cast")?;
+        if can_leave_skin && hit.time_of_impact == 0.0 {
+            // A rounded stop against another body can land just inside the skin.
+            // Let a separating or tangent move leave that margin if the contact
+            // plane keeps at least half the nominal clearance over the entire
+            // leg. Keep that margin for the f32 contact calculation.
+            let inward = hit.normal1.dot(velocity);
+            let gap = (other_pos.translation - pos.translation + other_pos.rotation * hit.witness2
+                - hit.witness1)
+                .dot(hit.normal1);
+            if inward <= (EPS as f32) * velocity.length()
+                && gap - inward.max(0.0) > -(SKIN as f32) / 2.0
+            {
+                return None;
+            }
+        }
+        Some(f64::from(hit.time_of_impact))
+    }
+}
+
+// The Source box preflight accounts for rounding before the f32 solver.
+fn disjoint_box(bounds: &Bounds, a: Point, b: Point, body: &BodyProfile) -> bool {
+    use super::coordinates;
+    let maximum = [a, b, bounds.min, bounds.max]
+        .into_iter()
+        .flat_map(coordinates)
+        .fold(body.radius.max(body.height), |largest, value| {
+            largest.max(value.abs())
+        });
+    let rounding = 1e-3_f64.max(maximum * (1.0 / (1 << 20) as f64));
+    let radius = body.radius + SKIN + rounding;
+    a.x.max(b.x) + radius < bounds.min.x
+        || a.x.min(b.x) - radius > bounds.max.x
+        || a.z.max(b.z) + radius < bounds.min.z
+        || a.z.min(b.z) - radius > bounds.max.z
+        || a.y.max(b.y) + body.height + SKIN + rounding < bounds.min.y
+        || a.y.min(b.y) - SKIN - rounding > bounds.max.y
+}

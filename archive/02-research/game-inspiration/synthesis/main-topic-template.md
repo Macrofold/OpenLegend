@@ -4,7 +4,7 @@
 
 Use this as a flexible starting point for a central cross-game and world learning guide, not a form that every topic must reproduce. Organize an economy guide around flows and incentives, a lore guide around history and competing accounts, or a social guide around relationships and group activities. Merge, reorder, rename or omit suggested sections where doing so improves the explanation. Do not pad a topic with irrelevant sections, impose an equal quota of violent/peaceful examples, or treat all 35 topics as mandatory features for every world.
 
-Preserve the essential functions: clear topic identity and scope; traceable evidence and uncertainty; synthesis rather than a pile of summaries; explicit applicability to OpenLegend; and reciprocal links for any registered design subtopic. Keep research, proposed designs, accepted behavior, implementation and measured outcomes distinguishable.
+Preserve the essential functions: clear topic identity and scope; traceable evidence and uncertainty; synthesis rather than a pile of summaries; explicit applicability to Open Legend; and reciprocal links for any registered design subtopic. Keep research, proposed designs, accepted behavior, implementation and measured outcomes distinguishable.
 
 ## Suggested main-topic structure
 
@@ -48,11 +48,11 @@ Distinguish a lesson about ordinary enjoyment from one about return frequency, c
 
 Keep an explicit **alternatives and omissions** account, as prose, cases or an optional comparison table. Include the already-capable ordinary route, a simpler rule, abstraction or deliberate absence where relevant. Compare the benefit with learning, reading, repetition, time, social pressure, development, maintenance and service burden. Record which assumptions or observations would change the recommendation; do not invent numerical targets or promise causal uplift from a qualitative source.
 
-### 6. OpenLegend application and cross-topic connections
+### 6. Open Legend application and cross-topic connections
 
 Explain what might transfer, what should not be copied, and the smallest complete experience worth considering. Link current specifications and existing designs before alleging a missing capability. The repertoire catalogues are idea sources, not implementation evidence or automatic obligations.
 
-The skeleton's **Current OpenLegend baseline and existing design owners** section should distinguish: delivered scope with evidence; selected designs whose delivery or acceptance is unfinished; broader proposals or conditional extensions; and genuinely new questions. State the repository revision and relevant owner when making a current-support claim. Reuse the current ND dispositions and focused trackers. Do not restart a designed feature, label an unrun check missing design, or silently rewrite accepted behavior to fit a research preference.
+The skeleton's **Current Open Legend baseline and existing design owners** section should distinguish: delivered scope with evidence; selected designs whose delivery or acceptance is unfinished; broader proposals or conditional extensions; and genuinely new questions. State the repository revision and relevant owner when making a current-support claim. Reuse the current ND dispositions and focused trackers. Do not restart a designed feature, label an unrun check missing design, or silently rewrite accepted behavior to fit a research preference.
 
 The **Complete situations and cross-topic consequences** section follows a useful episode: intention and why now; available information and means; choice and resistance; actual outcome; other people's responses; later opportunities; and what can remain achieved. Include entry, ordinary use, interruption or meaningful failure, recovery, stopping and return when relevant. A business or production guide can use a creator, customer or delivery journey rather than invent a combat scene. Constructed examples must be labeled, not presented as executed playtests.
 
@@ -88,7 +88,7 @@ Record meaningful unanswered experience questions separately from implementation
 
 The skeleton's **Open questions and missing evidence** section should say what would justify adopting, changing, simplifying or rejecting a proposal. Identify a real uncertainty and the smallest appropriate evidence, not a ritual to reread every source or run unrelated tests. A remaining empirical question does not by itself undo a completed technical design; a changed requirement can.
 
-## OpenLegend coverage lenses
+## Open Legend coverage lenses
 
 Use the relevant lenses across a guide's examples and proposed applications. Do not require every paragraph or every source to demonstrate them all.
 
@@ -113,7 +113,7 @@ Use the relevant lenses across a guide's examples and proposed applications. Do 
 
 Consider a **hypothetical** threatened workshop. A character might protect it by fighting, hiding supplies, negotiating, moving, building a barrier or persuading a neighbor to help. Another character may refuse, initiate their own response or care about a different stake. A repaired tool, broken promise, changed route or memorial could carry the consequences forward; later inhabitants might tell competing stories about the event.
 
-Use such a scenario to check connections among CRAFT, ECON, COMBAT, KNOW, NPC, SOCIETY, BUILD, LOSS and LORE. It does not establish that OpenLegend already supports these actions, approve them as a bundle, or prove that a more complex version is more enjoyable. A small complete case with a few meaningful choices can be a better first application.
+Use such a scenario to check connections among CRAFT, ECON, COMBAT, KNOW, NPC, SOCIETY, BUILD, LOSS and LORE. It does not establish that Open Legend already supports these actions, approve them as a bundle, or prove that a more complex version is more enjoyable. A small complete case with a few meaningful choices can be a better first application.
 
 Also consider a **hypothetical peaceful gathering**: someone chooses what to cook or perform, another prefers to watch, another declines, and a shared place acquires a remembered association. Compare SPEECH, LEISURE, MULTI, NPC, PRESENT and LORE without manufacturing a crisis, productivity reward or compulsory friendship. A quiet successful occasion is a useful contrasting case, not a required feature package.
 

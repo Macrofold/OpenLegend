@@ -1,0 +1,674 @@
+//! Real dependency-ordered composition of the currently converted owners.
+//! Remaining roots stay unclaimed: this private intermediate cannot install a
+//! live simulation, advance it or mint a Ready/completion token.
+
+use super::*;
+use crate::events::OriginalOccurrenceInput;
+use crate::experience::{
+    PersonalInstallContext, install_cognition, install_personal, install_received_values,
+};
+use crate::host::ByteBudget;
+use crate::received::ReceivedChargeDirectory;
+use crate::reception::{OriginalRevisionRegistry, ReceptionRoots, read_reception_rows};
+use crate::records::{CurrentRecords, RecordLayout, RecordSchema};
+use crate::simulation::{InstalledWorld, SimulationState};
+use crate::worlds::InstalledEvidenceMeaning;
+
+#[derive(Debug)]
+pub(crate) enum CoreInstallError {
+    Records(InstallError),
+    Encoding(crate::records::RecordEncodingError),
+    Personal(crate::experience::PersonalInstallError),
+    Receiving(crate::received::ReceivedError),
+    Activity(crate::activity::ActivityError),
+    Execution(crate::execution::ExecutionError),
+    MissingTemporal,
+}
+impl From<InstallError> for CoreInstallError {
+    fn from(value: InstallError) -> Self {
+        Self::Records(value)
+    }
+}
+impl From<crate::records::RecordEncodingError> for CoreInstallError {
+    fn from(value: crate::records::RecordEncodingError) -> Self {
+        Self::Encoding(value)
+    }
+}
+impl From<crate::experience::PersonalInstallError> for CoreInstallError {
+    fn from(value: crate::experience::PersonalInstallError) -> Self {
+        Self::Personal(value)
+    }
+}
+impl From<crate::received::ReceivedError> for CoreInstallError {
+    fn from(value: crate::received::ReceivedError) -> Self {
+        Self::Receiving(value)
+    }
+}
+impl From<crate::activity::ActivityError> for CoreInstallError {
+    fn from(value: crate::activity::ActivityError) -> Self {
+        Self::Activity(value)
+    }
+}
+impl From<crate::execution::ExecutionError> for CoreInstallError {
+    fn from(value: crate::execution::ExecutionError) -> Self {
+        Self::Execution(value)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum InstallPurpose {
+    Current,
+    Restore,
+}
+
+pub(crate) struct CoreInstallInput {
+    pub purpose: InstallPurpose,
+    pub records: CurrentRecords,
+    pub originals: Vec<OriginalOccurrenceInput>,
+    pub definitions: NativeDefinitionInputs,
+    pub settings: NativeSetupSettings,
+    pub layouts: Vec<RecordLayout>,
+    pub cold_directories: Option<IndexMap<String, Vec<ReceivedChargeDirectory>>>,
+    pub accepted_cut: u64,
+}
+pub(crate) struct CoreInstallation {
+    pub state: SimulationState,
+    pub host_settings: crate::administration::InstalledHostSettings,
+    pub remaining_rows: RowImport,
+    pub remaining_children: WorldChildren,
+    pub archived_event_count: Option<u64>,
+    pub assembly_geometry_revision: Option<u64>,
+    pub story_policy_revision: Option<u64>,
+}
+fn child(children: &mut WorldChildren, field: &str, required: bool) -> Result<bool, InstallError> {
+    match children.take(field)? {
+        Some(true) => Ok(true),
+        None if !required => Ok(false),
+        _ => Err(InstallError::ParentPresence),
+    }
+}
+fn selected<T: DefinitionIdentity + DeserializeOwned + PartialEq + DefinitionAllocation>(
+    input: DefinitionInput,
+    budget: &ByteBudget,
+) -> Result<VerifiedDefinition<T>, InstallError> {
+    let mut construction = reserve_typed_parse::<T>(
+        &input.canonical,
+        T::array_item_bytes(),
+        T::map_entry_bytes(),
+        budget,
+    )?;
+    let family=std::any::type_name::<T>();
+    let value = serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionFamily(family))?;
+    input.verify(value, &mut construction, budget).map_err(|error| match error {
+        InstallError::DefinitionBody=>InstallError::DefinitionFamily(family),
+        other=>other,
+    })
+}
+
+pub(crate) fn assemble_core(
+    input: CoreInstallInput,
+    database_schema: &str,
+    budget: &ByteBudget,
+) -> Result<CoreInstallation, CoreInstallError> {
+    assemble_selected_core(input, None, database_schema, budget)
+}
+/// Active cold restoration supplies the exact indexed selection made by the
+/// maintained SQL owner; creation/full current import supplies complete rows.
+pub(crate) fn assemble_working_core(
+    input: CoreInstallInput,
+    selection: WorkingSetSelection,
+    database_schema: &str,
+    budget: &ByteBudget,
+) -> Result<CoreInstallation, CoreInstallError> {
+    // The Source startup prunes hot pointers and forces its archived header
+    // through the same first save. Refuse until that native saved projection
+    // has joined the save owner; importing fewer pointers alone loses counts.
+    if selection.removed_hot_events != 0 {
+        return Err(InstallError::UnsupportedFamily("active hot-history projection").into());
+    }
+    assemble_selected_core(input, Some(selection), database_schema, budget)
+}
+fn assemble_selected_core(
+    input: CoreInstallInput,
+    working_set: Option<WorkingSetSelection>,
+    database_schema: &str,
+    budget: &ByteBudget,
+) -> Result<CoreInstallation, CoreInstallError> {
+    if input.accepted_cut > MAX_SAFE_INTEGER {
+        return Err(InstallError::Identity.into());
+    }
+    let CoreInstallInput {
+        purpose,
+        records,
+        originals,
+        definitions,
+        settings,
+        layouts,
+        cold_directories,
+        accepted_cut,
+    } = input;
+    let schema = Arc::new(RecordSchema::install(layouts)?);
+    let record_ledger = crate::records::RecordLedger::from_records(&records, accepted_cut, budget)?;
+    let mut import = RowImport::new(records, CurrentFormat { database_schema })?;
+    if let Some(selection) = working_set {
+        import.install_working_set(selection, budget)?;
+    }
+    let host_settings = crate::administration::read_host_settings(&mut import, budget)?;
+    let NativeDefinitionInputs {
+        manifest,
+        retained,
+        attributes,
+        mut person_creation,
+        senses,
+        acoustics,
+        response_profiles,
+        body_policy,
+        status_policy,
+        work_policy,
+        attention,
+        event_disclosure,
+        detection_support,
+        prepared_responses,
+        movement_policy,
+        time_rules,
+        account_rules,
+        name_rules,
+        recognition,
+        occurrence_rules,
+        speech_action,
+        ordinary_actions,
+        fire_care,
+        hearth_placement,
+        travel_host,
+        observation_rules,
+        event_appraisal_rules,
+        promises,
+        social_defaults,
+        presentation,
+    } = definitions;
+    let mut root = read_physical_root(&mut import, presentation.as_ref())?;
+    let npc_activity_choices = crate::worlds::select_npc_activity_choices(&root.content.profile)?;
+    let manifest_present = child(&mut root.children, "moduleManifest", true)?;
+    let statuses_present = child(&mut root.children, "statusEffectPolicy", true)?;
+    let profiles_present = child(&mut root.children, "nativeResponseProfiles", false)?;
+    let NativeSetupSettings {
+        encounter_batch_entries,
+        work,
+        maximum_change_scopes,
+        spatial,
+        movement,
+        time_epsilon,
+        activity,
+        activity_learning,
+        activity_display_bytes,
+        native_response,
+        personal_evidence_preparation,
+        experience,
+        mind,
+        agency,
+        actor_response,
+    } = settings;
+    if !experience.protected_importance.is_finite()
+        || !(0.0..=10.0).contains(&experience.protected_importance)
+    {
+        return Err(InstallError::CurrentFormat.into());
+    }
+    let encounter_batch_entries = usize::try_from(encounter_batch_entries)
+        .ok()
+        .filter(|n| *n > 0)
+        .ok_or(InstallError::CurrentFormat)?;
+    let meanings = install_physical_meanings(
+        &mut import,
+        manifest_present,
+        statuses_present,
+        profiles_present,
+        PhysicalDefinitionInputs {
+            manifest,
+            attributes,
+            senses,
+            acoustics,
+            body_policy,
+            response_profiles,
+            status_policy,
+            work_policy,
+        },
+        work,
+        budget,
+    )?;
+    let map_present = child(&mut root.children, "map", true)?;
+    let geometry = install_geometry(&mut import, map_present, budget)?;
+    let social = install_social(
+        &mut import,
+        root.children.take("socialPolicy")?,
+        &social_defaults,
+    )?;
+    let prepared =
+        selected::<crate::experience::PreparedResponseProfile>(prepared_responses, budget)?;
+    let cognition = install_cognition(
+        &mut import,
+        child(&mut root.children, "cognitionPolicy", true)?,
+        Some(&prepared),
+        &meanings.status_policy,
+        budget,
+    )?;
+    let attention = selected::<crate::attention::AttentionPolicy>(attention, budget)?;
+    let account_rules = selected::<crate::worlds::InstalledAccountRules>(account_rules, budget)?;
+    let name_rules = selected::<crate::worlds::InstalledPersonalNameRules>(name_rules, budget)?;
+    let recognition = selected::<crate::worlds::InstalledRecognitionPolicy>(recognition, budget)?;
+    recognition.value().validate_warning()?;
+    let occurrence_rules =
+        selected::<crate::worlds::InstalledOccurrenceRules>(occurrence_rules, budget)?;
+    let requests = &occurrence_rules.value().response.offers.installed_requests;
+    for (index, request) in requests.iter().enumerate() {
+        if !meanings.manifest.activity_hosts.contains(&request.host)
+            || !crate::values::is_safe_record_id(&request.id)
+            || requests[..index].iter().any(|prior| prior.id == request.id)
+            || request.commands.is_empty()
+            || request.fields.values().any(|field| !field.required
+                || field.dependencies.iter().flatten().any(|dependency| !request.fields.contains_key(dependency))) {
+            return Err(InstallError::DefinitionBody.into());
+        }
+    }
+
+    let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action, budget)?;
+    let ordinary_actions =
+        selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions, budget)?;
+    if !(ordinary_actions.value().harvest_seconds.is_finite() && ordinary_actions.value().harvest_seconds>0.)
+        || ordinary_actions
+        .value()
+        .plan
+        .watch
+        .as_ref()
+        .is_some_and(|watch| !watch.valid())
+    {
+        return Err(InstallError::DefinitionBody.into());
+    }
+    let fire_care = fire_care.map(|input| selected::<crate::fire_care::FireCare>(input, budget)).transpose()?;
+    if fire_care.as_ref().is_some_and(|rule| !rule.value().valid()
+        || !meanings.manifest.activity_hosts.contains(&rule.value().host)) {
+        return Err(InstallError::DefinitionBody.into());
+    }
+    let hearth_placement = hearth_placement.map(|input| {
+        crate::hearth::InstalledPlacement::install(input, &meanings.manifest, budget)
+    }).transpose()?;
+    let travel = travel_host.map(|host| {
+        crate::outings::verify_travel_host(host, &meanings.manifest, budget)
+    }).transpose()?.is_some();
+    let promises = selected::<crate::worlds::InstalledPromiseRules>(promises, budget)?;
+    let observation_rules =
+        selected::<crate::worlds::InstalledObservationRules>(observation_rules, budget)?;
+    let event_appraisal_rules =
+        selected::<crate::worlds::InstalledEventAppraisalRules>(event_appraisal_rules, budget)?;
+    let event_disclosure =
+        selected::<crate::worlds::InstalledEventDisclosure>(event_disclosure, budget)?;
+    let detection_support =
+        selected::<crate::reception::DetectionSupportPolicy>(detection_support, budget)?;
+    let movement_law = crate::worlds::InstalledMovementPolicy::install(movement_policy, budget)?;
+    let maximum_candidates = usize::try_from(native_response.maximum_candidates)
+        .map_err(|_| InstallError::CurrentFormat)?;
+    let maximum_path_points =
+        usize::try_from(spatial.max_path_points).map_err(|_| InstallError::CurrentFormat)?;
+    let PhysicalInstallation {
+        state: mut physical,
+        mut content,
+        personal,
+        archived_event_count,
+        assembly_geometry_revision,
+        story_policy_revision,
+        mut children,
+    } = install_physical(
+        &mut import,
+        purpose,
+        root,
+        &PhysicalDefinitions {
+            senses: &meanings.senses,
+            default_senses: &meanings.default_senses,
+            response_profiles: &meanings.response_profiles,
+            work_policy: meanings.work_policy.clone(),
+            attributes: &meanings.attributes,
+            status_policy: &meanings.status_policy,
+            body_policy: meanings.body_policy.as_ref().map(VerifiedDefinition::value),
+            ranged_installed: meanings.manifest.ranged_policy.is_some() && occurrence_rules.value().ranged.is_some(),
+            local_avoidance: meanings.manifest.ranged_policy_pin.as_ref().zip(
+                meanings.manifest.ranged_policy.as_ref().and_then(|policy| policy.local_avoidance.as_ref())
+            ),
+            fire_out: occurrence_rules.value().fire_out.as_ref(),
+            maximum_candidates,
+            maximum_path_points,
+            epsilon: spatial.epsilon,
+            population_work: &meanings.population_work,
+        },
+        budget,
+    )?;
+    content.fund(budget)?;
+    let has_finite_rain = child(&mut children, "finiteRain", false)?;
+    let finite_rain_row = rows::take_one_row(
+        &mut import, "sim_finite_rain", "[\"world\"]", "finiteRain", has_finite_rain,
+    )?;
+    let _finite_rain_preparation = finite_rain_row.as_ref().map(|row| {
+        reserve_typed_parse::<crate::weather::FiniteRainInput>(&row.payload, 0, None, budget)
+    }).transpose()?;
+    let finite_rain_input = finite_rain_row.as_ref().map(|row| serde_json::from_str(&row.payload))
+        .transpose().map_err(|_| InstallError::CurrentFormat)?;
+    let (retained, finite_rain) = install_retained(
+        &mut import, &mut children, retained, &schema, &activity, (&content.profile.id, content.profile.version),
+        &meanings.manifest.recipe_families, &meanings.attributes, spatial.max_extent,
+        meanings.status_policy.clock_offset_hours, finite_rain_input.as_ref(), budget,
+    )?;
+    drop((_finite_rain_preparation, finite_rain_input, finite_rain_row));
+    if !speech_action.value().valid(&retained) {
+        return Err(InstallError::DefinitionBody.into());
+    }
+    physical.gifts.validate_definitions(&retained, budget)?;
+    crate::flight::validate_corridors(
+        &retained.flight_corridors,
+        maximum_candidates,
+        spatial.epsilon,
+    )?;
+    crate::flight::validate_flyers(
+        &physical.entities,
+        &retained.flight_corridors,
+        &geometry.spatial.surfaces,
+        &meanings.response_profiles,
+        physical.header.sim_time,
+        occurrence_rules.value().flight.as_ref(),
+        spatial.epsilon,
+    )?;
+    retained
+        .places_read
+        .validate_physical(&physical, &geometry, &spatial)?;
+    physical.structures = crate::assembly::scene::StructureScene::install(
+        geometry.spatial.revision, assembly_geometry_revision.unwrap_or(0),
+        &physical.entities, &retained, budget,
+    )?;
+    physical
+        .participation
+        .validate_policy(retained.participation_read.as_ref(), &physical.entities)?;
+    crate::worlds::base_decision_offers::validate_strike_reads(
+        &retained.native_strike_read,
+        &meanings.response_profiles,
+        &physical.entities,
+        budget,
+    )?;
+    use crate::host::retained_size::HeapBytes;
+    let mut definition_storage = meanings.storage;
+    definition_storage
+        .merge(
+            budget
+                .reserve_record(
+                    actor_response
+                        .heap_bytes()
+                        .and_then(|bytes| bytes.checked_add(meanings.calendar.heap_bytes()?))
+                        .ok_or(InstallError::Capacity)?,
+                )
+                .map_err(|_| InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
+    let installed = Arc::new(InstalledWorld {
+        _definition_storage: definition_storage,
+        encounter_batch_entries,
+        manifest: meanings.manifest,
+        retained,
+        schema: schema.clone(),
+        content,
+    if let Some(template) = person_creation.as_mut() {
+        template.install(&retained, budget)?;
+    }
+        attributes: meanings.attributes,
+        senses: meanings.senses,
+        default_senses: meanings.default_senses,
+        acoustics: meanings.acoustics,
+        response_profiles: meanings.response_profiles,
+        status_policy: meanings.status_policy,
+        calendar: meanings.calendar,
+        capabilities: meanings.capabilities,
+                        .and_then(|bytes| {
+                            bytes.checked_add(person_creation.as_ref().map_or(Some(0), |p| p.retained_bytes())?)
+                        })
+        status_work: meanings.status_work,
+        population_work: meanings.population_work,
+        status_rosters: crate::status::StatusRosters::new(),
+        geometry,
+        work_policy: meanings.work_policy,
+        event_disclosure,
+        person_creation,
+        attention,
+        cognition,
+        prepared_responses: prepared,
+        name_rules,
+        recognition,
+        social,
+        speech_action,
+        ordinary_actions,
+        fire_care,
+        hearth_placement,
+        travel,
+        promises,
+        observation_rules,
+        event_appraisal_rules,
+        account_rules,
+        occurrence_rules,
+        npc_activity_choices,
+        detection_support,
+        maximum_change_scopes: usize::try_from(maximum_change_scopes)
+            .map_err(|_| InstallError::CurrentFormat)?,
+        movement: movement_law,
+        time_rules: crate::worlds::InstalledTimeRules::install(time_rules, budget)?,
+        body_policy: meanings.body_policy,
+        spatial,
+        movement_settings: movement,
+        time_epsilon,
+        response_settings: native_response,
+        personal_evidence_preparation,
+        experience_settings: experience,
+        mind_limits: mind,
+        agency_limits: agency,
+        actor_response_limits: actor_response,
+    });
+    super::physical::validate_physical_item_references(&physical, &installed)?;
+    let outings = crate::outings::OutingState::install(
+        &mut import, &mut children, &installed, &physical, budget,
+    )?;
+    // Every presence below is consumed from the actual root, including empty
+    // owners. Missing rows never synthesize an empty receiver or personal graph.
+    let roots = ReceptionRoots {
+        sensory: child(&mut children, "sensory", false)?,
+        perception_evidence: child(&mut children, "perceptionEvidence", false)?,
+        observer_identities: child(&mut children, "observerIdentities", false)?,
+        perception_episodes: child(&mut children, "perceptionEpisodes", false)?,
+        actor_knowledge: child(&mut children, "actorKnowledge", false)?,
+        knowledge_revisions: child(&mut children, "knowledgeRevisions", false)?,
+        visible_objects: child(&mut children, "visibleObjects", false)?,
+        visible_people: child(&mut children, "visiblePeople", false)?,
+        visible_places: child(&mut children, "visiblePlaces", false)?,
+        map_markers: child(&mut children, "mapMarkers", false)?,
+    };
+    for field in ["experience", "memories", "receivedValues", "events"] {
+        child(&mut children, field, matches!(field, "memories" | "events"))?;
+    }
+    let display_bytes =
+        usize::try_from(activity_display_bytes).map_err(|_| InstallError::CurrentFormat)?;
+    let display = Arc::new(activity.display(display_bytes)?);
+    let activity_learning = Arc::new(activity_learning.install(budget)?);
+    let received = install_received_values(
+        &mut import,
+        personal.received_values,
+        physical.header.sim_time,
+        physical.header.sequence,
+        display.clone(),
+        budget,
+    )?;
+    let mut reception = read_reception_rows(
+        &mut import, roots, received, installed.content.cartography.as_ref(),
+        &physical.entities, &schema, budget,
+    )?;
+    reception.fund_originals(budget)?;
+    reception.fund_current_records(budget)?;
+    let mut revisions = OriginalRevisionRegistry::new(budget)?;
+    let personal_install = install_personal(
+        &mut import,
+        originals,
+        PersonalInstallContext {
+            activity_limits: &display,
+            budget,
+            presence: personal,
+            through: physical.header.sim_time,
+            archived_event_count,
+            reception: &reception,
+            cold_directories: cold_directories.as_ref(),
+            original_revisions: &mut revisions,
+        },
+        &InstalledEvidenceMeaning,
+    )?;
+    physical.projectiles.validate_crossing_occurrences(&personal_install.occurrences)?;
+    let temporal = personal_install
+        .temporal
+        .ok_or(CoreInstallError::MissingTemporal)?;
+    reception.validate_reception(&physical, &installed, &temporal, &mut revisions)?;
+    let activity = crate::activity::install_activity(
+        &mut import,
+        child(&mut children, "actionExperience", true)?,
+        Arc::new(activity),
+        display,
+        activity_learning,
+        budget,
+    )?;
+    let commands = crate::commands::CommandState::install(
+        &mut import,
+        child(&mut children, "commandReceipts", true)?,
+    )?;
+    let responses = crate::response::ResponseState::install(
+        &mut import,
+        child(&mut children, "responseReceipts", false)?,
+        &installed.actor_response_limits,
+        budget,
+    )?;
+    let minds = crate::cognition::install_minds(
+        &mut import,
+        child(&mut children, "minds", false)?,
+        child(&mut children, "innerWorlds", false)?,
+        &physical.entities,
+        &installed.mind_limits,
+        &schema,
+        physical.header.sim_time,
+        &installed.event_appraisal_rules,
+        budget,
+    )?;
+    let administration = crate::administration::install_administration(
+        &mut import,
+        child(&mut children, "identity", false)?,
+        child(&mut children, "authorship", true)?,
+        child(&mut children, "objectState", true)?,
+        &physical.entities,
+        budget,
+    )?;
+    let inventory = super::inventory::install_inventory(
+        &mut import,
+        child(&mut children, "objectLineage", false)?,
+        physical.header.sim_time,
+        &physical.entities,
+        &installed.retained,
+        &installed.observation_rules.value().pile_kind,
+        budget,
+    )?;
+    let learned_capabilities = install_learned_capabilities(
+        &mut import,
+        child(&mut children, "knowledge", true)?,
+        &physical.entities,
+        &installed.retained.recipes,
+        &temporal,
+        physical.header.sim_time,
+        budget,
+    )?;
+    for id in physical.entities.ordered_ids() {
+        let entity = physical
+            .entities
+            .get(id)
+            .ok_or(InstallError::CurrentFormat)?;
+        if entity.actor.as_ref().and_then(|actor| actor.action.as_ref()).is_some_and(|action| {
+            action.is_manufacturing() && (
+                !crate::manufacturing::valid_saved(&physical, &installed.retained, id, action)
+                || !learned_capabilities.known_recipes(id).iter()
+                    .any(|recipe| Some(recipe.as_str()) == action.recipe_id.as_deref())
+            )
+        }) {
+            return Err(InstallError::CurrentFormat.into());
+        }
+        if let Some(threat) = &entity.threat {
+            if !threat.valid(entity, &installed.retained.native_strike_read) {
+                return Err(InstallError::CurrentFormat.into());
+            }
+            if entity
+                .actor
+                .as_ref()
+                .is_some_and(|actor| actor.controller == "native")
+                && crate::contact::profile(&installed, entity, threat.strike_definition()).is_none()
+            {
+                return Err(InstallError::UnsupportedFamily("territorial contact profile").into());
+            }
+        }
+        if entity
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref())
+            .is_some_and(|action| {
+                action.is_natural_contact()
+                    && !crate::contact::valid_action(
+                        &installed,
+                        &physical.entities,
+                        entity,
+                        action,
+                        action
+                            .target_id
+                            .as_deref()
+                            .and_then(|id| physical.entities.get(id)),
+                        physical.header.sim_time,
+                    )
+            })
+        {
+            return Err(InstallError::CurrentFormat.into());
+        }
+    }
+    let mut appraisals = crate::appraisals::install_appraisals(
+        &mut import,
+        child(&mut children, "appraisals", false)?,
+        child(&mut children, "appraisalProcesses", false)?,
+        &physical.entities,
+        &installed,
+    )?;
+    appraisals.prepare_indices(budget)?;
+    let state = SimulationState {
+        outings,
+        records: record_ledger,
+        generation: import.generation().to_owned(),
+        accepted_cut,
+        durable_revision: import.durable_revision(),
+        installed,
+        physical,
+        finite_rain,
+        reception,
+        experience: personal_install.experience,
+        temporal,
+        occurrences: personal_install.occurrences,
+        activity,
+        commands,
+        responses,
+        minds,
+        administration,
+        inventory,
+        learned_capabilities,
+        appraisals,
+    };
+    CoachingState::validate_evidence(&state)?;
+    crate::plans::validate_installation(&state, budget)?;
+    crate::gathering::validate_saved_work(&state, budget)?;
+    Ok(CoreInstallation {
+        state,
+        host_settings,
+        remaining_rows: import,
+        remaining_children: children,
+        archived_event_count,
+        assembly_geometry_revision,
+        story_policy_revision,
+    })
+}

@@ -1,6 +1,6 @@
 # Standalone perspective stability experiment (E07)
 
-This tool compares ordinary rasterization with Dylan Ebert's pinned MIT texel-splatting renderer using the **same exported static geometry from the existing starting scene**. It does not load another playable world or alter OpenLegend's graphics backend. All surfaces receive the upstream renderer's neutral stone material so material differences cannot be mistaken for stability differences. It cannot qualify face art, animation, fabric coverage or transparent effects.
+This tool compares ordinary rasterization with Dylan Ebert's pinned MIT texel-splatting renderer using the **same exported static geometry from the existing starting scene**. It does not load another playable world or alter Open Legend's graphics backend. All surfaces receive the upstream renderer's neutral stone material so material differences cannot be mistaken for stability differences. It cannot qualify face art, animation, fabric coverage or transparent effects.
 
 Export only player-permitted static mesh data from a disposable copy of the current starting scene. The JSON input is `{ source: { commit, scene }, meshes: [{ name, positions, normals, indices }], camera: { position: [x,y,z], target: [x,y,z] } }`. Positions and unit normals are in world coordinates; indices are local to each mesh. The pinned renderer requires at most 65,535 merged vertices. Include suitable existing ground, shelter, raised surfaces and thin seams/poles; do not invent a replacement map.
 

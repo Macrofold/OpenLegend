@@ -1,0 +1,165 @@
+//! The director can inspect a finite native wakeup cut. The opaque handle is
+//! the freshness witness; restoring its JSON cannot acknowledge an inspection.
+use super::*;
+pub use crate::capture::npc_intake::{
+    NpcQueueInputs, NpcScheduleFacts, ScheduleBodyInput, ScheduleEvidence,
+};
+pub use crate::experience::intake::IntakeSelection as RuntimeNpcIntakeSelection;
+mod direct;
+pub use direct::{NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources};
+pub enum RuntimeDiscoveryOperation {
+    Reserve { interval: u64 },
+    Settle { dispatched: bool },
+}
+
+pub struct RuntimeNpcTrigger {
+    read: crate::capture::npc_intake::NpcIntakeCapture,
+}
+pub struct RuntimeNpcInspection {
+    _lease: crate::host::PublicationLease,
+    fence: Arc<CandidateFence>,
+    _storage: ByteReservation,
+}
+impl RuntimeNpcInspection {
+    pub fn is_current(&self) -> bool {
+        self.fence.phase() == crate::host::CandidatePhase::Publishing
+            && !self.fence.stop_requested()
+    }
+}
+impl RuntimeNpcTrigger {
+    pub(crate) fn copy_semantic_causes_for(
+        &self,
+        world: &str,
+        generation: &str,
+        actor: &str,
+        life: u64,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<crate::response::ResponseSemanticCause>, ByteReservation), RuntimeError> {
+        self.read
+            .copy_semantic_causes_for(world, generation, actor, life, budget)
+            .map_err(failure)
+    }
+
+    pub fn inputs(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let raw: &serde_json::value::RawValue = serde_json::from_str(
+            self.read
+                .inputs_json()
+                .ok_or_else(|| failure("not an addon trigger"))?,
+        )
+        .map_err(failure)?;
+        RuntimeJson::encode(raw, budget)
+    }
+
+    pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let raw: &serde_json::value::RawValue = serde_json::from_str(
+            self.read
+                .json()
+                .ok_or_else(|| failure("not an addon trigger"))?,
+        )
+        .map_err(failure)?;
+        RuntimeJson::encode(raw, budget)
+    }
+}
+impl NativeWorldSession {
+    /// The Rust scheduler keeps the exact acknowledged queue inputs together
+    /// with their reservation, so neither side transfers a JSON packet.
+    pub fn read_npc_queue_inputs_direct(
+        &self,
+        actor_id: String,
+        weighed_through: Option<u64>,
+        selection: RuntimeNpcIntakeSelection,
+    ) -> Result<NpcQueueInputs, RuntimeError> {
+        use crate::capture::npc_intake::{NpcIntakeReadRequest, capture_queue_inputs};
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        let request = NpcIntakeReadRequest {
+            actor_id,
+            after_sequence: 0,
+            weighed_through,
+            selection,
+            schedule_through: Some(self.session.durable_identity_through()),
+        };
+        capture_queue_inputs(state, &request, &self.budget)
+            .map_err(|error| session_failure(error.into()))
+    }
+    pub fn npc_trigger_current(&self, trigger: &RuntimeNpcTrigger) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        trigger.read.current(state, &self.budget).map_err(failure)
+    }
+    /// Check the exact existing free-interval reservation at the first
+    /// provider poll. This only looks up one actor in the accepted state.
+    pub fn npc_discovery_current(
+        &self,
+        trigger: &RuntimeNpcTrigger,
+        actor: &str,
+        generation: &str,
+        reservation: &str,
+        interval: u64,
+    ) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
+        Ok(state.generation == generation
+            && trigger.read.matches_actor(actor)
+            && !state.physical.header.paused
+            && state.physical.entities.get(actor).is_some_and(|entity| {
+                entity.has_memory()
+                    && entity.actor.as_ref().is_some_and(|actor| {
+                        actor.alive
+                            && trigger.read.matches_life(actor.physical_life)
+                            && actor.controller == "npc"
+                            && actor.agency.semantic.as_ref().is_some_and(|semantic| {
+                                semantic.interval == interval
+                                    && semantic.occupied_purpose.is_none()
+                                    && semantic.discovery == "reserved"
+                                    && semantic.reservation.as_deref() == Some(reservation)
+                            })
+                    })
+            }))
+    }
+    /// The application owns the funded actor and reservation through queue
+    /// admission. The native intake cursor still validates and journals them.
+    pub fn begin_npc_discovery(
+        &mut self,
+        actor_id: String,
+        reservation: String,
+        operation: RuntimeDiscoveryOperation,
+    ) -> Result<CandidateKey, RuntimeError> {
+        use crate::simulation::npc_intake::{NpcIntakeOperation, NpcIntakeRequest};
+        self.require_active()?;
+        let operation = match operation {
+            RuntimeDiscoveryOperation::Reserve { interval } => {
+                if interval > crate::identity::MAX_SAFE_INTEGER {
+                    return Err(failure(
+                        "NPC discovery interval exceeds the supported range",
+                    ));
+                }
+                NpcIntakeOperation::ReserveDiscovery {
+                    interval,
+                    reservation,
+                }
+            }
+            RuntimeDiscoveryOperation::Settle { dispatched } => {
+                NpcIntakeOperation::SettleDiscovery {
+                    reservation,
+                    dispatched,
+                }
+            }
+        };
+        self.session
+            .begin_npc_intake(NpcIntakeRequest {
+                actor_id,
+                operation,
+            })
+            .map_err(session_failure)
+    }
+
+    pub fn begin_npc_intake(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let request = serde_json::from_slice(input).map_err(failure)?;
+        self.session
+            .begin_npc_intake(request)
+            .map_err(session_failure)
+    }
+}

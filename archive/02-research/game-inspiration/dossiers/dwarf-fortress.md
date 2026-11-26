@@ -1,6 +1,6 @@
 # Dwarf Fortress — a settlement inside a remembered world
 
-**G23 · Completed research pass · September 26, 2026.** Research reference, not an accepted OpenLegend specification. Scope includes Fortress, Adventure and Legends, with Classic/Premium and historical/current boundaries. No gameplay, automated testing, full video viewing or current source-code audit was performed.
+**G23 · Completed research pass · September 26, 2026.** Research reference, not an accepted Open Legend specification. Scope includes Fortress, Adventure and Legends, with Classic/Premium and historical/current boundaries. No gameplay, automated testing, full video viewing or current source-code audit was performed.
 
 [Original chapter](../games/dwarf-fortress.md) · [Preserved granular study](../mechanics/dwarf-fortress-artifacts-work-and-remembered-life.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
@@ -69,7 +69,7 @@ An artifact's exceptional craftsmanship does not cancel its material properties.
 
 A **strange mood** can commandeer a workshop and require particular materials in order. Appropriate skills influence the workshop and result, but the player does not freely select who is inspired or the exact artifact. Success can develop the creator's skill; a possessed mood is an important exception. Failure can have severe consequences. This couples a production problem to a particular person's future rather than only to the next item in a queue. [D31]
 
-**Interpretation:** for OpenLegend, “rare,” “valuable,” “effective,” “beloved,” “claimed” and “historically important” should not be assumed to mean the same thing. An invention can have a reusable mechanical definition while a particular instance has a history that should not automatically travel with every copy.
+**Interpretation:** for Open Legend, “rare,” “valuable,” “effective,” “beloved,” “claimed” and “historically important” should not be assumed to mean the same thing. An invention can have a reusable mechanical definition while a particular instance has a history that should not automatically travel with every copy.
 
 ## 4. People, care, institutions and conflict
 
@@ -178,7 +178,7 @@ The strongest presentation question is causal readability. Can a player connect 
 
 PC Gamer's review finds the graphical edition more approachable but still awkward, with nested interfaces and substantial newcomer learning. It also values details that do not always alter the immediate strategy: an offscreen history can help the world feel inhabited. This qualifies the earlier chapter's strong emphasis on mechanically consequential history. Not every atmospheric detail must earn its place through a numerical effect. [D6]
 
-**Historical implementation evidence:** in his 2021 Stack Overflow interview, Tarn Adams describes an accumulated C/C++ project, regrets around a rigid item hierarchy, a more flexible tool category, and connected walking regions used to reject impossible searches before pathfinding. He explicitly notes limitations for flying creatures. These are primary historical explanations, not a current code audit or a universal prescription for OpenLegend's architecture. [D33]
+**Historical implementation evidence:** in his 2021 Stack Overflow interview, Tarn Adams describes an accumulated C/C++ project, regrets around a rigid item hierarchy, a more flexible tool category, and connected walking regions used to reject impossible searches before pathfinding. He explicitly notes limitations for flying creatures. These are primary historical explanations, not a current code audit or a universal prescription for Open Legend's architecture. [D33]
 
 **Interpretation:** optimize representations around the interactions promised to players, while stating approximations. A differently embodied creature should not be described as capable of something that an invisible shortcut prevents. Equally, copying every expensive detail of this simulation would not automatically create its emotional effect.
 
@@ -218,7 +218,7 @@ Some concrete complaints have changed since those reviews. **The 2025 patches re
 
 **Synthesis:** deep simulation, visible meaning and enjoyable management are separate achievements. One player can find a stable fortress empty while another finds hundreds of lives worth attending to. The design question is how much interpretive work the intended audience enjoys—not whether a bored player has failed to appreciate the game correctly.
 
-## 10. OpenLegend transfer hypotheses
+## 10. Open Legend transfer hypotheses
 
 **Preserve a causal history, not a compulsory explanation.** An object or person can connect events across time. A concise inspectable record should distinguish occurrence, allegation, recollection and interpretation. The bridge story fails as inspiration if narration invents certainty before evidence exists.
 
@@ -232,7 +232,7 @@ Some concrete complaints have changed since those reviews. **The 2025 patches re
 
 **Budget for interpretation and ordinary play.** A spectacular failure is a poor proxy for a satisfying hour. Test whether players can find causes, form new intentions and enjoy the routine between surprises. Allow atmosphere to matter without demanding that every detail become a mechanic, while avoiding endless prose that never changes attention or choice.
 
-These are research questions and design hypotheses. They do not authorize a new OpenLegend subsystem, dictate a clinical model of emotion or turn Dwarf Fortress's bundled fantasy rules into universal engine laws.
+These are research questions and design hypotheses. They do not authorize a new Open Legend subsystem, dictate a clinical model of emotion or turn Dwarf Fortress's bundled fantasy rules into universal engine laws.
 
 ## 11. Preservation, coverage and verification
 

@@ -2,13 +2,13 @@
 
 ## Presentation contract
 
-[World presentation](world-presentation.md) is the canonical owner for default-lit sprite/mesh artwork, multi-receiver dynamic shadows, depth/read-through behavior, configurable player visibility settings and smooth right-drag camera controls. These never change physical sight, sound, support or action authority.
+[World presentation](world-presentation.md) is the canonical owner for default-lit sprite/mesh artwork, multi-receiver dynamic shadows, scene depth and see-through reveal, configurable player visibility settings and smooth right-drag camera controls. These never change physical sight, sound, support or action authority.
 
 ## Renderer boundary
 
 Physical data is renderer-independent. The current `WorldRenderer` boundary accepts the existing authorized `GameView` DTO and returns intentions; it does not expose PlayCanvas objects to React or the domain. This minimal implemented interface is smaller than the eventual rendering projection described in the [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets). [Architecture](architecture.md#spatial-world-foundation) identifies delivered behavior; the remaining target is not implicitly complete.
 
-**Status: accepted target; a bounded native 3D foundation is implemented.** This specification establishes OpenLegend's intended spatial behavior. The [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md) owns technical representation and execution. The [SW tracker](maintainers/spatial-world.md) owns tasks, dependencies, and acceptance. [Architecture](architecture.md) continues to describe the running implementation.
+**Status: accepted target; a bounded native 3D foundation is implemented.** This specification establishes Open Legend's intended spatial behavior. The [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md) owns technical representation and execution. The [SW tracker](maintainers/spatial-world.md) owns tasks, dependencies, and acceptance. [Architecture](architecture.md) continues to describe the running implementation.
 
 ## Client replacement path
 
@@ -16,7 +16,9 @@ The renderer boundary preserves a choice of presentation technology; it is not a
 
 For this browser path, share camera, gestures, permitted-image reconciliation, asset identity/fetching, motion/pose timing, light selection and reusable geometry/shader math. Each backend retains decoding, native resources, animation evaluation, material/pass integration and GPU-specific optimization. React and authoritative simulation remain shared. PlayCanvas remains the default pending actual evidence; the second backend is a selected comparison, not an assumed migration. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) remain relevant to broader platform choices.
 
-Two changes have different scope. Replacing the browser renderer can retain React and the surrounding web application. Building a native Unreal client would also require substantial UI, input and client lifecycle work; the TypeScript `WorldRenderer` interface is a design seam, not something C++ or Blueprints can directly implement without adaptation.
+The [UE5 playable-client feature spec](features/unreal-player/README.md) selects an installed client for ordinary play. The existing renderer boundary preserves the meaning of a permitted view and an intention. A portable-client SDK and packaged Unreal integration remain undelivered. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) own the rationale and reconsideration criteria. The narrow interface exists today, but a dedicated authorized rendering projection and complete input extraction remain [SW10.1–SW10.2](maintainers/spatial-world.md#sw10--renderer-boundary-and-mixed-representation).
+
+Unreal Engine 5 is the selected client direction. The existing browser remains the client for Rust server qualification and receives only work needed for the transition. The UE5 client needs its own UI, input and connection lifecycle around the existing permitted server views and intentions. The TypeScript `WorldRenderer` interface shows where those responsibilities separate today. Use its behavior as a reference when defining the cross-language interface.
 
 | Part                                                            | Expected treatment in a future native client                                                                                                                                                              |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -27,19 +29,19 @@ Two changes have different scope. Replacing the browser renderer can retain Reac
 | Art and asset metadata                                          | Reuse licensed source assets and semantic IDs where compatible; convert import settings, shaders, rigs and generated-asset loading as needed. Standard file formats do not guarantee identical appearance |
 | Accounts, reconnection and platform lifecycle                   | Adapt and qualify for the target platform without moving authorization into the client                                                                                                                    |
 
-A future migration should proceed through one playable slice:
+Apply these behavioral checks to the selected migration:
 
-1. Identify the concrete product or production blocker and define equivalent visual, interaction and device acceptance criteria before selecting another engine.
+1. Use the selected landscape, player interaction and agent-production goals to define visual, interaction and device acceptance criteria.
 2. Complete the relevant SW10 separation work only as needed by that slice. Consume scoped public contracts, never database access or raw world state. Do not create a universal graphics wrapper in advance.
 3. Connect the candidate client to the same server. Demonstrate movement, inspection, conversation and invention with existing admission, plus representative art and animation.
 4. Check differing player knowledge, stale/removed targets, reconnect and save/load timeline changes. Client physics, lighting, visibility and animation must not become a second authority for movement, perception or consequences.
-5. Compare production effort, frame times, memory, startup/download, input usability and deployment cost. Commit to a full replacement only when the evidence warrants its migration and maintenance cost.
+5. Compare production effort, frame times, memory, startup/download, input usability and deployment cost. Switch the primary player after the migration's packaged-game and ordinary-play gates pass.
 
-An installed client can still depend on hosted simulation and AI. Offline play would be a separate architecture decision: the current TypeScript server/domain would need a local host or a deliberate port, and provider-dependent behavior needs its own offline policy. A renderer change does not deliver that capability.
+An installed client can still depend on hosted simulation and AI. Offline play would be a separate architecture decision: a local world host and a separate policy for provider-dependent behavior would need qualification, including on a chosen Rust installation. A renderer change does not deliver that capability.
 
 ## The decision
 
-OpenLegend is fundamentally a **three-dimensional simulated world**. Positions, physical extents, movement, interaction distances, sight, and hearing account for height. Its initial control style is tactical rather than first-person: actors usually walk on surfaces, and flyers initially use supported aerial routes. A free rigid-body physics sandbox is not required.
+Open Legend is fundamentally a **three-dimensional simulated world**. Positions, physical extents, movement, interaction distances, sight, and hearing account for height. Its initial control style is tactical rather than first-person: actors usually walk on surfaces, and flyers initially use supported aerial routes. A free rigid-body physics sandbox is not required.
 
 Presentation is independent. A generated animal can be a two-dimensional sprite while its body occupies a three-dimensional position and volume. A humanoid can later use a rigged 3D model beside that animal without creating a different set of physical rules. Terrain, ramps, floors, and barriers need simple geometry that conveys their actual spatial shape; painted textures and sprite scenery can decorate that geometry.
 
@@ -226,7 +228,7 @@ Light and sound are physical inputs under installed world rules. Rendered bright
 
 **Implemented display feature.** Two independent bottom-right **Sight** and **Hearing** icon toggles save device-local preferences through the existing preference helper; both start off. Hover/focus explanations identify the complete regions and reference. The same controls remain available below an open narrow conversation sheet. They change only graphics: character senses, observations, recognition, descriptions, memories, AI information, actions and spending admission are unchanged.
 
-Sight uses continuous teal outlines with short hover labels **Clear sight** and **Within sight**. The inner division reuses the existing presentation-only focus fraction; it adds no observation or description tier. The outer limit uses the character's actual sight range. Native line-of-sight queries from the character's eye to the same-sized reference person's exposed body clip both areas against physical geometry. Camera floor focus, cutaways and read-through do not change that geometry.
+Sight uses continuous teal outlines with short hover labels **Clear sight** and **Within sight**. The inner division reuses the existing presentation-only focus fraction; it adds no observation or description tier. The outer limit uses the character's actual sight range. Native line-of-sight queries from the character's eye to the same-sized reference person's exposed body clip both areas against physical geometry. Camera floor focus, cutaways and see-through reveal do not change that geometry.
 
 Hearing uses dashed amber outlines with short hover labels **Clear speech**, **Some words** and **Faint sound**. The reference is **normal-volume speech from someone the controlled character's size**, using their body/ear anchors. Native acoustic thresholds, hearing sensitivity and background sound determine the radii; native barrier transmission adjusts the sampled reach. This is a possible-speaker guide, not a map of actual people or sound sources. Sound can cross a sight-blocking barrier when the authored transmission permits it. Existing hearing, intelligibility and speech-volume rules are unchanged.
 
@@ -254,11 +256,11 @@ Camera movement is usable while the simulation is paused. It does not advance ti
 
 Levels remain named/grouped support surfaces, not necessarily equally spaced horizontal planes. A sloped path can span several heights while remaining one connected surface. Ordinary camera UI does not select or hide entire floors.
 
-Holding **Option (Alt)** makes currently character-visible things readable through roofs, upper floors and other permitted camera scenery. The renderer reuses the existing authorized-silhouette read-through mask rather than hiding whole geometry; unknown contents stay unknown. Collision, support, physical sight, shadow casting and acoustics remain intact. Releasing the key, moving into UI, focus loss or suspension restores the configured presentation. [World presentation](world-presentation.md#local-read-through) owns the exact scope, gesture and rendering policy.
+Holding **Option (Alt)** makes currently character-visible things readable through roofs, upper floors and other permitted camera scenery. The renderer reuses the existing mask for drawing permitted silhouettes rather than hiding whole geometry; unknown contents stay unknown. Collision, support, physical sight, shadow casting and acoustics remain intact. Releasing the key, moving into UI, focus loss or suspension restores the configured presentation. [World presentation](world-presentation.md#see-through-reveal) owns the exact scope, gesture and rendering policy.
 
 **Selected physical-awareness target:** bodily/sensory state and native evidence determine acquisition for players and NPCs. Camera or viewport framing may select how permitted information is presented or optionally attended; it cannot establish or refuse physical acquisition. A camera-side wall can hide a body-visible object from the displayed view, and an approved cutaway can remove that presentation obstruction without changing body sight. Creator inspection remains a separate audience and grants no ordinary character knowledge.
 
-The former viewport-narrows-bodily-exposure target was not implemented and is superseded by the [shared awareness contract](projects/stealth-awareness-tech-design.md#shared-contracts). Current profile-configurable local read-through still displays only already body-authorized targets. This reconciliation does not claim that the new physical gaze/detail model is delivered; [World presentation](world-presentation.md#local-read-through) retains current rendering behavior.
+The former viewport-narrows-bodily-exposure target was not implemented and is superseded by the [shared awareness contract](projects/stealth-awareness-tech-design.md#shared-contracts). The player’s see-through reveal setting displays only subjects their character can currently see. This reconciliation does not claim that the new physical gaze/detail model is delivered; [World presentation](world-presentation.md#see-through-reveal) retains current rendering behavior.
 
 ### Picking and controls
 
@@ -266,7 +268,7 @@ A compact bottom-right camera toolbar keeps zoom, recenter, follow-player and Si
 
 A click intersects actual permitted spatial geometry, not an assumed `y=0` plane. Where several surfaces lie beneath the pointer, choose the nearest visible supported intersection; held Option does not turn movement into a click through covering geometry. Preserve the actual XYZ point and support identity when submitting a destination. The server independently checks the submitted location and actor permissions.
 
-Combat aiming uses the same camera geometry with a separate [subject-or-point contract](projects/action-execution-and-skill-expression-tech-design.md#15-physical-pointer-aim-consequence-review-and-cancellation). Every accepted release re-picks current geometry. An eligible displayed living body selects its exact effective-body center for subject aim; other permitted hits retain exact XYZ. The shooter's native anchor, not the camera, starts the released ray. Camera read-through grants no collision bypass.
+Combat aiming uses the same camera geometry with a separate [subject-or-point contract](projects/action-execution-and-skill-expression-tech-design.md#15-physical-pointer-aim-consequence-review-and-cancellation). Every accepted release re-picks current geometry. An eligible displayed living body selects its exact effective-body center for subject aim; other permitted hits retain exact XYZ. The shooter's native anchor, not the camera, starts the released ray. See-through reveal does not change which physical objects can block a shot.
 
 Preserve existing click-to-act and contextual menus. Orbit and pan gestures must not accidentally submit movement on release. Provide keyboard and visible-button alternatives, touch controls, recenter, and reduced-motion behavior. Existing inventory/crafting/world-agent shortcuts must not be silently reused for camera controls.
 

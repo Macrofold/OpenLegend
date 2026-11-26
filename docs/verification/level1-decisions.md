@@ -115,7 +115,7 @@ The final independent review also qualifies the two remaining real-caller forms 
 
 The unchanged-follow case timed out at 60 seconds in the first serial full check, with no recorded stage attribution. Its focused existing test then passed in 3.263 seconds (6.50 seconds total; 1 passed, 24 skipped), exercising native follow, both director completions and the exact assertion that an unchanged opportunity creates no second call. No continuation nonprogress was reproduced, and that focused pass does not erase or explain the full-check timeout.
 
-The same validated learned method reproduced the recorded-command draft escape on `8005f7c7`: cloning succeeded before execution and failed afterwards at the occurrence's command. Snapshotting that command repairs the current branch; cloning and real manual current-format checkpoint create/read/restore now preserve its spoken command. TypeScript, pinned formatting on changed files and affected-diff review passed. The caller and diagnostic drivers/raw checkpoints remain private under `/private/tmp`; no generated artifacts are committed and actual cumulative spend remains **$0**.
+The same validated learned activity reproduced the recorded-command draft escape on `8005f7c7`: cloning succeeded before execution and failed afterwards at the occurrence's command. Snapshotting that command repairs the current branch; cloning and real manual current-format checkpoint create/read/restore now preserve its spoken command. TypeScript, pinned formatting on changed files and affected-diff review passed. The caller and diagnostic drivers/raw checkpoints remain private under `/private/tmp`; no generated artifacts are committed and actual cumulative spend remains **$0**.
 
 ### Independent full-check qualification
 

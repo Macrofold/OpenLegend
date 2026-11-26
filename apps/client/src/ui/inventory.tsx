@@ -16,10 +16,11 @@ import {
 import { Popover } from 'react-aria-components';
 import type {
   ActionOption,
+  CommandInput,
   ContainerPage,
   GameView,
   InventoryItemView,
-  InventoryItemSummary,
+  InventoryItemBinding,
   InventoryTransferSource,
   ApiResult,
 } from '@open-legend/protocol';
@@ -41,6 +42,10 @@ import { BagWindow } from './bag-window';
 import type { OpenContainerRequest } from './container-opening';
 import type { InventoryCollectionState } from './use-inventory-collection';
 
+type InventoryActionItem = Pick<
+  InventoryItemBinding,
+  'id' | 'name' | 'icon' | 'art' | 'availableQuantity' | 'group'
+>;
 type InventoryProps = {
   bagWindowHost: HTMLElement | null;
   bagWindowsVisible: boolean;
@@ -55,8 +60,9 @@ type InventoryProps = {
   view: GameView;
   addItem(): void;
   chooseWork?(item: InventoryItemView): void;
+  onTalkAbout?(context: { itemId: string; name: string; recipientId?: string }): void;
   browseActions?(
-    item: InventoryItemSummary,
+    item: InventoryActionItem,
     opener: Element,
     dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
   ): void;
@@ -112,6 +118,8 @@ function sameItem(left: InventoryItemView, right: InventoryItemView) {
     left.revision === right.revision &&
     left.placementRevision === right.placementRevision &&
     left.group?.members === right.group?.members &&
+    left.group?.representativeQuantity === right.group?.representativeQuantity &&
+    left.group?.representativeAvailableQuantity === right.group?.representativeAvailableQuantity &&
     left.quantity === right.quantity &&
     left.container?.revision === right.container?.revision &&
     left.availableQuantity === right.availableQuantity
@@ -170,8 +178,10 @@ export function Inventory(props: InventoryProps) {
     () => ({
       addItem: () => latest.current.addItem(),
       chooseWork: (item: InventoryItemView) => latest.current.chooseWork?.(item),
+      onTalkAbout: (context: { itemId: string; name: string; recipientId?: string }) =>
+        latest.current.onTalkAbout?.(context),
       browseActions: (
-        item: InventoryItemSummary,
+        item: InventoryActionItem,
         opener: Element,
         dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
       ) => latest.current.browseActions?.(item, opener, dispatchCommand),
@@ -203,6 +213,7 @@ export function Inventory(props: InventoryProps) {
       {...props}
       {...callbacks}
       chooseWork={props.chooseWork ? callbacks.chooseWork : undefined}
+      onTalkAbout={props.onTalkAbout ? callbacks.onTalkAbout : undefined}
       browseActions={props.browseActions ? callbacks.browseActions : undefined}
       view={view}
       scope={access.scope}
@@ -216,6 +227,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   addItem,
   browseActions,
   chooseWork,
+  onTalkAbout,
   contextMenu,
   command,
   connected,
@@ -317,7 +329,6 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     !!(
       currentWorldRoot?.storage &&
       currentWorldRoot.storage.containerId === worldRoot.id &&
-      currentWorldRoot.storage.revision !== undefined &&
       currentWorldRoot.storage.placementRevision === worldRoot.placementRevision &&
       JSON.stringify([currentWorldRoot.position, currentWorldRoot.supportSurfaceId]) ===
         worldRoot.position
@@ -348,21 +359,15 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }, []);
   // These are permitted native changes, not world-clock ticks. Exterior storage loses its
   // revision hint on lost reach/access; that invalidates any previously readable contents.
-  const inventoryKey = useMemo(
-    () =>
-      JSON.stringify(
-        view.player.inventory.map((item) => [
-          item.id,
-          item.equipped,
-          item.container?.revision,
-          item.characteristics,
-          item.equipmentConflicts,
-          item.recipeRecord,
-          item.materialCondition,
-          item.art,
-        ]),
-      ),
-    [view.player.inventory],
+  const equipped = useMemo(
+    () => [
+      ...new Map(
+        view.player.equipmentPorts.flatMap((port) =>
+          port.item ? [[port.item.id, port.item] as const] : [],
+        ),
+      ).values(),
+    ],
+    [view.player.equipmentPorts],
   );
   const recipeKey = useMemo(
     () => JSON.stringify(view.recipes.map((recipe) => recipe.id)),
@@ -384,7 +389,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         view.player.position,
         view.player.supportSurfaceId,
         view.map.spatial.revision,
-        inventoryKey,
+        view.player.inventoryReadRevision.details,
         recipeKey,
       ]),
     [
@@ -399,7 +404,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       view.player.position,
       view.player.supportSurfaceId,
       view.map.spatial.revision,
-      inventoryKey,
+      view.player.inventoryReadRevision.details,
       recipeKey,
     ],
   );
@@ -407,6 +412,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     initialId: view.player.id,
     scope,
     displayOwner,
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
     revisionKey,
     visible: workspaceVisible,
     connected,
@@ -416,6 +422,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     initialId: '',
     scope,
     displayOwner,
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
     revisionKey: JSON.stringify([
       revisionKey,
       worldRoot,
@@ -433,11 +440,24 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         (detailOpen && moveDestination?.target === 'container')),
     connected,
     expectedRootId: worldRoot?.id ?? view.player.id,
+    carriedRevision: worldRoot ? undefined : view.player.inventoryRevision,
     blockedReason:
       primaryBag?.invalid || !worldRootValid
         ? 'This container moved or is no longer within permitted reach. Open it again from the world.'
         : undefined,
+    nativeInspection: !!worldRoot,
+    inspect: inspectWorldContents,
   });
+  function inspectWorldContents(input: CommandInput) {
+    return operations.dispatch({
+      id: 'inspect-container-contents',
+      label: 'Inspect container contents',
+      enabled: workspaceVisible && connected && view.player.canUseInventory,
+      command: input,
+    });
+  }
+  const openingRoot =
+    openContainer && view.entities.find((entity) => entity.id === openContainer.containerId);
   const requestId = openContainer?.requestId;
   useLayoutEffect(() => {
     focusAvailable.current = workspaceVisible && connected;
@@ -448,15 +468,17 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }, [workspaceVisible, connected, requestId, scope]);
   useLayoutEffect(() => {
     if (!openContainer || requestSeen.current === openContainer.requestId) return;
+    // The command receipt and its permitted view arrive independently.
+    // Wait for the accepted inspection in this view before installing its pane.
+    if (openContainer.scope !== scope || openingRoot?.storage?.revision === undefined) return;
     requestSeen.current = openContainer.requestId;
-    if (openContainer.scope !== scope) return;
     openBag(
       openContainer.containerId,
       openContainer.name,
       captureWorldRoot(openContainer.containerId),
       openContainer.opener,
     );
-  }, [requestId, scope]);
+  }, [requestId, scope, openingRoot?.storage?.revision]);
   const operations = useInventoryCommand({
     worldId: view.worldId,
     actorId: view.player.id,
@@ -466,11 +488,17 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     epoch: view.commandEpoch,
     connected,
     command,
-    onResolved(result) {
+    onResolved(result, request) {
       left.refresh();
       right.refresh();
       for (const state of bagCollections.values()) state.refresh();
-      if (result.ok) {
+      // Inspection prepares the open reader; a mutation finishes its interaction.
+      const inspection =
+        request.command !== null &&
+        typeof request.command === 'object' &&
+        'type' in request.command &&
+        request.command.type === 'inspect-inventory';
+      if (result.ok && !inspection) {
         closeDetail(false);
       }
       if (result.ok && actionFocus.current)
@@ -610,6 +638,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }
   const selectedCollection = selection && collection(selection.side);
   const item = selectedCollection?.page?.items.find((entry) => entry.id === selection?.itemId);
+  const stackQuantity = item?.group?.representativeQuantity ?? item?.quantity;
+  const stackAvailable = item?.group?.representativeAvailableQuantity ?? item?.availableQuantity;
   const target = selection && opposite(selection.side)?.page?.container;
   const amountTarget = amountDraft?.targetSide
     ? collection(amountDraft.targetSide)?.page?.container
@@ -628,8 +658,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   )
     inspectedSelection.current = undefined;
   const amountMaximum =
-    amountDraft?.operation === 'offer' && item?.group
-      ? item.group.representativeAvailableQuantity
+    amountDraft?.operation === 'offer' || amountDraft?.operation === 'split'
+      ? stackAvailable
       : item?.availableQuantity;
   const amount = amountDraft && exactQuantity(amountDraft.value, amountMaximum);
   const draftStale =
@@ -643,6 +673,11 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         (!amountTarget ||
           amountTarget.id !== amountDraft.target?.id ||
           amountTarget.revision !== amountDraft.target?.revision)));
+  const canSubmitAmount =
+    canAct &&
+    !draftStale &&
+    (amountDraft?.operation !== 'move' ||
+      (!!amountDraft.targetSide && !!collection(amountDraft.targetSide)?.current));
 
   const tradeRecipientId = amountDraft?.operation === 'offer' ? amountDraft.recipientId : undefined;
   useLayoutEffect(() => {
@@ -801,7 +836,15 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     else if (selection && amountDraft) setDetailOpen(true);
   }, [workspaceVisible, connected]);
 
-  function navigate(side: InventorySide, id: string, opener?: HTMLElement) {
+  function navigationPage(side: InventorySide) {
+    const state = collection(side);
+    const worldPage = bags.some((bag) => bag.side === side && !!bag.root);
+    // A same-owner refresh can leave a permitted world page on screen. Its
+    // item selection may request inspection; the server checks current access.
+    return !busy && state?.available && (worldPage || state.current) ? state.page : undefined;
+  }
+
+  async function navigate(side: InventorySide, id: string, opener?: HTMLElement) {
     if (busy) return;
     if (!id) {
       closeBag(side);
@@ -811,21 +854,23 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       onShowBelongings();
       return;
     }
-    const state = collection(side);
-    if (!state?.current || !state.page) return;
+    const page = navigationPage(side);
+    if (!page) return;
     const name =
-      state.page.items.find((item) => item.id === id)?.name ??
-      state.page.breadcrumbs.find((parent) => parent.id === id)?.name ??
+      page.items.find((item) => item.id === id)?.name ??
+      page.breadcrumbs.find((parent) => parent.id === id)?.name ??
       'Container';
     const input = opener ?? anchor.current;
+    const root = bags.find((bag) => bag.side === side)?.root;
+    // Opening a child of a world container is a deliberate inspection, just
+    // like opening the outer container. Keep the original navigation on refusal.
+    if (root && id !== page.container.id) {
+      const result = await inspectWorldContents({ type: 'inspect-inventory', containerId: id });
+      if (!result.ok) return;
+    }
     closeDetail(false);
     stopDrag();
-    openBag(
-      id,
-      name,
-      side === 'belongings' ? undefined : bags.find((bag) => bag.side === side)?.root,
-      input,
-    );
+    openBag(id, name, root, input);
   }
   function choose(
     side: InventorySide,
@@ -848,6 +893,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       connected &&
       view.access?.controlling &&
       source &&
+      !source.inspection &&
       collection(side)?.available &&
       !collection(side)?.loading
     ) {
@@ -858,17 +904,18 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         selected.id,
       ]);
       inspectedSelection.current = identity;
-      void command({
-        id: `inspect:${selected.id}`,
-        label: `Inspect ${selected.name}`,
-        enabled: true,
-        command: {
-          type: 'inspect-inventory',
-          itemId: selected.id,
-          containerId: source.container.id,
-          expectedRevision: source.container.revision,
-        },
-      })
+      void operations
+        .dispatch({
+          id: `inspect:${selected.id}`,
+          label: `Inspect ${selected.name}`,
+          enabled: true,
+          command: {
+            type: 'inspect-inventory',
+            itemId: selected.id,
+            containerId: source.container.id,
+            expectedRevision: source.container.revision,
+          },
+        })
         .then((result) => {
           if (alive.current && inspectedSelection.current === identity) {
             if (result.ok) collection(side)?.refresh();
@@ -1089,7 +1136,9 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     stopDrag();
   }
   function chooseAmount(operation: AmountDraft['operation'], action?: ActionOption) {
-    if (!item || !selectedContainer || !selection) return;
+    // Opening the editor is local. A same-owner refresh can hold the write
+    // without interrupting the player's click or discarding the draft.
+    if (!canTrade || !item || !selectedContainer || !selection) return;
     setQuantityError('');
     setAmountDraft({
       operation,
@@ -1109,10 +1158,11 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     });
   }
   function submitAmount() {
-    if (!selection || !amountDraft || draftStale) return;
+    if (!selection || !amountDraft || !canSubmitAmount) return;
     if (
       amount === undefined ||
-      (amountDraft.operation === 'split' && amount >= amountDraft.item.quantity)
+      (amountDraft.operation === 'split' &&
+        amount >= (amountDraft.item.group?.representativeQuantity ?? amountDraft.item.quantity))
     ) {
       setQuantityError(
         amountDraft.operation === 'split'
@@ -1273,31 +1323,29 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
           </p>
         )}
       </details>
-      {view.player.inventory.some((entry) => entry.equipped) && (
+      {equipped.length > 0 && (
         <section className="ol-inventory-equipment" aria-label="Equipped items">
           <strong>Equipped</strong>
-          {view.player.inventory
-            .filter((entry) => entry.equipped)
-            .map((entry) => (
-              <div key={entry.id}>
-                <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
-                <span>{entry.name}</span>
-                {browseActions && (
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    disabled={!canAct}
-                    onPress={(event) =>
-                      browseActions(entry, event.target, (action) =>
-                        contextDispatch.current(action, 'belongings'),
-                      )
-                    }
-                  >
-                    Item actions
-                  </Button>
-                )}
-              </div>
-            ))}
+          {equipped.map((entry) => (
+            <div key={entry.id}>
+              <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
+              <span>{entry.name}</span>
+              {browseActions && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={!canAct}
+                  onPress={(event) =>
+                    browseActions(entry, event.target, (action) =>
+                      contextDispatch.current(action, 'belongings'),
+                    )
+                  }
+                >
+                  Item actions
+                </Button>
+              )}
+            </div>
+          ))}
         </section>
       )}
     </>
@@ -1416,6 +1464,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
               initialId: bag.id,
               scope,
               displayOwner,
+              disclosureRevision: view.player.inventoryReadRevision.disclosure,
               revisionKey: JSON.stringify([
                 revisionKey,
                 bag.root,
@@ -1426,16 +1475,26 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
               visible: readerVisible,
               connected,
               expectedRootId: bag.root?.id ?? view.player.id,
+              carriedRevision: bag.root ? undefined : view.player.inventoryRevision,
               blockedReason,
+              nativeInspection: !!bag.root,
+              inspect: bag.root ? inspectWorldContents : undefined,
             }}
           >
             {content}
           </BagCollectionReader>
         );
       })}
+      {/* Inspection withdraws the previous private page before replacement loads.
+          Keep the chosen reader open, with only its loading state in that gap. */}
       <Popover
         triggerRef={anchor}
-        isOpen={detailOpen && !!selection && (!!item || !!tradeRecipientId) && workspaceVisible}
+        isOpen={
+          detailOpen &&
+          !!selection &&
+          (!!item || !!selectedCollection?.loading || !!tradeRecipientId) &&
+          workspaceVisible
+        }
         onOpenChange={(open) => {
           setDetailOpen(open);
         }}
@@ -1569,6 +1628,10 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                   active={operations.pending?.status === 'sending'}
                   label="Sending inventory action"
                 />
+                <LoadingIndicator
+                  active={!item && !!selectedCollection?.loading}
+                  label="Loading item details"
+                />
                 {operations.pending && operations.pending.status !== 'sending' && (
                   <p className="ol-caption">
                     The original request needs recovery. Use Check result in the inventory.
@@ -1652,7 +1715,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                         )}
                         <div className="ol-actions">
                           {amountDraft.operation !== 'offer' && (
-                            <Button disabled={!canAct || draftStale} onPress={submitAmount}>
+                            <Button disabled={!canSubmitAmount} onPress={submitAmount}>
                               {amountDraft.operation === 'move'
                                 ? 'Move amount'
                                 : amountDraft.operation === 'split'
@@ -1733,7 +1796,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                                 {!item.individual && item.quantity > 1 && (
                                   <Button
                                     variant="quiet"
-                                    disabled={!canAct}
+                                    disabled={!canTrade}
                                     onPress={() => chooseAmount('move')}
                                   >
                                     Move an amount…
@@ -1745,7 +1808,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             <>
                               <Button
                                 variant="quiet"
-                                disabled={busy}
+                                disabled={!navigationPage(selection.side)}
                                 onPress={() => navigate(selection.side, item.id)}
                               >
                                 Open {namePhrase(item, 'definite')}
@@ -1753,7 +1816,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                               {selection.side === 'belongings' && !right.location.id && (
                                 <Button
                                   variant="quiet"
-                                  disabled={busy}
+                                  disabled={busy || !selectedCollection?.current}
                                   onPress={() => {
                                     navigate('belongings', item.id);
                                   }}
@@ -1766,9 +1829,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                           <Button
                             variant="quiet"
                             disabled={
-                              !canAct ||
-                              item.availableQuantity === undefined ||
-                              item.availableQuantity < 1
+                              !canTrade || stackAvailable === undefined || stackAvailable < 1
                             }
                             onPress={() => chooseAmount('offer')}
                             aria-description={
@@ -1779,6 +1840,17 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                           >
                             Give
                           </Button>
+                          {onTalkAbout && (
+                            <Button
+                              variant="quiet"
+                              onPress={() => {
+                                onTalkAbout({ itemId: item.id, name: item.name });
+                                closeDetail();
+                              }}
+                            >
+                              Talk about {namePhrase(item, 'definite')}
+                            </Button>
+                          )}
                           {browseActions &&
                             selectedCollection?.page?.breadcrumbs.some(
                               (entry) => entry.id === view.player.id,
@@ -1817,30 +1889,38 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                               {item.workBatch.label}
                             </Button>
                           )}
-                          {item.actions.map((action) => (
-                            <div key={action.id}>
-                              <Button
-                                variant="quiet"
-                                disabled={!canAct || !action.enabled}
-                                onPress={() =>
-                                  action.command.type === 'split-item'
-                                    ? chooseAmount('split', action)
-                                    : action.command.type === 'drop' && item.quantity > 1
-                                      ? chooseAmount('drop', action)
+                          {item.actions.map((action) => {
+                            const amountOperation =
+                              action.command.type === 'split-item'
+                                ? 'split'
+                                : action.command.type === 'drop' && item.quantity > 1
+                                  ? 'drop'
+                                  : undefined;
+                            return (
+                              <div key={action.id}>
+                                <Button
+                                  variant="quiet"
+                                  disabled={
+                                    !(amountOperation ? canTrade : canAct) || !action.enabled
+                                  }
+                                  onPress={() =>
+                                    amountOperation
+                                      ? chooseAmount(amountOperation, action)
                                       : send(action, selection.side)
-                                }
-                              >
-                                {action.command.type === 'split-item'
-                                  ? 'Split stack…'
-                                  : action.command.type === 'drop' && item.quantity > 1
-                                    ? 'Drop an amount…'
-                                    : action.label}
-                              </Button>
-                              {!action.enabled && action.reason && (
-                                <p className="ol-caption">{action.reason}</p>
-                              )}
-                            </div>
-                          ))}
+                                  }
+                                >
+                                  {amountOperation === 'split'
+                                    ? 'Split stack…'
+                                    : amountOperation === 'drop'
+                                      ? 'Drop an amount…'
+                                      : action.label}
+                                </Button>
+                                {!action.enabled && action.reason && (
+                                  <p className="ol-caption">{action.reason}</p>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                         <details open={!selection.actions}>
                           <summary>Known details</summary>
@@ -1932,29 +2012,37 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                             </details>
                           ) : null;
                         })}
-                        {!item.group && !item.individual && !item.container && !item.equipped && (
-                          <MergeTargets
-                            key={item.id}
-                            item={item}
-                            containerId={selectedContainer.id}
-                            pageKey={selectedCollection?.key ?? ''}
-                            canAct={canAct && item.availableQuantity === item.quantity}
-                            visible={workspaceVisible && connected}
-                            onMerge={(match) =>
-                              send(
-                                arrange(
-                                  'merge-item',
-                                  item,
-                                  match.id,
-                                  match.revision,
-                                  item.quantity,
-                                  'Merge stacks',
-                                ),
-                                selection.side,
-                              )
-                            }
-                          />
-                        )}
+                        {!item.individual &&
+                          !item.container &&
+                          !item.equipped &&
+                          stackQuantity !== undefined && (
+                            <MergeTargets
+                              key={item.id}
+                              item={item}
+                              containerId={selectedContainer.id}
+                              containerRevision={selectedContainer.revision}
+                              readScope={JSON.stringify([
+                                scope,
+                                view.player.inventoryReadRevision.disclosure,
+                              ])}
+                              pageKey={selectedCollection?.key ?? ''}
+                              canAct={canAct && stackAvailable === stackQuantity}
+                              visible={workspaceVisible && connected}
+                              onMerge={(match) =>
+                                send(
+                                  arrange(
+                                    'merge-item',
+                                    item,
+                                    match.id,
+                                    match.revision,
+                                    stackQuantity,
+                                    'Merge stacks',
+                                  ),
+                                  selection.side,
+                                )
+                              }
+                            />
+                          )}
                         {view.godMode && (
                           <details>
                             <summary>Declare ownership (God mode)</summary>

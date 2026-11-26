@@ -1,0 +1,29 @@
+{
+  "verbs": ["go", "move", "walk", "run"],
+  "destination": "to",
+  "axes": ["x", "z"],
+  "support": ["on", "surface"],
+  "approach": {
+    "verbs": ["go", "move", "walk", "run", "head"],
+    "qualifiers": ["over", "up"],
+    "direct": "approach",
+    "example": "walk to <visible name>"
+  },
+  "relative": {
+    "verbs": ["go", "move", "walk", "step", "run"],
+    "implicitDistanceVerb": "step",
+    "units": ["m", "metres", "meters", "steps", "units"],
+    "directions": {
+      "forward": [0, 1],
+      "forwards": [0, 1],
+      "ahead": [0, 1],
+      "back": [0, -1],
+      "backward": [0, -1],
+      "backwards": [0, -1],
+      "left": [-1, 0],
+      "right": [1, 0]
+    },
+    "sameClauseJoin": "and",
+    "example": "walk 0.35 m forward"
+  }
+}

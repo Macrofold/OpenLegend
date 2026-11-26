@@ -29,6 +29,7 @@ import { nextId } from './data.js';
 import { externalAudience } from './event-audience.js';
 import { hasMemory } from './living.js';
 import { emit, emitObservedOccurrence, outcome } from './events.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { subjectNarration, person } from './narration.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -71,7 +72,6 @@ import { nativeMovementSpeed } from './worlds/base/actions.js';
 import {
   flightTracks,
   fallingDisplacement,
-  FALL_ACCELERATION,
   motionTrackPosition,
   type MotionTrack,
 } from './flight.js';
@@ -761,18 +761,19 @@ export function captureProjectileBodies(
 /** Bounded chords of the admitted falling curve. The acceleration owner's
  * displacement supplies positions; the maximum chord deviation is below the
  * spatial tolerance consumed by current-time settlement. */
-function fallingMotion(entity: Entity, seconds: number): MotionTrack {
+function fallingMotion(world: WorldState, entity: Entity, seconds: number): MotionTrack {
   const point = worldPosition(entity),
-    velocity = entity.spatial.fallVelocity!;
+    velocity = entity.spatial.fallVelocity!,
+    rules = selectedOccurrenceRules(world).flight;
   const segments = Math.max(
     1,
-    Math.ceil(seconds / Math.sqrt(SPATIAL_LIMITS.epsilon / FALL_ACCELERATION)),
+    Math.ceil(seconds / Math.sqrt(SPATIAL_LIMITS.epsilon / rules.fallAcceleration)),
   );
   const track: MotionTrack = { at: [], pose: [] };
   for (let index = 0; index <= segments; index++) {
     const at = (seconds * index) / segments;
     track.at.push(at);
-    track.pose.push({ ...point, y: point.y - fallingDisplacement(velocity, at) });
+    track.pose.push({ ...point, y: point.y - fallingDisplacement(rules, velocity, at) });
   }
   return track;
 }
@@ -824,7 +825,7 @@ export function projectileBoundary(
       action = entity.actor?.action;
     if (motion?.has(entity.id)) return retainTracks(entry, motion.get(entity.id)!);
     if (!entry.restricted && entity.spatial.fallVelocity !== undefined)
-      return retainTracks(entry, [fallingMotion(entity, seconds)]);
+      return retainTracks(entry, [fallingMotion(world, entity, seconds)]);
     if (!entry.restricted && entity.spatial.flight)
       entry.tracks = flightTracks(world, entity, seconds);
     if (
@@ -966,6 +967,7 @@ function finishProjectile(
   events: WorldEvent[],
 ): void {
   const id = flight.id;
+  const { ranged: words, projectileContactEvent } = selectedOccurrenceRules(world);
   const source = entityGet(world.entities, flight.sourceId),
     target = contact?.body;
   // Injury can separate a player's living participant into a corpse. Capture
@@ -1020,12 +1022,10 @@ function finishProjectile(
     emit(
       world,
       events,
-      'projectile-contact',
+      projectileContactEvent,
       subjectNarration(target, [
-        result === 'hit' ? BASE_RANGED_TEXT.contactHit : BASE_RANGED_TEXT.contactStopped,
-        ...(knownSource
-          ? [BASE_RANGED_TEXT.contactSource, person(knownSource.id, 'object'), '.']
-          : []),
+        result === 'hit' ? words.contactHit : words.contactStopped,
+        ...(knownSource ? [words.contactSource, person(knownSource.id, 'object'), '.'] : []),
       ]),
       target,
       target.id,
@@ -1051,8 +1051,8 @@ function finishProjectile(
   emit(
     world,
     events,
-    'projectile-ended',
-    'A committed projectile terminated.',
+    words.projectileEnded,
+    words.terminated,
     source,
     flight.targetId,
     {
@@ -1105,10 +1105,10 @@ function finishProjectile(
     emit(
       world,
       events,
-      'shot-ended',
+      words.shotEnded,
       observed
         ? subjectNarration(source, [
-            reportedHit ? BASE_RANGED_TEXT.observedHit : BASE_RANGED_TEXT.observedNoInjury,
+            reportedHit ? words.observedHit : words.observedNoInjury,
             person(reported!, 'object'),
             '.',
           ])
@@ -1116,9 +1116,9 @@ function finishProjectile(
             source,
             observedPoint
               ? contact
-                ? BASE_RANGED_TEXT.observedCover
-                : BASE_RANGED_TEXT.observedRangeEnd
-              : BASE_RANGED_TEXT.stopped,
+                ? words.observedCover
+                : words.observedRangeEnd
+              : words.stopped,
           ),
       source,
       observed ? reported?.id : undefined,
@@ -1338,11 +1338,12 @@ export function advanceProjectiles(
           actual.animal!.episode?.profilePin ?? actual.animal!.profile,
         );
         if (!profile) continue;
-        emit(
+        emitObservedOccurrence(
           world,
           events,
           'projectile-passage',
-          subjectNarration(actual, profile.presentation.alarmed),
+          subjectNarration(actual, profile.presentation.projectilePassage),
+          [actual.id],
           actual,
           actual.id,
           {
@@ -1351,7 +1352,6 @@ export function advanceProjectiles(
             incomingY: -flight.direction.y,
             incomingZ: -flight.direction.z,
           },
-          'external',
           passage.point,
         );
       }

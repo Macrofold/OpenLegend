@@ -1,9 +1,37 @@
-import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
+import { nativeActivityMethodSignatures, nativeNormalizedIntents } from './native-language.js';
+import {
+  currentContactPayload,
+  currentContactMetadata,
+  sameCurrentContactContent,
+} from './current-contact-codec.js';
+import {
+  receivedRecordReferences,
+  receivedCurrentOwnerTables,
+} from './received-record-references.js';
+import { liveEvidenceRowSql } from './world-record-schema.js';
+import {
+  captureTemporalPageChange,
+  mergeTemporalPageIntent,
+  packTemporalSave,
+  temporalPageColumns,
+  type TemporalStorageSource,
+  temporalPageIntentKey,
+  temporalPageRecordId,
+  temporalPagePosition,
+  temporalBlockExpiredSql,
+  validateTemporalPageSources,
+  readTemporalPageRecord,
+  validateTemporalPageValueReferences,
+  type PendingTemporalPage,
+} from './temporal-page-storage.js';
+import { sqlRecordBatchesWithCount, SqlWriteBatch } from './sql-rows.js';
+import { recordDatabaseRows } from './performance.js';
 import { tableRows } from './record-pages.js';
-import { hotEventDependencies } from './hot-events.js';
+import { hotEventDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
   HISTORY_TABLES,
   HOT_AWARENESS_ROWS,
+  HOT_TEMPORAL_BYTES,
   historyPositions,
   historyKey,
   materializedObjectHistory,
@@ -13,6 +41,7 @@ import {
 import { randomUUID, createHash } from 'node:crypto';
 import {
   EXPERIENCE_LIMITS,
+  ACTIVITY_LEARNING_PREPARATION,
   RESPONSE_LIMITS,
   orderedRecordEntries,
   orderedRecordGet,
@@ -21,6 +50,7 @@ import {
   type OrderedRecord,
   updateWorld,
   appendedRecordCount,
+  allocatedIdentityBetween,
   entityChangesBetween,
   recordMapChangesBetween,
   entityGet,
@@ -40,11 +70,20 @@ import {
   completeObjectHistory,
   isSafeRecordId,
   isImmutableData,
+  jsonText,
+  canonicalJson,
   type Appraisal,
   type Entity,
   type ItemInstance,
+  type ReceivedValue,
+  temporalPageReferences,
+  temporalPageMutation,
+  restoreReceivedRecentDirectory,
+  type ReceivedChargeDirectory,
+  referencedReceivedValues,
 } from '@open-legend/domain';
-import type { SavedWorld, SqlDatabase } from './store.js';
+import type { SavedWorld } from './saved-world.js';
+import type { SqlDatabase } from './sql-database.js';
 import {
   RECORD_NODES,
   WORLD_RECORD_SCHEMA,
@@ -53,7 +92,100 @@ import {
   type RecordNode,
 } from './world-record-schema.js';
 
+const encodedTemporalCuts = new WeakMap<
+  RecordChanges,
+  { acknowledgedBefore: number | undefined; changes: RecordChanges }
+>();
+/** Convert the detached native suffix once, outside simulation advancement. */
+export function materializeTemporalChanges(
+  changes: RecordChanges,
+  world: TemporalStorageSource,
+  acknowledgedBefore: number | undefined,
+): RecordChanges {
+  if (!changes.temporal?.size) return changes;
+  const cached = encodedTemporalCuts.get(changes);
+  if (cached && cached.acknowledgedBefore === acknowledgedBefore) return cached.changes;
+  const writes = new Map(changes.writes);
+  const rows = [...(writes.get('mind_temporal_pages') ?? [])];
+  const node = RECORD_NODES.get('mind_temporal_pages')!;
+  const encodedPages = packTemporalSave(changes.temporal.values(), world, acknowledgedBefore);
+  for (const encoded of encodedPages) {
+    const page = encoded.native;
+    const columns = temporalPageColumns(encoded);
+    const path = ['world', 'experience', 'temporal', 'actors', page.actorId, 'pages', page.id];
+    rows.push({
+      id: temporalPageRecordId(page.actorId, page.id),
+      parent: recordId(path.slice(0, -2)),
+      slot: page.id,
+      position: temporalPagePosition(page),
+      payload: encoded.payload,
+      extra: Object.keys(node.columns!).map((name) => columns[name]),
+      create: !encoded.replacement,
+      logicalRemoval: encoded.replacement === true,
+      ...(encoded.replacement ? {} : { receivedValueAdditions: encoded.metadata.references }),
+    });
+  }
+  writes.set('mind_temporal_pages', rows);
+  const result = {
+    ...changes,
+    writes,
+    rows: changes.rows + encodedPages.length,
+    temporal: undefined,
+    temporalEdits: [
+      ...(changes.temporalEdits ?? []),
+      ...[...changes.temporal.values()].filter((intent) => intent.replacement || intent.deleted),
+    ],
+    savedTemporalPages: [
+      ...(changes.savedTemporalPages ?? []),
+      ...encodedPages.map((page) => page.native),
+    ],
+    savedTemporalActors: [
+      ...new Set([
+        ...(changes.savedTemporalActors ?? []),
+        ...[...changes.temporal.values()].map((intent) => intent.after.actorId),
+      ]),
+    ],
+  };
+  encodedTemporalCuts.set(changes, { acknowledgedBefore, changes: result });
+  return result;
+}
+
 type Value = unknown;
+const personalMetadataTables = new Set([
+  'mind_temporal_actors',
+  'mind_temporal_pages',
+  'mind_awareness',
+  'mind_memories',
+  'mind_summaries',
+  'mind_perception_owners',
+  'mind_perception_current',
+  'mind_perception_motion_samples',
+]);
+const personalMetadataFields = new Set([
+  'actor_id',
+  'individual_ids',
+  'retention_metadata',
+  'account_revision',
+  'retention_class',
+  'policy_priority',
+  'active_or_protected',
+  'next_due_at',
+  'logical_bytes',
+  'unresolved',
+  'value_refs',
+  'metadata',
+  'receipt_count',
+  'expired_through_time',
+  'pressure_batch_order',
+  'pressure_entry',
+  'pressure_member',
+  'pressure_at',
+  'pressure_order',
+]);
+const personalMetadataColumns = (node: RecordNode) =>
+  personalMetadataTables.has(node.table)
+    ? Object.entries(node.columns ?? {}).filter(([name]) => personalMetadataFields.has(name))
+    : [];
 export interface RowChange {
   id: string;
   parent: string;
@@ -62,12 +194,129 @@ export interface RowChange {
   payload: string;
   extra: unknown[];
   create: boolean;
+  /** Exact reference-closure comparison; unchanged dependencies skip shared ownership. */
+  receivedUsesChanged?: boolean;
+  /** Undefined writes the complete row; a mask writes only those owned columns and revision. */
+  writeColumns?: readonly string[];
+  /** Changed block with actual removed/replaced members, not an append. */
+  logicalRemoval?: boolean;
+  /** Exact reference deltas from a known predecessor or a proved append. */
+  receivedValueAdditions?: readonly string[];
+  receivedValueRemovals?: readonly string[];
 }
 export interface RecordChanges {
   writes: Map<string, RowChange[]>;
   deletes: Map<string, string[]>;
   rows: number;
+  temporal?: Map<string, PendingTemporalPage>;
+  /** Exact predecessors for protected correction/forgetting; never ordinary expiry. */
+  temporalEdits?: readonly PendingTemporalPage[];
+  savedTemporalPages?: readonly import('@open-legend/domain').TemporalPage[];
+  /** Includes old-only native intents so successful acknowledgement also rebases them. */
+  savedTemporalActors?: readonly string[];
+  /** Actor-permitted semantic expiry, never re-archived as an old source version. */
+  expired?: Map<string, string[]>;
 }
+/** Fold the next accepted delta without losing a pending full-content write or
+ * turning a certified insert into an upsert. Historical rows retain exact IDs. */
+export function mergeRowChange(
+  previous: RowChange | undefined,
+  next: RowChange,
+  table = 'mind_perception_current',
+): RowChange {
+  if (!previous) return next;
+  const fields = Object.keys(RECORD_NODES.get(table)?.columns ?? {});
+  // The caller supplies the table when extra-column reconstruction is needed;
+  // the row carries its mask, so stable extra values survive a metadata-only update.
+  const knownPrevious =
+    previous.receivedUsesChanged === false || previous.receivedValueAdditions !== undefined;
+  const knownNext = next.receivedUsesChanged === false || next.receivedValueAdditions !== undefined;
+  const added = new Set(previous.receivedValueAdditions ?? []);
+  const removed = new Set(previous.receivedValueRemovals ?? []);
+  for (const id of next.receivedValueRemovals ?? []) {
+    if (!added.delete(id)) removed.add(id);
+  }
+  for (const id of next.receivedValueAdditions ?? []) {
+    if (!removed.delete(id)) added.add(id);
+  }
+  return {
+    ...next,
+    create: previous.create || next.create,
+    writeColumns:
+      !previous.writeColumns || !next.writeColumns
+        ? undefined
+        : [...new Set([...previous.writeColumns, ...next.writeColumns])],
+    receivedUsesChanged:
+      previous.receivedUsesChanged !== false || next.receivedUsesChanged !== false,
+    logicalRemoval: previous.logicalRemoval || next.logicalRemoval,
+    receivedValueAdditions: knownPrevious && knownNext ? [...added] : undefined,
+    receivedValueRemovals: knownPrevious && knownNext ? [...removed] : undefined,
+    extra: next.writeColumns
+      ? previous.extra.map((value, at) =>
+          next.writeColumns!.includes(fields[at]!) ? next.extra[at] : value,
+        )
+      : next.extra,
+  };
+}
+export function mergeRecordChanges(previous: RecordChanges, next: RecordChanges): RecordChanges {
+  const writes = new Map(
+    [...previous.writes].map(([table, rows]) => [table, new Map(rows.map((row) => [row.id, row]))]),
+  );
+  const deletes = new Map([...previous.deletes].map(([table, ids]) => [table, new Set(ids)]));
+  for (const [table, ids] of next.deletes) {
+    let removed = deletes.get(table);
+    if (!removed) deletes.set(table, (removed = new Set()));
+    for (const id of ids) {
+      writes.get(table)?.delete(id);
+      removed.add(id);
+    }
+  }
+  for (const [table, rows] of next.writes) {
+    let target = writes.get(table);
+    if (!target) writes.set(table, (target = new Map()));
+    for (const row of rows) {
+      deletes.get(table)?.delete(row.id);
+      target.set(row.id, mergeRowChange(target.get(row.id), row, table));
+    }
+  }
+  const expired = new Map(
+    [...(previous.expired ?? [])].map(([table, ids]) => [table, new Set(ids)]),
+  );
+  for (const [table, ids] of next.expired ?? []) {
+    let selected = expired.get(table);
+    if (!selected) expired.set(table, (selected = new Set()));
+    for (const id of ids) selected.add(id);
+  }
+  const temporal = new Map(previous.temporal);
+  for (const [key, intent] of next.temporal ?? [])
+    temporal.set(key, mergeTemporalPageIntent(temporal.get(key), intent));
+  return {
+    ...(temporal.size ? { temporal } : {}),
+    ...(previous.temporalEdits?.length || next.temporalEdits?.length
+      ? { temporalEdits: [...(previous.temporalEdits ?? []), ...(next.temporalEdits ?? [])] }
+      : {}),
+    writes: new Map(
+      [...writes]
+        .filter(([, rows]) => rows.size)
+        .map(([table, rows]) => [table, [...rows.values()]]),
+    ),
+    deletes: new Map(
+      [...deletes].filter(([, ids]) => ids.size).map(([table, ids]) => [table, [...ids]]),
+    ),
+    rows: [...writes.values()].reduce((sum, rows) => sum + rows.size, 0),
+    ...(expired.size
+      ? { expired: new Map([...expired].map(([table, ids]) => [table, [...ids]])) }
+      : {}),
+  };
+}
+export const retainedSourceTables: ReadonlySet<string> = new Set([
+  'mind_awareness',
+  'mind_memories',
+  'mind_summaries',
+  'mind_temporal_pages',
+  'mind_perception_values',
+  'mind_temporal_supports',
+]);
 const own = (value: Value, key: string): Value =>
   value && typeof value === 'object' && Object.hasOwn(value, key)
     ? (value as JsonRecord)[key]
@@ -83,6 +332,9 @@ function body(node: RecordNode, value: Value): Value {
   if (node.children?.['$']) return Array.isArray(value) ? [] : {};
   if (Array.isArray(value)) return value;
   const copy: JsonRecord = { ...value };
+  // Grouped charge directories are rebuilt from canonical blocks, not another
+  // durable actor-sized copy of the same history metadata.
+  if (node.table === 'mind_temporal_actors') delete copy['recent'];
   for (const [field, child] of Object.entries(node.children ?? {})) {
     const part = own(value, field);
     if (part !== undefined && part !== null) copy[field] = child.mode === 'list' ? [] : {};
@@ -103,8 +355,20 @@ const reusableTables = new Set([
   'sim_status_effects',
   'sim_work_invocations',
   'sim_native_response_episodes',
+  'mind_perception_owners',
 ]);
 function encodedBody(node: RecordNode, value: Value): string {
+  if (node.serialize) return node.serialize(value);
+  // Immutable leaf values have no excluded children; reuse the same encoding
+  // that native evidence and its next snapshot already share.
+  if (
+    !node.children &&
+    node.table !== 'world_hot_events' &&
+    value &&
+    typeof value === 'object' &&
+    isImmutableData(value)
+  )
+    return jsonText(value);
   const reusable =
     !!value &&
     typeof value === 'object' &&
@@ -150,8 +414,27 @@ function recordIndexName(table: string, columns: string[], unique = false): stri
 
 export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
+  private readonly retirements = new WeakMap<
+    SavedWorld,
+    {
+      rows: Map<string, string[]>;
+      positions: Map<string, Map<string, number>>;
+      previous: Map<string, Map<string, unknown>>;
+    }
+  >();
+  stageRetirements(
+    state: SavedWorld,
+    rows: Map<string, string[]>,
+    positions = new Map<string, Map<string, number>>(),
+    previous = new Map<string, Map<string, unknown>>(),
+  ): void {
+    for (const table of rows.keys())
+      if (!retainedSourceTables.has(table))
+        throw new Error('Unsupported personal-history retirement.');
+    this.retirements.set(state, { rows, positions, previous });
+  }
   needsHotPrune = false;
-  private currentContributionsPredicate(alias = ''): string {
+  private static currentContributionsPredicate(alias = ''): string {
     const json = (field: string) => `${alias}payload::jsonb ->> '${field}'`;
     // Only explicit terminal independent instances leave the current working set;
     // singleton cooldowns remain present. Complete capture validates cold rows too.
@@ -213,11 +496,10 @@ export class WorldRecords {
         throw new Error('Physical material provenance references a missing source identity.');
     }
   }
-  async initialize() {
-    await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
+  static async initializeSchema(db: Pick<SqlDatabase, 'exec'>): Promise<void> {
+    await db.exec(`CREATE TABLE IF NOT EXISTS world_head (
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
-      revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL,
-      applied_revision BIGINT NOT NULL CHECK (applied_revision>=0 AND applied_revision<=revision)
+      revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
     const create = (node: RecordNode, parent?: RecordNode): string => {
       const extra = Object.entries(node.columns ?? {})
@@ -237,11 +519,30 @@ export class WorldRecords {
         .map((child) => create(child.node, node))
         .join('\n')}`;
     };
-    await this.db.exec(create(WORLD_RECORD_SCHEMA));
+    await db.exec(create(WORLD_RECORD_SCHEMA));
+    // An immutable ID may be hydrated again, never rebound to different contents.
+    // Identical stored text needs no JSONB comparison. Canonical JavaScript JSON
+    // can represent isolated UTF-16 units that PostgreSQL JSONB rejects.
+    await db.exec(`CREATE OR REPLACE FUNCTION reject_received_value_mutation() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        RAISE EXCEPTION 'An immutable received value cannot change its contents.';
+      END $$;
+      DROP TRIGGER IF EXISTS received_value_immutable ON mind_perception_values;
+      CREATE TRIGGER received_value_immutable BEFORE UPDATE OF payload ON mind_perception_values
+        FOR EACH ROW WHEN (
+          CASE WHEN OLD.payload COLLATE "C" = NEW.payload THEN FALSE
+            ELSE OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb
+          END
+        )
+        EXECUTE FUNCTION reject_received_value_mutation()`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS temporal_page_buckets
+      ON mind_temporal_pages USING gin(lookup_buckets)`);
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
+    await db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
-    await this.db.exec(`
+    // All receipt membership reads use the bounded lookup vocabulary plus exact
+    // array checks; raw receipt/fact keys must not grow another GIN dictionary.
+    await db.exec(`
       CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
       CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
       CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
@@ -249,76 +550,229 @@ export class WorldRecords {
       CREATE INDEX IF NOT EXISTS mind_corrections_evidence ON mind_corrections(world_id,actor_id,correction_id);
     `);
     const appraisalState = "payload::jsonb ->> 'state'";
-    await this.db.exec(
+    await db.exec(
       `CREATE INDEX IF NOT EXISTS mind_appraisals_current ON mind_appraisals(world_id,parent_id,position) WHERE ${appraisalState}='active' OR ${appraisalState} IS NULL`,
     );
-    await this.db.exec(
-      `CREATE INDEX IF NOT EXISTS sim_status_effects_current ON sim_status_effects(world_id,parent_id,position) WHERE ${this.currentContributionsPredicate()}`,
+    await db.exec(
+      `CREATE INDEX IF NOT EXISTS sim_status_effects_current ON sim_status_effects(world_id,parent_id,position) WHERE ${WorldRecords.currentContributionsPredicate()}`,
     );
   }
   async head() {
     const row = await this.db
-      .prepare('SELECT world_id,revision,generation,applied_revision FROM world_head WHERE id=1')
+      .prepare('SELECT world_id,revision,generation FROM world_head WHERE id=1')
       .get();
     return row
       ? {
           worldId: String(row['world_id']),
           revision: Number(row['revision']),
           generation: String(row['generation']),
-          appliedRevision: Number(row['applied_revision']),
         }
       : null;
   }
   /** Acquire the write fence before touching any effects. Caller owns the transaction. */
-  async advance(
-    worldId: string,
-    expected: number,
-    restore = false,
-    previousWorldId = worldId,
-  ): Promise<number> {
-    const replacesWorld = previousWorldId !== worldId;
+  async advance(worldId: string, expected: number, restore = false): Promise<number> {
     if (expected === 0)
       await this.db
-        .prepare('INSERT INTO world_head VALUES (1,?,0,?,0) ON CONFLICT(id) DO NOTHING')
+        .prepare('INSERT INTO world_head VALUES (1,?,0,?) ON CONFLICT(id) DO NOTHING')
         .run(worldId, randomUUID());
-    if (replacesWorld) {
-      if (!restore) throw new Error('World replacement requires native restore admission.');
-      const head = await this.db
-        .prepare('SELECT world_id,revision,applied_revision FROM world_head WHERE id=1 FOR UPDATE')
-        .get();
-      if (
-        head?.['world_id'] !== previousWorldId ||
-        Number(head['revision']) !== expected ||
-        Number(head['applied_revision']) !== expected
-      )
-        throw new Error('Save conflict: another writer changed this world.');
-      // A complete recovery cut is durable before this transaction. Canonical
-      // records belong to one active world; delete their owned root, never rename IDs.
-      // Physical-parent references intentionally restrict ordinary entity deletion.
-      // Only this complete-world replacement detaches their derived SQL edges before
-      // discarding every canonical owner in the same fenced transaction.
-      await this.db.prepare('DELETE FROM sim_placements WHERE world_id=?').run(previousWorldId);
-      await this.db.prepare('DELETE FROM data_world WHERE world_id=?').run(previousWorldId);
-    }
     const row = await this.db
       .prepare(
-        `UPDATE world_head SET revision=revision+1,applied_revision=revision+1${replacesWorld ? ',world_id=?' : ''}${restore ? ',generation=?' : ''}
-      WHERE id=1 AND world_id=? AND revision=? AND applied_revision=revision RETURNING revision`,
+        `UPDATE world_head SET revision=revision+1${restore ? ',generation=?' : ''}
+      WHERE id=1 AND world_id=? AND revision=? RETURNING revision`,
       )
-      .get(
-        ...(replacesWorld ? [worldId] : []),
-        ...(restore ? [randomUUID()] : []),
-        previousWorldId,
-        expected,
-      );
+      .get(...(restore ? [randomUUID()] : []), worldId, expected);
     if (!row) throw new Error('Save conflict: another writer changed this world.');
     return Number(row['revision']);
   }
   /** Establishes derived storage-position metadata on the supplied collections.
-   * A complete reference encoding for diagnostics must use an independent copy:
-   * recapturing an accepted collection can overwrite its live storage ordinals. */
-  prepare(before: SavedWorld | undefined, after: SavedWorld): RecordChanges {
+   * A selection prepares only those tables, plus ancestor deletions whose foreign
+   * keys remove selected records. Unrelated collections are never enumerated. */
+  prepare(
+    before: SavedWorld | undefined,
+    after: SavedWorld,
+    selectedTables?: ReadonlySet<string>,
+  ): RecordChanges {
+    return this.prepareRecords(before, after, selectedTables, false);
+  }
+  /** Initial creation only, before residency eviction or any accepted successor.
+   * The same schema walk that prepares the first SQL write computes its actual
+   * ordinals. Cold restoration instead reads coverage and rows from PostgreSQL;
+   * a resident tail cannot stand in for a complete creation capture.
+   */
+  captureCreation(
+    after: SavedWorld,
+    cut: { databaseSchema: string; generation: string; durableRevision: number },
+  ) {
+    if (this.needsHotPrune || !completeObjectHistory(after.world.entities))
+      throw new Error('Native creation requires an unevicted initial world.');
+    const changes = materializeTemporalChanges(
+      this.prepareRecords(undefined, after, undefined, true),
+      after.world,
+      undefined,
+    );
+    const tables = Object.fromEntries(
+      [...changes.writes].map(([table, rows]) => [
+        table,
+        rows.map(({ id, parent, slot, position, payload, extra }) => ({
+          id,
+          parent,
+          slot,
+          position,
+          payload,
+          extra,
+        })),
+      ]),
+    );
+    const rowOwners = new Map<string, Map<string, number>>();
+    for (const [table, rows] of Object.entries(tables)) {
+      const owners = new Map<string, number>();
+      for (const row of rows)
+        owners.set(row.parent, Math.max(owners.get(row.parent) ?? 0, row.position + 1));
+      rowOwners.set(table, owners);
+    }
+    const coverage: Array<{
+      table: string;
+      owner: string;
+      complete: boolean;
+      nextOrdinal: number;
+      parentPresent: boolean;
+    }> = [];
+    const visit = (node: RecordNode, value: unknown, path: string[]): void => {
+      const owner = recordId(path);
+      for (const [field, child] of Object.entries(node.children ?? {})) {
+        const current = field === '$' ? value : own(value, field);
+        const present = current !== undefined && current !== null;
+        const listPlacement = Array.isArray(current) ? historyPositions.get(current) : undefined;
+        const mapPlacement =
+          current && typeof current === 'object' ? historyMapPositions.get(current) : undefined;
+        if (
+          listPlacement?.complete === false ||
+          mapPlacement?.complete === false ||
+          (child.node.table === 'mind_appraisals' &&
+            !completeAppraisalHistory(current as Record<string, Appraisal> | undefined)) ||
+          (child.node.table === 'sim_status_effects' &&
+            !completeContributionHistory(current as Entity['statusEffects']))
+        )
+          throw new Error(`Native creation requires complete ${child.node.table} ownership.`);
+        coverage.push({
+          table: child.node.table,
+          owner,
+          complete: true,
+          nextOrdinal: child.orderKey
+            ? after.world.nextId
+            : (listPlacement?.next ??
+              mapPlacement?.next ??
+              (child.node.table === 'sim_entities' && present
+                ? entityPositions.get(current as object)?.next
+                : undefined) ??
+              rowOwners.get(child.node.table)?.get(owner) ??
+              0),
+          parentPresent: present,
+        });
+        if (!present) continue;
+        const childPath = field === '$' ? path : [...path, field];
+        if (child.mode === 'one') visit(child.node, current, childPath);
+        else if (child.mode === 'list') {
+          if (!Array.isArray(current)) throw new Error('Invalid native creation list.');
+          current.forEach((entry, index) =>
+            visit(child.node, entry, [
+              ...childPath,
+              child.key ? String(own(entry, child.key) ?? index) : String(index),
+            ]),
+          );
+        } else {
+          const entries =
+            child.mode === 'entity-map'
+              ? entityEntries(current as SavedWorld['world']['entities'])
+              : child.mode === 'indexed-map'
+                ? orderedRecordEntries(current as OrderedRecord<unknown>)
+                : members(current);
+          for (const [key, entry] of entries) visit(child.node, entry, [...childPath, key]);
+        }
+      }
+    };
+    visit(WORLD_RECORD_SCHEMA, after, []);
+    return {
+      records: {
+        worldId: after.world.id,
+        ...cut,
+        entityOrdering: {
+          nextInsertion: after.world.entities.nextInsertion,
+          entries: entityKeys(after.world.entities).map((id) => ({
+            id,
+            key: entityOrdering(after.world.entities, id)!.key,
+          })),
+        },
+        normalizedIntents: nativeNormalizedIntents(tables['sim_intentions'] ?? []),
+        activityMethodSignatures: nativeActivityMethodSignatures(tables['activity_methods'] ?? []),
+        tables,
+        coverage,
+      },
+      originals: after.world.events.map((event) => ({
+        eventId: event.id,
+        payload: jsonText(event),
+      })),
+    };
+  }
+  /** A resident tail cannot prove a proposed key is new. Before dependency
+   * preparation, resolve only those exact IDs against the accepted read cut;
+   * final compare-and-swap still owns whether this candidate can commit. */
+  async proveRecordCreates(
+    worldId: string,
+    revision: number,
+    table: string,
+    rows: readonly RowChange[],
+  ): Promise<void> {
+    if (!rows.length) return;
+    if (!RECORD_NODES.has(table)) throw new Error('Unknown canonical record table.');
+    for (let offset = 0; offset < rows.length; offset += 800) {
+      const batch = rows.slice(offset, offset + 800);
+      const existing = await this.db
+        .prepare(
+          `SELECT h.world_id,h.revision,t.id
+        FROM world_head h LEFT JOIN ${table} t ON t.world_id=h.world_id AND t.id=ANY(?::text[])
+        WHERE h.id=1`,
+        )
+        .all(batch.map((row) => row.id));
+      if (
+        !existing.length ||
+        existing.some((row) => row['world_id'] !== worldId || Number(row['revision']) !== revision)
+      )
+        throw new Error('Save conflict: another writer changed this world.');
+      const ids = new Set(existing.map((row) => row['id']));
+      for (const row of batch) if (!ids.has(row.id)) row.create = true;
+    }
+  }
+  /** Captures a complete candidate without rebinding live collection ordinals.
+   * Coverage is checked separately; a rejected resident tail must leave its
+   * accepted placement and staged cold-retirement metadata untouched. */
+  captureMetadataRecords(
+    after: SavedWorld,
+    selectedTables: ReadonlySet<string>,
+    before?: SavedWorld,
+  ): RecordChanges {
+    return this.prepareRecords(before, after, selectedTables, true);
+  }
+  private prepareRecords(
+    before: SavedWorld | undefined,
+    after: SavedWorld,
+    selectedTables: ReadonlySet<string> | undefined,
+    readOnlyMetadata: boolean,
+  ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
+    const retirement = readOnlyMetadata ? undefined : this.retirements.get(after);
+    const absentRetirements = new Map(
+      [...(retirement?.rows ?? [])].map(([table, ids]) => [table, new Set(ids)]),
+    );
+    const required = selectedTables ? new Set(selectedTables) : undefined;
+    if (required)
+      for (const table of selectedTables!) {
+        let parent = RECORD_PARENTS.get(table);
+        while (parent) {
+          required.add(parent);
+          parent = RECORD_PARENTS.get(parent);
+        }
+      }
     const visit = (
       node: RecordNode,
       old: Value,
@@ -328,52 +782,209 @@ export class WorldRecords {
       slot: string,
       position: number,
       oldPosition = position,
+      knownAbsent = false,
     ) => {
-      if (old === next && oldPosition === position && !this.needsHotPrune) return;
+      if (required && !required.has(node.table)) return;
+      const retired = absentRetirements.get(node.table);
+      if (old === next && oldPosition === position && !this.needsHotPrune) {
+        if (next !== undefined && retired?.size) retired.delete(recordId(path));
+        return;
+      }
       const id = recordId(path);
+      if (next !== undefined) retired?.delete(id);
+      // A scoped cold edit supplies its exact canonical predecessor, not a new
+      // logical owner. Segment descendants must diff that stored layout too.
+      if (
+        old === undefined &&
+        next !== undefined &&
+        retirement?.previous.get(node.table)?.has(id)
+      ) {
+        old = retirement.previous.get(node.table)!.get(id);
+        const storedPosition = retirement.positions.get(node.table)?.get(id);
+        if (storedPosition !== undefined) {
+          oldPosition = position = storedPosition;
+        }
+      }
+      // Absence from a resident tail is not proof of absence from PostgreSQL.
+      // Only a complete predecessor/new parent or a proved append gets INSERT-only.
+      const create =
+        old === undefined &&
+        (!before ||
+          knownAbsent ||
+          (['mind_memories', 'mind_awareness', 'mind_summaries'].includes(node.table) &&
+            allocatedIdentityBetween(before.world, after.world, path.at(-1)!)));
       if (next === undefined) {
+        // Residency eviction is not deletion. The indexed collector owns shared values.
+        if (node.table === 'mind_perception_values') return;
+        if (node.table === 'mind_temporal_pages' && !retirement?.previous.get(node.table)?.has(id))
+          return;
+        if (node.table === 'mind_temporal_pages' && old !== undefined) {
+          const page = old as import('@open-legend/domain').TemporalPage;
+          (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
+            before: page,
+            after: page,
+            replacement: true,
+            deleted: true,
+            reservedBytes: 0,
+          });
+        }
         // Foreign keys remove this owned subtree, never another actor's records.
         const ids = changes.deletes.get(node.table) ?? [];
         ids.push(id);
         changes.deletes.set(node.table, ids);
         return;
       }
-      const payload = encodedBody(node, next);
-      if (
-        old === undefined ||
-        (this.needsHotPrune && node.table === 'world_settings') ||
-        oldPosition !== position ||
-        payload !== encodedBody(node, old)
-      ) {
-        const rows = changes.writes.get(node.table) ?? [];
-        rows.push({
-          id,
-          parent,
-          slot,
-          position,
-          payload,
-          create: old === undefined,
-          extra: Object.values(node.columns ?? {}).map((column) =>
-            column.value(next as JsonRecord, path),
-          ),
-        });
-        changes.writes.set(node.table, rows);
-        changes.rows++;
+      // Read-only position bookkeeping must still use actual physical packing;
+      // a logical append page is not a current SQL row for creation or restore.
+      if (node.table === 'mind_temporal_pages') {
+        const page = next as import('@open-legend/domain').TemporalPage;
+        if (!page.batches.length) {
+          if (temporalPageMutation(page) !== 'edit') return;
+          const previousPage = old as import('@open-legend/domain').TemporalPage | undefined;
+          if (!previousPage?.appendClosed) return;
+          (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
+            before: previousPage,
+            after: page,
+            replacement: true,
+            deleted: true,
+            reservedBytes: 0,
+          });
+          const ids = changes.deletes.get(node.table) ?? [];
+          ids.push(id);
+          changes.deletes.set(node.table, ids);
+          return;
+        }
+        const intent = captureTemporalPageChange(
+          old as import('@open-legend/domain').TemporalPage | undefined,
+          next as import('@open-legend/domain').TemporalPage,
+          retirement?.previous.get(node.table)?.has(id) === true,
+        );
+        (changes.temporal ??= new Map()).set(temporalPageIntentKey(intent.after), intent);
+        return;
+      }
+      if (node.encode) {
+        const previous = old;
+        old = old === undefined ? undefined : node.encode(old, undefined, before?.world);
+        next = node.encode(next, previous, after.world);
+      }
+      if (!selectedTables || selectedTables.has(node.table)) {
+        const contactMetadataOnly =
+          node.table === 'mind_perception_current' &&
+          old !== undefined &&
+          sameCurrentContactContent(
+            old as import('@open-legend/domain').CurrentContact,
+            next as import('@open-legend/domain').CurrentContact,
+          );
+        const payload =
+          node.table === 'mind_perception_current'
+            ? currentContactPayload(
+                next as import('@open-legend/domain').CurrentContact,
+                old as import('@open-legend/domain').CurrentContact | undefined,
+              )
+            : encodedBody(node, next);
+        const metadataChanged =
+          node.table === 'mind_perception_current' &&
+          (old === undefined ||
+            currentContactMetadata(next as import('@open-legend/domain').CurrentContact) !==
+              currentContactMetadata(old as import('@open-legend/domain').CurrentContact));
+        if (
+          old === undefined ||
+          (this.needsHotPrune && node.table === 'world_settings') ||
+          oldPosition !== position ||
+          metadataChanged ||
+          payload !== encodedBody(node, old)
+        ) {
+          const rows = changes.writes.get(node.table) ?? [];
+          const row: RowChange = {
+            id,
+            parent,
+            slot,
+            position,
+            payload,
+            create,
+            extra: Object.values(node.columns ?? {}).map((column) =>
+              column.value(next as JsonRecord, path, after.world),
+            ),
+          };
+          if (
+            receivedCurrentOwnerTables.includes(
+              node.table as (typeof receivedCurrentOwnerTables)[number],
+            )
+          ) {
+            const nextRefs = row.extra[
+              Object.keys(node.columns!).indexOf('value_refs')
+            ] as string[];
+            const previousRefs =
+              old === undefined ? [] : receivedRecordReferences(node.table, old as JsonRecord);
+            row.receivedUsesChanged =
+              old === undefined ||
+              nextRefs.length !== previousRefs.length ||
+              nextRefs.some((id, at) => id !== previousRefs[at]);
+            // Fresh check metadata can replace its frame without changing the
+            // acquired payload. Its exact stored ownership must change with it.
+            // docs/projects/bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions
+            if (contactMetadataOnly)
+              row.writeColumns = row.receivedUsesChanged
+                ? ['metadata', 'value_refs']
+                : ['metadata'];
+            if (row.receivedUsesChanged && (old !== undefined || create)) {
+              const beforeRefs = new Set(previousRefs);
+              const afterRefs = new Set(nextRefs);
+              row.receivedValueAdditions = nextRefs.filter((id) => !beforeRefs.has(id));
+              row.receivedValueRemovals = [...beforeRefs].filter((id) => !afterRefs.has(id));
+            }
+          }
+          rows.push(row);
+          changes.writes.set(node.table, rows);
+          changes.rows++;
+        }
       }
       for (const [field, child] of Object.entries(node.children ?? {})) {
+        if (required && !required.has(child.node.table)) continue;
         const previous = field === '$' ? old : own(old, field);
         const current = field === '$' ? next : own(next, field);
         if (previous === current && !(this.needsHotPrune && child.node.table === 'world_settings'))
           continue;
         const childPath = field === '$' ? path : [...path, field];
+        const complete =
+          !!before &&
+          previous !== undefined &&
+          child.complete &&
+          isImmutableData(previous) &&
+          isImmutableData(current);
         if (child.mode === 'one') {
-          visit(child.node, previous ?? undefined, current ?? undefined, childPath, id, field, 0);
+          visit(
+            child.node,
+            previous ?? undefined,
+            current ?? undefined,
+            childPath,
+            id,
+            field,
+            0,
+            0,
+            create,
+          );
           continue;
         }
         if (child.mode === 'list') {
           const a = Array.isArray(previous) ? previous : [];
           const b = Array.isArray(current) ? current : [];
-          const placement = historyPositions.get(a);
+          const key = (entry: Value, index: number) =>
+            child.key ? String(own(entry, child.key) ?? index) : String(index);
+          // History keeps canonical ordinals from its first encoding, before any
+          // cold eviction. Replacing an expired source must not renumber its
+          // retained sibling into the position the replacement still owns.
+          // docs/performance.md#inactive-history-residency
+          const placement = child.orderKey
+            ? undefined
+            : (historyPositions.get(a) ??
+              (HISTORY_TABLES.has(child.node.table)
+                ? {
+                    positions: new Map(a.map((entry, index) => [key(entry, index), index])),
+                    next: a.length,
+                    complete: true,
+                  }
+                : undefined));
           const appended = appendedRecordCount(a, b);
           const nextPlacement = placement
             ? {
@@ -384,11 +995,14 @@ export class WorldRecords {
               }
             : undefined;
           const start = appended === undefined ? 0 : a.length;
-          const key = (entry: Value, index: number) =>
-            child.key ? String(own(entry, child.key) ?? index) : String(index);
           const prior = new Map(
             a.slice(start).map((entry, i) => [key(entry, start + i), { entry, index: start + i }]),
           );
+          // Complete unordered IDs need prefix membership. Native ordered
+          // appends stay INSERT-only: the database enforces duplicate retained
+          // keys without a redundant prefix scan during preparation.
+          const prefixIds =
+            complete && start && !child.orderKey ? new Set(a.slice(0, start).map(key)) : undefined;
           const seen = new Set<string>();
           for (let i = start; i < b.length; i++) {
             const entry = b[i],
@@ -397,11 +1011,17 @@ export class WorldRecords {
               throw new Error(`Duplicate record identity in ${child.node.table}.`);
             seen.add(entryId);
             const previousEntry = prior.get(entryId);
-            const oldIndex = placement?.positions.get(entryId) ?? previousEntry?.index;
-            const position =
-              nextPlacement && !(placement?.complete && child.node.table === 'mind_summaries')
+            const oldIndex =
+              child.orderKey && previousEntry
+                ? Number(own(previousEntry.entry, child.orderKey))
+                : (placement?.positions.get(entryId) ?? previousEntry?.index);
+            const position = child.orderKey
+              ? Number(own(entry, child.orderKey))
+              : nextPlacement && !(placement?.complete && child.node.table === 'mind_summaries')
                 ? (oldIndex ?? nextPlacement.next++)
                 : i;
+            if (!Number.isSafeInteger(position) || position < 0)
+              throw new Error(`Invalid native ordering in ${child.node.table}.`);
             nextPlacement?.positions.set(entryId, position);
             visit(
               child.node,
@@ -412,10 +1032,13 @@ export class WorldRecords {
               String(position),
               position,
               oldIndex,
+              create ||
+                (!!complete && !previousEntry && !prefixIds?.has(entryId)) ||
+                (!!child.orderKey && appended !== undefined && previous !== undefined),
             );
             prior.delete(entryId);
           }
-          if (nextPlacement)
+          if (nextPlacement && !readOnlyMetadata)
             historyPositions.set(b, {
               ...nextPlacement,
               complete: placement?.complete,
@@ -458,6 +1081,8 @@ export class WorldRecords {
                   id,
                   key,
                   0,
+                  0,
+                  !!complete && !Object.hasOwn(previous, key),
                 );
               continue;
             }
@@ -504,7 +1129,7 @@ export class WorldRecords {
                   orderedRecordGet(next.values, key)!,
                   orderedRecordGet(positions!.values, key),
                 );
-              entityPositions.set(current as object, next);
+              if (!readOnlyMetadata) entityPositions.set(current as object, next);
               continue;
             }
           }
@@ -592,6 +1217,7 @@ export class WorldRecords {
               key,
               position,
               oldPosition,
+              create || (!!complete && !prior),
             );
             index++;
             oldEntries.delete(key);
@@ -604,13 +1230,76 @@ export class WorldRecords {
           )
             for (const [key, prior] of oldEntries)
               visit(child.node, prior.entry, undefined, [...childPath, key], id, key, prior.index);
-          if (positions && current && Object.isFrozen(current))
+          if (positions && current && Object.isFrozen(current) && !readOnlyMetadata)
             entityPositions.set(current as object, positions);
-          if (nextPlacement && current) historyMapPositions.set(current as object, nextPlacement);
+          if (nextPlacement && current && !readOnlyMetadata)
+            historyMapPositions.set(current as object, nextPlacement);
         }
       }
     };
     visit(WORLD_RECORD_SCHEMA, before, after, [], '', '', 0);
+    const retired = retirement?.rows;
+    if (retired?.size) {
+      // Placement-only metadata can mark a cold update as an existing row. It
+      // does not delete a record or require the synchronous expiry save path.
+      const expired = new Map(
+        [...retired].filter(
+          ([table, ids]) =>
+            table !== 'mind_perception_values' &&
+            ids.length &&
+            (!selectedTables || selectedTables.has(table)),
+        ),
+      );
+      if (expired.size) changes.expired = expired;
+      for (const [table, ids] of retired) {
+        if (selectedTables && !selectedTables.has(table)) continue;
+        // A bounded cold-retention read already proved these exact rows exist.
+        // Their replacement cannot be treated as a newly allocated identity.
+        for (const row of changes.writes.get(table) ?? []) {
+          const position = retirement!.positions.get(table)?.get(row.id);
+          if (position === undefined) continue;
+          row.create = false;
+          row.position = position;
+          const path = JSON.parse(row.id) as string[];
+          const values =
+            table === 'mind_memories'
+              ? after.world.memories[path[2]!]
+              : table === 'mind_awareness'
+                ? after.world.experience?.awareness[path[3]!]
+                : table === 'mind_summaries'
+                  ? after.world.experience?.summaries[path[3]!]
+                  : undefined;
+          const placement = values && historyPositions.get(values);
+          if (placement) {
+            placement.positions.set(path.at(-1)!, position);
+            placement.next = Math.max(placement.next, position + 1);
+          }
+        }
+        const written = new Set((changes.writes.get(table) ?? []).map((row) => row.id));
+        const deletes = new Set(changes.deletes.get(table) ?? []);
+        // A rewind can recreate the same impression already stored in the
+        // current timeline. An unchanged surviving row needs no upsert, but
+        // its source retirement must not turn that absence into a deletion.
+        for (const id of ids)
+          if (!written.has(id) && absentRetirements.get(table)?.has(id)) {
+            deletes.add(id);
+            if (table === 'mind_temporal_pages') {
+              const page = retirement?.previous.get(table)?.get(id) as
+                | import('@open-legend/domain').TemporalPage
+                | undefined;
+              if (page)
+                (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
+                  before: page,
+                  after: page,
+                  replacement: true,
+                  deleted: true,
+                  reservedBytes: 0,
+                });
+            }
+          }
+        if (deletes.size) changes.deletes.set(table, [...deletes]);
+      }
+    }
     return changes;
   }
   async write(
@@ -620,7 +1309,7 @@ export class WorldRecords {
     writes = new SqlWriteBatch(this.db),
   ) {
     // This metadata is derived from canonical personal records, inside the same
-    // transaction. Journal replay takes this path too. A new ordinary observation
+    // transaction. A new ordinary observation
     // needs no relationship query; only changed social sources/revocations do.
     const agreementGroups = new Map<string, { actor_id: string; agreement_key: string }>(),
       sourceRefs: Array<{ actor_id: string; source_id: string }> = [];
@@ -684,10 +1373,14 @@ export class WorldRecords {
       // Group those operations instead of paying two SQL round trips per observer.
       // Keep insert-only conflict detection, parent-table order, and original row
       // order where a secondary uniqueness constraint can make ordering meaningful.
-      const rows =
-        node.uniqueIndexes?.length || changed.every((row) => row.create === changed[0]!.create)
-          ? changed
-          : [...changed.filter((row) => row.create), ...changed.filter((row) => !row.create)];
+      const shapes = new Map<string, RowChange[]>();
+      for (const row of changed) {
+        const key = JSON.stringify([row.create, row.writeColumns ?? null]);
+        const rows = shapes.get(key) ?? [];
+        rows.push(row);
+        shapes.set(key, rows);
+      }
+      const rows = node.uniqueIndexes?.length ? changed : [...shapes.values()].flat();
       const columns = [
         'world_id',
         'id',
@@ -700,8 +1393,46 @@ export class WorldRecords {
       ];
       for (let offset = 0; offset < rows.length; ) {
         const create = rows[offset]!.create;
+        const mask = rows[offset]!.writeColumns;
+        if (mask) {
+          const selected = ['world_id', 'id', 'revision', ...mask];
+          const values: unknown[][] = [];
+          while (
+            offset < rows.length &&
+            rows[offset]!.create === create &&
+            JSON.stringify(rows[offset]!.writeColumns) === JSON.stringify(mask)
+          ) {
+            const row = rows[offset++]!;
+            const names = Object.keys(node.columns ?? {});
+            values.push([
+              worldId,
+              row.id,
+              revision,
+              ...mask.map((name) => row.extra[names.indexOf(name)]),
+            ]);
+          }
+          for (const batch of sqlRecordBatchesWithCount(selected, values)) {
+            recordDatabaseRows(table, batch.rows, batch.bytes);
+            await writes.add(
+              table,
+              `UPDATE ${table} target SET revision=incoming.revision,${mask.map((column) => `${column}=incoming.${column}`).join(',')}
+              FROM jsonb_populate_recordset(NULL::${table}, ?::jsonb) incoming
+              WHERE target.world_id=incoming.world_id AND target.id=incoming.id RETURNING target.id`,
+              [batch.payload],
+              {
+                rows: batch.rows,
+                message: 'Current-contact metadata update lost its existing owner.',
+              },
+            );
+          }
+          continue;
+        }
         function* values() {
-          while (offset < rows.length && rows[offset]!.create === create) {
+          while (
+            offset < rows.length &&
+            rows[offset]!.create === create &&
+            !rows[offset]!.writeColumns
+          ) {
             const row = rows[offset++]!;
             yield [
               worldId,
@@ -715,7 +1446,8 @@ export class WorldRecords {
             ];
           }
         }
-        for (const batch of sqlRecordBatches(columns, values()))
+        for (const batch of sqlRecordBatchesWithCount(columns, values())) {
+          recordDatabaseRows(table, batch.rows, batch.bytes);
           await writes.add(
             table,
             `INSERT INTO ${table} (${columns.join(',')})
@@ -730,8 +1462,9 @@ export class WorldRecords {
                   .map((column) => `${column}=excluded.${column}`)
                   .join(',')}`
           }`,
-            [batch],
+            [batch.payload],
           );
+        }
       }
     }
     // Move physical children before deleting their old parent. Semantic containment
@@ -742,6 +1475,17 @@ export class WorldRecords {
     // index. A surviving child's placement remains restrictive unless its admitted
     // reparenting write above moved it; never cascade through physical_parent_id.
     // docs/save-and-load.md#current-subsystem-integration
+    // A merged item survives as a retired entity. Delete its selected
+    // placement before deleting the old pile it still references on disk.
+    const deletedPlacements = changes.deletes.get('sim_placements') ?? [];
+    for (let offset = 0; offset < deletedPlacements.length; offset += 800) {
+      const batch = deletedPlacements.slice(offset, offset + 800);
+      await this.db
+        .prepare(
+          `DELETE FROM sim_placements WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+        )
+        .run(worldId, ...batch);
+    }
     const deletedEntities = changes.deletes.get('sim_entities') ?? [];
     for (let offset = 0; offset < deletedEntities.length; offset += 800) {
       const batch = deletedEntities.slice(offset, offset + 800);
@@ -751,15 +1495,46 @@ export class WorldRecords {
         )
         .run(worldId, ...batch);
     }
-    for (const [table, ids] of changes.deletes)
+    const pendingDeletes = new Set<string>();
+    const related = (left: string, right: string) => {
+      for (let parent = RECORD_PARENTS.get(left); parent; parent = RECORD_PARENTS.get(parent))
+        if (parent === right) return true;
+      for (let parent = RECORD_PARENTS.get(right); parent; parent = RECORD_PARENTS.get(parent))
+        if (parent === left) return true;
+      return false;
+    };
+    for (const [table, ids] of changes.deletes) {
+      if (table === 'sim_placements') continue;
+      // Cascade-related or additional foreign-key owners retain explicit order;
+      // independent families can share the existing bounded SQL group.
+      if (
+        [...pendingDeletes].some((prior) => related(prior, table)) ||
+        RECORD_NODES.get(table)?.constraints?.some((constraint) =>
+          constraint.includes('FOREIGN KEY'),
+        )
+      ) {
+        await writes.flush();
+        pendingDeletes.clear();
+      }
       for (let offset = 0; offset < ids.length; offset += 800) {
         const batch = ids.slice(offset, offset + 800);
-        await this.db
-          .prepare(
-            `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
-          )
-          .run(worldId, ...batch);
+        await writes.add(
+          table,
+          `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+          [worldId, ...batch],
+        );
+        pendingDeletes.add(table);
       }
+      if (
+        RECORD_NODES.get(table)?.constraints?.some((constraint) =>
+          constraint.includes('FOREIGN KEY'),
+        )
+      ) {
+        await writes.flush();
+        pendingDeletes.clear();
+      }
+    }
+    await writes.flush();
     if (sourceRefs.length)
       for (let offset = 0; offset < sourceRefs.length; offset += 800) {
         const rows = await this.db
@@ -804,19 +1579,13 @@ export class WorldRecords {
       ? this.db.readTransaction(() => this.readRecords(active))
       : this.db.transaction(() => this.readRecords(active));
   }
-  /** Journal recovery reads the complete applied prefix inside its owned transaction. */
-  async loadApplied(): Promise<{ revision: number; state: SavedWorld } | null> {
-    if (!this.db.transactionActive) throw new Error('Applied recovery requires its transaction.');
-    return this.readRecords(false, true);
-  }
-  private async readRecords(
-    active: boolean,
-    applied = false,
-  ): Promise<{ revision: number; state: SavedWorld } | null> {
+  /** Shared startup SQL selection, before either authority is constructed.
+   * The caller owns one fixed database snapshot. Native consumers receive these
+   * actual current rows and coverage; they never assemble a TypeScript world.
+   * Feature reads continue to use their scoped repositories below. */
+  async readCurrentRows(active: boolean, columns: 'source' | 'native') {
     const head = await this.head();
     if (!head) return null;
-    if (!applied && head.appliedRevision !== head.revision)
-      throw new Error('World tables have not applied the committed revision.');
     const settings = active
       ? await this.db
           .prepare('SELECT payload FROM world_settings WHERE world_id=?')
@@ -828,6 +1597,10 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
+      if (active && ['mind_temporal_pages', 'mind_perception_values'].includes(table)) {
+        groups.set(table, new Map());
+        continue;
+      }
       if (active && table === 'world_hot_events') {
         groups.set(table, new Map());
         continue;
@@ -837,7 +1610,7 @@ export class WorldRecords {
       const currentPredicate = !active
         ? ''
         : table === 'sim_status_effects'
-          ? ` AND ${this.currentContributionsPredicate('t.')}`
+          ? ` AND ${WorldRecords.currentContributionsPredicate('t.')}`
           : table === 'mind_appraisals'
             ? ` AND (t.payload::jsonb ->> 'state'='active' OR t.payload::jsonb ->> 'state' IS NULL)`
             : ['sim_object_lineage', 'sim_object_retirements'].includes(table)
@@ -849,52 +1622,73 @@ export class WorldRecords {
           ? this.currentEntityPredicate(table)
           : '');
       let rows: JsonRecord[] = [];
-      if (partial && table === 'activity_occurrences') {
+      const fields = [
+        'id',
+        'parent_id',
+        'slot',
+        'position',
+        'payload',
+        ...(columns === 'native'
+          ? Object.keys(RECORD_NODES.get(table)!.columns ?? {})
+          : personalMetadataColumns(RECORD_NODES.get(table)!).map(([name]) => name)),
+      ];
+      if (partial && (table === 'activity_occurrences' || table === 'mind_awareness')) {
+        const awareness = table === 'mind_awareness';
+        // Seek each owner's bounded tail, union only identities, then hydrate.
+        // Hashing whole account bodies here needlessly detoasts/deduplicates
+        // megabytes before startup can consume the same selected records.
+        // Native expiry owns sensory cues. Omitting an older cue at cold load
+        // would strand its row after that owner can no longer see its deadline.
         rows = await this.db
           .prepare(
-            `SELECT a.id,a.parent_id,a.slot,a.position,a.payload
-          FROM activity_occurrences_owners o CROSS JOIN LATERAL (
-            SELECT id,parent_id,slot,position,payload FROM activity_occurrences
-            WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT 128
-          ) a WHERE o.world_id=?
-          UNION SELECT id,parent_id,slot,position,payload FROM activity_occurrences WHERE world_id=? AND status='running'`,
+            `WITH selected AS MATERIALIZED (
+            SELECT a.id FROM ${table}_owners o CROSS JOIN LATERAL (
+              SELECT id FROM ${table}
+              WHERE world_id=o.world_id AND actor_id=o.slot
+              ORDER BY position DESC LIMIT ${awareness ? HOT_AWARENESS_ROWS : 128}
+            ) a WHERE o.world_id=?
+            UNION SELECT id FROM ${table} WHERE world_id=? AND ${
+              awareness
+                ? 'agreement_head=1 AND agreement_open=1 AND (agreement_until IS NULL OR agreement_until>?)'
+                : "status='running'"
+            }
+            ${
+              awareness
+                ? `UNION SELECT a.id FROM ${table}_owners o CROSS JOIN LATERAL (
+                  SELECT id FROM ${table}
+                  WHERE world_id=o.world_id AND actor_id=o.slot AND retention_class='sensory'
+                ) a WHERE o.world_id=?`
+                : ''
+            }
+          ) SELECT ${fields.map((name) => `t.${name}`).join(',')}
+          FROM selected s JOIN ${table} t ON t.world_id=? AND t.id=s.id`,
           )
-          .all(head.worldId, head.worldId);
-      } else if (partial && table === 'mind_awareness') {
-        // Owner rows are independent of retained history size; each lateral read seeks
-        // one actor's indexed tail. docs/performance.md#inactive-history-residency
-        rows = await this.db
-          .prepare(
-            `SELECT a.id,a.parent_id,a.slot,a.position,a.payload
-          FROM mind_awareness_owners o CROSS JOIN LATERAL (
-            SELECT id,parent_id,slot,position,payload FROM mind_awareness
-            WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}
-          ) a WHERE o.world_id=?
-          UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness
-          WHERE world_id=? AND agreement_head=1 AND agreement_open=1
-            AND (agreement_until IS NULL OR agreement_until>?)`,
-          )
-          .all(head.worldId, head.worldId, simTime);
+          .all(
+            head.worldId,
+            head.worldId,
+            ...(awareness ? [simTime, head.worldId] : []),
+            head.worldId,
+          );
       } else if (partial && table === 'mind_memories') {
         rows = await this.db
           .prepare(
             `
-          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND at>=?
+          SELECT ${fields.join(',')} FROM mind_memories WHERE world_id=? AND at>=?
           UNION ALL
-          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND unresolved=1 AND at<?
+          SELECT ${fields.join(',')} FROM mind_memories WHERE world_id=? AND unresolved=1 AND at<?
           ORDER BY parent_id,position`,
           )
           .all(head.worldId, cutoff, head.worldId, cutoff);
       } else if (!partial && !objectPredicate && table !== 'world_hot_events') {
         // Full recovery remains explicit, but each database transfer stays bounded.
         // Large PostgreSQL histories must not become one timeout-sized result.
-        for await (const row of tableRows(this.db, table, head.worldId)) rows.push(row);
+        for await (const row of tableRows(this.db, table, head.worldId, 'retained')) rows.push(row);
       } else {
         rows = await this.db
           .prepare(
             table === 'world_hot_events'
               ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
+              : `SELECT ${fields.join(',')} FROM ${table} t WHERE world_id=?${liveEvidenceRowSql(table) ? ` AND ${liveEvidenceRowSql(table)}` : ''}${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
           )
           .all(head.worldId);
       }
@@ -911,18 +1705,118 @@ export class WorldRecords {
         siblings.sort((a, b) => Number(a['position']) - Number(b['position']));
       groups.set(table, parents);
     }
+    const nextPositions = active
+      ? await this.readOrdinalHighwaters(head.worldId, [...HISTORY_TABLES, ...HISTORY_MAP_TABLES])
+      : new Map<string, number>();
+    return { head, groups, nextPositions };
+  }
+  /** Indexed metadata only. Omitted bodies must never make a native append
+   * reuse a durable ordinal; this is the same predecessor seek used by Source
+   * partial history, also usable for native partial current-value collections. */
+  async readOrdinalHighwaters(worldId: string, tables: Iterable<string>) {
     const nextPositions = new Map<string, number>();
-    if (active)
-      for (const table of [...HISTORY_TABLES, ...HISTORY_MAP_TABLES]) {
-        for (const row of await this.db
-          .prepare(
-            `SELECT o.id AS parent_id,t.position+1 AS next FROM ${RECORD_PARENTS.get(table)!} o
+    for (const table of tables) {
+      const parent = RECORD_PARENTS.get(table);
+      if (!RECORD_NODES.has(table) || !parent)
+        throw new Error('Current ordinal selection has no registered parent.');
+      for (const row of await this.db
+        .prepare(
+          `SELECT o.id AS parent_id,t.position+1 AS next FROM ${parent} o
              CROSS JOIN LATERAL (SELECT position FROM ${table} WHERE world_id=o.world_id AND parent_id=o.id ORDER BY position DESC LIMIT 1) t
              WHERE o.world_id=?`,
-          )
-          .all(head.worldId))
-          nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
-      }
+        )
+        .all(worldId))
+        nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
+    }
+    return nextPositions;
+  }
+  /** Physical cardinality can prove that an actual filtered selection omitted
+   * no rows. It does not hydrate cold bodies or certify an unrelated subset. */
+  async readRecordCounts(worldId: string, tables: Iterable<string>) {
+    const counts = new Map<string, number>();
+    for (const table of tables) {
+      if (!RECORD_NODES.has(table)) throw new Error('Current count has no registered table.');
+      const row = await this.db
+        .prepare(`SELECT count(*) AS n FROM ${table} WHERE world_id=?`)
+        .get(worldId);
+      const count = Number(row?.['n']);
+      if (!Number.isSafeInteger(count) || count < 0)
+        throw new Error('Current record count exceeds its supported range.');
+      counts.set(table, count);
+    }
+    return counts;
+  }
+  /** Metadata only; these directories preserve cold receipt identity without
+   * making every physical history block resident. */
+  async readTemporalDirectories(worldId: string) {
+    return this.db
+      .prepare(
+        `SELECT p.actor_id,p.physical_life,p.receipt_epoch,p.first_batch_order,p.first_entry,p.first_member,
+          p.last_batch_order,p.last_entry,p.last_member,p.charge_directory
+        FROM mind_temporal_pages p JOIN mind_temporal_actors a ON a.world_id=p.world_id AND a.actor_id=p.actor_id
+        WHERE p.world_id=? AND NOT ${temporalBlockExpiredSql('p', 'a')}
+        ORDER BY p.actor_id,p.first_batch_order,p.first_entry,p.first_member,p.id`,
+      )
+      .all(worldId);
+  }
+  /** The same byte-tail selection serves Source and native cold restoration.
+   * Decoding and current reference closure remain with their actual owners. */
+  async readTemporalTail(worldId: string, maximum: number) {
+    if (!Number.isSafeInteger(maximum) || maximum < 0)
+      throw new Error('Temporal resident tail requires a finite byte allowance.');
+    return this.db
+      .prepare(
+        `SELECT c.* FROM mind_temporal_actors a CROSS JOIN LATERAL (
+          WITH RECURSIVE selected AS (
+            (SELECT p.*,p.encoded_bytes AS resident_bytes FROM mind_temporal_pages p
+              WHERE p.world_id=a.world_id AND p.actor_id=a.actor_id
+              ORDER BY p.first_batch_order DESC,p.first_entry DESC,p.first_member DESC,p.id DESC LIMIT 1)
+            UNION ALL
+            SELECT next.*,prior.resident_bytes+next.encoded_bytes FROM selected prior
+              CROSS JOIN LATERAL (SELECT p.* FROM mind_temporal_pages p
+                WHERE p.world_id=a.world_id AND p.actor_id=a.actor_id
+                  AND (p.first_batch_order,p.first_entry,p.first_member,p.id)<(prior.first_batch_order,prior.first_entry,prior.first_member,prior.id)
+                ORDER BY p.first_batch_order DESC,p.first_entry DESC,p.first_member DESC,p.id DESC LIMIT 1) next
+              WHERE prior.resident_bytes<?
+          ) SELECT * FROM selected
+        ) c WHERE a.world_id=? ORDER BY c.actor_id,c.first_batch_order,c.first_entry,c.first_member,c.id`,
+      )
+      .all(maximum, worldId);
+  }
+  /** Read hot pointers and their exact original bodies at the caller's fixed cut.
+   * Source startup supplies dependencies to select its recent and pinned rows.
+   * Native startup and Load omit that filter and admit the complete hot family. */
+  async readHotEvents(worldId: string, dependencies?: readonly string[]) {
+    const missing = await this.db
+      .prepare(
+        `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
+      )
+      .get(worldId);
+    if (missing) throw new Error('Active history references a missing source; recovery refused.');
+    const selection =
+      dependencies === undefined
+        ? ''
+        : `AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT ${HOT_EVENT_RECENT_ROWS}) OR h.id IN (SELECT value FROM jsonb_array_elements_text(?::jsonb)))`;
+    const rows = await this.db
+      .prepare(
+        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.id AS event_id,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? ${selection} ORDER BY t.position`,
+      )
+      .all(worldId, ...(dependencies === undefined ? [] : [worldId, JSON.stringify(dependencies)]));
+    const count = Number(
+      (
+        await this.db
+          .prepare('SELECT COUNT(*) AS n FROM world_hot_events WHERE world_id=?')
+          .get(worldId)
+      )?.['n'],
+    );
+    return { rows, count };
+  }
+  private async readRecords(
+    active: boolean,
+  ): Promise<{ revision: number; state: SavedWorld } | null> {
+    const captured = await this.readCurrentRows(active, 'source');
+    if (!captured) return null;
+    const { head, groups, nextPositions } = captured;
     const state = assembleWorldRecords(
       groups,
       head.worldId,
@@ -930,22 +1824,49 @@ export class WorldRecords {
       nextPositions,
       WORLD_RECORD_SCHEMA,
     );
+    if (active && state.world.experience?.temporal)
+      restoreTemporalDirectories(state.world, await this.readTemporalDirectories(head.worldId));
+    if (active && state.world.receivedValues) {
+      const received = state.world.receivedValues;
+      const temporal = state.world.experience?.temporal;
+      const maximum = HOT_TEMPORAL_BYTES;
+      // Load each actor's bounded physical tail; older decoding seeds stay in
+      // their self-contained blocks and current knowledge has its own support.
+      // docs/save-and-load.md#shared-temporal-evidence-continuation
+      const references = new Set(referencedReceivedValues(state.world).keys());
+      const pages = temporal ? await this.readTemporalTail(head.worldId, maximum) : [];
+      const byActor = new Map<string, typeof pages>();
+      for (const row of pages) {
+        const actorId = String(row['actor_id']);
+        const selected = byActor.get(actorId) ?? [];
+        selected.push(row);
+        byActor.set(actorId, selected);
+      }
+      for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
+        const selected = byActor.get(actorId) ?? [];
+        actor.pages = selected.map(readTemporalPageRecord);
+        for (const chunk of actor.pages)
+          for (const id of temporalPageReferences(chunk)) references.add(id);
+      }
+      for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
+        for (const row of await this.db
+          .prepare(
+            'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
+          .all(head.worldId, ids.slice(offset, offset + 800))) {
+          const source = JSON.parse(String(row['payload'])) as unknown as ReceivedValue;
+          received.sources[source.id] = source;
+        }
+    }
+    if (active)
+      for (const actor of Object.values(state.world.experience?.temporal?.actors ?? {}))
+        for (const chunk of actor.pages) validateTemporalPageSources(chunk, state.world);
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
-      const missing = await this.db
-        .prepare(
-          `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
-        )
-        .get(head.worldId);
-      if (missing) throw new Error('Active history references a missing source; recovery refused.');
-      const ids = [...hotEventDependencies(state.world)];
-      const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
-      const rows = await this.db
-        .prepare(
-          `SELECT t.position,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
-        )
-        .all(head.worldId, head.worldId, JSON.stringify(ids));
+      const { rows, count } = await this.readHotEvents(head.worldId, [
+        ...hotEventDependencies(state.world),
+      ]);
       state.world.events = rows.map((row) => JSON.parse(String(row['payload'])));
       historyPositions.set(state.world.events, {
         positions: new Map(
@@ -953,28 +1874,150 @@ export class WorldRecords {
         ),
         next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
       });
-      const count = Number(
-        (
-          await this.db
-            .prepare('SELECT COUNT(*) AS n FROM world_hot_events WHERE world_id=?')
-            .get(head.worldId)
-        )?.['n'],
-      );
       const removed = count - state.world.events.length;
       if (removed < 0) throw new Error('Invalid active event coverage.');
       if (removed) state.world.archivedEventCount = (state.world.archivedEventCount ?? 0) + removed;
       this.needsHotPrune ||= removed > 0;
     }
-    return { revision: applied ? head.appliedRevision : head.revision, state };
+    await this.auditRetentionTotals(state, groups);
+    return { revision: head.revision, state };
   }
-  async pruneActiveEvents(state: SavedWorld): Promise<void> {
+  /** Cold bodies stay cold: independently sum canonical metadata in the same
+   * snapshot so a damaged header cannot evade age/space maintenance after load. */
+  private async auditRetentionTotals(
+    state: SavedWorld,
+    groups: Map<string, Map<string, JsonRecord[]>>,
+  ): Promise<void> {
+    const actors = state.world.experience?.temporal?.actors;
+    if (!actors || !Object.keys(actors).length) return;
+    if (
+      await this.db
+        .prepare(
+          "SELECT 1 AS invalid FROM mind_source_versions WHERE world_id=? AND (source_kind NOT IN ('awareness','memory','summary','perspective') OR (source_kind='perspective' AND retention_class<>'external-story') OR logical_bytes<>octet_length(payload)) LIMIT 1",
+        )
+        .get(state.world.id)
+    )
+      throw new Error('Invalid retained source family or body charge.');
+    const totals = await this.db
+      .prepare(
+        `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
+      ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\nUNION ALL ')}
+      UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
+      UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class
+    ) canonical GROUP BY actor_id,category`,
+      )
+      .all(...Array(5).fill(state.world.id));
+    const indexed = new Map(
+      totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
+    );
+    const add = (actorId: string, category: string, bytes: number, count: number) => {
+      if (!count) return;
+      const key = JSON.stringify([actorId, category]),
+        before = indexed.get(key);
+      indexed.set(key, {
+        actor_id: actorId,
+        category,
+        bytes: Number(before?.['bytes'] ?? 0) + bytes,
+        count: Number(before?.['count'] ?? 0) + count,
+      });
+    };
+    // Both families are already fully loaded by this same snapshot. Read their
+    // canonical fields from that owner, and charge the original SQL bytes.
+    // Independent domain validation still runs before the repository admits it.
+    // PostgreSQL json/jsonb field extraction rejects an unrelated isolated
+    // UTF-16 unit in quoted prose, which is valid JavaScript/current-format data.
+    for (const rows of groups.get('mind_knowledge_documents')?.values() ?? []) {
+      const actorId = String(rows[0]?.['actor_id']);
+      const documents = state.world.actorKnowledge?.[actorId];
+      let bytes = 0,
+        count = 0;
+      for (const row of rows)
+        if (documents?.[String(row['slot'])]?.origin === 'actor-edit') {
+          bytes += Buffer.byteLength(String(row['payload']));
+          count++;
+        }
+      add(actorId, 'optional', bytes, count);
+    }
+    for (const rows of groups.get('mind_learned_capabilities')?.values() ?? []) {
+      const actorId = String(rows[0]?.['actor_id']);
+      const knowledge = state.world.knowledge[actorId];
+      let bytes = 0,
+        count = 0;
+      for (const row of rows) {
+        // The row identity names the recipe; its slot indexes the assembled list.
+        const record = knowledge?.[Number(row['slot'])];
+        if (record && record.source !== 'authored') {
+          bytes += Buffer.byteLength(String(row['payload']));
+          count++;
+        }
+      }
+      add(actorId, 'required', bytes, count);
+    }
+    // Recognition is fully resident on activation. Its selected-world owner
+    // separates learned facts from the bounded liveness locator; SQL's raw body
+    // length would charge housekeeping as knowledge and disagree with admission.
+    for (const [actorId, identities] of Object.entries(state.world.observerIdentities ?? {})) {
+      let bytes = 0,
+        count = 0;
+      for (const identity of Object.values(identities))
+        if (identity.retained && !identity.authored) {
+          bytes += Buffer.byteLength(JSON.stringify(identity));
+          count++;
+        }
+      if (!count) continue;
+      const key = JSON.stringify([actorId, 'optional']),
+        before = indexed.get(key);
+      indexed.set(key, {
+        actor_id: actorId,
+        category: 'optional',
+        bytes: Number(before?.['bytes'] ?? 0) + bytes,
+        count: Number(before?.['count'] ?? 0) + count,
+      });
+    }
+    const versionTotals = await this.db
+      .prepare(
+        "SELECT actor_id,retention_class,SUM(logical_bytes) AS bytes,COUNT(*) AS count,COUNT(*) FILTER(WHERE logical_bytes<>octet_length(payload))AS invalid FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class",
+      )
+      .all(state.world.id);
+    const versionsByActor = new Map(
+      versionTotals.map((row) => [JSON.stringify([row['actor_id'], row['retention_class']]), row]),
+    );
+    if (
+      versionTotals.some(
+        (row) =>
+          !['optional', 'required', 'speech'].includes(String(row['retention_class'])) ||
+          !actors[String(row['actor_id'])],
+      )
+    )
+      throw new Error('Invalid exact archived source owner.');
+    for (const [actorId, actor] of Object.entries(actors))
+      for (const category of ['optional', 'required', 'speech'] as const) {
+        const found = versionsByActor.get(JSON.stringify([actorId, category])),
+          counter = actor.accounts?.archives?.[category];
+        if (
+          Number(found?.['invalid'] ?? 0) ||
+          Number(found?.['bytes'] ?? 0) !== (counter?.bytes ?? 0) ||
+          Number(found?.['count'] ?? 0) !== (counter?.count ?? 0)
+        )
+          throw new Error('Exact archived source charges disagree with their retained bodies.');
+      }
+    for (const [actorId, actor] of Object.entries(actors))
+      for (const category of ['optional', 'required', 'speech'] as const) {
+        const counter = actor.accounts?.[category];
+        if (!counter) continue;
+        const total = indexed.get(JSON.stringify([actorId, category]));
+        if (
+          counter.bytes !== Number(total?.['bytes'] ?? 0) ||
+          counter.count !== Number(total?.['count'] ?? 0)
+        )
+          throw new Error('Retained personal counters disagree with their canonical records.');
+      }
+  }
+  async pruneActiveEvents(worldId: string, eventIds: readonly string[]): Promise<void> {
     const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
     await this.db
       .prepare(`DELETE FROM world_hot_events WHERE world_id=? AND id NOT IN (${selector})`)
-      .run(
-        state.world.id,
-        JSON.stringify(state.world.events.map((event) => recordId(['world', 'events', event.id]))),
-      );
+      .run(worldId, JSON.stringify(eventIds));
   }
   /** Explicit dependency materialization for maintenance/edit/save, never a tick read. */
   async activityPage(
@@ -982,30 +2025,52 @@ export class WorldRecords {
     actorId: string,
     after = -1,
     ids?: string[],
-    limit = 128,
-    maxBytes = 4194304,
+    limit: number = ACTIVITY_LEARNING_PREPARATION.page,
+    maxBytes: number = ACTIVITY_LEARNING_PREPARATION.bytes,
   ) {
-    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 4194304)
-      throw new Error('Invalid activity hydration allowance.');
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 128)
-      throw new Error('Invalid activity page size.');
-    if (!Number.isSafeInteger(after) || after < -1 || (ids && ids.length > 512))
-      throw new Error('Invalid activity history scope.');
-    if (ids && !ids.length) return [];
-    // Count bytes inside PostgreSQL before transferring or decoding row bodies.
-    // A contiguous prefix preserves a usable position cursor under byte pressure.
-    const rows = await this.db
-      .prepare(
-        `WITH page AS (
-      SELECT position,payload FROM activity_occurrences WHERE world_id=? AND actor_id=?${ids ? ` AND source_id IN (${ids.map(() => '?').join(',')})` : ' AND position>?'} ORDER BY position LIMIT ${ids ? 512 : limit}
-    ), bounded AS (SELECT position,payload,SUM(octet_length(payload)) OVER (ORDER BY position) AS bytes FROM page)
-    SELECT position,payload FROM bounded WHERE bytes<=? ORDER BY position`,
-      )
-      .all(worldId, actorId, ...(ids ?? [after]), maxBytes);
+    const rows = await this.activityRows(worldId, actorId, after, ids, limit, maxBytes);
     return rows.map((row) => ({
       position: Number(row['position']),
       entry: JSON.parse(String(row['payload'])) as import('@open-legend/domain').ActivityOccurrence,
     }));
+  }
+
+  /** Original canonical columns, shared with native dependency hydration. The
+   * caller retains its fixed SQL/pending cut; this read creates no row identity. */
+  async activityRows(
+    worldId: string,
+    actorId: string,
+    after = -1,
+    ids?: readonly string[],
+    limit: number = ACTIVITY_LEARNING_PREPARATION.page,
+    maxBytes: number = ACTIVITY_LEARNING_PREPARATION.bytes,
+  ) {
+    const limits = ACTIVITY_LEARNING_PREPARATION;
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > limits.bytes)
+      throw new Error('Invalid activity hydration allowance.');
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > limits.page)
+      throw new Error('Invalid activity page size.');
+    if (!Number.isSafeInteger(after) || after < -1 || (ids && ids.length > limits.rows))
+      throw new Error('Invalid activity history scope.');
+    if (ids && !ids.length) return [];
+    // Count bytes inside PostgreSQL before transferring or decoding row bodies.
+    // A contiguous prefix preserves a usable position cursor under byte pressure.
+    const columns = [
+      'id',
+      'parent_id',
+      'slot',
+      'position',
+      'payload',
+      ...Object.keys(RECORD_NODES.get('activity_occurrences')!.columns!),
+    ].join(',');
+    return this.db
+      .prepare(
+        `WITH page AS (
+      SELECT ${columns} FROM activity_occurrences WHERE world_id=? AND actor_id=?${ids ? ` AND source_id IN (${ids.map(() => '?').join(',')})` : ' AND position>?'} ORDER BY position LIMIT ${ids ? limits.rows : limit}
+    ), bounded AS (SELECT ${columns},SUM(octet_length(payload)) OVER (ORDER BY position) AS bytes FROM page)
+    SELECT ${columns} FROM bounded WHERE bytes<=? ORDER BY position`,
+      )
+      .all(worldId, actorId, ...(ids ?? [after]), maxBytes);
   }
 
   withActivityPage(
@@ -1411,6 +2476,77 @@ export class WorldRecords {
 }
 
 /** Reuse the canonical codec for database recovery and streamed checkpoints. */
+function compareTemporalRows(a: Record<string, unknown>, b: Record<string, unknown>): number {
+  return (
+    Number(a['first_batch_order']) - Number(b['first_batch_order']) ||
+    Number(a['first_entry']) - Number(b['first_entry']) ||
+    Number(a['first_member']) - Number(b['first_member'])
+  );
+}
+/** Canonical directories are the only cold recent accounting input. This also
+ * establishes the disjoint range invariant required by direct predecessor seeks. */
+function restoreTemporalDirectories(
+  world: SavedWorld['world'],
+  rows: readonly Record<string, unknown>[],
+): void {
+  const directories = temporalDirectoriesFromRows(
+    Object.keys(world.experience?.temporal?.actors ?? {}),
+    rows,
+  );
+  for (const [actorId, selected] of Object.entries(directories))
+    restoreReceivedRecentDirectory(world, actorId, selected);
+}
+export function temporalDirectoriesFromRows(
+  actors: Iterable<string>,
+  rows: readonly Record<string, unknown>[],
+): Record<string, ReceivedChargeDirectory[]> {
+  const actorIds = new Set(actors);
+  const result = Object.create(null) as Record<string, ReceivedChargeDirectory[]>;
+  const byActor = new Map<string, Record<string, unknown>[]>();
+  for (const row of rows) {
+    const actorId = String(row['actor_id']),
+      selected = byActor.get(actorId) ?? [];
+    if (!actorIds.has(actorId)) throw new Error('Temporal block has no actor owner.');
+    selected.push(row);
+    byActor.set(actorId, selected);
+  }
+  for (const actorId of actorIds) {
+    const selected = (byActor.get(actorId) ?? []).sort(compareTemporalRows);
+    const directories: ReceivedChargeDirectory[] = [];
+    let previous: [number, number, number] | undefined;
+    for (const row of selected) {
+      const first: [number, number, number] = [
+        Number(row['first_batch_order']),
+        Number(row['first_entry']),
+        Number(row['first_member']),
+      ];
+      const last: [number, number, number] = [
+        Number(row['last_batch_order']),
+        Number(row['last_entry']),
+        Number(row['last_member']),
+      ];
+      const compare = (a: readonly number[], b: readonly number[]) =>
+        a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
+      if (
+        ![...first, ...last].every((value) => Number.isSafeInteger(value) && value >= 0) ||
+        compare(first, last) > 0 ||
+        (previous && compare(previous, first) >= 0)
+      )
+        throw new Error('Received block address ranges overlap or are invalid.');
+      previous = last;
+      const directory = JSON.parse(String(row['charge_directory'])) as ReceivedChargeDirectory;
+      if (
+        directory.actorId !== actorId ||
+        directory.physicalLife !== Number(row['physical_life']) ||
+        directory.epoch !== row['receipt_epoch']
+      )
+        throw new Error('Foreign received charge directory.');
+      directories.push(directory);
+    }
+    result[actorId] = directories;
+  }
+  return result;
+}
 export function assembleWorldRecords(
   groups: Map<string, Map<string, JsonRecord[]>>,
   worldId: string,
@@ -1419,12 +2555,16 @@ export function assembleWorldRecords(
   schema = WORLD_RECORD_SCHEMA,
 ): SavedWorld {
   let consumed = 0;
+  const personalRows: Array<{ node: RecordNode; row: JsonRecord; value: Value }> = [];
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
-    const value: Value = JSON.parse(String(row['payload']));
+    const value: Value = node.decodeRow ? node.decodeRow(row) : JSON.parse(String(row['payload']));
+    if (personalMetadataTables.has(node.table)) personalRows.push({ node, row, value });
+
     for (const [field, child] of Object.entries(node.children ?? {})) {
       const placeholder = field === '$' ? value : own(value, field);
       const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];
+      if (child.node.table === 'mind_temporal_pages') children.sort(compareTemporalRows);
       if (placeholder === undefined || placeholder === null) {
         if (children.length) throw new Error('Orphaned gameplay records; recovery refused.');
         continue;
@@ -1446,7 +2586,15 @@ export function assembleWorldRecords(
                   : {};
         const slots = new Set<string>();
         for (const entry of children) {
-          const slot = String(entry[child.mode === 'list' ? 'position' : 'slot']);
+          const slot = String(
+            entry[
+              child.node.table === 'mind_temporal_pages'
+                ? 'slot'
+                : child.mode === 'list'
+                  ? 'position'
+                  : 'slot'
+            ],
+          );
           if (slots.has(slot))
             throw new Error('Duplicate gameplay record placement; recovery refused.');
           slots.add(slot);
@@ -1465,13 +2613,18 @@ export function assembleWorldRecords(
           }
           put(
             target,
-            HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events'
+            child.orderKey ||
+              HISTORY_TABLES.has(child.node.table) ||
+              child.node.table === 'world_hot_events'
               ? String((target as unknown[]).length)
               : String(entry['slot']),
             entryValue,
           );
         }
-        if (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events') {
+        if (
+          !child.orderKey &&
+          (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events')
+        ) {
           const entries = target as unknown[];
           historyPositions.set(entries, {
             complete: !active,
@@ -1500,11 +2653,50 @@ export function assembleWorldRecords(
         if (field !== '$') put(value, field, target);
       }
     }
-    return value;
+    const result = node.decode ? node.decode(value) : value;
+    if (node.table === 'mind_temporal_pages' && row['value_refs'] !== undefined)
+      validateTemporalPageValueReferences(
+        result as unknown as import('@open-legend/domain').TemporalPage,
+        row['value_refs'],
+      );
+    if (
+      receivedCurrentOwnerTables.includes(
+        node.table as (typeof receivedCurrentOwnerTables)[number],
+      ) &&
+      row['value_refs'] !== undefined &&
+      canonicalJson(row['value_refs']) !==
+        canonicalJson(receivedRecordReferences(node.table, result as JsonRecord))
+    )
+      throw new Error('Current received-value membership disagrees with its canonical contact.');
+    return result;
   };
   const roots = groups.get(schema.table)?.get('') ?? [];
   if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');
   const state = assemble(schema, roots[0]!) as SavedWorld;
+  for (const { node, row, value } of personalRows) {
+    const path = JSON.parse(String(row['id'])) as string[];
+    for (const [name, column] of personalMetadataColumns(node)) {
+      const expected = column.value(value as JsonRecord, path, state.world);
+      const actual =
+        typeof expected === 'number'
+          ? Number(row[name])
+          : /^BIGINT\[\]/.test(column.sql) && Array.isArray(row[name])
+            ? row[name].map(Number)
+            : row[name];
+      if (canonicalJson(actual) !== canonicalJson(expected))
+        throw new Error(
+          `Personal record ${node.table}.${name} lookup metadata disagrees with its record.`,
+        );
+    }
+  }
+  if (!active && state.world.experience?.temporal) {
+    for (const actor of Object.values(state.world.experience.temporal.actors))
+      for (const page of actor.pages) validateTemporalPageSources(page, state.world);
+    restoreTemporalDirectories(
+      state.world,
+      [...(groups.get('mind_temporal_pages')?.values() ?? [])].flat(),
+    );
+  }
   if (active) {
     for (const records of Object.values(state.world.appraisals ?? {}))
       markPartialAppraisals(records);

@@ -1,6 +1,6 @@
 # Low-refusal character simulation: evidence, models and product boundaries
 
-**Research date: October 20, 2026. Status: desk research and proposed evaluation criteria; no model adoption, execution or content-policy change.** This dossier examines unwanted censorship in OpenLegend alongside the [technical catalogue](04-models-local-hosted-openrouter.md) and [community-use survey](08-community-adoption-and-model-shortlist.md). Popular general models remain controls, not presumed winners.
+**Research date: October 20, 2026. Status: desk research and proposed evaluation criteria; no model adoption, execution or content-policy change.** This dossier examines unwanted censorship in Open Legend alongside the [technical catalogue](04-models-local-hosted-openrouter.md) and [community-use survey](08-community-adoption-and-model-shortlist.md). Popular general models remain controls, not presumed winners.
 
 ## 1. What freedom means for this game
 
@@ -96,7 +96,7 @@ A model can avoid explicit refusal yet systematically make every person concilia
 
 Use contrasting original characters and varied legitimate reactions. A cautious person may retreat; a loyal person may defend someone; an antagonist may cooperate for self-interest. An actor choosing not to fight is not automatically sanitized. Measure whether differences between characters survive pressure from the player, whether assertions replace witnessed facts, and whether actual conduct agrees with later dialogue.
 
-[XSTest](https://arxiv.org/abs/2308.01263) provides a precedent for distinguishing benign requests that resemble harmful requests from genuinely problematic ones. Reading: primary abstract/version record. It does not cover the complete semantics of embodied fictional choice. Adapt the distinction to our permitted content without importing an unrelated benchmark's policy as OpenLegend's rulebook.
+[XSTest](https://arxiv.org/abs/2308.01263) provides a precedent for distinguishing benign requests that resemble harmful requests from genuinely problematic ones. Reading: primary abstract/version record. It does not cover the complete semantics of embodied fictional choice. Adapt the distinction to our permitted content without importing an unrelated benchmark's policy as Open Legend's rulebook.
 
 ## 7. Adoption interpretation
 

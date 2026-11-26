@@ -10,11 +10,13 @@ export type {
   NetworkScheduler,
   NetworkFetch,
 } from './operation.js';
+export { afterNetworkResourcesClose } from './operation.js';
 export { requestBytes, requestText, consumeHttp } from './http.js';
 export type {
   HttpBytes,
   HttpText,
   HttpRequest,
+  HttpPublication,
   HttpConsumer,
   ConsumeStep,
   NetworkExchange,

@@ -1,6 +1,6 @@
 # G146 — V Rising
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 V Rising is most useful as a study of **making progression a hunt for embodied capability**. Its bosses are not merely gates between equipment tiers: named V Blood carriers physically inhabit the world, and defeating them advances crafting, castle infrastructure, spells, transformations, resources, traversal and access. The vampire fantasy is similarly systemic rather than cosmetic: sunlight makes shadows tactical terrain, blood type changes the current build, humans can become prisoners or servants, and a gothic castle is simultaneously home, factory, transport hub and PvP asset.
 
@@ -495,7 +495,7 @@ Servants are the closest thing to an owned worker system:
 - perform real-time Hunts for resources;
 - can be resurrected after death through their coffin.
 
-They have useful traits/mission affinities rather than deep personal goals, romances or authored companion quests. They are also not a normal follow-the-player combat party. For OpenLegend, this is a clean baseline of **delegation without personhood simulation**.
+They have useful traits/mission affinities rather than deep personal goals, romances or authored companion quests. They are also not a normal follow-the-player combat party. For Open Legend, this is a clean baseline of **delegation without personhood simulation**.
 
 ### Clans
 
@@ -723,13 +723,13 @@ These are qualitative anecdotes, not frequency estimates. In particular, all-tim
 
 **Configurable friction versus default identity.** Server rules can transform grind/travel/raiding so extensively that player accounts may describe meaningfully different games.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Embody the tech tree in people and places
 
 V Blood progression is powerful because "unlock the tannery" is not merely a menu requirement—it means **find and defeat a particular person in the world**.
 
-For OpenLegend:
+For Open Legend:
 - let capabilities live in teachers, institutions, creatures, artifacts and locations;
 - make gaining capability produce history/relationships;
 - avoid making every progression edge an abstract XP purchase.
@@ -743,7 +743,7 @@ V Rising does not stop at vampire cosmetics:
 - home → coffin/castle;
 - boss kill → drink knowledge/power.
 
-OpenLegend should ask whether a world's ontology changes **what ordinary actions mean**.
+Open Legend should ask whether a world's ontology changes **what ordinary actions mean**.
 
 ### 3. The same entity can support several relationships
 
@@ -754,17 +754,17 @@ A human can be:
 - a servant;
 - a combat threat.
 
-This composability is more powerful than separate bespoke entity classes for each system. In OpenLegend, one person should remain one person while different systems expose different affordances.
+This composability is more powerful than separate bespoke entity classes for each system. In Open Legend, one person should remain one person while different systems expose different affordances.
 
 ### 4. Delegation should be earned through world engagement
 
 Servants convert prior capture/exploration/equipment into resource missions. The player does not unlock an abstract "passive income +10%"; they acquire an agent and assign work.
 
-A richer OpenLegend version could preserve personality, consent, goals, relationships and failure rather than treating agents as resource drones.
+A richer Open Legend version could preserve personality, consent, goals, relationships and failure rather than treating agents as resource drones.
 
 ### 5. Environmental weakness can make time/space mechanically alive
 
-Sunlight gives real meaning to moving shadows. OpenLegend can make character-specific vulnerabilities transform the map dynamically.
+Sunlight gives real meaning to moving shadows. Open Legend can make character-specific vulnerabilities transform the map dynamically.
 
 **Limit:** frequent environmental waiting is tedious unless there are alternative routes/actions.
 
@@ -778,13 +778,13 @@ Avoid the opposite extreme: dozens of mandatory rooms that turn architecture int
 
 V Rising demonstrates that death, gathering, PvP, raids, clans and timers are **world rules**, not merely difficulty numbers.
 
-OpenLegend's authored realities can make these explicit, named configurations while preserving which laws the world actually owns.
+Open Legend's authored realities can make these explicit, named configurations while preserving which laws the world actually owns.
 
 ### 8. Know when architecture should end rather than accrete
 
 Stunlock investigated official modding/future expansion and concluded V Rising's current architecture could not support the ambitions at their desired standard. It chose a new project architecture.
 
-This is unusually relevant to OpenLegend: extensibility is valuable, but **not every successful runtime should be forced to host every future idea**. Preserve the world/lessons and create a cleaner seam when foundational constraints are real.
+This is unusually relevant to Open Legend: extensibility is valuable, but **not every successful runtime should be forced to host every future idea**. Preserve the world/lessons and create a cleaner seam when foundational constraints are real.
 
 ### What not to copy automatically
 

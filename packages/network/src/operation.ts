@@ -53,6 +53,12 @@ export function scopeOf(operation: NetworkOperation): OperationScope {
   return scope;
 }
 
+/** Release adapter-owned memory after this operation's actual resources close.
+ * Caller timeout remains independent of an abandoned transport's settlement. */
+export function afterNetworkResourcesClose(operation: NetworkOperation, release: () => void): void {
+  void scopeOf(operation).lease.resourcesClosed().then(release);
+}
+
 export class OperationScope extends FiniteLifetime implements NetworkOperation {
   private readonly operationParent?: OperationScope;
   private resources = 0;
@@ -110,9 +116,13 @@ export class OperationScope extends FiniteLifetime implements NetworkOperation {
   }
 
   markStarted(phase: NetworkPhase): void {
+    this.markPhase(phase, 0);
+  }
+
+  private markPhase(phase: NetworkPhase, ownedHttpActivities: 0 | 1): void {
     this.throwIfStopped();
     if (phase === 'connect' || phase === 'credentials' || phase === 'subprocess') {
-      if (this.httpActivities > 0) {
+      if (this.httpActivities > ownedHttpActivities) {
         throw new NetworkError(
           'capacity_unavailable',
           'admission',
@@ -150,11 +160,23 @@ export class OperationScope extends FiniteLifetime implements NetworkOperation {
     };
   }
 
-  httpActivity(): Activity {
+  httpActivity(): Activity & { start(): void } {
+    this.throwIfStopped();
+    if (this.httpActivities > 0)
+      throw new NetworkError('capacity_unavailable', 'admission', this.dispatch);
     const underlying = this.activity();
     this.httpActivities++;
     let done = false;
+    let started = false;
     return {
+      start: () => {
+        if (done || started)
+          throw new NetworkError('capacity_unavailable', 'admission', this.dispatch);
+        // The real resource is reserved while final application admission is
+        // awaited. Only its own token may mark that resource's transport start.
+        this.markPhase('connect', 1);
+        started = true;
+      },
       finish: () => {
         if (done) return;
         done = true;

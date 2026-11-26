@@ -1,4 +1,6 @@
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
+import { markLexicalIncomplete } from './lexical-coverage.js';
+import { derivedChargeSql } from './memory-derivatives.js';
 import { searchWords } from './text-search.js';
 import { countMetric, gaugeMetric, recordBackgroundFailure } from './performance.js';
 
@@ -8,23 +10,6 @@ const PENDING_ROWS = 65536;
 const PENDING_BYTES = 8 * 1024 * 1024;
 const READ_WAIT_MS = 5000;
 const BACKGROUND_DELAY_MS = 1000;
-export interface MemoryReadControl {
-  signal?: AbortSignal;
-  /** A live caller may shorten this while preparing; the five-second read bound never renews. */
-  readonly deadlineMs?: number;
-}
-
-interface LexicalScope {
-  worldId: string;
-  actorId: string;
-  generation: string;
-}
-interface ReadinessGroup {
-  scope: LexicalScope;
-  required: boolean;
-  subscribers: Set<() => void>;
-}
-
 const lexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
 
 function lexicalVector(text: string): string {
@@ -40,6 +25,80 @@ function lexicalVector(text: string): string {
   return [...words].map(([word, positions]) => `${lexeme(word)}:${positions.join(',')}`).join(' ');
 }
 
+/** The selected finite pending work, including the accepted head. Raw text
+ * transfers through the Rust owner's independent admission against this same
+ * deterministic statement. */
+export function lexicalWorkSql(): string {
+  return `WITH head AS MATERIALIZED (
+          SELECT h.world_id,h.generation,h.revision,p.generation AS projection_generation
+          FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id WHERE h.id=1
+        ), candidates AS MATERIALIZED (
+          SELECT q.* FROM head h JOIN memory_lexical_pending q
+            ON q.world_id=h.world_id AND q.generation=h.generation
+          WHERE h.projection_generation=h.generation
+          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind LIMIT ${BATCH_ROWS}
+        ), sized AS (
+          SELECT q.*,row_number() OVER batch AS ordinal,
+            sum(coalesce(octet_length(r.search_text),0)) OVER batch AS source_bytes
+          FROM candidates q LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
+            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
+          WINDOW batch AS (ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind ROWS UNBOUNDED PRECEDING)
+        ) SELECT h.*,q.actor_id,q.id,q.source_kind,q.source_revision,q.world_revision,q.removing,r.search_text
+          FROM head h LEFT JOIN sized q ON q.ordinal=1 OR q.source_bytes<=${BATCH_BYTES}
+          LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
+            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
+          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind`;
+}
+
+/** Write only claims whose exact account revision is still current, with
+ * the actor's same optional lexical storage admission. */
+export function lexicalWriteSql(requested = '?', world = '?', generation = '?'): string {
+  return `WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(${requested}::jsonb) AS s(actor text,id text,kind text,revision text,vector text,budget bigint)
+        ), offered AS MATERIALIZED (
+        SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision AS source_revision,s.vector::tsvector AS search_vector,s.budget
+        FROM requested s
+        JOIN recall_sources r ON r.actor_id=s.actor AND r.id=s.id AND r.source_kind=s.kind AND r.revision=s.revision
+        WHERE r.world_id=${world} AND s.vector IS NOT NULL AND (SELECT generation FROM world_head WHERE id=1)=${generation}
+        ), sized AS (
+          SELECT d.*,sum(${derivedChargeSql('lexical')}) OVER(PARTITION BY world_id,actor_id ORDER BY id,source_kind ROWS UNBOUNDED PRECEDING) AS charge
+          FROM offered d
+        ), written AS (INSERT INTO memory_lexical_documents
+        SELECT world_id,actor_id,id,source_kind,source_revision,search_vector FROM sized WHERE charge<=budget
+        ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET source_revision=excluded.source_revision,search_vector=excluded.search_vector
+        RETURNING actor_id,id,source_kind)
+        SELECT actor_id,id,source_kind FROM written UNION SELECT d.actor_id,d.id,d.source_kind
+        FROM memory_lexical_documents d JOIN requested s ON d.actor_id=s.actor AND d.id=s.id
+          AND d.source_kind=s.kind AND d.source_revision=s.revision WHERE d.world_id=${world}`;
+}
+
+/** Complete only the exact queue keys, after the prepared source effects.
+ * DML CTE reads share the old snapshot, so coverage subtracts completed keys. */
+export function lexicalCompletionSql(
+  requested = '?',
+  world = '?',
+  generation = '?',
+  revision = '?',
+): string {
+  return `WITH claimed AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(${requested}::jsonb) AS s(actor text,id text,kind text,revision text,"worldRevision" bigint)
+        ), removed_documents AS (
+          DELETE FROM memory_lexical_documents d USING claimed s WHERE d.world_id=${world} AND d.actor_id=s.actor AND d.id=s.id AND d.source_kind=s.kind
+          AND NOT EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind)
+        ), completed AS (
+          DELETE FROM memory_lexical_pending q USING claimed s WHERE q.world_id=${world} AND q.generation=${generation} AND q.actor_id=s.actor AND q.id=s.id
+            AND q.source_kind=s.kind AND q.source_revision=s.revision AND q.world_revision=s."worldRevision"
+          RETURNING q.actor_id,q.id,q.source_kind,q.bytes
+        ), unresolved AS MATERIALIZED (
+          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=${world} AND q.generation=${generation}
+          AND NOT EXISTS (SELECT 1 FROM completed c WHERE c.actor_id=q.actor_id AND c.id=q.id AND c.source_kind=q.source_kind) LIMIT 1
+        ) UPDATE memory_lexical_progress SET
+          covered_revision=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN ${revision} ELSE covered_revision END,
+          pending_rows=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_rows-(SELECT count(*) FROM completed)) END,
+          pending_bytes=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_bytes-coalesce((SELECT sum(bytes) FROM completed),0)) END
+          WHERE world_id=${world} AND generation=${generation} RETURNING NOT EXISTS(SELECT 1 FROM unresolved) AS ready`;
+}
+
 export class LexicalPreparationError extends Error {
   override readonly name = 'LexicalPreparationError';
   constructor() {
@@ -47,6 +106,64 @@ export class LexicalPreparationError extends Error {
       'Memory search preparation is temporarily unavailable. Exact evidence remains saved; retry the search.',
     );
   }
+}
+
+/** Exact pending-key deltas share the source transaction. Replacing a queued
+ * revision coalesces one row and cannot manufacture storage pressure. */
+export function enqueueLexicalSql(source: string, removing: boolean): string {
+  if (removing)
+    return `, removed_documents AS (
+    DELETE FROM memory_lexical_documents d USING ${source} s WHERE d.world_id=s.world_id
+      AND d.actor_id=s.actor_id AND d.id=s.id AND d.source_kind=s.source_kind
+  ), removed_pending AS (
+    DELETE FROM memory_lexical_pending q USING ${source} s WHERE q.world_id=s.world_id
+      AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind RETURNING q.world_id,q.bytes
+  ), delta AS (SELECT world_id,count(*) AS rows,sum(bytes) AS bytes FROM removed_pending GROUP BY world_id)
+  UPDATE memory_lexical_progress p SET pending_rows=greatest(0,p.pending_rows-d.rows),
+    pending_bytes=greatest(0,p.pending_bytes-d.bytes) FROM delta d WHERE p.world_id=d.world_id
+    RETURNING p.pending_rows,p.pending_bytes`;
+  return `, previous_pending AS MATERIALIZED (
+    SELECT q.world_id,q.actor_id,q.id,q.source_kind,q.bytes FROM memory_lexical_pending q
+    JOIN ${source} s ON s.world_id=q.world_id AND s.actor_id=q.actor_id AND s.id=q.id AND s.source_kind=q.source_kind
+  ), candidates AS MATERIALIZED (
+    SELECT s.*,h.generation,h.revision AS world_revision,p.id AS previous_id,
+      coalesce(p.bytes,0) AS previous_bytes,coalesce(g.pending_rows,0) AS pending_rows,coalesce(g.pending_bytes,0) AS pending_bytes,
+      octet_length(s.world_id)+octet_length(s.actor_id)+octet_length(s.id)+octet_length(s.source_kind)+octet_length(s.revision)+octet_length(h.generation)+512 AS bytes
+    FROM ${source} s JOIN world_head h ON h.world_id=s.world_id
+    LEFT JOIN previous_pending p ON p.world_id=s.world_id AND p.actor_id=s.actor_id AND p.id=s.id AND p.source_kind=s.source_kind
+    LEFT JOIN memory_lexical_progress g ON g.world_id=s.world_id WHERE s.search_text<>''
+  ), ranked AS (
+    SELECT c.*,sum(CASE WHEN previous_id IS NULL THEN 1 ELSE 0 END) OVER admission AS new_rows,
+      sum(greatest(0,bytes-previous_bytes)) OVER admission AS added_bytes FROM candidates c
+    WINDOW admission AS (PARTITION BY world_id ORDER BY actor_id,id,source_kind ROWS UNBOUNDED PRECEDING)
+  ), queued AS (
+    INSERT INTO memory_lexical_pending
+    SELECT world_id,actor_id,id,source_kind,revision,generation,world_revision,false,bytes FROM ranked
+    WHERE (previous_id IS NOT NULL OR pending_rows+new_rows<=${PENDING_ROWS}) AND pending_bytes+added_bytes<=${PENDING_BYTES}
+    ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET
+      source_revision=excluded.source_revision,generation=excluded.generation,world_revision=excluded.world_revision,
+      removing=excluded.removing,bytes=excluded.bytes
+    RETURNING world_id,actor_id,id,source_kind,generation,world_revision,bytes
+  ), queue_delta AS (
+    SELECT q.world_id,min(q.world_revision)-1 AS covered_revision,
+      count(*)-count(p.id) AS pending_rows,sum(q.bytes)-coalesce(sum(p.bytes),0) AS pending_bytes
+    FROM queued q LEFT JOIN previous_pending p ON p.world_id=q.world_id AND p.actor_id=q.actor_id AND p.id=q.id AND p.source_kind=q.source_kind
+    GROUP BY q.world_id
+  ), coverage AS (
+    SELECT s.world_id,h.generation,min(h.revision)-1 AS covered_revision,
+      coalesce(array_agg(DISTINCT s.actor_id) FILTER(WHERE s.lexical_expected AND
+        (s.search_text='' OR NOT EXISTS(SELECT 1 FROM queued q WHERE q.world_id=s.world_id AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind))),ARRAY[]::text[]) AS incomplete_actors
+    FROM ${source} s JOIN world_head h ON h.world_id=s.world_id GROUP BY s.world_id,h.generation
+  ) INSERT INTO memory_lexical_progress
+    SELECT c.world_id,c.generation,coalesce(q.covered_revision,c.covered_revision),
+      coalesce(q.pending_rows,0),coalesce(q.pending_bytes,0),c.incomplete_actors
+    FROM coverage c LEFT JOIN queue_delta q ON q.world_id=c.world_id WHERE true
+    ON CONFLICT(world_id) DO UPDATE SET
+      covered_revision=least(memory_lexical_progress.covered_revision,excluded.covered_revision),
+      pending_rows=memory_lexical_progress.pending_rows+excluded.pending_rows,
+      pending_bytes=memory_lexical_progress.pending_bytes+excluded.pending_bytes,
+      incomplete_actors=ARRAY(SELECT DISTINCT unnest(memory_lexical_progress.incomplete_actors||excluded.incomplete_actors))
+    RETURNING pending_rows,pending_bytes`;
 }
 
 /** Durable derived work shares the existing database writer, never world mutation
@@ -57,89 +174,52 @@ export class LexicalProjection {
   private closed = false;
   private failed = false;
   private pendingKnown = true;
-  private pendingEpoch = 0;
-  private readonly readers = new Map<string, ReadinessGroup>();
-  private preferRequired = true;
+  private required = false;
   private backgroundAllowed = () => true;
+  private derivedAdmission: (worldId: string, actors: Iterable<string>) => Promise<void> =
+    async () => {};
+  private optionalAdmission: (
+    worldId: string,
+    actors: Iterable<string>,
+  ) => Promise<ReadonlyMap<string, number>> = async (_world, actors) =>
+    new Map([...actors].map((actor) => [actor, Number.MAX_SAFE_INTEGER]));
+  setOptionalAdmission(
+    callback: (worldId: string, actors: Iterable<string>) => Promise<ReadonlyMap<string, number>>,
+  ): void {
+    this.optionalAdmission = callback;
+  }
   constructor(private readonly db: SqlDatabase) {}
+  setDerivedAdmission(
+    callback: (worldId: string, actors: Iterable<string>) => Promise<void>,
+  ): void {
+    this.derivedAdmission = callback;
+  }
 
   setBackgroundAdmission(allowed: () => boolean): void {
     this.backgroundAllowed = allowed;
   }
 
-  async initialize() {
-    await this.db.exec(`
-      CREATE TABLE IF NOT EXISTS memory_lexical_documents (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,id TEXT NOT NULL,source_kind TEXT NOT NULL,
-        source_revision TEXT NOT NULL,search_vector tsvector NOT NULL,
-        PRIMARY KEY(world_id,actor_id,id,source_kind));
-      CREATE INDEX IF NOT EXISTS memory_lexical_vector ON memory_lexical_documents USING GIN(search_vector);
-      CREATE TABLE IF NOT EXISTS memory_lexical_pending (
-        world_id TEXT NOT NULL,actor_id TEXT NOT NULL,id TEXT NOT NULL,source_kind TEXT NOT NULL,
-        source_revision TEXT NOT NULL,generation TEXT NOT NULL,world_revision BIGINT NOT NULL,
-        removing BOOLEAN NOT NULL,bytes BIGINT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,id,source_kind));
-      CREATE INDEX IF NOT EXISTS memory_lexical_due ON memory_lexical_pending(world_id,world_revision,actor_id,id,source_kind);
-      CREATE TABLE IF NOT EXISTS memory_lexical_progress (
-        world_id TEXT PRIMARY KEY,generation TEXT NOT NULL,covered_revision BIGINT NOT NULL,
-        pending_rows BIGINT NOT NULL,pending_bytes BIGINT NOT NULL);
-    `);
-  }
-
-  /** Append after the caller's `WITH changed AS (... RETURNING exact source fields)`.
-   * Metering deliberately overcounts replaced keys until drain, conservatively bounding
-   * debt without another round trip or a growing COUNT scan on every world save.
-   * Revoke this revision's coverage: saturation may have drained an earlier source
-   * batch in the same canonical transaction before this later batch is appended. */
-  enqueueSql(source: string, removing: boolean): string {
-    const revision = this.db.projectionRevision ?? 'h.revision';
-    return `, queued AS (
-      INSERT INTO memory_lexical_pending
-      SELECT s.world_id,s.actor_id,s.id,s.source_kind,s.revision,h.generation,${revision},${removing},
-        octet_length(s.world_id)+octet_length(s.actor_id)+octet_length(s.id)+octet_length(s.source_kind)+octet_length(s.revision)+octet_length(h.generation)+512
-      FROM ${source} s JOIN world_head h ON h.world_id=s.world_id
-      ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET
-        source_revision=excluded.source_revision,generation=excluded.generation,world_revision=excluded.world_revision,
-        removing=excluded.removing,bytes=excluded.bytes RETURNING world_id,generation,world_revision,bytes
-    ) INSERT INTO memory_lexical_progress
-      SELECT world_id,generation,min(world_revision)-1,count(*),sum(bytes) FROM queued GROUP BY world_id,generation
-      ON CONFLICT(world_id) DO UPDATE SET
-        covered_revision=least(memory_lexical_progress.covered_revision,excluded.covered_revision),
-        pending_rows=memory_lexical_progress.pending_rows+excluded.pending_rows,
-        pending_bytes=memory_lexical_progress.pending_bytes+excluded.pending_bytes
-      RETURNING pending_rows,pending_bytes`;
-  }
-
   async admit(progress: Record<string, unknown> | undefined) {
     if (progress && Number(progress['pending_rows']) > 0) {
-      this.markPending();
+      this.pendingKnown = true;
       gaugeMetric('memory.lexicalPendingRows', Number(progress['pending_rows']));
       gaugeMetric('memory.lexicalPendingBytes', Number(progress['pending_bytes']));
     }
-    while (
-      progress &&
-      (Number(progress['pending_rows']) > PENDING_ROWS ||
-        Number(progress['pending_bytes']) > PENDING_BYTES)
-    ) {
-      await this.batch();
-      progress = await this.db
-        .prepare(
-          'SELECT pending_rows,pending_bytes FROM memory_lexical_progress WHERE world_id=(SELECT world_id FROM world_head WHERE id=1)',
-        )
-        .get();
-    }
+    // Canonical source saving never drains optional search work. Saturation pauses
+    // optional admission; exact source retrieval remains independent of this index.
   }
 
   /** A different owned application session committed source work. This wakes
    * optional preparation without promoting it to a required foreground read. */
   sourcesCommitted(): void {
-    this.markPending();
+    this.pendingKnown = true;
     this.committed();
   }
 
   committed(force = false) {
     if (force) {
-      this.markPending();
+      this.required = true;
+      this.pendingKnown = true;
       this.cancelScheduled();
     }
     if (this.closed || this.active || !this.pendingKnown) return;
@@ -164,14 +244,18 @@ export class LexicalProjection {
       let more = true;
       while (more && !this.closed) {
         transactionEntered = false;
-        if (!this.hasRequiredReaders() && !this.backgroundAllowed()) return;
-        more = await this.db.transaction(async () => {
+        if (!this.required && !this.backgroundAllowed()) return;
+        const transaction =
+          this.db.maintenanceTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+        more = await transaction(async () => {
           transactionEntered = true;
-          // The journal fence has settled and the primary writer is now held.
-          // A save or command may have arrived while that fence was awaited.
-          if (!this.hasRequiredReaders() && !this.backgroundAllowed()) return false;
-          return this.batch(this.nextRequiredScope());
+          // A save or command may have arrived while this writer slot was awaited.
+          if (!this.required && !this.backgroundAllowed()) return false;
+          return this.batch();
         });
+        // One background slice per opportunity; an explicit bounded search may
+        // continue preparing its captured required coverage outside mutation.
+        if (!this.required) break;
       }
     });
     this.active = operation
@@ -179,28 +263,25 @@ export class LexicalProjection {
         this.failed = true;
         countMetric('memory.lexicalFailures');
         recordBackgroundFailure('memory-search', error, { transactionEntered });
-        this.notifyReaders();
       })
       .finally(() => {
         this.active = undefined;
+        this.required = false;
         // A source commit can enqueue just after the last batch's empty check but
         // before this promise releases ownership. Its kick must not be lost.
-        if (this.pendingKnown && !this.closed && !this.failed)
-          this.committed(this.hasRequiredReaders());
+        if (this.pendingKnown && !this.closed && !this.failed) this.committed();
       });
   }
 
   async close() {
     this.closed = true;
     this.cancelScheduled();
-    this.notifyReaders();
     await this.active;
   }
 
   restored() {
     this.cancelScheduled();
-    this.markPending();
-    this.notifyReaders();
+    this.pendingKnown = true;
   }
 
   private cancelScheduled() {
@@ -208,180 +289,84 @@ export class LexicalProjection {
     this.scheduled = undefined;
   }
 
-  private markPending() {
-    this.pendingKnown = true;
-    this.pendingEpoch++;
-  }
-
-  private hasRequiredReaders() {
-    for (const group of this.readers.values()) if (group.required) return true;
-    return false;
-  }
-
-  /** Alternate one requested actor batch with ordinary oldest work. Map rotation
-   * keeps several active actors fair without another queue or copied source data. */
-  private nextRequiredScope(): LexicalScope | undefined {
-    if (!this.preferRequired) {
-      this.preferRequired = true;
-      return undefined;
-    }
-    for (const [key, group] of this.readers) {
-      if (!group.required) continue;
-      group.required = false;
-      this.readers.delete(key);
-      this.readers.set(key, group);
-      this.preferRequired = false;
-      return group.scope;
-    }
-    return undefined;
-  }
-
-  private notifyReaders(worldId?: string, generation?: string, actors?: Set<string>) {
-    for (const group of this.readers.values()) {
-      if (
-        worldId !== undefined &&
-        (group.scope.worldId !== worldId ||
-          group.scope.generation !== generation ||
-          (actors && !actors.has(group.scope.actorId)))
-      )
-        continue;
-      for (const notify of group.subscribers) notify();
-    }
-  }
-
-  private async covered(scope: LexicalScope): Promise<boolean> {
+  private async covered(scope: {
+    worldId: string;
+    actorId: string;
+    generation: string;
+  }): Promise<boolean> {
     const row = await this.db
       .prepare(
-        `SELECT h.generation,p.generation IS NOT NULL AND NOT EXISTS (
-          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=h.world_id
-            AND q.generation=h.generation AND q.actor_id=?
-        ) AS ready
+        `SELECT h.generation,?=ANY(p.incomplete_actors) AS incomplete,p.covered_revision IS NOT NULL AND
+        (p.covered_revision>=h.revision OR NOT EXISTS (
+          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=h.world_id AND q.generation=h.generation
+        )) AS ready
       FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id AND p.generation=h.generation
       WHERE h.world_id=?`,
       )
       .get(scope.actorId, scope.worldId);
     if (!row || row['generation'] !== scope.generation) throw new LexicalPreparationError();
-    // Generation reconciliation must finish before an empty actor queue proves
-    // coverage. Exact source changes/pending keys are atomic; other actors' work
-    // cannot invalidate this actor's complete search in the same read snapshot.
+    if (row['incomplete'] === true) {
+      // Forgetting every canonical source makes an empty result provable again.
+      // Otherwise an omitted optional artifact stays honestly unavailable until
+      // complete preparation, including across a restore of the same character.
+      const sources = await this.db
+        .prepare(
+          `SELECT EXISTS(SELECT 1 FROM recall_sources
+        WHERE world_id=? AND actor_id=? AND eligible=1) AS present`,
+        )
+        .get(scope.worldId, scope.actorId);
+      if (sources?.['present'] === true) throw new LexicalPreparationError();
+      return true;
+    }
+    // A clock-only commit advances the world head without changing searchable
+    // sources. Source writes and pending keys commit atomically, so an empty
+    // same-generation queue proves readiness in this snapshot without a writer.
     return row['ready'] === true;
   }
 
   /** Never wait for the writer while retaining an older read snapshot. A caller that
    * supplied its own snapshot must prepare first or receive truthful unavailability. */
   async snapshot<T>(
-    scope: LexicalScope,
+    scope: { worldId: string; actorId: string; generation: string },
     operation: () => Promise<T>,
-    control: MemoryReadControl = {},
   ): Promise<T> {
-    const wallDeadline = Date.now() + READ_WAIT_MS;
-    const monotonicDeadline = performance.now() + READ_WAIT_MS;
-    const remaining = () =>
-      Math.min(
-        wallDeadline - Date.now(),
-        monotonicDeadline - performance.now(),
-        (control.deadlineMs ?? Infinity) - Date.now(),
-      );
-    const current = () => {
-      control.signal?.throwIfAborted();
-      if (this.closed || remaining() <= 0) throw new LexicalPreparationError();
-    };
-    current();
     if (this.db.transactionActive) {
       if (!(await this.covered(scope))) throw new LexicalPreparationError();
-      current();
-      const value = await operation();
-      current();
-      return value;
+      return operation();
     }
-    const key = JSON.stringify([scope.worldId, scope.generation, scope.actorId]);
-    let group = this.readers.get(key);
-    if (!group) {
-      group = { scope, required: false, subscribers: new Set() };
-      this.readers.set(key, group);
-    }
-    let changed = () => {};
-    const notify = () => changed();
-    // Register before reading readiness. A committing final batch between that
-    // read and waiting then resolves this same subscription instead of losing it.
-    group.subscribers.add(notify);
-    try {
-      for (;;) {
-        current();
-        const progress = new Promise<void>((resolve) => {
-          changed = resolve;
-        });
-        const snapshot =
-          this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
-        const result = await snapshot(
-          async (): Promise<{ ready: false } | { ready: true; value: T }> => {
-            current();
-            if (!(await this.covered(scope))) return { ready: false };
-            current();
-            const value = await operation();
-            current();
-            return { ready: true, value };
-          },
-        );
-        current();
-        if (result.ready) return result.value;
-        group.required = true;
-        this.committed(true);
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        let aborted: (() => void) | undefined;
-        try {
-          await Promise.race([
-            progress,
-            new Promise<never>((_, reject) => {
-              timer = setTimeout(
-                () => reject(new LexicalPreparationError()),
-                Math.max(0, remaining()),
-              );
-              if (control.signal) {
-                aborted = () => reject(control.signal!.reason);
-                control.signal.addEventListener('abort', aborted, { once: true });
-                if (control.signal.aborted) aborted();
-              }
-            }),
-          ]);
-        } finally {
-          if (timer) clearTimeout(timer);
-          if (aborted) control.signal?.removeEventListener('abort', aborted);
-        }
-        if (this.failed) throw new LexicalPreparationError();
+    const deadline = Date.now() + READ_WAIT_MS;
+    for (;;) {
+      if (this.closed || Date.now() >= deadline) throw new LexicalPreparationError();
+      const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+      const result = await snapshot(
+        async (): Promise<{ ready: false } | { ready: true; value: T }> =>
+          (await this.covered(scope))
+            ? { ready: true, value: await operation() }
+            : { ready: false },
+      );
+      if (result.ready) return result.value;
+      // Release the old read snapshot before asking the writer to catch up.
+      this.committed(true);
+      const active = this.active;
+      if (this.closed || !active) throw new LexicalPreparationError();
+      const remaining = deadline - Date.now();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          active,
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new LexicalPreparationError()), Math.max(0, remaining));
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
       }
-    } finally {
-      group.subscribers.delete(notify);
-      if (!group.subscribers.size) this.readers.delete(key);
+      if (this.failed || this.closed) throw new LexicalPreparationError();
     }
   }
 
-  private async batch(scope?: LexicalScope): Promise<boolean> {
-    const pendingEpoch = this.pendingEpoch;
-    const rows = await this.db
-      .prepare(
-        `WITH head AS MATERIALIZED (
-          SELECT h.world_id,h.generation,h.revision,p.generation AS projection_generation
-          FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id WHERE h.id=1
-        ), candidates AS MATERIALIZED (
-          SELECT q.* FROM head h JOIN memory_lexical_pending q
-            ON q.world_id=h.world_id AND q.generation=h.generation
-          WHERE h.projection_generation=h.generation
-            ${scope ? 'AND q.actor_id=? AND h.world_id=? AND h.generation=?' : ''}
-          ORDER BY ${scope ? 'q.id,q.source_kind' : 'q.world_revision,q.actor_id,q.id,q.source_kind'} LIMIT ${BATCH_ROWS}
-        ), sized AS (
-          SELECT q.*,row_number() OVER batch AS ordinal,
-            sum(coalesce(octet_length(r.search_text),0)) OVER batch AS source_bytes
-          FROM candidates q LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
-            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
-          WINDOW batch AS (ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind ROWS UNBOUNDED PRECEDING)
-        ) SELECT h.*,q.actor_id,q.id,q.source_kind,q.source_revision,q.world_revision,q.removing,r.search_text
-          FROM head h LEFT JOIN sized q ON q.ordinal=1 OR q.source_bytes<=${BATCH_BYTES}
-          LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
-            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
-          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind`,
-      )
-      .all(...(scope ? [scope.actorId, scope.worldId, scope.generation] : []));
+  private async batch(): Promise<boolean> {
+    const rows = await this.db.prepare(lexicalWorkSql()).all();
     const head = rows[0];
     if (!head) {
       // Startup can precede the first world commit. There is no work to own yet;
@@ -413,18 +398,19 @@ export class LexicalProjection {
         .run(world);
       await this.db
         .prepare(
-          `INSERT INTO memory_lexical_progress
+          `INSERT INTO memory_lexical_progress(world_id,generation,covered_revision,pending_rows,pending_bytes)
         SELECT ?,?,0,count(*),coalesce(sum(bytes),0) FROM memory_lexical_pending WHERE world_id=?
         ON CONFLICT(world_id) DO UPDATE SET generation=excluded.generation,covered_revision=0,
         pending_rows=excluded.pending_rows,pending_bytes=excluded.pending_bytes`,
         )
         .run(world, generation, world);
-      const notify = () => this.notifyReaders();
-      if (this.db.afterCommit) this.db.afterCommit(notify);
-      else notify();
-      return this.batch(scope);
+      return this.batch();
     }
     const selected = rows.filter((row) => row['id'] !== null);
+    const admitted = await this.optionalAdmission(
+      world,
+      new Set(selected.map((row) => String(row['actor_id']))),
+    );
     // Size the bounded key prefix in SQL before transferring bodies. One already
     // admitted oversized source is still processed alone, rather than stranded.
     const claims = selected.map((row) => ({
@@ -439,42 +425,36 @@ export class LexicalProjection {
       countMetric('memory.lexicalBatches');
       const values = selected.map((row, index) => ({
         ...claims[index],
+        budget: admitted.get(String(row['actor_id'])) ?? 0,
         vector:
-          typeof row['search_text'] === 'string' && !row['removing']
+          typeof row['search_text'] === 'string' &&
+          !row['removing'] &&
+          admitted.has(String(row['actor_id']))
             ? lexicalVector(row['search_text'])
             : null,
       }));
-      await this.db
-        .prepare(
-          `INSERT INTO memory_lexical_documents
-        SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision,s.vector::tsvector
-        FROM jsonb_to_recordset(?::jsonb) AS s(actor text,id text,kind text,revision text,vector text)
-        JOIN recall_sources r ON r.actor_id=s.actor AND r.id=s.id AND r.source_kind=s.kind AND r.revision=s.revision
-        WHERE r.world_id=? AND s.vector IS NOT NULL AND (SELECT generation FROM world_head WHERE id=1)=?
-        ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET source_revision=excluded.source_revision,search_vector=excluded.search_vector`,
-        )
-        .run(JSON.stringify(values), world, generation);
+      const written = await this.db
+        .prepare(lexicalWriteSql())
+        .all(JSON.stringify(values), world, generation, world);
+      const stored = new Set(
+        written.map((row) => JSON.stringify([row['actor_id'], row['id'], row['source_kind']])),
+      );
+      await markLexicalIncomplete(this.db, world, [
+        ...new Set(
+          selected
+            .filter(
+              (row) =>
+                !row['removing'] &&
+                typeof row['search_text'] === 'string' &&
+                row['search_text'] !== '' &&
+                !stored.has(JSON.stringify([row['actor_id'], row['id'], row['source_kind']])),
+            )
+            .map((row) => String(row['actor_id'])),
+        ),
+      ]);
     }
     const completed = await this.db
-      .prepare(
-        `WITH claimed AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) AS s(actor text,id text,kind text,revision text,"worldRevision" bigint)
-        ), removed_documents AS (
-          DELETE FROM memory_lexical_documents d USING claimed s WHERE d.world_id=? AND d.actor_id=s.actor AND d.id=s.id AND d.source_kind=s.kind
-          AND NOT EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind)
-        ), completed AS (
-          DELETE FROM memory_lexical_pending q USING claimed s WHERE q.world_id=? AND q.generation=? AND q.actor_id=s.actor AND q.id=s.id
-            AND q.source_kind=s.kind AND q.source_revision=s.revision AND q.world_revision=s."worldRevision"
-          RETURNING q.actor_id,q.id,q.source_kind,q.bytes
-        ), unresolved AS MATERIALIZED (
-          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=? AND q.generation=?
-          AND NOT EXISTS (SELECT 1 FROM completed c WHERE c.actor_id=q.actor_id AND c.id=q.id AND c.source_kind=q.source_kind) LIMIT 1
-        ) UPDATE memory_lexical_progress SET
-          covered_revision=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN ? ELSE covered_revision END,
-          pending_rows=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_rows-(SELECT count(*) FROM completed)) END,
-          pending_bytes=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_bytes-coalesce((SELECT sum(bytes) FROM completed),0)) END
-          WHERE world_id=? AND generation=? RETURNING NOT EXISTS(SELECT 1 FROM unresolved) AS ready`,
-      )
+      .prepare(lexicalCompletionSql())
       .get(
         JSON.stringify(claims),
         world,
@@ -489,15 +469,8 @@ export class LexicalProjection {
     // Data-modifying CTEs share the statement's original snapshot. Coverage must
     // explicitly subtract the exact completed keys, not rescan as if DELETE were visible.
     if (!completed) throw new Error('Search preparation lost its current progress owner.');
-    const pending = completed['ready'] !== true;
-    const publish = () => {
-      // A saturation batch can precede another enqueue in its outer transaction.
-      // Its later commit callback must not clear that newer pending indication.
-      if (pending || pendingEpoch === this.pendingEpoch) this.pendingKnown = pending;
-      this.notifyReaders(world, generation, new Set(claims.map((claim) => String(claim.actor))));
-    };
-    if (this.db.afterCommit) this.db.afterCommit(publish);
-    else publish();
-    return pending;
+    await this.derivedAdmission(world, new Set(selected.map((row) => String(row['actor_id']))));
+    this.pendingKnown = completed['ready'] !== true;
+    return this.pendingKnown;
   }
 }

@@ -25,6 +25,11 @@ import {
 
 const active = (request: InventionRequestView) =>
   ['queued', 'judging', 'generating'].includes(request.status);
+
+function canReviewChoices(request: InventionRequestView, canAuthor: boolean) {
+  return !!request.search && (canAuthor || request.search.matches.length > 0);
+}
+
 type Draft = {
   mode?: 'workshop';
   candidateJson?: string;
@@ -74,6 +79,7 @@ const merge = (current: InventionRequestView[], incoming: InventionRequestView[]
     (a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id),
   );
 export function Inventions({
+  canAuthor,
   worldId,
   accessScope,
   requestScope,
@@ -85,6 +91,7 @@ export function Inventions({
   connected,
   allowance,
 }: {
+  canAuthor: boolean;
   worldId: string;
   accessScope: string;
   requestScope: string;
@@ -138,7 +145,8 @@ export function Inventions({
   }
   const [requests, setRequests] = useState<InventionRequestView[]>([]);
   const [historyRead, setHistoryRead] = useState(false);
-  const [view, setView] = useState<'idea' | 'recipes' | 'history'>('idea');
+  const [selectedView, setView] = useState<'idea' | 'recipes' | 'history'>('idea');
+  const view = !canAuthor && selectedView === 'idea' ? 'history' : selectedView;
   const [recipeQuery, setRecipeQuery] = useState('');
   const focusIdea = useRef(false);
   const [next, setNext] = useState<InventionHistory['next']>();
@@ -174,7 +182,7 @@ export function Inventions({
     }
   }, [view, visible]);
   useEffect(() => {
-    if (seed && seed.id !== formRef.current.seedId) {
+    if (canAuthor && seed && seed.id !== formRef.current.seedId) {
       setView('idea');
       setForm({
         text: seed.text,
@@ -183,7 +191,7 @@ export function Inventions({
         seedId: seed.id,
       });
     }
-  }, [seed]);
+  }, [canAuthor, seed]);
   useEffect(() => {
     if (!visible || !connected) return;
     let disposed = false;
@@ -218,7 +226,7 @@ export function Inventions({
           (request) =>
             request.currentTimeline &&
             !request.continuedBy &&
-            request.search &&
+            canReviewChoices(request, canAuthor) &&
             !dismissed.current.has(request.id),
         );
         if (waiting) setChoiceId(waiting.id);
@@ -241,7 +249,7 @@ export function Inventions({
       setOlderBusy(false);
       clearTimeout(timer);
     };
-  }, [worldId, visible, connected, requestScope, refresh]);
+  }, [canAuthor, worldId, visible, connected, requestScope, refresh]);
   function settle(submission: Draft, result: ApiResult) {
     releaseRequest(recoveryKey, submission.requestId);
     remember({ status: 'empty' });
@@ -306,7 +314,13 @@ export function Inventions({
     }
   }
   async function submit(submission = formRef.current, retry = false) {
-    if (!connected || sending.current || !submission.text.trim()) return;
+    if (
+      (!canAuthor && submission.continuation?.action !== 'reuse') ||
+      !connected ||
+      sending.current ||
+      !submission.text.trim()
+    )
+      return;
     const original = readRetainedRequest(recoveryKey, validDraft, recoveryCharacters);
     remember(original);
     if (
@@ -367,7 +381,13 @@ export function Inventions({
     action: InventionContinuation['action'],
     recipeId?: string,
   ) {
-    if (!connected || sending.current || retainedRef.current.status !== 'empty') return;
+    if (
+      (!canAuthor && action !== 'reuse') ||
+      !connected ||
+      sending.current ||
+      retainedRef.current.status !== 'empty'
+    )
+      return;
     const continuation = {
       parentId: request.id,
       action,
@@ -403,7 +423,11 @@ export function Inventions({
     if (connected && visible && next) loadOlder.current?.(next);
   }
   const choice = requests.find(
-    (request) => request.id === choiceId && !request.continuedBy && request.currentTimeline,
+    (request) =>
+      request.id === choiceId &&
+      !request.continuedBy &&
+      request.currentTimeline &&
+      canReviewChoices(request, canAuthor),
   );
   const matchingRecipes = useMemo(() => {
     const terms = recipeQuery.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -426,10 +450,12 @@ export function Inventions({
     visible && connected && view === 'history' && !historyRead && !historyError;
   return (
     <div className="ol-inventions ol-player-workshop">
-      <nav className="ol-creator-views" aria-label="Create views">
-        <Button variant="quiet" aria-pressed={view === 'idea'} onPress={() => setView('idea')}>
-          Invent
-        </Button>
+      <nav className="ol-creator-views" aria-label="Recipe and request views">
+        {canAuthor && (
+          <Button variant="quiet" aria-pressed={view === 'idea'} onPress={() => setView('idea')}>
+            Invent
+          </Button>
+        )}
         <Button
           variant="quiet"
           aria-pressed={view === 'recipes'}
@@ -453,9 +479,7 @@ export function Inventions({
           {retained.status === 'pending' ? (
             <>
               <p>{retained.request.text}</p>
-              <p>
-                Your draft can change. Check the original result before sending another invention.
-              </p>
+              <p>Check whether the original request finished.</p>
               <Button
                 variant="quiet"
                 disabled={!connected}
@@ -464,7 +488,7 @@ export function Inventions({
               >
                 Check original invention
               </Button>
-              {retryAllowed && (
+              {retryAllowed && (canAuthor || retained.request.continuation?.action === 'reuse') && (
                 <Button
                   variant="quiet"
                   disabled={!connected || pending || checking}
@@ -477,8 +501,8 @@ export function Inventions({
           ) : (
             <>
               <p>
-                This browser could not read the original request. Restore storage access before
-                sending another invention.
+                This browser could not read the original request. Restore storage access to check
+                it.
               </p>
               <Button
                 variant="quiet"
@@ -519,7 +543,7 @@ export function Inventions({
         )}
       </section>
       <section
-        hidden={view !== 'idea'}
+        hidden={!canAuthor || view !== 'idea'}
         className="ol-creator-page"
         aria-label="Develop an invention"
       >
@@ -665,8 +689,9 @@ export function Inventions({
         <h3>Saved requests</h3>
         {historyError && <p role="alert">{historyError}</p>}
         <p className="ol-caption">
-          Read the result, revise the idea, or apply a saved proposal. Opening a result does not
-          repeat its request.
+          {canAuthor
+            ? 'Read the result, revise the idea, or apply a saved proposal.'
+            : 'Read past results and choose an existing recipe when one is offered.'}
         </p>
         <Button variant="quiet" onPress={() => setRefresh((value) => value + 1)}>
           Refresh saved results
@@ -715,7 +740,7 @@ export function Inventions({
                   request.currentTimeline &&
                   request.conversationId && (
                     <>
-                      {request.code === 'draft-ready' && request.candidateDigest && (
+                      {canAuthor && request.code === 'draft-ready' && request.candidateDigest && (
                         <Button
                           size="sm"
                           variant="primary"
@@ -725,7 +750,7 @@ export function Inventions({
                           Apply saved proposal
                         </Button>
                       )}
-                      {request.search && (
+                      {canReviewChoices(request, canAuthor) && (
                         <Button
                           size="sm"
                           isDisabled={!connected || blocked}
@@ -734,25 +759,27 @@ export function Inventions({
                           Review choices
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="quiet"
-                        isDisabled={!connected || blocked}
-                        onPress={() =>
-                          follow(
-                            request,
-                            request.code === 'needs-clarification' ? 'clarify' : 'revise',
-                          )
-                        }
-                      >
-                        {request.code === 'needs-clarification'
-                          ? 'Answer clarification'
-                          : 'Revise request'}
-                      </Button>
+                      {canAuthor && (
+                        <Button
+                          size="sm"
+                          variant="quiet"
+                          isDisabled={!connected || blocked}
+                          onPress={() =>
+                            follow(
+                              request,
+                              request.code === 'needs-clarification' ? 'clarify' : 'revise',
+                            )
+                          }
+                        >
+                          {request.code === 'needs-clarification'
+                            ? 'Answer clarification'
+                            : 'Revise request'}
+                        </Button>
+                      )}
                     </>
                   )
                 )}
-                {active(request) && (
+                {canAuthor && active(request) && (
                   <Button
                     size="sm"
                     variant="quiet"
@@ -817,7 +844,7 @@ export function Inventions({
               </header>
               <div className="ol-invention-choice-body">
                 <p className="ol-invention-choice-intent">{choice.intent}</p>
-                {choice.search.status === 'unavailable' ? (
+                {canAuthor && choice.search.status === 'unavailable' ? (
                   <>
                     <p>
                       Similar recipes could not be checked. Retry the search, or continue with a new
@@ -854,13 +881,15 @@ export function Inventions({
                       >
                         Use this recipe
                       </Button>
-                      <Button
-                        variant="quiet"
-                        isDisabled={!connected || blocked}
-                        onPress={() => follow(choice, 'modify', match.recipeId)}
-                      >
-                        Modify this recipe
-                      </Button>
+                      {canAuthor && (
+                        <Button
+                          variant="quiet"
+                          isDisabled={!connected || blocked}
+                          onPress={() => follow(choice, 'modify', match.recipeId)}
+                        >
+                          Modify this recipe
+                        </Button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -876,7 +905,7 @@ export function Inventions({
                 >
                   Cancel
                 </Button>
-                {choice.search.status === 'unavailable' && (
+                {canAuthor && choice.search.status === 'unavailable' && (
                   <Button
                     variant="secondary"
                     isDisabled={!connected || blocked}
@@ -885,15 +914,17 @@ export function Inventions({
                     Retry search
                   </Button>
                 )}
-                <Button
-                  variant="primary"
-                  isDisabled={!connected || blocked}
-                  onPress={() => follow(choice, 'new')}
-                >
-                  {choice.search.status === 'unavailable'
-                    ? 'Continue without search'
-                    : 'Invent something new'}
-                </Button>
+                {canAuthor && (
+                  <Button
+                    variant="primary"
+                    isDisabled={!connected || blocked}
+                    onPress={() => follow(choice, 'new')}
+                  >
+                    {choice.search.status === 'unavailable'
+                      ? 'Continue without search'
+                      : 'Invent something new'}
+                  </Button>
+                )}
               </footer>
             </LoadingDialog>
           </Modal>

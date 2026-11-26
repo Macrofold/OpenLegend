@@ -1,3 +1,5 @@
+import { runtimeApiPath } from './network-policies';
+import { inCognitionLab, workspaceStoragePrefix } from './lab-location';
 import { browserRequest } from './browser-network';
 import { pruneWorldRequests } from './retained-request';
 import type { AssetRevisionReference } from '@open-legend/assets';
@@ -14,7 +16,7 @@ import type {
 } from '@open-legend/protocol';
 
 import { clearTradeDrafts } from './trade-drafts';
-import { clearDraft } from './draft';
+import { clearDraft, composerDraftScope } from './draft';
 import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
 
 async function prepareTabHeaders(): Promise<Record<string, string>> {
@@ -29,7 +31,10 @@ let worldGeneration = '';
 let viewScope = '';
 let privateDraftNamespace = '';
 let privateDraftTimeline = '';
+let pendingStreamRecoveryOwner: string | undefined;
+let pendingComposerOwner: string | null = null;
 let accessGeneration = 0;
+let currentContacts = new Set<string>();
 export class AccessError extends Error {}
 /** A missing session is a normal entry state, distinct from a refused world grant. */
 export class SignInRequiredError extends AccessError {}
@@ -51,6 +56,7 @@ export class WorldCreationHostError extends Error {
 }
 /** A restore is still replacing the world; entry must wait for a fresh view. */
 export class WorldLoadingError extends Error {}
+export class LabUnavailableError extends Error {}
 function clearSessionDrafts(
   preservePendingCommands = false,
   preserveCheckpointResults = false,
@@ -77,13 +83,32 @@ function clearSessionDrafts(
 }
 export function clearAccess(options?: {
   preservePendingCommands?: boolean;
+  preserveLabComposer?: boolean;
   preserveCheckpointResultsFor?: string;
 }): void {
+  pendingStreamRecoveryOwner = undefined;
+  pendingComposerOwner = null;
   accessGeneration++;
   worldGeneration = '';
   viewScope = '';
+  currentContacts.clear();
   privateDraftNamespace = '';
   privateDraftTimeline = '';
+  if (inCognitionLab) {
+    if (!options?.preserveLabComposer) clearDraft();
+    try {
+      for (const key of Object.keys(sessionStorage))
+        if (
+          key.startsWith(workspaceStoragePrefix + 'checkpoint-request:') &&
+          key !==
+            workspaceStoragePrefix + 'checkpoint-request:' + options?.preserveCheckpointResultsFor
+        )
+          sessionStorage.removeItem(key);
+    } catch {
+      /* Browser storage is optional. */
+    }
+    return;
+  }
   clearTradeDrafts();
   // Each store can be unavailable independently; local storage must not prevent session cleanup.
   clearSessionDrafts(options?.preservePendingCommands, !!options?.preserveCheckpointResultsFor);
@@ -108,13 +133,63 @@ export function clearAccess(options?: {
     /* Browser storage is optional. */
   }
 }
+
+/** A command receipt can outlive its stream, but belongs to the same private owner and timeline. */
+export function commandRecoveryOwner(view: GameView): string | undefined {
+  if (!view.access?.commandRecoveryScope) return undefined;
+  return JSON.stringify([
+    view.access.commandRecoveryScope,
+    view.worldId,
+    view.access.actorId,
+    view.player.id,
+    view.saveTimeline,
+  ]);
+}
+
+/** Drop old read authority while preserving same-owner recovery and the Lab's
+ * unsent text. No draft is read or submitted until access is proved again. */
+export function invalidateStreamAccess(view: GameView): void {
+  const owner = commandRecoveryOwner(view);
+  const composer = inCognitionLab ? composerDraftScope(view) : null;
+  clearAccess({
+    preservePendingCommands: !!owner,
+    preserveLabComposer: !!composer,
+    preserveCheckpointResultsFor: view.checkpoint?.recoveryScope,
+  });
+  pendingStreamRecoveryOwner = owner;
+  pendingComposerOwner = composer;
+}
+
 export function acceptAccess(view: GameView): void {
+  if (pendingComposerOwner && pendingComposerOwner !== composerDraftScope(view)) clearDraft();
+  pendingComposerOwner = null;
+  if (pendingStreamRecoveryOwner) {
+    if (pendingStreamRecoveryOwner !== commandRecoveryOwner(view))
+      clearAccess({
+        preserveCheckpointResultsFor: view.checkpoint?.recoveryScope,
+        preserveLabComposer: inCognitionLab && !!composerDraftScope(view),
+      });
+    pendingStreamRecoveryOwner = undefined;
+  }
+  currentContacts = new Set(
+    view.entities.flatMap((entity) => [
+      entity.id,
+      ...(entity.assembly?.parts.map((part) => part.id) ?? []),
+    ]),
+  );
   const generation = view.historyEpoch?.split(':')[0] ?? '';
   const scope = view.access?.scope ?? '';
   if (generation === worldGeneration && scope === viewScope) return;
   accessGeneration++;
   worldGeneration = generation;
   viewScope = scope;
+  // The Lab document uses native scope-keyed drafts and receipts. Opening it must
+  // never clear the playable world's recovery records or change its storage owner.
+  if (inCognitionLab) {
+    privateDraftNamespace = view.access?.privateDraftScope ?? '';
+    privateDraftTimeline = view.saveTimeline ?? '';
+    return;
+  }
   // In-memory sharing also expires when browser storage is unavailable.
   if (
     (privateDraftNamespace && privateDraftNamespace !== view.access?.privateDraftScope) ||
@@ -227,6 +302,17 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
   if (response.status === 401) throw new SignInRequiredError('Sign in to enter your world.');
   if (response.status === 403)
     throw new AccessError('This account does not currently have access to this world.');
+  if (
+    inCognitionLab &&
+    response.status === 503 &&
+    typeof response.body === 'object' &&
+    response.body !== null &&
+    'code' in response.body &&
+    response.body.code === 'lab-unavailable'
+  )
+    throw new LabUnavailableError(
+      'The Lab world is unavailable. Check its database and data directory, or prepare a fresh Lab.',
+    );
   if (response.status === 503) {
     const body = (response.body ?? {}) as {
       code?: string;
@@ -303,7 +389,7 @@ export async function getOperations(): Promise<OperationsView> {
   if (!response.ok || !result.ok)
     throw new Error(result.message ?? 'World operations could not be loaded. Try again.');
   const view = result as OperationsView;
-  pruneWorldRequests(view.checkpoint?.recoveryScope);
+  if (!inCognitionLab) pruneWorldRequests(view.checkpoint?.recoveryScope);
   // Mutations carry this audience; a changed scope or world generation invalidates in-flight work.
   if (view.generation !== worldGeneration || view.scope !== viewScope) {
     accessGeneration++;
@@ -312,10 +398,15 @@ export async function getOperations(): Promise<OperationsView> {
   }
   return view;
 }
+/** A remembered or inspected role is not a live body; only contact tokens expire here. */
+export const currentContactAvailable = (reference: string): boolean =>
+  !/^(contact|part)-[a-f0-9]{64}$/.test(reference) || currentContacts.has(reference);
+
 /** Private reads carry this tab's audience and discard responses from a prior scope. */
 export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<T> {
   const scope = viewScope;
   const generation = accessGeneration;
+  const contactReferences = decodeURIComponent(path).match(/(?:contact|part)-[a-f0-9]{64}/g) ?? [];
   const response = await browserRequest(
     path,
     {
@@ -333,6 +424,8 @@ export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<
   const result = response.body as T;
   if (generation !== accessGeneration)
     throw new Error('Your access or world changed. Reload this information.');
+  if (contactReferences.some((reference) => !currentContacts.has(reference)))
+    throw new Error('That observed target is no longer available.');
   return result;
 }
 function applyFields<T extends object>(
@@ -347,6 +440,7 @@ function applyFields<T extends object>(
 }
 const requiredEntityFields = new Set([
   'id',
+  'observation',
   'name',
   'kind',
   'subtype',
@@ -403,9 +497,39 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
       entities = order.map((id) => byId.get(id)!);
     } else entities = [...byId.values()];
   }
+  let events = current.events;
+  if (patch.events) {
+    const byId = new Map(events.map((event) => [event.id, event]));
+    const touched = new Set<string>();
+    for (const id of patch.events.remove) {
+      touched.add(id);
+      if (!byId.delete(id)) throw new Error('Missing removed game event.');
+    }
+    for (const event of patch.events.upsert) {
+      if (touched.has(event.id)) throw new Error('Conflicting game event changes.');
+      touched.add(event.id);
+      byId.set(event.id, event);
+    }
+    const order = patch.events.order;
+    if (
+      order &&
+      (order.length !== byId.size ||
+        new Set(order).size !== order.length ||
+        order.some((id) => !byId.has(id)))
+    )
+      throw new Error('Invalid game event order.');
+    events = order ? order.map((id) => byId.get(id)!) : [...byId.values()];
+  }
   const next: GameView = {
     ...current,
     revision: patch.revision,
+    evaluationCut: patch.evaluationCut,
+    ...(patch.sightConfirmedThrough !== undefined
+      ? { sightConfirmedThrough: patch.sightConfirmedThrough }
+      : {}),
+    ...(patch.communicationReferences
+      ? { communicationReferences: patch.communicationReferences }
+      : {}),
     ...(patch.commandEpoch !== undefined ? { commandEpoch: patch.commandEpoch } : {}),
     ...(patch.historyEpoch !== undefined ? { historyEpoch: patch.historyEpoch } : {}),
     ...(patch.worldEventsRevision !== undefined
@@ -414,12 +538,11 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     ...(patch.historyRevision !== undefined ? { historyRevision: patch.historyRevision } : {}),
     ...(Object.hasOwn(patch, 'narrator') ? { narrator: patch.narrator } : {}),
     ...(Object.hasOwn(patch, 'cartography') ? { cartography: patch.cartography } : {}),
-    ...(patch.profile ? { profile: patch.profile } : {}),
     clock: applyFields(current.clock, patch.clock, patch.remove?.clock),
     player: applyFields(current.player, patch.player, patch.remove?.player),
     ...(patch.entities ? { entities } : {}),
     ...(patch.recipes ? { recipes: patch.recipes } : {}),
-    ...(patch.events ? { events: patch.events } : {}),
+    ...(patch.events ? { events } : {}),
     ...(patch.conversation ? { conversation: patch.conversation } : {}),
     ai: applyFields(current.ai, patch.ai, patch.remove?.ai),
     ...(patch.milestones ? { milestones: patch.milestones } : {}),
@@ -468,6 +591,51 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
     throw new Error(`The request was not accepted (${response.status}).`);
   return result;
 }
+/** A private read treats refused access and a changed read scope differently
+ * from an interrupted refresh, so its owner can discard an already shown result. */
+export async function postPrivateRead<T extends { ok: boolean; message?: string }>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const generation = accessGeneration;
+  const { response, result } = await sendPost<T>(path, body, signal);
+  if (generation !== accessGeneration)
+    throw new AccessError('Your access or world changed. Refresh before continuing.');
+  if (response.status === 401) throw new SignInRequiredError('Sign in to continue.');
+  if (response.status === 403)
+    throw new AccessError(result.message ?? 'This account has no access to this information.');
+  if (!response.ok && !result.message)
+    throw new Error(`The request was not accepted (${response.status}).`);
+  return result;
+}
+
+/** Read-only POSTs share contact-loss fencing with scoped GETs. Write receipts
+ * deliberately use post(): losing a contact cannot erase a committed result. */
+export async function postContactRead<T extends { ok: boolean; message?: string }>(
+  path: string,
+  body: unknown,
+  references: readonly (string | undefined)[] = [],
+  signal?: AbortSignal,
+): Promise<T> {
+  const selected = new Set(references);
+  const collect = (value: unknown): void => {
+    if (typeof value === 'string' && /^(contact|part)-[a-f0-9]{64}$/.test(value))
+      selected.add(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  collect(body);
+  const result = await post<T>(path, body, signal);
+  if (
+    [...selected].some(
+      (reference) => reference !== undefined && !currentContactAvailable(reference),
+    )
+  )
+    throw new Error('That observed target is no longer available.');
+  return result;
+}
+
 export function updateWorldInput(
   input: WorldInputUpdate,
   signal?: AbortSignal,
@@ -482,6 +650,7 @@ export function updateWorldInput(
 export async function loadGameSave(request: {
   id: string;
   requestId: string;
+  keepCurrentModels?: boolean;
 }): Promise<ApiResult | undefined> {
   const generation = accessGeneration;
   const { response, result } = await sendPost<ApiResult>('/api/saves/load', request);
@@ -556,7 +725,7 @@ export function startPresence(scope: string): () => void {
     if (beacon) {
       const body = { clientId: tabClientId(), visible, sequence: ++presenceSequence };
       const queued = navigator.sendBeacon(
-        `/api/presence?client=${tabClientId()}&scope=${scope}`,
+        runtimeApiPath(`/api/presence?client=${tabClientId()}&scope=${scope}`),
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
       // Browser queue acceptance is not a server acknowledgement. Its newer

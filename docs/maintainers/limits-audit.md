@@ -25,6 +25,8 @@ The October 17 [CTR design](../projects/combat-and-threat-responses-tech-design.
 
 ## Ranking method
 
+Use the [shared decision rule](../limits/README.md#entry-structure) to assess whether the restriction belongs at all, then use the priorities below to decide when to revisit it.
+
 - **P1 — ordinary play soon:** reachable through normal supported actions/populations, with a whole-world stall/stop, player refusal or broken common workflow. Investigate/fix these first.
 - **P2 — sustained or conditional use:** meaningful gameplay/recovery/support impact after natural accumulation, a particular supported action or a failure. Move up when evidence shows frequent exposure.
 - **P3 — extreme or future use:** thousands of deliberate creations/saves, advanced authoring, or a not-yet-connected consumer. A severe theoretical outcome alone does not make its trigger imminent.

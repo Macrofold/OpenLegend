@@ -2,7 +2,7 @@
 
 ## Navigation and collision dependencies
 
-The server uses `recast-navigation@0.43.1` (MIT wrapper; retain the applicable upstream Recast/Detour notices with distributed WASM) and `@dimforge/rapier3d-compat@0.20.0` (Apache-2.0). Applicable packaged notices are preserved in [licenses/navigation](licenses/navigation); retain upstream/transitive notices when redistributing binaries. These dependencies do not relicense OpenLegend first-party code. No navcat runtime, third-party reference screenshot or game artwork was added.
+The server uses `recast-navigation@0.43.1` (MIT wrapper; retain the applicable upstream Recast/Detour notices with distributed WASM) and `@dimforge/rapier3d-compat@0.20.0` (Apache-2.0). Applicable packaged notices are preserved in [licenses/navigation](licenses/navigation); retain upstream/transitive notices when redistributing binaries. These dependencies do not relicense Open Legend first-party code. No navcat runtime, third-party reference screenshot or game artwork was added.
 
 Accepted September 19, 2026. This guide distinguishes the license effective in this repository from policies for components that do not exist yet. The applicable license texts and explicit component notices govern permissions.
 
@@ -15,6 +15,10 @@ This applies to the current first-party documentation and reference-board code a
 Earlier revisions were released under Apache-2.0. Existing grants for those revisions remain in effect; this change does not revoke recipients' rights in them. The former license is retained at [licenses/Apache-2.0.txt](licenses/Apache-2.0.txt) for that history and future explicitly designated components. Its presence does **not** dual-license this entire revision. Preserve applicable third-party and inherited notices when incorporating work.
 
 The imported UI assets have separate notices in [design-system assets](apps/client/src/design-system/README.md): Game-icons.net silhouettes are CC BY 3.0 with per-icon authors, Lucide utilities are ISC, and bundled fonts use SIL OFL 1.1. These assets are licensed imports, distinct from the unlicensed-to-us art reference board.
+
+## Unreal desktop client
+
+The [Unreal client licensing decision](docs/features/unreal-player/README.md#decisions-and-needs-design) selects MIT for newly authored Open Legend client code in the separate Unreal project. The [Unreal project notice](apps/unreal/LICENSE) covers newly authored client material and identifies its copyright holders. The client connects to the AGPL Rust host over the public interface. Unreal Engine and third-party dependencies retain their own terms. Reusing existing AGPL material under MIT requires permission from the applicable rights holders.
 
 ## Why AGPL
 

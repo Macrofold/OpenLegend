@@ -1,6 +1,6 @@
 # Enshrouded — rented servers, membership and world rules
 
-Evidence cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md). This chapter studies documented services and permissions; it does not recommend a provider or claim a server was rented or tested. OpenLegend proposals have a separate [idea owner](../../../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md).
+Evidence cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md). This chapter studies documented services and permissions; it does not recommend a provider or claim a server was rented or tested. Open Legend proposals have a separate [idea owner](../../../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md).
 
 ## What the rental precedent actually establishes
 
@@ -16,7 +16,7 @@ Three operating arrangements should be distinguished:
 
 Nitrado's own guide describes choosing player slots, rental duration and server location, plus configuration tools, file access, backups and scheduled tasks. These are provider descriptions, not independently measured uptime, support quality or recovery guarantees. Its exact offer URL supplied by Mike timed out repeatedly in this research. Search indexing confirmed the Enshrouded offering, and its substantive setup guide was readable. No current Nitrado price is asserted. [H02][H05]
 
-A dated comparison was directly visible on GPORTAL's PC page: **$18.45 for 10 slots/30 days** and **$20.95 for 16 slots/30 days**, with Dallas selected; its headline advertised 30 days starting at $9.40. These are October 25, 2026 displayed offers, not an all-region quote or an independently checked checkout total. The page also advertises backup space and mod-loader configuration. Such offers establish an available paid product, not its sales, renewal rate, profit or suitability for OpenLegend. [H04]
+A dated comparison was directly visible on GPORTAL's PC page: **$18.45 for 10 slots/30 days** and **$20.95 for 16 slots/30 days**, with Dallas selected; its headline advertised 30 days starting at $9.40. These are October 25, 2026 displayed offers, not an all-region quote or an independently checked checkout total. The page also advertises backup space and mod-loader configuration. Such offers establish an available paid product, not its sales, renewal rate, profit or suitability for Open Legend. [H04]
 
 The [development chapter](02-development-and-commercial-history.md#current-release-boundary) owns platform differences: the PC and PS5 populations and caps differ, and crossplay was unavailable at 1.0 launch. A provider's general “up to 16” claim must not override the console limit.
 
@@ -39,7 +39,7 @@ The configuration gives visitors no editing/storage privileges and separates fri
 
 **Source qualification:** the server-roles article contains mixed-age prose: it says three groups while listing four, and its general statement about outside-base access conflicts with its Visitor description. Its older Friend example also differs from the later configuration on base-extension permission. The table above describes distinct supported controls; it does not turn every historical example into a verified 1.0 default. No server configuration was executed.
 
-The direct relevance to OpenLegend is conceptual. “May join,” “may visit this home,” “may build here,” “may take these supplies” and “may expel another human” describe different relationships. Paying for a world should not accidentally make every invited person its administrator, and being a fictional king should not grant access to another player's private records.
+The direct relevance to Open Legend is conceptual. “May join,” “may visit this home,” “may build here,” “may take these supplies” and “may expel another human” describe different relationships. Paying for a world should not accidentally make every invited person its administrator, and being a fictional king should not grant access to another player's private records.
 
 ## Griefing can cross a property boundary indirectly
 
@@ -47,7 +47,7 @@ Keen's water update added a visitor restriction on outside-base terraforming spe
 
 **Research inference:** persistent-world permission design must consider the effects that actually matter in that world. Possible routes include changing a watercourse, excavating supports, starting fire, obstructing an entrance, leading hostile creatures to a home, delegated NPC work, traps or projectiles. Which routes exist depends on supported world mechanics; this is not a request to implement them all.
 
-A single PvP switch cannot state whether players may loot unattended storage, alter someone else's plot, damage a building indirectly or remove an owner's claim. Administrative enforcement and fictional legality are different too: theft might be physically possible but punished in one world, while another world prevents the inventory transfer outright. The proposed OpenLegend rule profiles must make that distinction before they become an offered experience.
+A single PvP switch cannot state whether players may loot unattended storage, alter someone else's plot, damage a building indirectly or remove an owner's claim. Administrative enforcement and fictional legality are different too: theft might be physically possible but punished in one world, while another world prevents the inventory transfer outright. The proposed Open Legend rule profiles must make that distinction before they become an offered experience.
 
 ## Persistent saves, progression and availability
 
@@ -70,7 +70,7 @@ These promises should be specified and costed separately. Enshrouded hosting evi
 
 Mike's supplied Fort Armco transcript adds an attributed use case beyond a hosting inquiry. The narrator says they rented a dedicated server so friends could explore, gather and keep building their shared castle while the narrator was offline. They distinguish their own structural work from another member's tower and interior decoration, and describe a water feature built together. Returning to find something another person had added is part of the pleasure. [H11]
 
-**Interpretation:** the purchased value is the group's ability to continue a shared project across different schedules. Billing responsibility, administrative control and credit for contributions are different roles. This account motivates examining who may alter shared work and what happens when contributors or the payer leave; it does not establish Enshrouded's ownership safeguards or OpenLegend permission contracts.
+**Interpretation:** the purchased value is the group's ability to continue a shared project across different schedules. Billing responsibility, administrative control and credit for contributions are different roles. This account motivates examining who may alter shared work and what happens when contributors or the payer leave; it does not establish Enshrouded's ownership safeguards or Open Legend permission contracts.
 
 Only the supplied transcript was read; no footage was inspected, purchase corroborated or game version established. Its descriptions of game systems remain player testimony.
 
@@ -80,31 +80,31 @@ The supplied [r/Enshrouded thread](https://www.reddit.com/r/Enshrouded/comments/
 
 This is a small, self-selected conversation that includes commercial participation. It is evidence of questions customers ask, not a neutral provider comparison, verified price survey or representative willingness-to-pay study. The claim that a particular network tunnel works, or that an advertised RAM figure is sufficient for any current world, was not adopted from a comment. Relative timestamps on the retrieved page are not converted into an invented publication date.
 
-The useful questions for OpenLegend are direct: Can my friends enter without me? Can I control membership? What happens to our home if I stop paying? Is the service responsive where we live? Can we understand our bill? Those are customer needs worth testing.
+The useful questions for Open Legend are direct: Can my friends enter without me? Can I control membership? What happens to our home if I stop paying? Is the service responsive where we live? Can we understand our bill? Those are customer needs worth testing.
 
 ## Commercial transfer: a credible candidate with different costs
 
-**Interpretation:** an owner-funded private world is a credible OpenLegend candidate because it offers a clear social benefit: one person can arrange an enduring place for a chosen group. Built-in creation and membership management could remove the separate-provider/configuration burden. The existing [commercial-offer decision brief](../../../../../docs/projects/initial-commercial-offer-decision-brief.md) already compares that candidate with another feasible browser offer.
+**Interpretation:** an owner-funded private world is a credible Open Legend candidate because it offers a clear social benefit: one person can arrange an enduring place for a chosen group. Built-in creation and membership management could remove the separate-provider/configuration burden. The existing [commercial-offer decision brief](../../../../../docs/projects/initial-commercial-offer-decision-brief.md) already compares that candidate with another feasible browser offer.
 
 Three service approaches remain distinguishable:
 
 | Candidate                  | Attractive aspect                                          | Main unresolved obligation                                                                                                     |
 | -------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| First-party managed world  | Coherent creation, membership, billing and support journey | OpenLegend operates capacity, support and the full customer lifecycle.                                                         |
+| First-party managed world  | Coherent creation, membership, billing and support journey | Open Legend operates capacity, support and the full customer lifecycle.                                                         |
 | Integrated hosting partner | Existing provider operations and an in-game entry path     | Explain responsibility for billing, settings, outages, support and retained work; integration does not erase those boundaries. |
 | Self-hosted world          | Operator autonomy and possible community experimentation   | Distribution, updates, service-dependent features and supported authority boundaries need an explicit product decision.        |
 
 These are options to compare, not three required products. Browser play does not itself decide who runs the server.
 
-OpenLegend's operating model must account for actual computation, storage, networking, provider/model work, operational support and payment obligations. Concurrency, NPC activity, simulation speed, invention and persistent history may affect costs differently. Hosting prices for a small cooperative action RPG cannot be copied as evidence of sustainable pricing for a much larger social simulation. Nor does payment select a world's violence, property or privacy rules.
+Open Legend's operating model must account for actual computation, storage, networking, provider/model work, operational support and payment obligations. Concurrency, NPC activity, simulation speed, invention and persistent history may affect costs differently. Hosting prices for a small cooperative action RPG cannot be copied as evidence of sustainable pricing for a much larger social simulation. Nor does payment select a world's violence, property or privacy rules.
 
 An appropriate future comparison would observe whether groups find the game worth returning to, understand the offer, choose it over alternatives and can be served sustainably. This research performed no customer interview, purchase, renewal or cost measurement. Rental-market precedent strengthens the case for that comparison; it does not close it.
 
-## OpenLegend application and evidence boundary
+## Open Legend application and evidence boundary
 
 The [hosted worlds and rule profiles idea](../../../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md) preserves Mike's proposal for integrated rental, membership control and independently configurable official/private worlds. It includes protected construction, PvP with protected homes, destructive frontier play, and optional construction-disabled settings as separate possibilities. An illustrative equal PvP/PvE split is not an adopted allocation.
 
-The positive opportunity is larger than private isolation: a home can serve travelers, customers, neighbors, allies and rivals, while private groups retain control over who joins their own world. More participants are useful when their presence changes what players can meaningfully do. This remains a hypothesis; Enshrouded's cooperative-server model does not qualify OpenLegend's concurrency, economics, autonomous behavior or conflict rules.
+The positive opportunity is larger than private isolation: a home can serve travelers, customers, neighbors, allies and rivals, while private groups retain control over who joins their own world. More participants are useful when their presence changes what players can meaningfully do. This remains a hypothesis; Enshrouded's cooperative-server model does not qualify Open Legend's concurrency, economics, autonomous behavior or conflict rules.
 
 ## Sources and access notes
 

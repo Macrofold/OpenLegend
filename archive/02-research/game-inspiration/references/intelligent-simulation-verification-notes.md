@@ -9,7 +9,7 @@ Nair and Karim's August 27, 2026 preprint tests five Unity NPCs with a shared tr
 
 **Our interpretation:** a layered controller is a design opportunity, not an automatic quality improvement. A system can make fewer high-level choices and still make the wrong kind of choice repeatedly. The performance of one opponent class can hide another class's failure. A fixed five-second interval in a small combat experiment does not establish an appropriate cognition interval for independently living people.
 
-For OpenLegend, compare a hybrid with the existing controller and a credible simpler alternative. Evaluate personally meaningful cases separately from mechanical task success. Choosing whether to accept surrender or preserve an ally is not the same task as selecting a formation. A useful future experiment would retain permitted knowledge and actual action semantics while changing the decision policy; it would count preparation and inference cost as well as successful outcomes. No such experiment was run here.
+For Open Legend, compare a hybrid with the existing controller and a credible simpler alternative. Evaluate personally meaningful cases separately from mechanical task success. Choosing whether to accept surrender or preserve an ally is not the same task as selecting a formation. A useful future experiment would retain permitted knowledge and actual action semantics while changing the decision policy; it would count preparation and inference cost as well as successful outcomes. No such experiment was run here.
 
 ## Source version and interpretation checks
 
@@ -17,7 +17,7 @@ The study set distinguishes original architecture from current releases, prototy
 
 For metareasoning, the primary proceedings title is *Selecting Computations: Theory and Applications* (Hay and colleagues, 2012). The current arXiv revision at `2410.05563v3` is *Rational Metareasoning for Large Language Models* (De Sabbata, Sumers, AlKhamissi, Bosselut and Griffiths; June 23, 2025 revision of the 2024 submission). Its token-saving result concerns its evaluated language tasks, not a qualified NPC routing policy. The architecture study's source register uses those identifiers. [V2, V3]
 
-These distinctions are consequential: neither a modern publication date nor fluent explanation makes a result transferable without examining the task, evidence, baseline and failure cases. A primary source can establish what its authors reported without independently establishing that the result will reproduce in OpenLegend.
+These distinctions are consequential: neither a modern publication date nor fluent explanation makes a result transferable without examining the task, evidence, baseline and failure cases. A primary source can establish what its authors reported without independently establishing that the result will reproduce in Open Legend.
 
 ## Sources
 

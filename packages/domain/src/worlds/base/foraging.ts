@@ -1,5 +1,11 @@
 import { updateTerritorialPlace } from '../../territorial-threat.js';
 import { nativeRegroupingIntention } from './foraging-regroup.js';
+import {
+  foragingBehaviorChanged,
+  setForagingMode,
+  setForagingDestination,
+  setForagingReviewAt,
+} from './foraging-state.js';
 import { entityGet } from '../../entity-collection.js';
 import { nativeHuntingIntention, endNativeHunt } from './foraging-hunt.js';
 import { distance3D } from '@open-legend/spatial';
@@ -13,7 +19,6 @@ import { itemFor, directChildIds } from '../../objects.js';
 import { inDailyWindow, localHour, readEntityAttribute } from '../../status-effects.js';
 import { nativeResponseProfile, type NativeLocomotion } from '../../native-response.js';
 import { recordAnimalClockWrite } from '../../native-response-controller.js';
-import { recordSemanticChange } from '../../dependencies.js';
 import { nextRandom } from '../../data.js';
 import { chargeWork } from '../../work-budget.js';
 import { capabilityBlocked } from '../../status-capabilities.js';
@@ -56,10 +61,11 @@ export function nativeForagingDue(world: WorldState, animal: Entity): boolean {
           (state.mode !== 'searching' && (!target || !seesEntity(world, animal, target))))))
   );
 }
-function changed(world: WorldState, animal: Entity): void {
+/** Review/proposal bookkeeping wakes its existing queue. Mode, destination and
+ * work mutation owners separately announce actual behavior changes. */
+function finishForagingUpdate(world: WorldState, animal: Entity): void {
   updateTerritorialPlace(world, animal);
   recordAnimalClockWrite(world, animal.id);
-  recordSemanticChange(world, { kind: 'state', entityId: animal.id, field: 'behavior' });
 }
 /** Invoked by the existing animal arbitration boundary, after danger/territory.
  * One local sight read per due choice; no provider, global prey scan or extra clock. */
@@ -74,10 +80,13 @@ export function nativeForagingIntention(
   if (!profile) return;
   const action = animal.actor!.action;
   if (action && action.id !== state.work?.actionId) {
-    delete state.work;
-    state.mode = 'resting';
-    state.reviewAt = world.simTime + profile.routine.choiceGameSeconds;
-    changed(world, animal);
+    if (state.work) {
+      delete state.work;
+      foragingBehaviorChanged(world, animal);
+    }
+    setForagingMode(world, animal, 'resting');
+    setForagingReviewAt(world, animal, world.simTime + profile.routine.choiceGameSeconds);
+    finishForagingUpdate(world, animal);
     return;
   }
   if (action?.type === 'feed') return;
@@ -85,8 +94,12 @@ export function nativeForagingIntention(
     state.work?.actionId !== action?.id &&
     state.work?.kind !== 'hunt' &&
     state.work?.kind !== 'regroup'
-  )
-    delete state.work;
+  ) {
+    if (state.work) {
+      delete state.work;
+      foragingBehaviorChanged(world, animal);
+    }
+  }
   const here = supportedPosition(animal);
   if (!here) return;
   const clock = world.statusEffectPolicy.namedTimes,
@@ -184,9 +197,9 @@ export function nativeForagingIntention(
   else delete state.anchorFood;
   if (chosen) {
     if (state.work?.kind === 'hunt') endNativeHunt(world, animal);
-    state.mode = 'feeding';
-    state.reviewAt = world.simTime + profile.routine.choiceGameSeconds;
-    changed(world, animal);
+    setForagingMode(world, animal, 'feeding');
+    setForagingReviewAt(world, animal, world.simTime + profile.routine.choiceGameSeconds);
+    finishForagingUpdate(world, animal);
     return {
       command: {
         type: 'feed',
@@ -199,18 +212,18 @@ export function nativeForagingIntention(
   }
   if (profile.hunt && (hungry || state.work?.kind === 'hunt')) {
     const hunting = nativeHuntingIntention(world, animal, visible, night, fullness, prepared);
-    changed(world, animal);
+    finishForagingUpdate(world, animal);
     if (hunting === 'holding') return;
     if (hunting) return hunting;
   }
   if (!state.work || state.work.kind === 'routine' || state.work.kind === 'regroup') {
     const joining = nativeRegroupingIntention(world, animal, visible);
     if (joining === 'holding') {
-      changed(world, animal);
+      finishForagingUpdate(world, animal);
       return;
     }
     if (joining) {
-      changed(world, animal);
+      finishForagingUpdate(world, animal);
       return joining;
     }
   }
@@ -222,10 +235,13 @@ export function nativeForagingIntention(
     !night &&
     distance3D(here, state.home) <= world.itemHandling.reach
   ) {
-    state.mode = 'resting';
-    state.reviewAt = world.simTime + profile.routine.choiceGameSeconds;
-    delete state.work;
-    changed(world, animal);
+    setForagingMode(world, animal, 'resting');
+    setForagingReviewAt(world, animal, world.simTime + profile.routine.choiceGameSeconds);
+    if (state.work) {
+      delete state.work;
+      foragingBehaviorChanged(world, animal);
+    }
+    finishForagingUpdate(world, animal);
     return;
   }
   let candidates =
@@ -241,19 +257,19 @@ export function nativeForagingIntention(
   );
   if (preferred.length) candidates = preferred;
   if (!candidates.length) {
-    state.mode = 'resting';
-    state.reviewAt = world.simTime + profile.routine.choiceGameSeconds;
-    changed(world, animal);
+    setForagingMode(world, animal, 'resting');
+    setForagingReviewAt(world, animal, world.simTime + profile.routine.choiceGameSeconds);
+    finishForagingUpdate(world, animal);
     return;
   }
   const point =
     candidates.length === 1
       ? candidates[0]!
       : candidates[Math.floor(nextRandom(world) * candidates.length)]!;
-  state.mode = 'routine';
-  state.destination = { ...point };
-  state.reviewAt = world.simTime + profile.routine.choiceGameSeconds;
-  changed(world, animal);
+  setForagingMode(world, animal, 'routine');
+  setForagingDestination(world, animal, point);
+  setForagingReviewAt(world, animal, world.simTime + profile.routine.choiceGameSeconds);
+  finishForagingUpdate(world, animal);
   return {
     command: {
       type: 'move',
@@ -272,15 +288,21 @@ export function nativeForagingIntention(
 }
 function blockNativeForaging(world: WorldState, animal: Entity): void {
   const state = animal.animal!.foraging!;
-  state.mode = 'blocked';
-  state.reviewAt =
-    world.simTime + nativeResponseProfile(world, animal.animal!.profile)!.blockedReviewSeconds;
+  setForagingMode(world, animal, 'blocked');
+  setForagingReviewAt(
+    world,
+    animal,
+    world.simTime + nativeResponseProfile(world, animal.animal!.profile)!.blockedReviewSeconds,
+  );
   // Failed travel cannot renew a hunt's finite allowance. Keep its original
   // target/deadline/distance while waiting; a stale route grants no movement.
   // docs/worlds/base/first-playable-roaming.md#alarm-injury-lost-contact-and-blocked-routes
-  if (state.work?.kind !== 'hunt' && state.work?.kind !== 'regroup') delete state.work;
+  if (state.work && state.work.kind !== 'hunt' && state.work.kind !== 'regroup') {
+    delete state.work;
+    foragingBehaviorChanged(world, animal);
+  }
   delete state.proposal;
-  changed(world, animal);
+  finishForagingUpdate(world, animal);
 }
 export function noteNativeForagingFailure(
   world: WorldState,
@@ -306,8 +328,11 @@ export function noteNativeForagingAdmission(
       (state.work?.kind === 'hunt' || state.work?.kind === 'regroup') &&
       intention.command.type !== 'feed'
     ) {
-      state.work.actionId = installed.id;
-      changed(world, animal);
+      if (state.work.actionId !== installed.id) {
+        state.work.actionId = installed.id;
+        foragingBehaviorChanged(world, animal);
+      }
+      finishForagingUpdate(world, animal);
       return;
     }
     state.work = {
@@ -319,9 +344,10 @@ export function noteNativeForagingAdmission(
       lastPoint: { ...supportedPosition(animal)! },
       ...('targetId' in intention.command ? { sourceId: intention.command.targetId } : {}),
     };
+    foragingBehaviorChanged(world, animal);
   } else {
     blockNativeForaging(world, animal);
     return;
   }
-  changed(world, animal);
+  finishForagingUpdate(world, animal);
 }

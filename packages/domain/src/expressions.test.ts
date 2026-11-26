@@ -148,6 +148,7 @@ it('uses the same contact owner for an ordinary NPC expression and preserves res
   const response: ActorResponse = {
     operations: [
       {
+        talk: null, goal: null, plan: null, think: null,
         localId: 'touch',
         requiresAccepted: [],
         act: {

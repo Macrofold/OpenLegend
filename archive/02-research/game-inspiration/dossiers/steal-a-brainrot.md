@@ -203,7 +203,7 @@ The sampled discussions do not supply a representative complaint ranking. Subred
 
 **Keep the event and the ordinary session separate.** Shared spectacles may supply a reason to arrive, but the underlying activity must supply a reason to stay or return. A larger peak is not the only definition of better play.
 
-These are gameplay and product comparisons, not instructions to implement the same monetization, copied characters, random rewards or competitive loss in OpenLegend.
+These are gameplay and product comparisons, not instructions to implement the same monetization, copied characters, random rewards or competitive loss in Open Legend.
 
 ## 14. Reading routes, completion and preservation
 

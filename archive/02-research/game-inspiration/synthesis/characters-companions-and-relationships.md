@@ -2,7 +2,7 @@
 
 This guide covers characters, companions and relationships as a whole: personality, motivations, independent lives, memory, emotional expression, social bonds, friendship, rivalry, romance, family, care, teaching, animal bonds and the player's experience of those relationships. Intelligence and simulation efficiency are subtopics within that broader scope, not the organizing purpose of the entire guide.
 
-**Topic: NPC · Focused intelligence/simulation pass completed October 14, 2026; broader topic coverage remains open.** The intelligence/simulation research below synthesizes selected game dossiers, primary implementation accounts, academic work and industrial evidence. It is not a claim that every source in the 35-topic matrix has been assessed, that all relationship subtopics are complete, or that any new OpenLegend implementation is approved.
+**Topic: NPC · Focused intelligence/simulation pass completed October 14, 2026; broader topic coverage remains open.** The intelligence/simulation research below synthesizes selected game dossiers, primary implementation accounts, academic work and industrial evidence. It is not a claim that every source in the 35-topic matrix has been assessed, that all relationship subtopics are complete, or that any new Open Legend implementation is approved.
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [Assessment records](assessment-records.md) · [Dossier/pass inventory](../research-progress-intelligent-simulation-2026-10-14.md)
 
@@ -40,11 +40,11 @@ The inspected games do not share one mind architecture. They distribute effort a
 
 The [game evidence study](../references/game-ai-implementation-and-scale.md) identifies what was actually inspected. The distinction is between **authoring possible concerns and means** and **authoring every resulting sequence**. A dynamic plan is not necessarily a prewritten sequence. Conversely, putting thousands of conditions in data instead of code does not eliminate their authoring cost.
 
-Interruptions are similar. The kinds of changes a conventional controller recognizes are usually explicitly represented, while a replacement plan can be computed dynamically. OpenLegend's hardest additional problem is recognizing when an apparently ordinary observation matters because of a person's history, values or interpretation. That recognition cannot be assumed free.
+Interruptions are similar. The kinds of changes a conventional controller recognizes are usually explicitly represented, while a replacement plan can be computed dynamically. Open Legend's hardest additional problem is recognizing when an apparently ordinary observation matters because of a person's history, values or interpretation. That recognition cannot be assumed free.
 
 ## 3. Consolidated lessons and tradeoffs
 
-The following are research conclusions or hypotheses, not new engine contracts. Each lesson has a stable anchor for evidence tracking. Confidence describes the transfer argument, not a measured OpenLegend result.
+The following are research conclusions or hypotheses, not new engine contracts. Each lesson has a stable anchor for evidence tracking. Confidence describes the transfer argument, not a measured Open Legend result.
 
 <a id="npc-l001"></a>
 ### NPC-L001 — Preserve the distinction between a person, their skills and their current choice
@@ -58,7 +58,7 @@ A method describes something the person knows how to do. An intention describes 
 
 A chosen activity can include a purpose, known means, acceptable substitutions and a stopping condition. Continuing a valid step need not reopen the whole decision. This is the most direct route to fewer expensive choices without substituting a generic personality.
 
-**Evidence:** action continuity in Left 4 Dead, reusable behaviors in Halo 2, temporal abstraction in the options literature, and the historical Shadows of Doubt routine calculation. **Failure/cost:** overly broad delegation can quietly choose theft, risk or resource sacrifice. A “same goal” test is insufficient: the new means may be the consequential choice. **Confidence:** strong motivation; no measured savings or acceptable decision interval is established for OpenLegend.
+**Evidence:** action continuity in Left 4 Dead, reusable behaviors in Halo 2, temporal abstraction in the options literature, and the historical Shadows of Doubt routine calculation. **Failure/cost:** overly broad delegation can quietly choose theft, risk or resource sacrifice. A “same goal” test is insufficient: the new means may be the consequential choice. **Confidence:** strong motivation; no measured savings or acceptable decision interval is established for Open Legend.
 
 <a id="npc-l003"></a>
 ### NPC-L003 — Let the world expose opportunities without assigning everyone's priorities
@@ -79,7 +79,7 @@ Target availability, actual results, changed commitments and chosen review times
 
 Two equally attractive choices can both be understood; one dominant choice can rest on a missing fact. Escalation should account for uncertainty, consequence, reversibility and time, not merely score concentration.
 
-**Evidence:** Simile's 2026 error-prediction work distinguishes prediction error from simple entropy and top-option-gap features. Its activation-based method also requires model access an opaque API may not supply. **Failure/cost:** uncalibrated self-reported confidence can cheaply justify bad decisions. **Application:** qualify a cheap selector on relevant episode families and rare consequential exceptions before routing by confidence. **Confidence:** strong warning against the proxy; the appropriate OpenLegend labels and gate remain unmeasured.
+**Evidence:** Simile's 2026 error-prediction work distinguishes prediction error from simple entropy and top-option-gap features. Its activation-based method also requires model access an opaque API may not supply. **Failure/cost:** uncalibrated self-reported confidence can cheaply justify bad decisions. **Application:** qualify a cheap selector on relevant episode families and rare consequential exceptions before routing by confidence. **Confidence:** strong warning against the proxy; the appropriate Open Legend labels and gate remain unmeasured.
 
 <a id="npc-l006"></a>
 ### NPC-L006 — Experience, interpretation and actual effects must stay separate
@@ -149,16 +149,16 @@ Reusable procedures, a small selector, a learned policy and generative reconside
 
 A person can finish a purpose, enjoy a familiar activity, care for someone or choose solitude without maximizing productivity or novelty. A companion need not always agree; a scene director need not keep manufacturing trouble.
 
-**Evidence:** the contrast between intentionally helpful L4D companions, authored RPG/Legacy continuity, ordinary life simulations and OpenLegend's accepted character intent. **Failure/cost:** universal hunger/flee/help rules remove meaningful exceptions; constant curiosity rewards can prohibit contentment. **Application:** include a peaceful complete episode and legitimate refusal in qualification, while separating voluntary silence from an exhausted inference budget. **Confidence:** strong fit to the project, not a universal requirement for every game genre.
+**Evidence:** the contrast between intentionally helpful L4D companions, authored RPG/Legacy continuity, ordinary life simulations and Open Legend's accepted character intent. **Failure/cost:** universal hunger/flee/help rules remove meaningful exceptions; constant curiosity rewards can prohibit contentment. **Application:** include a peaceful complete episode and legitimate refusal in qualification, while separating voluntary silence from an exhausted inference budget. **Confidence:** strong fit to the project, not a universal requirement for every game genre.
 
 <a id="npc-l016"></a>
 ### NPC-L016 — Evaluate the rare meaningful exception and the later return
 
 Average agreement can look excellent while the system misses every promise, sentimental possession or justified change of mind. More frequent or more expensive cognition is not an unquestionable oracle.
 
-**Evidence:** the revised 1,052-person study, Simile's calibration work, published society limitations and OpenLegend's recorded stopping failures. **Application:** vary one relevant experience or commitment, preserve permitted knowledge, inspect actual effects and revisit later. Separate natural workload frequency from deliberately constructed edge cases. **Failure/cost:** judging fluent rationales rather than conduct rewards explanation without causation. **Confidence:** strong evaluation design; no complete test suite or live quality measurement was produced in this research task.
+**Evidence:** the revised 1,052-person study, Simile's calibration work, published society limitations and Open Legend's recorded stopping failures. **Application:** vary one relevant experience or commitment, preserve permitted knowledge, inspect actual effects and revisit later. Separate natural workload frequency from deliberately constructed edge cases. **Failure/cost:** judging fluent rationales rather than conduct rewards explanation without causation. **Confidence:** strong evaluation design; no complete test suite or live quality measurement was produced in this research task.
 
-## 4. Current OpenLegend baseline and existing design owners
+## 4. Current Open Legend baseline and existing design owners
 
 This comparison uses GitHub `Macrofold/OpenLegend` main at `0c12398e32e7c9578e18de07bbe79d39b4827208`, the research branch's base. It is a documentation/evidence reading, not a fresh runtime audit.
 
@@ -222,9 +222,9 @@ Population studies leave important gaps: interactive latency, long-running world
 
 The proposed emphasis on continuation should change if profiling finds a different dominant cost, if maintaining dependency checks is more expensive than reevaluation, or if delayed reconsideration systematically misses personally consequential changes. Broader planning should be rejected where symbolic authoring becomes more complex than the decisions it replaces. Approximate scenes should be narrowed where their missing detail repeatedly becomes important later.
 
-No live game, language-agent deployment, paid model experiment, player study or OpenLegend benchmark was run for this pass. Source confidence and actual inspected scope remain in the linked studies and assessment records. Broader NPC-topic work, including deeper family, romance, teaching and animal-bond comparisons, is not silently completed by this intelligence-focused research.
+No live game, language-agent deployment, paid model experiment, player study or Open Legend benchmark was run for this pass. Source confidence and actual inspected scope remain in the linked studies and assessment records. Broader NPC-topic work, including deeper family, romance, teaching and animal-bond comparisons, is not silently completed by this intelligence-focused research.
 
-## 8. OpenLegend-specific research subtopics and design mapping
+## 8. Open Legend-specific research subtopics and design mapping
 
 These identifiers organize research, not executable modules or newly approved projects. Existing design status stays with the linked owners. No new ND identifier is allocated by this pass.
 

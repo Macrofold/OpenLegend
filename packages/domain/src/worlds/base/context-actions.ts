@@ -1,3 +1,5 @@
+import activityDisplay from './config/ordinary-activity-display.json' with { type: 'json' };
+import contextActions from './config/context-actions.json' with { type: 'json' };
 import { entityGet } from '../../entity-collection.js';
 import { isEquipped } from '../../equipment.js';
 import { activelyParticipates } from '../../participation-state.js';
@@ -10,21 +12,8 @@ import type { Action, Command, Entity, WorldState } from '../../types.js';
  * docs/projects/player-experience-overhaul-tech-design.md#pointer-hud-and-visibility-follow-up--october-16-2026 */
 const attacks = new Set<string>(['strike', 'hunt', 'aim', 'shoot-once', 'release-shot']);
 const standard = new Set<string>(['move', 'inspect', 'inspect-inventory', 'cancel']);
-const priorities: Partial<Record<Command['type'], number>> = {
-  gather: 90,
-  pickup: 90,
-  harvest: 90,
-  fish: 90,
-  'practice-shot': 90,
-  'release-shot': 100,
-  replenish: 80,
-  cook: 70,
-  craft: 70,
-  hunt: 60,
-  'shoot-once': 50,
-  strike: 40,
-  aim: 30,
-};
+const priorities: Partial<Record<Command['type'], number>> = contextActions.priority;
+const combatRanks = contextActions.combat;
 
 function attacksBody(action: Action | null | undefined, target: Entity): boolean {
   return !!(
@@ -94,25 +83,25 @@ export function baseContextActions(world: WorldState, actorId: string, targetId?
       ...(choice.label
         ? {
             label: choice.approach
-              ? `Approach and ${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
+              ? `${activityDisplay.strike.catalogue.approachPrefix}${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
               : choice.label,
           }
         : {}),
       priority:
         combat && attack
-          ? 1000 +
+          ? combatRanks.base +
             (release
-              ? 30000
+              ? combatRanks.release
               : exactCurrent
-                ? 20000
+                ? combatRanks.exact
                 : contact && equipped
-                  ? 200
+                  ? combatRanks.equippedContact
                   : contact && !choice.itemId
-                    ? 100
+                    ? combatRanks.unarmedContact
                     : 0) +
             (priorities[choice.command!] ?? 0)
           : choice.speech
-            ? 100
+            ? contextActions.speak
             : ((choice.command && priorities[choice.command]) ?? 0),
       primary: speaking
         ? !!choice.speech

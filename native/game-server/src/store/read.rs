@@ -1,0 +1,1050 @@
+//! Read the current canonical format without constructing another world. Size
+//! each exact selection inside its owning snapshot, before body transfer.
+
+use super::schema::{SqlType, Table};
+use super::{
+    DurableHead, Session, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal,
+};
+use crate::language::{LanguageError, LanguageProvider, canonical::write_canonical};
+use openlegend_simulation::encoding::{json_record, json_tree_allocation_bound, sha256_hex};
+use openlegend_simulation::events::OriginalOccurrenceInput;
+use openlegend_simulation::host::{ByteBudget, ByteReservation, CapacityError};
+use openlegend_simulation::records::{
+    ActivityMethodSignature, CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow,
+    NormalizedIntent, OwnerCoverage, SqlCell,
+};
+use openlegend_simulation::text::JsText;
+use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
+use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
+use std::collections::{BTreeMap, HashMap};
+use std::future::Future;
+use std::mem::size_of;
+use std::pin::Pin;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio_postgres::types::ToSql;
+use tokio_postgres::{IsolationLevel, Row, Transaction};
+
+type ReadWork<'a, R> = Pin<Box<dyn Future<Output = StoreResult<R>> + Send + 'a>>;
+
+pub struct CurrentOpening {
+    pub records: CurrentRecords,
+    pub originals: Vec<OriginalOccurrenceInput>,
+    pub custody: ByteReservation,
+}
+
+impl CurrentOpening {
+    pub(crate) fn needs_language(&self) -> bool {
+        !self.records.tables["sim_intentions"].is_empty()
+            || !self.records.tables["activity_methods"].is_empty()
+    }
+
+    /// Prepare each saved intention and learned-method signature with the
+    /// pinned language provider at opening or recovery. The native importer
+    /// consumes these funded results against their original row identities.
+    pub(crate) fn prepare_language(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        self.prepare_intentions(language, budget)?;
+        self.prepare_activity_methods(language, budget)
+    }
+
+    fn prepare_intentions(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        let rows = &self.records.tables["sim_intentions"];
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[derive(Deserialize)]
+        struct SavedIntention {
+            description: JsText,
+        }
+        grow(
+            &mut self.custody,
+            rows.len()
+                .checked_mul(size_of::<NormalizedIntent>())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        let mut intentions = Vec::new();
+        intentions
+            .try_reserve_exact(rows.len())
+            .map_err(|_| StoreError::Capacity)?;
+        for row in rows {
+            // A TEXT row retains its exact JSON escapes. Fund the independent
+            // string, decoded units and transient raw JSON before parsing.
+            let size = row
+                .payload
+                .len()
+                .checked_mul(12)
+                .and_then(|n| n.checked_add(row.id.len()))
+                .and_then(|n| n.checked_add(128))
+                .ok_or(StoreError::Capacity)?;
+            let mut decoded = budget.reserve(size).map_err(|_| StoreError::Capacity)?;
+            let saved: SavedIntention =
+                serde_json::from_str(&row.payload).map_err(|_| StoreError::InvalidRecord)?;
+            let (normalized, normalized_custody) = language
+                .normalize_intention(&saved.description, budget)
+                .map_err(|error| match error {
+                    LanguageError::Capacity => StoreError::Capacity,
+                    _ => StoreError::InvalidRecord,
+                })?;
+            decoded
+                .resize(
+                    row.id
+                        .len()
+                        .checked_add(saved.description.storage_bytes())
+                        .ok_or(StoreError::Capacity)?,
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(decoded)
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(normalized_custody)
+                .map_err(|_| StoreError::Capacity)?;
+            intentions.push(NormalizedIntent {
+                row_id: row.id.clone(),
+                description: saved.description,
+                normalized,
+            });
+        }
+        self.records.normalized_intents = intentions;
+        Ok(())
+    }
+
+    fn prepare_activity_methods(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        #[derive(Deserialize, Serialize)]
+        struct SignatureInput<'a> {
+            #[serde(borrow)]
+            root: &'a RawValue,
+            #[serde(borrow)]
+            roles: &'a RawValue,
+            #[serde(borrow)]
+            manifest: &'a RawValue,
+            executable: bool,
+        }
+        let rows = &self.records.tables["activity_methods"];
+        grow(
+            &mut self.custody,
+            rows.len()
+                .checked_mul(size_of::<ActivityMethodSignature>())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        let mut signatures = Vec::new();
+        signatures
+            .try_reserve_exact(rows.len())
+            .map_err(|_| StoreError::Capacity)?;
+        for row in rows {
+            let bytes = json_tree_allocation_bound(&row.payload)
+                .and_then(|bytes| bytes.checked_add(row.payload.len().checked_mul(8)?))
+                .and_then(|bytes| bytes.checked_add(row.id.len() + 512))
+                .ok_or(StoreError::Capacity)?;
+            let mut scratch = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+            let input: SignatureInput<'_> =
+                serde_json::from_str(&row.payload).map_err(|_| StoreError::InvalidRecord)?;
+            let input = json_record(&input).map_err(|_| StoreError::InvalidRecord)?;
+            let mut canonical = Vec::with_capacity(input.len());
+            write_canonical(&input, &|a, b| language.compare_utf8(a, b), &mut canonical)
+                .map_err(|_| StoreError::InvalidRecord)?;
+            let signature = String::from_utf8(canonical).map_err(|_| StoreError::InvalidRecord)?;
+            drop(input);
+            let prepared = ActivityMethodSignature {
+                row_id: row.id.clone(),
+                payload_sha256: sha256_hex(row.payload.as_bytes()),
+                signature,
+            };
+            scratch
+                .resize(
+                    prepared.row_id.capacity()
+                        + prepared.payload_sha256.capacity()
+                        + prepared.signature.capacity(),
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(scratch)
+                .map_err(|_| StoreError::Capacity)?;
+            signatures.push(prepared);
+        }
+        self.records.activity_method_signatures = signatures;
+        Ok(())
+    }
+}
+
+/// These are the existing receipt fields, including the distinct read-only
+/// recovery fingerprint. The public result is retained as its original bytes.
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GameplayReceipt {
+    pub id: String,
+    pub epoch: u64,
+    pub fingerprint: String,
+    #[serde(deserialize_with = "Deserialize::deserialize")]
+    pub recovery_fingerprint: Option<String>,
+    pub expires_at: u64,
+    pub result: Box<RawValue>,
+}
+
+pub struct AdmittedReceipt {
+    receipt: GameplayReceipt,
+    _custody: ByteReservation,
+}
+
+impl AdmittedReceipt {
+    /// Fund the already prepared receipt once. Its accepted cut and detached
+    /// SQL prefix can keep the same bytes until both have released them.
+    pub(crate) fn share_live(
+        receipt: GameplayReceipt,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, CapacityError> {
+        let retained = Self::retained_bytes(&receipt)
+            .and_then(|bytes| bytes.checked_add(2 * size_of::<usize>()))
+            .ok_or(CapacityError)?;
+        let custody = budget.reserve(retained)?;
+        Ok(Arc::new(Self {
+            receipt,
+            _custody: custody,
+        }))
+    }
+
+    pub fn receipt(&self) -> &GameplayReceipt {
+        &self.receipt
+    }
+
+    fn retained_bytes(receipt: &GameplayReceipt) -> Option<usize> {
+        [
+            size_of::<Self>(),
+            receipt.id.capacity(),
+            receipt.fingerprint.capacity(),
+            receipt
+                .recovery_fingerprint
+                .as_ref()
+                .map_or(0, String::capacity),
+            receipt.result.get().len(),
+        ]
+        .into_iter()
+        .try_fold(0usize, usize::checked_add)
+    }
+}
+
+impl GameplayReceipt {
+    pub(crate) fn validate(&self) -> StoreResult<()> {
+        #[derive(Deserialize)]
+        struct RequiredResult {
+            #[serde(rename = "ok")]
+            _ok: bool,
+            #[serde(rename = "code")]
+            _code: openlegend_simulation::text::JsText,
+            #[serde(rename = "message")]
+            _message: openlegend_simulation::text::JsText,
+            #[serde(rename = "jobId", default, deserialize_with = "present_text")]
+            _job_id: Option<openlegend_simulation::text::JsText>,
+            #[serde(rename = "itemId", default, deserialize_with = "present_text")]
+            _item_id: Option<openlegend_simulation::text::JsText>,
+            #[serde(rename = "recipeId", default, deserialize_with = "present_text")]
+            _recipe_id: Option<openlegend_simulation::text::JsText>,
+            #[serde(rename = "goalId", default, deserialize_with = "present_text")]
+            _goal_id: Option<openlegend_simulation::text::JsText>,
+            #[serde(rename = "planId", default, deserialize_with = "present_text")]
+            _plan_id: Option<openlegend_simulation::text::JsText>,
+            #[serde(rename = "actionId", default, deserialize_with = "present_text")]
+            _action_id: Option<openlegend_simulation::text::JsText>,
+        }
+        fn present_text<'de, D: serde::Deserializer<'de>>(
+            deserializer: D,
+        ) -> Result<Option<openlegend_simulation::text::JsText>, D::Error> {
+            Deserialize::deserialize(deserializer).map(Some)
+        }
+        sql_ordinal(self.epoch)?;
+        sql_ordinal(self.expires_at)?;
+        if self.id.is_empty()
+            || self.fingerprint.is_empty()
+            || self
+                .recovery_fingerprint
+                .as_ref()
+                .is_some_and(String::is_empty)
+        {
+            return Err(StoreError::InvalidRecord);
+        }
+        let _: RequiredResult =
+            serde_json::from_str(self.result.get()).map_err(|_| StoreError::InvalidRecord)?;
+        Ok(())
+    }
+}
+
+impl Store {
+    /// Read finite application-owned records in an independent fixed snapshot.
+    /// This confers no gameplay source authority; the caller owns its final
+    /// session/grant check. Variable bodies use the existing transfer preflight.
+    pub(crate) async fn read_operational<R>(
+        &self,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        openlegend_simulation::profile_body!(READ_OP, {
+            Self::read_snapshot(&self.reader, work).await
+        })
+    }
+
+    /// An admitted inspection or history request can wait on PostgreSQL
+    /// without occupying the ordinary receipt reader or a simulation cut. The
+    /// request owns its read-only session through the fixed snapshot and drops
+    /// it on cancellation.
+    pub(crate) async fn read_isolated<R>(
+        &self,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        let (database, tls) = &self.checkpoint_connection;
+        let mut reader = Self::read_only_session(database, tls.clone()).await?;
+        openlegend_simulation::profile_body!(READ_OP, {
+            Self::read_fixed_snapshot(&mut reader, work).await
+        })
+    }
+
+    /// Read the exact cut required by a caller holding the world turn or
+    /// protected save barrier. Keep this snapshot independent of operational
+    /// readers that cannot advance the caller's operation.
+    pub(crate) async fn read_simulation_cut<R>(
+        &self,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        openlegend_simulation::profile_body!(READ_SIM, {
+            Self::read_snapshot(&self.simulation_reader, work).await
+        })
+    }
+
+    async fn read_snapshot<R>(
+        lane: &Mutex<Session>,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        let mut reader = openlegend_simulation::profile_measure!(READER_WAIT, lane.lock()).await;
+        #[cfg(feature = "profile-campaign")]
+        let mut hold = openlegend_simulation::profile::begin(
+            openlegend_simulation::profile::sites::READER_HOLD,
+        );
+        let result = Self::read_fixed_snapshot(&mut reader, work).await;
+        #[cfg(feature = "profile-campaign")]
+        hold.outcome(if result.is_ok() {
+            openlegend_simulation::profile::Outcome::Completed
+        } else {
+            openlegend_simulation::profile::Outcome::Failed
+        });
+        result
+    }
+
+    async fn read_fixed_snapshot<R>(
+        reader: &mut Session,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        openlegend_simulation::profile_body!(TRANSACTION, {
+            let transaction = reader
+                .client
+                .build_transaction()
+                .read_only(true)
+                .isolation_level(IsolationLevel::RepeatableRead)
+                .start()
+                .await?;
+            let result = work(&transaction).await?;
+            transaction.commit().await?;
+            Ok(result)
+        })
+    }
+
+    /// Read one durable header under the caller's protected save barrier.
+    pub(crate) async fn protected_edit_head(&self) -> StoreResult<Option<DurableHead>> {
+        let reader = self.simulation_reader.lock().await;
+        durable_head(&reader.client).await
+    }
+
+    /// Classify an installation with no current header in the same snapshot
+    /// that observed its absence. The release shares the creation target's
+    /// occupancy test, including cold records and operational receipts.
+    async fn missing_opening(&self, transaction: &Transaction<'_>) -> StoreResult<StoreError> {
+        let occupied: bool = transaction
+            .query_one(&self.schema.creation_target_occupied, &[])
+            .await?
+            .try_get(0)?;
+        if occupied {
+            return Ok(StoreError::DamagedInstallation);
+        }
+        let registered: bool = transaction
+            .query_one(
+                "SELECT EXISTS(SELECT 1 FROM creation_target_registration)",
+                &[],
+            )
+            .await?
+            .try_get(0)?;
+        Ok(if registered {
+            StoreError::AwaitingCreation
+        } else {
+            StoreError::OpeningRequired
+        })
+    }
+
+    pub(crate) async fn initialized_storage(&self) -> StoreResult<&'static str> {
+        let mut reader = self.reader.lock().await;
+        let transaction = reader
+            .client
+            .build_transaction()
+            .read_only(true)
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .await?;
+        let state = if durable_head(&transaction).await?.is_some() {
+            "current-header-present"
+        } else {
+            match self.missing_opening(&transaction).await? {
+                StoreError::OpeningRequired => "empty",
+                StoreError::AwaitingCreation => "awaiting-creation",
+                error => return Err(error),
+            }
+        };
+        transaction.commit().await?;
+        Ok(state)
+    }
+
+    /// Load actual complete canonical records in one fixed snapshot. Normal
+    /// gameplay readers should use a scoped cut, not this startup selection.
+    pub async fn current_opening(&self) -> StoreResult<CurrentOpening> {
+        let mut reader = self.reader.lock().await;
+        let transaction = reader
+            .client
+            .build_transaction()
+            .read_only(true)
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .await?;
+        let Some(head) = durable_head(&transaction).await? else {
+            return Err(self.missing_opening(&transaction).await?);
+        };
+        self.validate_received(&transaction, &head.world_id).await?;
+        let initial = self
+            .schema
+            .tables
+            .len()
+            .checked_mul(512)
+            .ok_or(StoreError::Capacity)?;
+        let mut custody = self
+            .budget
+            .reserve(initial)
+            .map_err(|_| StoreError::Capacity)?;
+        let mut tables = BTreeMap::new();
+        for table in &self.schema.tables {
+            let params: &[&(dyn ToSql + Sync)] = &[&head.world_id];
+            let records = self
+                .select_current_rows(&transaction, table, "world_id=$1", params, &mut custody)
+                .await?;
+            tables.insert(table.name.clone(), records);
+        }
+        let originals = {
+            let (_selection, ids) = hot_occurrence_ids(&tables["world_hot_events"], &self.budget)?;
+            if ids.is_empty() {
+                Vec::new()
+            } else {
+                let (_wire, rows) = admitted_query(
+                    &transaction,
+                    "SELECT id,payload FROM history_events WHERE world_id=$1 AND id=ANY($2) ORDER BY position,id",
+                    &[&head.world_id, &ids],
+                    &self.budget,
+                ).await?;
+                if rows.len() != ids.len() {
+                    return Err(StoreError::InvalidRecord);
+                }
+                let body = rows.iter().try_fold(
+                    allocation::<OriginalOccurrenceInput>(rows.len())?,
+                    |bytes, row| {
+                        let id = text_bytes(row, 0)?;
+                        let payload = text_bytes(row, 1)?;
+                        bytes
+                            .checked_add(id)
+                            .and_then(|bytes| bytes.checked_add(payload))
+                            .ok_or(StoreError::Capacity)
+                    },
+                )?;
+                grow(&mut custody, body)?;
+                rows.into_iter()
+                    .map(|row| {
+                        Ok(OriginalOccurrenceInput {
+                            event_id: row.try_get(0)?,
+                            payload: row.try_get(1)?,
+                        })
+                    })
+                    .collect::<StoreResult<Vec<_>>>()?
+            }
+        };
+        transaction.commit().await?;
+        let records = self.opening_records(head, tables, &mut custody)?;
+        Ok(CurrentOpening {
+            records,
+            originals,
+            custody,
+        })
+    }
+
+    pub(super) fn opening_records(
+        &self,
+        head: DurableHead,
+        tables: BTreeMap<String, Vec<InstalledRow>>,
+        custody: &mut ByteReservation,
+    ) -> StoreResult<CurrentRecords> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Header<'a> {
+            id: &'a str,
+            next_id: u64,
+        }
+        let header: Header<'_> = serde_json::from_str(
+            &tables["world_settings"]
+                .iter()
+                .find(|row| row.id == "[\"world\"]")
+                .ok_or(StoreError::InvalidRecord)?
+                .payload,
+        )
+        .map_err(|_| StoreError::InvalidRecord)?;
+        if header.id != head.world_id {
+            return Err(StoreError::InvalidRecord);
+        }
+        sql_ordinal(header.next_id)?;
+        let children = self
+            .schema
+            .tables
+            .iter()
+            .try_fold(0usize, |size, table| {
+                let bytes = tables[&table.name].iter().try_fold(0usize, |bytes, row| {
+                    table.children.iter().try_fold(bytes, |bytes, child| {
+                        bytes.checked_add(160 + row.id.len() + child.table.len())
+                    })
+                })?;
+                size.checked_add(bytes)
+            })
+            .ok_or(StoreError::Capacity)?;
+        custody
+            .resize(
+                custody
+                    .bytes()
+                    .checked_add(children)
+                    .ok_or(StoreError::Capacity)?,
+            )
+            .map_err(|_| StoreError::Capacity)?;
+        let mut coverage = Vec::new();
+        for table in &self.schema.tables {
+            for child in &table.children {
+                let mut next = HashMap::new();
+                for row in &tables[&child.table] {
+                    let successor = row
+                        .position
+                        .checked_add(1)
+                        .ok_or(StoreError::InvalidRecord)?;
+                    let ordinal = next.entry(row.parent.as_str()).or_insert(0);
+                    *ordinal = (*ordinal).max(successor);
+                }
+                for parent in &tables[&table.name] {
+                    let value = child_presence(&parent.payload, &child.field)?;
+                    let high = next.get(parent.id.as_str()).copied().unwrap_or(0);
+                    if (!value && high > 0) || high > super::MAX_SAFE_INTEGER {
+                        return Err(StoreError::InvalidRecord);
+                    }
+                    coverage.push(OwnerCoverage {
+                        table: child.table.clone(),
+                        owner: parent.id.clone(),
+                        complete: true,
+                        next_ordinal: if child.order_by_identity {
+                            header.next_id
+                        } else {
+                            high
+                        },
+                        parent_present: value,
+                    });
+                }
+            }
+        }
+        let entities = self
+            .schema
+            .tables
+            .iter()
+            .find(|table| table.name == "sim_entities")
+            .ok_or(StoreError::Schema)?;
+        let id_column = entities
+            .columns
+            .iter()
+            .position(|column| column.name == "entity_id")
+            .ok_or(StoreError::Schema)?;
+        let ids = tables["sim_entities"].iter().map(|row| {
+            row.extra[id_column]
+                .as_str()
+                .ok_or(StoreError::InvalidRecord)
+        });
+        let entity_ordering = entity_ordering(ids, tables["sim_entities"].len(), custody)?;
+        Ok(CurrentRecords {
+            world_id: head.world_id,
+            database_schema: self.schema.version.clone(),
+            durable_revision: head.revision,
+            generation: head.generation,
+            entity_ordering,
+            normalized_intents: Vec::new(),
+            activity_method_signatures: Vec::new(),
+            tables,
+            coverage,
+        })
+    }
+
+    /// The exact selection runs once for sizing, and only a hit sends a body.
+    /// A retained hit owns its own allocation after the snapshot closes.
+    pub async fn command_receipt(
+        &self,
+        world_id: &str,
+        id: &str,
+    ) -> StoreResult<Option<AdmittedReceipt>> {
+        let mut reader = self.reader.lock().await;
+        let transaction = reader
+            .client
+            .build_transaction()
+            .read_only(true)
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .await?;
+        let (mut custody, mut rows) = admitted_query(
+            &transaction,
+            "SELECT epoch,expires_at,payload FROM gameplay_receipts WHERE world_id=$1 AND id=$2",
+            &[&world_id, &id],
+            &self.budget,
+        )
+        .await?;
+        transaction.commit().await?;
+        drop(reader);
+        let Some(row) = rows.pop() else {
+            return Ok(None);
+        };
+        let payload: &str = row.try_get(2)?;
+        let receipt: GameplayReceipt =
+            serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+        receipt.validate()?;
+        if !rows.is_empty()
+            || receipt.id != id
+            || receipt.epoch != ordinal(row.try_get(0)?)?
+            || receipt.expires_at != ordinal(row.try_get(1)?)?
+        {
+            return Err(StoreError::InvalidRecord);
+        }
+        drop(row);
+        drop(rows);
+        let retained = AdmittedReceipt::retained_bytes(&receipt).ok_or(StoreError::Capacity)?;
+        release_workspace(&mut custody, retained)?;
+        Ok(Some(AdmittedReceipt {
+            receipt,
+            _custody: custody,
+        }))
+    }
+}
+
+/// Borrow the exact currently retained original IDs from hot canonical pointers.
+/// The caller retains selection custody through its source read.
+pub(super) fn hot_occurrence_ids<'a>(
+    hot: &'a [InstalledRow],
+    budget: &ByteBudget,
+) -> StoreResult<(ByteReservation, Vec<&'a str>)> {
+    #[derive(Deserialize)]
+    struct Pointer<'a> {
+        id: &'a str,
+    }
+    let storage = budget
+        .reserve(
+            hot.iter()
+                .try_fold(0usize, |bytes, row| {
+                    bytes
+                        .checked_add(64)?
+                        .checked_add(row.payload.len().checked_mul(4)?)
+                })
+                .ok_or(StoreError::Capacity)?,
+        )
+        .map_err(|_| StoreError::Capacity)?;
+    let ids = hot
+        .iter()
+        .map(|row| {
+            serde_json::from_str::<Pointer<'_>>(&row.payload)
+                .map(|pointer| pointer.id)
+                .map_err(|_| StoreError::InvalidRecord)
+        })
+        .collect::<StoreResult<Vec<_>>>()?;
+    Ok((storage, ids))
+}
+
+impl Store {
+    /// Transfer a trusted, explicitly scoped current-record selection. The
+    /// caller owns the independently funded typed rows through its snapshot.
+    pub(super) async fn select_current_rows(
+        &self,
+        transaction: &Transaction<'_>,
+        table: &Table,
+        predicate: &str,
+        params: &[&(dyn ToSql + Sync)],
+        custody: &mut ByteReservation,
+    ) -> StoreResult<Vec<InstalledRow>> {
+        self.select_current_rows_bounded(transaction, table, predicate, params, custody, None)
+            .await
+    }
+
+    /// The same current row transfer with an additional consumer wire bound.
+    /// Debit it from the original trusted size preflight before receiving bodies.
+    pub(super) async fn select_current_rows_bounded(
+        &self,
+        transaction: &Transaction<'_>,
+        table: &Table,
+        predicate: &str,
+        params: &[&(dyn ToSql + Sync)],
+        custody: &mut ByteReservation,
+        wire_bytes: Option<&mut usize>,
+    ) -> StoreResult<Vec<InstalledRow>> {
+        let query = current_select(table, predicate);
+        let (_wire, rows) =
+            admitted_query_bounded(transaction, &query, params, &self.budget, wire_bytes).await?;
+        grow(custody, allocation::<InstalledRow>(rows.len())?)?;
+        let mut records = Vec::with_capacity(rows.len());
+        for row in rows {
+            let mut decode = self
+                .budget
+                .reserve(installed_row_bound(table, &row)?)
+                .map_err(|_| StoreError::Capacity)?;
+            let record =
+                openlegend_simulation::profile_call!(DECODE, { installed_row(table, row) })?;
+            let retained = record.retained_bytes().ok_or(StoreError::Capacity)?;
+            release_workspace(&mut decode, retained)?;
+            custody.merge(decode).map_err(|_| StoreError::Capacity)?;
+            records.push(record);
+        }
+        Ok(records)
+    }
+}
+
+pub(crate) async fn admitted_query(
+    transaction: &Transaction<'_>,
+    selection: &str,
+    params: &[&(dyn ToSql + Sync)],
+    budget: &ByteBudget,
+) -> StoreResult<(ByteReservation, Vec<Row>)> {
+    admitted_query_bounded(transaction, selection, params, budget, None).await
+}
+
+/// Copy a whole pending row under the reader's own admission. A column-only
+/// update cannot provide an independently usable canonical row.
+pub(super) fn retain_pending_row(
+    row: &openlegend_simulation::records::ChangedRow,
+    custody: &mut ByteReservation,
+) -> StoreResult<InstalledRow> {
+    if row.write_columns.is_some() {
+        return Err(StoreError::StaleCut);
+    }
+    grow(
+        custody,
+        row.installed_bytes()
+            .ok_or(StoreError::Capacity)?
+            .checked_add(size_of::<InstalledRow>() + 192)
+            .ok_or(StoreError::Capacity)?,
+    )?;
+    Ok(InstalledRow {
+        id: row.id.clone(),
+        parent: row.parent.clone(),
+        slot: row.slot.clone(),
+        position: row.position,
+        payload: row.payload.clone(),
+        extra: row.extra.clone(),
+    })
+}
+
+pub(super) async fn admitted_query_bounded(
+    transaction: &Transaction<'_>,
+    selection: &str,
+    params: &[&(dyn ToSql + Sync)],
+    budget: &ByteBudget,
+    wire_bytes: Option<&mut usize>,
+) -> StoreResult<(ByteReservation, Vec<Row>)> {
+    let statement = format!(
+        "SELECT count(*),COALESCE(sum(octet_length(row_to_json(selected)::text)),0)::bigint FROM ({selection}) selected"
+    );
+    let bound = openlegend_simulation::profile_result!(
+        PREFLIGHT,
+        transaction.query_one(&statement, params)
+    )
+    .await?;
+    let count = usize::try_from(ordinal(bound.try_get(0)?)?).map_err(|_| StoreError::Capacity)?;
+    if count == 0 {
+        let empty = budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        return Ok((empty, Vec::new()));
+    }
+    let bytes = usize::try_from(ordinal(bound.try_get(1)?)?).map_err(|_| StoreError::Capacity)?;
+    if let Some(remaining) = wire_bytes {
+        // A canonical transport envelope can escape up to six bytes per
+        // original code unit. SQL proof bytes here include its column names.
+        let transfer = bytes.checked_mul(6).ok_or(StoreError::Capacity)?;
+        *remaining = remaining
+            .checked_sub(transfer)
+            .ok_or(StoreError::Capacity)?;
+    }
+    // Wire buffers and driver row descriptors can overlap. The decoder admits
+    // shape-dependent carrier storage separately before building a Rust graph.
+    let bytes = bytes
+        .checked_mul(16)
+        .and_then(|total| total.checked_add(count.checked_mul(1024)?))
+        .ok_or(StoreError::Capacity)?;
+    let allowance = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+    let rows =
+        openlegend_simulation::profile_result!(BODY, transaction.query(selection, params)).await?;
+    openlegend_simulation::profile_count!(BODY_ROWS, rows.len() as u64);
+    if rows.len() != count {
+        return Err(StoreError::StaleCut);
+    }
+    Ok((allowance, rows))
+}
+
+fn current_select(table: &Table, predicate: &str) -> String {
+    let mut select = String::from("SELECT ");
+    append_current_record_fields(&mut select, table, "");
+    for column in &table.columns {
+        if matches!(
+            column.data_type,
+            SqlType::TextArray | SqlType::SmallIntegerArray
+        ) {
+            select.push_str(&format!(
+                ",cardinality({0})::bigint AS {0}_length,octet_length({0}::text)::bigint AS {0}_bytes",
+                column.name,
+            ));
+        }
+    }
+    select.push_str(&format!(
+        " FROM {} WHERE {predicate} ORDER BY parent_id,position,id",
+        table.name
+    ));
+    select
+}
+
+/// Use the canonical positional projection for any exact typed row read.
+/// Joined selectors can qualify their trusted table alias without changing
+/// how SQL JSON cells are transferred for the shared row decoder.
+pub(super) fn append_current_record_fields(select: &mut String, table: &Table, qualifier: &str) {
+    for (index, name) in ["id", "parent_id", "slot", "position", "payload"]
+        .iter()
+        .enumerate()
+    {
+        if index != 0 {
+            select.push(',');
+        }
+        select.push_str(qualifier);
+        select.push_str(name);
+    }
+    for column in &table.columns {
+        select.push(',');
+        select.push_str(qualifier);
+        select.push_str(&column.name);
+        if matches!(column.data_type, SqlType::Json) {
+            select.push_str("::text");
+        }
+    }
+}
+
+pub(super) fn installed_row(table: &Table, row: Row) -> StoreResult<InstalledRow> {
+    let mut extra = Vec::with_capacity(table.columns.len());
+    for (offset, column) in table.columns.iter().enumerate() {
+        extra.push(cell(&row, 5 + offset, column.data_type)?);
+    }
+    Ok(InstalledRow {
+        id: row.try_get(0)?,
+        parent: row.try_get(1)?,
+        slot: row.try_get(2)?,
+        position: ordinal(row.try_get(3)?)?,
+        payload: row.try_get(4)?,
+        extra,
+    })
+}
+
+fn installed_row_bound(table: &Table, row: &Row) -> StoreResult<usize> {
+    let mut bound = allocation::<SqlCell>(table.columns.len())?;
+    for index in [0, 1, 2, 4] {
+        bound = bound
+            .checked_add(text_bytes(row, index)?)
+            .ok_or(StoreError::Capacity)?;
+    }
+    let mut metric = 5 + table.columns.len();
+    for (index, column) in table.columns.iter().enumerate() {
+        let bytes = match column.data_type {
+            SqlType::Text => text_bytes(row, index + 5)?,
+            SqlType::Json => {
+                let source: Option<&str> = row.try_get(index + 5)?;
+                source
+                    .map_or(Some(0), SqlCell::json_decode_bound)
+                    .ok_or(StoreError::Capacity)?
+            }
+            SqlType::TextArray | SqlType::SmallIntegerArray => {
+                let count = unsigned_measure(row, metric)?;
+                let text = unsigned_measure(row, metric + 1)?;
+                metric += 2;
+                // Driver Vec<T> and the converted Vec<SqlCell> can coexist;
+                // reserve their growth plus the actual selected string body.
+                let element = match column.data_type {
+                    SqlType::TextArray => size_of::<String>(),
+                    _ => size_of::<i16>(),
+                };
+                count
+                    .checked_mul(4 * (size_of::<SqlCell>() + element))
+                    .and_then(|bytes| bytes.checked_add(text))
+                    .ok_or(StoreError::Capacity)?
+            }
+            _ => 0,
+        };
+        bound = bound.checked_add(bytes).ok_or(StoreError::Capacity)?;
+    }
+    Ok(bound)
+}
+
+fn allocation<T>(count: usize) -> StoreResult<usize> {
+    count
+        .checked_mul(size_of::<T>())
+        .ok_or(StoreError::Capacity)
+}
+
+fn text_bytes(row: &Row, at: usize) -> StoreResult<usize> {
+    Ok(row.try_get::<_, Option<&str>>(at)?.map_or(0, str::len))
+}
+
+fn unsigned_measure(row: &Row, at: usize) -> StoreResult<usize> {
+    let value: Option<i64> = row.try_get(at)?;
+    usize::try_from(value.unwrap_or_default()).map_err(|_| StoreError::Capacity)
+}
+
+fn grow(custody: &mut ByteReservation, extra: usize) -> StoreResult<()> {
+    custody
+        .resize(
+            custody
+                .bytes()
+                .checked_add(extra)
+                .ok_or(StoreError::Capacity)?,
+        )
+        .map_err(|_| StoreError::Capacity)
+}
+
+fn release_workspace(custody: &mut ByteReservation, retained: usize) -> StoreResult<()> {
+    if retained > custody.bytes() {
+        return Err(StoreError::Capacity);
+    }
+    custody.resize(retained).map_err(|_| StoreError::Capacity)
+}
+
+fn cell(row: &Row, at: usize, data_type: SqlType) -> StoreResult<SqlCell> {
+    let value = match data_type {
+        SqlType::Text => row.try_get::<_, Option<String>>(at)?.map(SqlCell::from),
+        SqlType::Integer => {
+            let value: Option<i64> = row.try_get(at)?;
+            if value.is_some_and(|value| value.unsigned_abs() > super::MAX_SAFE_INTEGER) {
+                return Err(StoreError::InvalidRecord);
+            }
+            value.map(|value| SqlCell::Number(value.into()))
+        }
+        SqlType::Double => {
+            let value: Option<f64> = row.try_get(at)?;
+            if value.is_some_and(|value| !value.is_finite()) {
+                return Err(StoreError::InvalidRecord);
+            }
+            value.map(SqlCell::from)
+        }
+        SqlType::Json => row
+            .try_get::<_, Option<&str>>(at)?
+            .map(serde_json::from_str)
+            .transpose()
+            .map_err(|_| StoreError::InvalidRecord)?,
+        SqlType::TextArray => row
+            .try_get::<_, Option<Vec<String>>>(at)?
+            .map(|array| SqlCell::Array(array.into_iter().map(SqlCell::from).collect())),
+        SqlType::SmallIntegerArray => row.try_get::<_, Option<Vec<i16>>>(at)?.map(|array| {
+            SqlCell::Array(
+                array
+                    .into_iter()
+                    .map(|value| SqlCell::Number(value.into()))
+                    .collect(),
+            )
+        }),
+    };
+    Ok(value.unwrap_or(SqlCell::Null))
+}
+
+fn child_presence(payload: &str, field: &str) -> StoreResult<bool> {
+    if field == "$" {
+        return Ok(payload != "null");
+    }
+    struct Child<'a>(&'a str);
+    impl<'de> DeserializeSeed<'de> for Child<'_> {
+        type Value = bool;
+        fn deserialize<D: serde::Deserializer<'de>>(self, reader: D) -> Result<bool, D::Error> {
+            reader.deserialize_map(self)
+        }
+    }
+    impl<'de> Visitor<'de> for Child<'_> {
+        type Value = bool;
+        fn expecting(&self, buffer: &mut std::fmt::Formatter) -> std::fmt::Result {
+            buffer.write_str("a canonical parent record")
+        }
+        fn visit_map<M: MapAccess<'de>>(self, mut fields: M) -> Result<bool, M::Error> {
+            let mut present = false;
+            while let Some(key) = fields.next_key::<&str>()? {
+                if key == self.0 {
+                    present = fields.next_value::<&RawValue>()?.get() != "null";
+                } else {
+                    fields.next_value::<IgnoredAny>()?;
+                }
+            }
+            Ok(present)
+        }
+    }
+    let mut decoder = serde_json::Deserializer::from_str(payload);
+    let present = Child(field)
+        .deserialize(&mut decoder)
+        .map_err(|_| StoreError::InvalidRecord)?;
+    decoder.end().map_err(|_| StoreError::InvalidRecord)?;
+    Ok(present)
+}
+
+fn entity_ordering<'a>(
+    ids: impl Iterator<Item = StoreResult<&'a str>>,
+    count: usize,
+    custody: &mut ByteReservation,
+) -> StoreResult<EntityOrdering> {
+    let mut next_insertion = 0;
+    grow(custody, allocation::<EntityOrderingEntry>(count)?)?;
+    let mut entries = Vec::with_capacity(count);
+    for id in ids {
+        let id = id?;
+        // The padded key is at most 18 ASCII characters. format!'s backing
+        // can grow while it emits the fixed decimal representation.
+        grow(
+            custody,
+            id.len().checked_add(48).ok_or(StoreError::Capacity)?,
+        )?;
+        let numeric = id.parse::<u32>().ok().filter(|value| {
+            *value < u32::MAX
+                && (id == "0" || !id.starts_with('0'))
+                && id.bytes().all(|byte| byte.is_ascii_digit())
+        });
+        let key = if let Some(value) = numeric {
+            format!("0/{value:010}")
+        } else {
+            let position = next_insertion;
+            next_insertion += 1;
+            format!("1/{position:016}")
+        };
+        entries.push(EntityOrderingEntry {
+            id: id.to_owned(),
+            key,
+        });
+    }
+    entries.sort_unstable_by(|left, right| left.key.cmp(&right.key));
+    Ok(EntityOrdering {
+        next_insertion,
+        entries,
+    })
+}

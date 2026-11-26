@@ -1,6 +1,6 @@
 # Dwarf Fortress: artifacts, organized work, and remembered life
 
-**Gameplay inspiration; researched September 25, 2026.** This extends the [Dwarf Fortress chapter](../games/dwarf-fortress.md). It keeps rule descriptions, developer accounts, reported play, and interpretation distinct. Historical implementation details are not represented as a current source-code audit, and this document creates no OpenLegend engineering tasks.
+**Gameplay inspiration; researched September 25, 2026.** This extends the [Dwarf Fortress chapter](../games/dwarf-fortress.md). It keeps rule descriptions, developer accounts, reported play, and interpretation distinct. Historical implementation details are not represented as a current source-code audit, and this document creates no Open Legend engineering tasks.
 
 ## 1. An item can be useful, prestigious, and historical for different reasons
 

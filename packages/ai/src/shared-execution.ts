@@ -14,6 +14,7 @@ import type {
   GenerateRequest,
   JudgeRequest,
   JsonValue,
+  RequestControl,
 } from './types.js';
 import type { EmbeddingClient, EmbeddingRequest } from './embedding.js';
 import type { MacrofoldOutputMode } from './macrofold-inference-target.js';

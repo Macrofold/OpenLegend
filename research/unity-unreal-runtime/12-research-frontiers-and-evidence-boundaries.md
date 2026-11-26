@@ -2,7 +2,7 @@
 
 Research snapshot: **23 October 2026**. This chapter complements the current Unreal/Unity mechanisms in the subsystem chapters with recent primary papers, technical reports, conference speaker notes, and an official video transcript. These sources were read for mechanisms, evaluation conditions, and limitations. Their experiments were not reproduced.
 
-The distinction between a **shipping engine feature**, a **published research implementation**, and a **demonstration** remains explicit. No result here selects an OpenLegend design, model, library, or provider. A newer publication date also does not establish that a technique dominates every older or simpler alternative.
+The distinction between a **shipping engine feature**, a **published research implementation**, and a **demonstration** remains explicit. No result here selects an Open Legend design, model, library, or provider. A newer publication date also does not establish that a technique dominates every older or simpler alternative.
 
 ## 1. Currency and inspection record
 
@@ -50,7 +50,7 @@ Buffering can preserve continuity while delaying the first influence of a new co
 
 SIMA 2 acts through rendered RGB frames and keyboard/mouse commands, without privileged access to underlying game state. Its Gemini-based model is trained with gameplay demonstrations, additional interaction data, and reinforcement learning. The report evaluates both familiar and held-out environments, including generated worlds. Its discussion still identifies short interaction memory, difficult very long tasks, precise low-level control, and complex visual understanding as limitations. This is research evidence for a generalist game-playing interface, not a drop-in implementation of an NPC's durable biography, private beliefs, or continuous authoritative simulation. [F03]
 
-The interface difference is decisive when comparing results. An agent receiving pixels must infer geometry and affordances from images. An agent receiving a structured observation depends on how that observation was constructed, filtered, and timed. Neither interface grants a universal performance advantage independently of the task. OpenLegend's current observation/knowledge boundaries are grounded in [chapter 00](00-openlegend-context-and-coverage.md), while current engine inference runtimes are covered in [chapter 03](03-ai-navigation-and-crowds.md).
+The interface difference is decisive when comparing results. An agent receiving pixels must infer geometry and affordances from images. An agent receiving a structured observation depends on how that observation was constructed, filtered, and timed. Neither interface grants a universal performance advantage independently of the task. Open Legend's current observation/knowledge boundaries are grounded in [chapter 00](00-openlegend-context-and-coverage.md), while current engine inference runtimes are covered in [chapter 03](03-ai-navigation-and-crowds.md).
 
 A model's ability to describe an intended action is also different from executing that action within a world's rules. The research examples make this separation observable: an action proposal, a controller command, an environment transition, and the subsequent observation are separate stages.
 
@@ -83,7 +83,7 @@ The last row is not guaranteed by success on the first three. An agent can forge
 
 Agent Island uses seven anonymized agents, private conversations, public pitches, elimination votes, and memory consolidation. Its released completed-game logs support analysis of messages, decisions, and outcomes. Relative skill is estimated with a Bayesian ranking model, rather than treating eloquent dialogue as the success criterion. The paper also documents limitations: a low-stakes setting and a scoring model that does not represent matchup effects. This is evidence about a particular competitive interaction environment. It does not establish a general model of friendship, institutions, economic exchange, ecological behavior, or a persistent inhabited society. [F07]
 
-For OpenLegend's broader intended scope, the substantive distinction is between **producing plausible social language** and **maintaining relationships between words, actions, shared resources, and later consequences**. A social benchmark can inspect part of that relationship. Its environment rules, participants, memory policy, observability, and scoring remain part of what was tested. A model ranking from the paper's specific run is therefore not presented as a current provider recommendation.
+For Open Legend's broader intended scope, the substantive distinction is between **producing plausible social language** and **maintaining relationships between words, actions, shared resources, and later consequences**. A social benchmark can inspect part of that relationship. Its environment rules, participants, memory policy, observability, and scoring remain part of what was tested. A model ranking from the paper's specific run is therefore not presented as a current provider recommendation.
 
 This also explains why a multiagent study cannot be substituted for the engine mechanisms in [chapters 02–07](02-simulation-and-perception.md): communication quality does not measure scheduling fairness, spatial query correctness, streaming continuity, or network recovery.
 
@@ -91,7 +91,7 @@ This also explains why a multiagent study cannot be substituted for the engine m
 
 ### SIGGRAPH 2026: Upgrading PSSR on PlayStation 5 Pro
 
-Daniel Craig's speaker notes describe moving from a network that predicts color to one that predicts filtering/blending parameters, while explicit GPU operations perform more of the reconstruction. The architecture uses color differences and an anisotropic Gaussian representation, with filtering in input space. The notes explain how this changes HDR handling, gradient flow, parameter allocation, and high-upscale behavior. This is first-party evidence from the implementation's engineer about a specific hardware/software stack. It is not a Unity or Unreal integration guarantee, and the reported improvements are not an OpenLegend benchmark. [F08]
+Daniel Craig's speaker notes describe moving from a network that predicts color to one that predicts filtering/blending parameters, while explicit GPU operations perform more of the reconstruction. The architecture uses color differences and an anisotropic Gaussian representation, with filtering in input space. The notes explain how this changes HDR handling, gradient flow, parameter allocation, and high-upscale behavior. This is first-party evidence from the implementation's engineer about a specific hardware/software stack. It is not a Unity or Unreal integration guarantee, and the reported improvements are not an Open Legend benchmark. [F08]
 
 The extracted notes were read, including the architecture section around PDF pages 53–71 and the concluding results. The deck's embedded moving comparisons were **not watched**, so no independent perceptual judgment is claimed. [F08] The course index establishes the event and material-update dates. [F09]
 
@@ -122,7 +122,7 @@ The current evidence supports several comparisons without prescribing a build:
 | “Many agents”                | Number represented, number actively simulated, number making expensive decisions, and number evaluated concurrently.        |
 | “Better performance”         | The actual hardware, inputs, population, timing metric, quality criterion, and comparison implementation.                   |
 
-The table is an analytical synthesis across the collection. It does not rank these research systems against Unreal, Unity, or OpenLegend as whole products. Their outputs and evaluation conditions are too different for such a ranking to be justified.
+The table is an analytical synthesis across the collection. It does not rank these research systems against Unreal, Unity, or Open Legend as whole products. Their outputs and evaluation conditions are too different for such a ranking to be justified.
 
 Two particularly important consequences follow. First, sophisticated approximate systems can be highly useful within a well-defined consumer boundary while remaining unsuitable evidence for an exact guarantee elsewhere. Second, explicitly preserving some operations outside a learned model is compatible with modern research; “state of the art” does not mean that every stage has become generative or probabilistic. The engine chapters show the same coexistence of data structures, exact checks, asynchronous work, authored rules, and selective approximation.
 

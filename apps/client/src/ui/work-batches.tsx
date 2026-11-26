@@ -6,7 +6,8 @@ import type {
   WorkBatchRequest,
   WorkBatchSelection,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import type { CommandDispatcher } from '../command-request';
+import { post, postContactRead } from '../api';
 import { actionSubjectKey, playerActionStatusKey } from '../action-browser';
 import { Button, SelectField } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
@@ -156,9 +157,10 @@ export function WorkBatches({
     const timer = setTimeout(async () => {
       setChecking(true);
       try {
-        const value = await post<WorkBatchPreview | (ApiResult & { ok: false })>(
+        const value = await postContactRead<WorkBatchPreview | (ApiResult & { ok: false })>(
           '/api/work-batches/preview',
           request,
+          [],
           AbortSignal.any([abort.signal, AbortSignal.timeout(15000)]),
         );
         // HTTP refusals carry a public result, not the prepared work's facts.

@@ -1,6 +1,6 @@
 # Hades: builds, character callbacks, and the rhythm of returning
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Hades / Hades II chapter](../games/hades-and-hades-ii.md). Detailed mechanics in this study refer to the original Hades, not interchangeable sequel rules. Earlier Hades II reception and economic history remain in the existing chapter. No gameplay, source-code audit, or full video viewing was performed. This is reference material, not an OpenLegend implementation plan.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Hades / Hades II chapter](../games/hades-and-hades-ii.md). Detailed mechanics in this study refer to the original Hades, not interchangeable sequel rules. Earlier Hades II reception and economic history remain in the existing chapter. No gameplay, source-code audit, or full video viewing was performed. This is reference material, not an Open Legend implementation plan.
 
 ## 1. Repeating a route does not require resetting its meaning
 
@@ -109,6 +109,6 @@ A persistent AI-native game can draw from these patterns without copying death r
 - **H7 — Edge, [Hands-on with Hades](https://www.gamesradar.com/hands-on-with-hades-supergiants-devilishly-stylish-underworld-dungeon-crawler/), January 23, 2020.** Early-access play and creator interview. Feedback percentages and balance values are not treated as independently measured results.
 - **H8 — [Quarter To Three discussion](https://forum.quartertothree.com/t/i-want-to-tell-you-why-hades-is-so-good/149672), October 2020.** Contrasting participant experiences; no prevalence, medical, or demographic conclusions.
 
-Accessed September 25, 2026. Detailed wiki retrieval was unavailable, so unsupported boon formulas and complete keepsake statistics were not added. Names identify reference examples, not proposed OpenLegend assets.
+Accessed September 25, 2026. Detailed wiki retrieval was unavailable, so unsupported boon formulas and complete keepsake statistics were not added. Names identify reference examples, not proposed Open Legend assets.
 
 [Back to granular studies](README.md) · [Hades / Hades II overview](../games/hades-and-hades-ii.md)

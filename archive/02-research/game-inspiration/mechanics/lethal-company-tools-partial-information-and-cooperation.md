@@ -1,6 +1,6 @@
 # Lethal Company: tools, partial information, and cooperation
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Among Us / Lethal Company chapter](../games/among-us-and-lethal-company.md). It explains the studied gameplay rather than recommending a horror mode or writing OpenLegend implementation tasks. Historical review versions, mods, player aspirations, and current features are kept distinct.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Among Us / Lethal Company chapter](../games/among-us-and-lethal-company.md). It explains the studied gameplay rather than recommending a horror mode or writing Open Legend implementation tasks. Historical review versions, mods, player aspirations, and current features are kept distinct.
 
 ## 1. The shared objective is easy to understand
 

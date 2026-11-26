@@ -27,7 +27,7 @@ export function TabResumeDialog({
             <h2 className="ol-heading">{title}</h2>
           </header>
           <div className="ol-person-form">
-            <p>OpenLegend is open in another tab.</p>
+            <p>Open Legend is open in another tab.</p>
             {error && <p role="alert">{error}</p>}
           </div>
           <footer className="ol-modal-actions">

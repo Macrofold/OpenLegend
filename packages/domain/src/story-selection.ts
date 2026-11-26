@@ -3,7 +3,7 @@ import { inventionPermission } from './invention-policy.js';
 import { canonicalJson } from './events.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { updateWorld } from './draft.js';
-import type { EncounterExposure, PlaceDefinition } from './places.js';
+import type { EncounterExposure } from './places.js';
 
 export interface StoryPolicy {
   id: string;
@@ -30,6 +30,15 @@ export interface StoryPolicy {
     significance: number;
   }[];
   delivery: { maximumSources: number; minimumInterval: number; maximumAge: number };
+}
+/** Story selection reads authored importance and subject classification only.
+ * A captured event must not retain the subject's private actor or future work. */
+export interface StorySubject {
+  id: string;
+  mechanismFields?: Entity['mechanismFields'];
+  actor?: object;
+  animal?: object;
+  landmarkId?: string;
 }
 export type StorySelection =
   | { kind: 'silent'; reason: string }
@@ -142,7 +151,7 @@ export function validateStoryPolicy(p: StoryPolicy): void {
 }
 export function storyField(
   p: StoryPolicy,
-  entity: Entity | PlaceDefinition | undefined,
+  entity: StorySubject | undefined,
   field: string,
 ): number | undefined {
   const f = p.fields[field];
@@ -160,8 +169,8 @@ export interface StorySelectionInput {
   viewerId: string;
   event: WorldEvent;
   sourceText: string;
-  source?: Entity;
-  target?: Entity;
+  source?: StorySubject;
+  target?: StorySubject;
 }
 type Evaluator = (input: StorySelectionInput, config: StoryPolicy) => StorySelection;
 const silent = (reason: string): StorySelection => ({ kind: 'silent', reason });
@@ -238,11 +247,13 @@ export function selectStory(input: StorySelectionInput, p: StoryPolicy): StorySe
     (event.scope === 'private' && !ownAcquisition) ||
     !p.enabled ||
     !evaluators[p.evaluator] ||
-    !input.event.audience.includes(input.viewerId) ||
-    !input.sourceText.trim()
+    !input.event.audience.includes(input.viewerId)
   )
     return silent('Disabled or unavailable evidence.');
-  return evaluators[p.evaluator](input, p);
+  const selected = evaluators[p.evaluator](input, p);
+  return selected.kind === 'candidate' && !input.sourceText.trim()
+    ? silent('Disabled or unavailable evidence.')
+    : selected;
 }
 /** All configuration and field changes share validation and revision invalidation. */
 export function editStoryMechanism(

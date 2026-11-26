@@ -1,6 +1,154 @@
 import type { CognitionPolicy } from '../../cognition-policy.js';
 import { definitionPin } from '../../world-modules.js';
 import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
+import type { WorldEvent } from '../../types.js';
+import { freeze } from 'immer';
+import { BASE_RESPONSE_RULES } from './response-rules.js';
+import {
+  BASE_EVASION_ENDED_EVENT,
+  BASE_RANGED_CHOICE_LABEL,
+  BASE_RANGED_TEXT,
+  baseEvasionOccurrenceRules,
+} from './ranged-counterplay.js';
+import { BASE_HUNTING } from './hunting.js';
+import { BASE_GUARD_TEXT } from './shield-defense.js';
+
+const fireOut = { eventType: 'fire-out', message: 'The campfire ran out of fuel.' };
+const flight = {
+  fallAcceleration: 0.04,
+  terminalFallSpeed: 3,
+  minimumFallHeight: -16,
+  takeoffEvent: 'takeoff',
+  landingEvent: 'landed',
+  takeoffSuffix: ' took flight.',
+  landingBeforeSurface: ' landed on ',
+  fallSuffix: ' came to rest on the surface below.',
+};
+const ranged = {
+  shotReleased: 'shot-released',
+  released: BASE_RANGED_TEXT.released,
+  projectileEnded: 'projectile-ended',
+  shotEnded: 'shot-ended',
+  aimReady: 'aim-ready',
+  prepared: BASE_RANGED_TEXT.prepared,
+  injuryInterrupted: BASE_RANGED_TEXT.injuryInterrupted,
+  menu: {
+    title: BASE_RANGED_CHOICE_LABEL,
+    aimLabel: BASE_RANGED_TEXT.aimName,
+    aimDescription: BASE_RANGED_TEXT.aimDescription,
+    shootLabel: BASE_RANGED_TEXT.shotName,
+    shootDescription: BASE_RANGED_TEXT.shotDescription,
+    releaseLabel: BASE_RANGED_TEXT.shootingName,
+    releaseDescription: BASE_RANGED_TEXT.releaseDescription,
+    releaseNotReady: BASE_RANGED_TEXT.notReady,
+    huntLabel: BASE_HUNTING.label,
+    huntSpecies: BASE_HUNTING.knownPrey,
+  },
+  contactHit: BASE_RANGED_TEXT.contactHit,
+  contactStopped: BASE_RANGED_TEXT.contactStopped,
+  contactSource: BASE_RANGED_TEXT.contactSource,
+  terminated: BASE_RANGED_TEXT.terminated,
+  observedHit: BASE_RANGED_TEXT.observedHit,
+  observedNoInjury: BASE_RANGED_TEXT.observedNoInjury,
+  observedCover: BASE_RANGED_TEXT.observedCover,
+  observedRangeEnd: BASE_RANGED_TEXT.observedRangeEnd,
+  stopped: BASE_RANGED_TEXT.stopped,
+};
+
+export const BASE_OCCURRENCE_RULES = freeze(
+  {
+    id: 'wilderness:occurrences',
+    version: 1,
+    importantEvents: ['death', 'taught', 'incapacitated'] as readonly string[],
+    importantValue: 9,
+    speechEvent: 'speech',
+    soundEvent: 'sound',
+    encounterEvent: 'encounter',
+    contactEvent: 'contact',
+    fireOut,
+    flight,
+    ranged,
+    guardInterrupted: BASE_GUARD_TEXT.injuryInterrupted,
+    evasion: baseEvasionOccurrenceRules(),
+    speechImportance: 7,
+    soundImportance: 3,
+    receivedUrgency: 4,
+    unintelligibleSpeechImportance: 3,
+    semanticEvents: [
+      'crafted',
+      BASE_EVASION_ENDED_EVENT,
+      'declaration-admitted',
+      'shot-released',
+      'projectile-contact',
+      'struck',
+      fireOut.eventType,
+      'fire-lit',
+      'fire-extinguished',
+      'rested',
+    ] as readonly string[],
+    semanticImportance: 6,
+    ordinaryImportance: 3,
+    urgentEvents: ['death', 'incapacitated'] as readonly string[],
+    urgentValue: 10,
+    speechUrgency: 4,
+    ordinaryUrgency: 2,
+    activityEvents: [
+      'action-started',
+      'speech',
+      'ate',
+      'equipped',
+      'gathered',
+      'prepared',
+      'crafted',
+      'harvested',
+      'cooked',
+      'fire-lit',
+      'fire-fueled',
+      'fire-extinguished',
+      'struck',
+      'guarded',
+      'shot-released',
+      ranged.shotEnded,
+      'body-effect',
+      'moved',
+      'action-stopped',
+    ] as readonly string[],
+    nativeTargetEvents: [
+      'struck',
+      'projectile-contact',
+      'projectile-passage',
+      'shot-released',
+      'attack-cue',
+      'action-started',
+    ] as readonly string[],
+    projectileContactEvent: 'projectile-contact',
+    projectilePassageEvent: 'projectile-passage',
+    importancePolicy: 'native-v1',
+    significantReason: 'significant',
+    response: BASE_RESPONSE_RULES,
+  },
+  true,
+);
+
+/** Authored fallback salience; explicit producer metrics are normalized by the event owner. */
+export function baseEventSalience(type: string, data: WorldEvent['data']) {
+  const rules = BASE_OCCURRENCE_RULES;
+  return {
+    importance:
+      data?.['significant'] === true || rules.importantEvents.includes(type)
+        ? rules.importantValue
+        : type === rules.speechEvent
+          ? rules.speechImportance
+          : data?.['semanticTrigger'] === true || rules.semanticEvents.includes(type)
+            ? rules.semanticImportance
+            : rules.ordinaryImportance,
+    urgency: rules.urgentEvents.includes(type)
+      ? rules.urgentValue
+      : type === rules.speechEvent
+        ? rules.speechUrgency
+        : rules.ordinaryUrgency,
+  };
+}
 
 /** Construct after linked world definitions initialize; exact pins use the shared
  * identity owner, rather than a second hand-maintained digest in authored data. */

@@ -36,7 +36,7 @@ Owns everyday activities pursued for pleasure, expression and ordinary fulfillme
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [arts and leisure repertoire](../../../../docs/repertoires/arts-leisure.md), [design foundation](../../../../docs/repertoires/design-foundation.md) and [compelling-character specification](../../../../docs/projects/compelling-characters-feature-spec.md). Repertoire options and character aspirations are not delivered activities; inspect their existing implementation owners before proposing a gap.
 
@@ -44,7 +44,7 @@ Use the [arts and leisure repertoire](../../../../docs/repertoires/arts-leisure.
 
 <!-- Follow a meal, game, garden or performance from wanting it, preparing and participating to a satisfying stopping point and what someone remembers. Include a quiet successful occasion that stays successful, not only disruption or crisis. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 

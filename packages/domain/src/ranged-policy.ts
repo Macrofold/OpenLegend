@@ -21,6 +21,7 @@ export interface RangedPolicy {
     contractedText: string;
     restoredText: string;
     clearedText: string;
+    postureHeldText: string;
   };
   conditionAdjustment: 'danger-or-return' | 'none';
   conditionAccuracyFactor: number;
@@ -78,6 +79,7 @@ export function validateRangedPolicy(policy: RangedPolicy | null): void {
         'contractedText',
         'restoredText',
         'clearedText',
+        'postureHeldText',
       ]) ||
         !Number.isFinite(policy.localAvoidance.contextFactor) ||
         policy.localAvoidance.contextFactor < 0 ||
@@ -86,6 +88,7 @@ export function validateRangedPolicy(policy: RangedPolicy | null): void {
           policy.localAvoidance.contractedText,
           policy.localAvoidance.restoredText,
           policy.localAvoidance.clearedText,
+          policy.localAvoidance.postureHeldText,
         ].every((text) => typeof text === 'string' && text.length > 0 && text.length <= 400) ||
         !Array.isArray(policy.localAvoidance.bodyProfiles) ||
         !policy.localAvoidance.bodyProfiles.length ||

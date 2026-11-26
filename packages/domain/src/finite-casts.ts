@@ -9,6 +9,7 @@ import { availableItemQuantity, itemDefinitionPin } from './resource-claims.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
 import type { Entity, WorldState } from './types.js';
+import castCopy from './finite-cast-messages.json' with { type: 'json' };
 
 /** A finite authored source and one probabilistic extraction, not animal ecology.
  * docs/food-preparation.md#finite-source-attempts */
@@ -67,7 +68,7 @@ export function castGeometryProblem(
 ): string | undefined {
   const cast = source.resource?.cast;
   const definition = castDefinition(world, source);
-  if (!cast || !definition) return 'The selected source no longer supports this cast.';
+  if (!cast || !definition) return castCopy.missingSource;
   const { stance, endpoint, water } = cast;
   if (
     !isWalkable(world, stance, stance.surfaceId, bodyProfile(actor)) ||
@@ -78,13 +79,13 @@ export function castGeometryProblem(
     distance3D(stance, endpoint) > definition.maximumLineMetres ||
     !hasLineOfSight(world, interactionAnchor(world, actor, stance), endpoint)
   )
-    return 'The selected stance or line to the declared endpoint is blocked.';
+    return castCopy.blockedLine;
   if (
     atStance &&
     (worldSupport(actor) !== stance.surfaceId ||
       distance3D(origin, stance) > definition.stanceTolerance)
   )
-    return 'The chosen stance is no longer within reach.';
+    return castCopy.outOfReach;
 }
 export function castBindingProblem(
   world: WorldState,
@@ -96,8 +97,7 @@ export function castBindingProblem(
   const definition = castDefinition(world, source);
   const item = itemFor(world, itemId);
   const tool = item && world.itemDefinitions[item.definitionId];
-  if (!source?.resource?.cast || !definition)
-    return 'The selected source no longer supports this cast.';
+  if (!source?.resource?.cast || !definition) return castCopy.missingSource;
   if (
     !item ||
     !accessiblePossession(world, actor.id, itemId) ||
@@ -117,7 +117,7 @@ export function castBindingProblem(
         itemDefinitionPin(world.itemDefinitions[binding.output.id]!),
       ))
   )
-    return 'The selected source, tool or catch definition changed.';
+    return castCopy.changedBinding;
 }
 export function validateFiniteCasts(world: WorldState): void {
   if (

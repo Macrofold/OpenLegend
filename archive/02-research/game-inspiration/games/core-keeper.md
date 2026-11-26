@@ -6,7 +6,7 @@
 
 **My interpretation.** Home and expedition reinforce one another. Exploration provides surprise and resources; a base converts those resources into security and capability; automation makes prior work legible as a functioning system. The camera’s distance does not preclude atmosphere because contrast, light and scale can communicate it.
 
-**For OpenLegend.** A generated world need not make every craft step more elaborate to feel rich. Familiar combinations with clear outcomes can provide a reliable vocabulary, while unusual situations supply the invention opportunity. Creature routines can also imply a world beyond the player without requiring every inhabitant to deliver a biography.
+**For Open Legend.** A generated world need not make every craft step more elaborate to feel rich. Familiar combinations with clear outcomes can provide a reliable vocabulary, while unusual situations supply the invention opportunity. Creature routines can also imply a world beyond the player without requiring every inhabitant to deliver a biography.
 
 **What to avoid.** Inventory volume is not automatically strategic depth. More resources and generated items can increase sorting and travel without increasing interesting choice. Likewise, forcing a wiki lookup for every recipe can bury a good exploratory loop. Natural-language assistance should clarify supported behavior without silently choosing all the player’s aims.
 

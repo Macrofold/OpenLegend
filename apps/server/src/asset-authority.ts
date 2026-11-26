@@ -4,7 +4,7 @@ import { ASSET_TABLES } from './asset-repository.js';
 import type { AssetConfiguration } from './asset-configuration.js';
 import { PostgresDatabase } from './postgres.js';
 import { signAssetAuthorityToken } from './asset-storage.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 /** One shared asset authority records publication and permission for every machine.
  * Each game keeps a synchronized copy in its own database, because worlds read

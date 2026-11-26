@@ -6,7 +6,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./execution-input": "./src/execution-input.ts",
-    "./appearance": "./src/appearance.ts"
+    "./appearance": "./src/appearance.ts",
+    "./conversation-menu": "./src/conversation-menu.json",
+    "./native-install": "./src/native-install.ts",
+    "./native-proof": "./src/worlds/base/native-proof.ts"
   },
   "types": "./src/index.ts",
   "license": "AGPL-3.0-only",

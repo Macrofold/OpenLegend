@@ -1,4 +1,5 @@
 import type {
+  ActivityRequestDefinitionScope,
   ActivityHostDescriptor,
   ActivityRequestChoice,
   ActivityRequestDescriptor,
@@ -47,7 +48,7 @@ export interface Role {
 export interface Form {
   id: string;
   type: Command['type'];
-  descriptor(world: WorldState, actorId?: string, binding?: true): ActivityRequestDescriptor;
+  descriptor(world: ActivityRequestDefinitionScope, actor?: { world: WorldState; id: string }, binding?: true): ActivityRequestDescriptor;
   roles: Readonly<Record<string, Role>>;
   bind(world: WorldState, actorId: string, id: string, args: Arguments): Command | Outcome;
 }
@@ -187,10 +188,10 @@ export function simple(
   return {
     id,
     type,
-    descriptor: (world, actorId, binding) => {
+    descriptor: (_world, actor, binding) => {
       let bounded = fields;
-      if (actorId && options.quantity && !binding) {
-        const quantities = quantitySummary(world, actorId);
+      if (actor && options.quantity && !binding) {
+        const quantities = quantitySummary(actor.world, actor.id);
         const maximum =
           options.quantity === 'known-stock'
             ? quantities.knownTotal
@@ -303,7 +304,7 @@ function validArgument(
 }
 
 export function nativeRequestSupport(
-  selected: (world: WorldState) => readonly Form[],
+  selected: (world: ActivityRequestDefinitionScope) => readonly Form[],
   find: (world: WorldState, family: string) => Form | undefined,
 ): Pick<
   ActivityHostDescriptor,
@@ -314,12 +315,12 @@ export function nativeRequestSupport(
   | 'requestRoleEntityIds'
 > {
   return {
-    requestDescriptors: (world, actorId) =>
+    requestDescriptors: (world, actor) =>
       selected(world)
-        .map((form) => form.descriptor(world, actorId))
+        .map((form) => form.descriptor(world, actor))
         .filter(
           (descriptor) =>
-            !actorId ||
+            !actor ||
             !Object.values(descriptor.fields).some(
               (field) => field.type === 'choice' && field.choices.length === 0,
             ),
@@ -335,7 +336,7 @@ export function nativeRequestSupport(
       const form = find(world, family);
       const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
       if (!form || !observed) return [];
-      const descriptor = form.descriptor(world, actorId);
+      const descriptor = form.descriptor(world, { world, id: actorId });
       const scope = readScope(world, actorId, observed);
       const ids = new Set<string>();
       for (const [field, role] of Object.entries(form.roles)) {
@@ -363,7 +364,7 @@ export function nativeRequestSupport(
           : []
         : selected(world).filter((form) => !selectedFamilies || selectedFamilies.has(form.id));
       for (const form of forms) {
-        const descriptor = form.descriptor(world, actorId);
+        const descriptor = form.descriptor(world, { world, id: actorId });
         if (query && query.family !== descriptor.id) continue;
         for (const [field, role] of Object.entries(form.roles)) {
           if (query && query.field !== field) continue;
@@ -431,7 +432,7 @@ export function nativeRequestSupport(
     compileRequest(world, actorId, id, request, permitted) {
       const form = find(world, request.family);
       if (!form) return unavailable();
-      const descriptor = form.descriptor(world, actorId, true),
+      const descriptor = form.descriptor(world, { world, id: actorId }, true),
         args = request.arguments;
       if (!hasRecordFields(args, Object.keys(descriptor.fields))) return unavailable();
       const observation = permitted

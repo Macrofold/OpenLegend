@@ -25,12 +25,12 @@ export function PerceivedEventText({
     return (
       <>
         {presentation.parts.map((part, index) =>
-          part.kind === 'participant' && inspectEntity ? (
+          part.kind === 'participant' && part.contactReference && inspectEntity ? (
             <button
               key={index}
               type="button"
               className="ol-inline-reference"
-              onClick={() => inspectEntity(part.id)}
+              onClick={() => inspectEntity(part.contactReference!)}
             >
               {part.text}
             </button>
@@ -42,31 +42,6 @@ export function PerceivedEventText({
     );
   }
   const tokens: Array<{ label: string; render(text: string, key: number): ReactNode }> = [];
-  if (inspectEntity && !event.descriptive)
-    for (const ref of event.references ?? []) {
-      if (
-        !ref.label ||
-        event.references?.some(
-          (other) =>
-            other.id !== ref.id &&
-            other.label.toLocaleLowerCase() === ref.label.toLocaleLowerCase(),
-        )
-      )
-        continue;
-      tokens.push({
-        label: ref.label,
-        render: (text, key) => (
-          <button
-            key={key}
-            type="button"
-            className="ol-inline-reference"
-            onClick={() => inspectEntity(ref.id)}
-          >
-            {text}
-          </button>
-        ),
-      });
-    }
   const change = event.attributeChange;
   if (change?.name && change.meaning)
     tokens.push({

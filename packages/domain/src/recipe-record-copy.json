@@ -1,0 +1,11 @@
+{
+  "learnLabel": "Learn this method",
+  "controlRequired": "Current character control is required.",
+  "paused": "Resume the world to act.",
+  "unavailable": "Reach and inspect an accessible recipe record.",
+  "stale": "The selected record changed. Inspect it again.",
+  "uninspected": "Inspect this accessible record before learning its method.",
+  "definitionUnavailable": "The exact method on this record is no longer installed.",
+  "capacity": "There is no room to retain this method and its exact learning proof.",
+  "proof": "I acquired a validated method."
+}

@@ -1,3 +1,4 @@
+import { receivedEventObservation } from './perception-evidence.js';
 import { navigationMembershipChanged } from './entity-index.js';
 import { stopOwnedOffense, finishPlanAction } from './agency.js';
 import { outcome } from './events.js';
@@ -26,6 +27,7 @@ import {
   nativeDangerSeparation,
   nativeRouteDangerSeparation,
   reconcileNativeDangers,
+  invalidateNativeDangerAssessment,
   type NativeDangerFrame,
 } from './native-response-danger.js';
 import {
@@ -45,9 +47,9 @@ import {
 } from './native-response-navigation.js';
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
-import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
-import { canonicalJson, contentLabel, emit } from './events.js';
-import { subjectNarration } from './narration.js';
+import { recordSemanticChange } from './dependencies.js';
+import { selectedOutwardBodyActivity } from './world-composition.js';
+import { canonicalJson, contentLabel } from './events.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { readEntityAttribute } from './status-effects.js';
 import { nextRandom } from './data.js';
@@ -69,10 +71,16 @@ import {
   advanceFlight,
 } from './flight.js';
 
-function changed(world: WorldState, animal: Entity): void {
+function changed(world: WorldState, animal: Entity, outwardChange = false): void {
   recordAnimalClockWrite(world, animal.id);
-  recordSensoryChange(world, animal.id, true);
-  recordSemanticChange(world, { kind: 'state', entityId: animal.id, field: 'behavior' });
+  // The controller's private alarm/proposal is not received activity. Actual
+  // locomotion, body and participation writers publish their own sensory changes.
+  recordSemanticChange(world, {
+    kind: 'state',
+    entityId: animal.id,
+    field: 'behavior',
+    outwardChange,
+  });
 }
 
 /** Control and body-life writers retire only this controller's uncommitted
@@ -102,6 +110,7 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
     state.physicalLife === (actor.physicalLife ?? 0)
   )
     return;
+  const outward = selectedOutwardBodyActivity(world, entity);
   retireNativeFlight(world, entity);
   delete state.episode;
   if (state.foraging) {
@@ -119,16 +128,12 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
     actor.planGeneration++;
   }
   reconcileAnimalWander(world, entity);
-  changed(world, entity);
+  changed(world, entity, outward !== selectedOutwardBodyActivity(world, entity));
 }
 
-/** Receives the exact committed occurrence, with independently checked sight or
- * actual bodily contact. It never asks hidden source state for a location. */
-export function acquireNativeResponseEvent(
-  world: WorldState,
-  event: Readonly<WorldEvent>,
-  events: WorldEvent[],
-): void {
+/** A native receiver needs the actual received occurrence independently of
+ * whether its world chooses a lasting personal account. */
+function nativeResponseReceiver(world: WorldState, event: Readonly<WorldEvent>) {
   if (
     ![
       'struck',
@@ -139,7 +144,7 @@ export function acquireNativeResponseEvent(
       'action-started',
     ].includes(event.type)
   )
-    return;
+    return undefined;
   const animal = event.targetId ? entityGet(world.entities, event.targetId) : undefined;
   if (
     !animal?.animal ||
@@ -148,20 +153,48 @@ export function acquireNativeResponseEvent(
     !activelyParticipates(animal) ||
     (animal.threat && !animal.threat.relinquished && !animal.animal.foraging)
   )
-    return;
+    return undefined;
   if (event.scope === 'private' && !event.audience.includes(animal.id)) return;
-  const source = event.actorId ? entityGet(world.entities, event.actorId) : undefined;
-  const felt =
-    event.type === 'projectile-contact' ||
-    event.type === 'projectile-passage' ||
-    (event.type === 'struck' && event.data?.['contactInjury'] === true);
+  return animal;
+}
+export function nativeResponseNeedsEventReception(
+  world: WorldState,
+  event: Readonly<WorldEvent>,
+  observerId: string,
+): boolean {
+  return event.targetId === observerId && nativeResponseReceiver(world, event) !== undefined;
+}
+
+/** Receives the exact committed occurrence, with independently checked sight or
+ * actual bodily contact. It never asks hidden source state for a location. */
+export function acquireNativeResponseEvent(
+  world: WorldState,
+  event: Readonly<WorldEvent>,
+  events: WorldEvent[],
+): void {
+  const animal = nativeResponseReceiver(world, event);
+  if (!animal) return;
+  const observation = receivedEventObservation(world, animal.id, event.id);
+  if (!observation) return;
+  const permittedEvent = observation.facets.find((facet) => facet.value.kind === 'event')?.value;
+  const sourcePermitted =
+    permittedEvent?.kind === 'event' &&
+    permittedEvent.references.some(
+      (reference) => reference.role === 'actor' && reference.id === event.actorId,
+    );
+  const source =
+    sourcePermitted && event.actorId ? entityGet(world.entities, event.actorId) : undefined;
+  const felt = observation.modality === 'touch';
+  const regional =
+    felt || (event.type === 'projectile-passage' && observation.modality === 'sight');
   const preparation = event.type === 'action-started' || event.type === 'attack-cue';
   if (
     preparation &&
     (!source || !attackPreparation(world, source) || source.actor?.action?.targetId !== animal.id)
   )
     return;
-  if (!felt && (!source || source.id === animal.id || !seesEntity(world, animal, source))) return;
+  if (!regional && (!source || source.id === animal.id || !seesEntity(world, animal, source)))
+    return;
   if (preparation && source) {
     observeNativeAttackPreparation(world, source, events);
     return;
@@ -186,19 +219,22 @@ export function acquireNativeResponseEvent(
       visible: true,
     };
   }
-  if (felt) {
+  if (regional) {
     const projectileId = event.data?.['projectileId'];
+    const receivedLocation = observation.facets.find(
+      (facet) => facet.value.kind === 'location',
+    )?.value;
     const origin =
-      event.type === 'projectile-contact' || event.type === 'projectile-passage'
-        ? (event.origin ?? worldPosition(animal))
+      receivedLocation?.kind === 'location' && receivedLocation.location.kind === 'point'
+        ? receivedLocation.location.point
         : worldPosition(animal);
     const regionSource =
       typeof projectileId === 'string'
         ? { kind: 'projectile' as const, id: projectileId }
         : { kind: 'event' as const, id: event.id };
-    const x = event.data?.['incomingX'],
-      y = event.data?.['incomingY'],
-      z = event.data?.['incomingZ'];
+    const x = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingX'] : undefined,
+      y = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingY'] : undefined,
+      z = permittedEvent?.kind === 'event' ? permittedEvent.data['incomingZ'] : undefined;
     episode.dangers[nativeRegionDangerKey(regionSource)] = {
       kind: 'region',
       source: regionSource,
@@ -209,6 +245,7 @@ export function acquireNativeResponseEvent(
         : {}),
     };
   }
+  invalidateNativeDangerAssessment(world, animal.id);
   changed(world, animal);
 }
 
@@ -281,14 +318,6 @@ function beginNativeAlarm(
     energy > wake.above
   )
     interruptStatusEffects(world, animal, events, wake.reason);
-  if (fresh)
-    emit(
-      world,
-      events,
-      'animal-response',
-      subjectNarration(animal, profile.presentation.alarmed),
-      animal,
-    );
   changed(world, animal);
   return episode;
 }
@@ -437,7 +466,7 @@ export function observeNativeAttackPreparation(
 
 export type NativeResponseDecision =
   | { status: 'none' | 'pending' }
-  | { status: 'choices'; routes: NativeRefugeRoute[] }
+  | { status: 'route'; route: NativeRefugeRoute }
   | { status: 'flight-choices'; preparation: NativeFlightPreparation }
   | { status: 'stop' };
 
@@ -623,7 +652,7 @@ export function nativeResponseDecision(
   ) {
     if (episode.reviewAt <= world.simTime) {
       episode.reviewAt = world.simTime + profile.reviewSeconds;
-      changed(world, animal);
+      recordAnimalClockWrite(world, animal.id);
     }
     return { status: 'pending' };
   }
@@ -691,26 +720,12 @@ export function nativeResponseDecision(
     if (episode.clearSince === undefined) {
       episode.clearSince = world.simTime;
       episode.mode = 'settling';
-      emit(
-        world,
-        events,
-        'animal-response',
-        subjectNarration(animal, profile.presentation.settling),
-        animal,
-      );
     }
     delete episode.proposal;
     delete episode.blocked;
     if (world.simTime >= episode.clearSince + profile.settlingSeconds) {
       finishNativeFlightResponse(animal);
       delete state.episode;
-      emit(
-        world,
-        events,
-        'animal-response',
-        subjectNarration(animal, profile.presentation.routine),
-        animal,
-      );
       advanceFlight(world, animal, 0, events);
       changed(world, animal);
       return { status: 'none' };
@@ -750,7 +765,7 @@ export function nativeResponseDecision(
         preparation.choices[0]!.candidate.retained
       ) {
         episode.reviewAt = nextReview();
-        changed(world, animal);
+        recordAnimalClockWrite(world, animal.id);
         return { status: 'none' };
       }
       return { status: 'flight-choices', preparation };
@@ -773,7 +788,7 @@ export function nativeResponseDecision(
       distance3D(worldPosition(animal), episode.refuge.point) > SPATIAL_LIMITS.epsilon
     ) {
       episode.reviewAt = nextReview();
-      changed(world, animal);
+      recordAnimalClockWrite(world, animal.id);
       return { status: 'none' };
     }
   }
@@ -824,7 +839,7 @@ export function nativeResponseDecision(
           progress,
         };
       if (progress >= search.distance * rule.preferredProgress - SPATIAL_LIMITS.epsilon)
-        return { status: 'choices', routes: [route] };
+        return { status: 'route', route };
     }
     search.attempted++;
     if (
@@ -844,7 +859,7 @@ export function nativeResponseDecision(
         best.path,
         best.length,
       );
-      if (scored.status === 'complete') return { status: 'choices', routes: [scored.route] };
+      if (scored.status === 'complete') return { status: 'route', route: scored.route };
       delete search.best;
     }
     if (search.attempted >= rule.angles.length) break;
@@ -938,13 +953,6 @@ export function admitNativeFlightChoices(
   delete episode.proposal;
   delete episode.blocked;
   delete episode.clearSince;
-  emit(
-    world,
-    events,
-    'animal-response',
-    subjectNarration(animal, frame.profile.presentation.escaping),
-    animal,
-  );
   reconcileAnimalWander(world, animal);
   changed(world, animal);
   advanceFlight(world, animal, 0, events);

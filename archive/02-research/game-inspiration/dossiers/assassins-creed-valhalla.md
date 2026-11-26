@@ -4,7 +4,7 @@
 
 **Full R01–R14 research pass. Capture: September 26, 2026.** The 2020 campaign, paid expansions, free activity modes and later compatibility work are distinct evidence scopes. Five substantive written reviews across five publications and three contrasting native Steam review bodies are discussed. Nine worked situations are constructed from documented rules, not personally played sessions. No linked footage or soundtrack is represented as watched or heard in this research.
 
-**Preservation:** this expansion-roster subject has no game-specific predecessor in the branch's original `games/` or `mechanics/` collection. Those owners remain unchanged. This pass preserves and extends checkpoints `11e95e17aaf2641316a4fe9cdeb1823626846d1f` and `2f1a038e8357607427ee52f1486fcc5b887b598c`, including the raid-recovery example, source limitations and creator accounts. The separate seven-file packet-preservation audit is not certified by completing this subject. Research observations and interpretations are not accepted OpenLegend implementation requirements.
+**Preservation:** this expansion-roster subject has no game-specific predecessor in the branch's original `games/` or `mechanics/` collection. Those owners remain unchanged. This pass preserves and extends checkpoints `11e95e17aaf2641316a4fe9cdeb1823626846d1f` and `2f1a038e8357607427ee52f1486fcc5b887b598c`, including the raid-recovery example, source limitations and creator accounts. The separate seven-file packet-preservation audit is not certified by completing this subject. Research observations and interpretations are not accepted Open Legend implementation requirements.
 
 ## 1. Player promise, identity and release boundaries
 

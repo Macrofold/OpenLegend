@@ -1,0 +1,16 @@
+{
+  "stale": "Choose a current installed food preparation.",
+  "heatNeeded": "A visible lit heat source is needed.",
+  "ingredientsMissing": "The exact selected ingredients are no longer available.",
+  "interrupted": "the selected preparation changed or its heat went out.",
+  "outOfReach": "the target moved out of reach.",
+  "completedSuffix": " completed.",
+  "costPrefix": "Uses the selected ingredients at work start; ",
+  "costSuffix": " game seconds; requires a lit fire throughout; spent ingredients are not returned on interruption",
+  "fireCondition": "Lit now; it must stay lit until cooking ends",
+  "outputPrefix": "On completion: ",
+  "ingredientsPrefix": "Ingredients: ",
+  "carriedSuffix": " in the selected carried stack",
+  "started": "started cook.",
+  "recordCapacity": "This preparation will not fit in the action record. Choose a simpler preparation."
+}

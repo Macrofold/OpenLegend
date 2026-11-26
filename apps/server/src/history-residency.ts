@@ -1,6 +1,24 @@
+import {
+  noteTemporalResidency,
+  compareTemporalPageOrder,
+  temporalPageResidentBytes,
+  temporalPageRecordId,
+  type PendingTemporalPage,
+} from './temporal-page-storage.js';
+import { isImmutableData } from '@open-legend/domain';
+import {
+  DerivedOwnerIndex,
+  objectIndexSet,
+  objectIndexEntriesAtLeast,
+  objectIndexEntriesAfter,
+  type ObjectIndexNode,
+} from '@open-legend/domain';
 import { cloneEntities, entityDelete, entityGet } from '@open-legend/domain';
 import {
   appendedRecordCount,
+  immutableDataSnapshot,
+  selectTemporalPageEntries,
+  temporalPageMutation,
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
   retiredObjectIds,
@@ -8,7 +26,9 @@ import {
   markPartialContributions,
   terminalContributionOwners,
   updateWorld,
+  freezeWorld,
   projectWorldHistory,
+  referencedReceivedValues,
   retainedAgreementEvidence,
   type WorldState,
 } from '@open-legend/domain';
@@ -21,7 +41,15 @@ export const HISTORY_TABLES = new Set([
   'mind_awareness',
   'mind_summaries',
   'activity_occurrences',
+  'mind_temporal_pages',
 ]);
+/** These canonical lists retain their abandoned allocation tail on rewind.
+ * Other collections keep their existing ordering contract. */
+export const RESTORED_HISTORY_POSITION_TABLES = [
+  'activity_occurrences',
+  'mind_awareness',
+  'world_hot_events',
+] as const;
 // Awareness consumers needing more than the presentation tail use SQL source IDs.
 // This is placement, not eligibility: important incidents remain fully recallable.
 export const HOT_AWARENESS_ROWS = 256;
@@ -31,14 +59,14 @@ type Positions = { complete?: boolean; positions: Map<string, number>; next: num
 export const historyPositions = new WeakMap<unknown[], Positions>();
 export const HISTORY_MAP_TABLES = new Set(['mind_appraisals', 'sim_status_effects']);
 export const historyMapPositions = new WeakMap<object, Positions>();
-/** Keep canonical order when a hot map omits earlier terminal records. New records
- * append after the canonical tail, not after the much shorter resident subset. */
-function retainMapPositions(before: object, after: object): void {
+/** Keep canonical order through order-preserving filtering or representation changes.
+ * New records append after the canonical tail, not the shorter resident subset. */
+export function retainMapPositions(before: object, after: object): void {
   const prior = historyMapPositions.get(before);
   if (prior)
     historyMapPositions.set(after, {
+      ...prior,
       positions: new Map(Object.keys(after).map((key) => [key, prior.positions.get(key)!])),
-      next: prior.next,
     });
 }
 export const historyKey = (entry: unknown): string => {
@@ -75,20 +103,25 @@ export function compactContributionHistory(world: WorldState): WorldState {
   if (!owners.size) return world;
   // Keep unrelated physical/source indexes and the SQL write lineage through this
   // residency-only change using the existing immutable publication path.
-  return updateWorld(world, (draft) => {
-    for (const id of owners) {
-      const entity = entityGet(world.entities, id);
-      if (!entity?.statusEffects) continue;
-      const statusEffects = Object.fromEntries(
-        Object.entries(entity.statusEffects).filter(
-          ([, state]) => !state.contribution || state.active,
-        ),
-      );
-      markPartialContributions(statusEffects);
-      retainMapPositions(entity.statusEffects, statusEffects);
-      entityGet(draft.entities, id)!.statusEffects = statusEffects;
-    }
-  });
+  const projected = updateWorld(
+    world,
+    (draft) => {
+      for (const id of owners) {
+        const entity = entityGet(world.entities, id);
+        if (!entity?.statusEffects) continue;
+        const statusEffects = Object.fromEntries(
+          Object.entries(entity.statusEffects).filter(
+            ([, state]) => !state.contribution || state.active,
+          ),
+        );
+        markPartialContributions(statusEffects);
+        retainMapPositions(entity.statusEffects, statusEffects);
+        entityGet(draft.entities, id)!.statusEffects = statusEffects;
+      }
+    },
+    { retainNativeValues: true },
+  );
+  return Object.isFrozen(world) ? freezeWorld(projected, { completedTransition: true }) : projected;
 }
 const compactedAppraisals = new WeakSet<object>();
 const compactedAppraisalOwners = new WeakSet<object>();
@@ -114,86 +147,214 @@ export function compactAppraisalHistory(world: WorldState): WorldState {
   compactedAppraisals.add(appraisals);
   return { ...world, appraisals };
 }
-export function compactHistory(
+const noOwners: Record<string, never[]> = Object.freeze({});
+function dueOwners<T>(deadline: (entries: T[]) => number) {
+  return new DerivedOwnerIndex<T[], number, ObjectIndexNode<number> | undefined>(
+    deadline,
+    () => undefined,
+    (tree, id, _before, next) =>
+      objectIndexSet(tree, id, next === undefined || next === Infinity ? undefined : -next),
+  );
+}
+const rawDelay = EXPERIENCE_LIMITS.rawHours * 3600 + 60;
+const memoryDue = dueOwners<WorldState['memories'][string][number]>((entries) => {
+  let at = Infinity;
+  for (const entry of entries)
+    if (entry.kind !== 'commitment' || entry.resolved) at = Math.min(at, entry.at + rawDelay);
+  return at;
+});
+const awarenessDue = dueOwners<NonNullable<WorldState['experience']>['awareness'][string][number]>(
+  (entries) => {
+    if (entries.some((entry) => entry.retentionClass === 'sensory')) return Infinity;
+    if (entries.length > HOT_AWARENESS_ROWS) return -Infinity;
+    let at = Infinity,
+      bytes = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i]!;
+      let size = recordBytes.get(entry);
+      if (size === undefined) {
+        size = Buffer.byteLength(JSON.stringify(entry));
+        recordBytes.set(entry, size);
+      }
+      bytes += size;
+      if (i < entries.length - 24) at = Math.min(at, entry.at + rawDelay);
+    }
+    return bytes > HOT_AWARENESS_BYTES && entries.length > 24 ? -Infinity : at;
+  },
+);
+const summaryDue = dueOwners<NonNullable<WorldState['experience']>['summaries'][string][number]>(
+  (entries) => (entries.length ? -Infinity : Infinity),
+);
+const occurrenceDue = dueOwners<WorldState['actionExperience']['occurrences'][string][number]>(
+  (entries) =>
+    entries.some((entry, index) => index < entries.length - 128 && entry.status !== 'running')
+      ? -Infinity
+      : Infinity,
+);
+
+type PlacementProjection = Parameters<typeof projectWorldHistory>[1];
+type Placement = {
+  kind: 'memories' | 'awareness' | 'summaries' | 'occurrences';
+  actorId: string;
+  source: unknown[];
+  selected: unknown[];
+};
+interface PlacementPlan {
+  placements: Placement[];
+  at: number;
+  awareness: unknown;
+  summaries: unknown;
+  occurrences: unknown;
+  forgotten: unknown;
+  corrections: unknown;
+  projection: PlacementProjection;
+}
+/** SQL preparation can assign canonical append ordinals after preview selection.
+ * Rebind the selected rows at release, including arrays normalized by publication.
+ * Never let a preview's temporary numbering become a later insertion address. */
+function projectPlacement(
   world: WorldState,
-  previous?: WorldState,
-  options: { preview?: boolean } = {},
-): WorldState {
-  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
-  const compact = <T>(
-    entries: T[],
-    prior: T[] | undefined,
-    at: (entry: T, index: number, length: number) => number,
-    tail = 0,
-    maximum = Infinity,
-    pinned?: ReadonlySet<string>,
-  ): T[] => {
-    let startIndex = Math.max(0, entries.length - maximum);
-    if (Number.isFinite(maximum)) {
-      let bytes = 0;
-      for (let i = entries.length - 1; i >= startIndex; i--) {
-        const record = entries[i] as object;
-        let size = recordBytes.get(record);
-        if (size === undefined) {
-          size = Buffer.byteLength(JSON.stringify(record));
-          recordBytes.set(record, size);
-        }
-        bytes += size;
-        if (bytes > HOT_AWARENESS_BYTES && i < entries.length - tail) {
-          startIndex = i + 1;
-          break;
-        }
+  projection: PlacementProjection,
+  placements: Placement[],
+  options: { preview?: boolean },
+) {
+  const projected = projectWorldHistory(world, projection, options);
+  for (const { kind, actorId, source, selected } of placements) {
+    const current =
+      kind === 'memories'
+        ? projected.memories[actorId]
+        : kind === 'occurrences'
+          ? projected.actionExperience.occurrences[actorId]
+          : projected.experience?.[kind][actorId];
+    if (!current) continue;
+    const canonical = historyPositions.get(source),
+      fallback = historyPositions.get(selected);
+    historyPositions.set(current, {
+      positions: new Map(
+        current.map((entry) => {
+          const id = historyKey(entry);
+          return [id, canonical?.positions.get(id) ?? fallback?.positions.get(id)!];
+        }),
+      ),
+      next: canonical?.next ?? fallback?.next ?? source.length,
+    });
+  }
+  return projected;
+}
+const placementPlans = new WeakMap<object, PlacementPlan>();
+const emptyTemporalOwners: NonNullable<
+  NonNullable<WorldState['experience']>['temporal']
+>['actors'] = Object.freeze({});
+function compactResidentRows<T>(
+  cutoff: number,
+  entries: T[],
+  prior: T[] | undefined,
+  at: (entry: T, index: number, length: number) => number,
+  tail = 0,
+  maximum = Infinity,
+  pinned?: ReadonlySet<string>,
+): T[] {
+  let startIndex = Math.max(0, entries.length - maximum);
+  if (Number.isFinite(maximum)) {
+    let bytes = 0;
+    for (let i = entries.length - 1; i >= startIndex; i--) {
+      const record = entries[i] as object;
+      let size = recordBytes.get(record);
+      if (size === undefined) {
+        size = Buffer.byteLength(JSON.stringify(record));
+        recordBytes.set(record, size);
+      }
+      bytes += size;
+      if (bytes > HOT_AWARENESS_BYTES && i < entries.length - tail) {
+        startIndex = i + 1;
+        break;
       }
     }
-    let earliest = expiry.get(entries);
-    if (earliest === undefined) {
-      const appended = prior ? appendedRecordCount(prior, entries) : undefined;
-      const oldExpiry = prior ? expiry.get(prior) : undefined;
-      earliest = appended !== undefined && oldExpiry !== undefined ? oldExpiry : Infinity;
-      const start =
-        appended !== undefined && oldExpiry !== undefined ? Math.max(0, prior!.length - tail) : 0;
-      for (let i = start; i < entries.length; i++)
-        earliest = Math.min(earliest, at(entries[i]!, i, entries.length));
-      expiry.set(entries, earliest);
-    }
-    // Residency can lag semantic expiry by one game minute. Amortize array compaction
-    // across commits rather than copying a six-hour window for each expired second.
-    if (startIndex === 0 && earliest + 60 >= cutoff) return entries;
-    const retained: T[] = [];
-    const old = historyPositions.get(entries);
-    const selected = new Map<string, number>();
-    let nextExpiry = Infinity;
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i]!,
-        required = pinned?.has(historyKey(entry)),
-        expires = required ? Infinity : at(entry, i, entries.length);
-      if (i < startIndex && !required) continue;
-      if (expires < cutoff) continue;
-      retained.push(entry);
-      nextExpiry = Math.min(nextExpiry, expires);
-      const key = historyKey(entry);
-      selected.set(key, old?.positions.get(key) ?? i);
-    }
-    if (retained.length === entries.length) return entries;
-    expiry.set(retained, nextExpiry);
-    historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
-    return retained;
-  };
-  const memories = { ...world.memories };
-  const awareness = { ...world.experience?.awareness };
-  const summaries = { ...world.experience?.summaries };
-  let changed = false;
-  for (const [actorId, entries] of Object.entries(memories)) {
-    memories[actorId] = compact(entries, previous?.memories[actorId], (entry) =>
+  }
+  let earliest = expiry.get(entries);
+  if (earliest === undefined) {
+    const appended = prior ? appendedRecordCount(prior, entries) : undefined;
+    const oldExpiry = prior ? expiry.get(prior) : undefined;
+    earliest = appended !== undefined && oldExpiry !== undefined ? oldExpiry : Infinity;
+    const start =
+      appended !== undefined && oldExpiry !== undefined ? Math.max(0, prior!.length - tail) : 0;
+    for (let i = start; i < entries.length; i++)
+      earliest = Math.min(earliest, at(entries[i]!, i, entries.length));
+    expiry.set(entries, earliest);
+  }
+  // Residency can lag semantic expiry by one game minute. Amortize array compaction
+  // across commits rather than copying a six-hour window for each expired second.
+  if (startIndex === 0 && earliest + 60 >= cutoff) return entries;
+  const retained: T[] = [];
+  const old = historyPositions.get(entries);
+  const selected = new Map<string, number>();
+  let nextExpiry = Infinity;
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!,
+      required = pinned?.has(historyKey(entry)),
+      expires = required ? Infinity : at(entry, i, entries.length);
+    if (i < startIndex && !required) continue;
+    if (expires < cutoff) continue;
+    retained.push(entry);
+    nextExpiry = Math.min(nextExpiry, expires);
+    const key = historyKey(entry);
+    selected.set(key, old?.positions.get(key) ?? i);
+  }
+  if (retained.length === entries.length) return entries;
+  expiry.set(retained, nextExpiry);
+  historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
+  return retained;
+}
+
+interface MemoryAwarenessSelection {
+  at: number;
+  sourceAwareness: unknown;
+  forgotten: unknown;
+  corrections: unknown;
+  memories: WorldState['memories'];
+  awareness: NonNullable<WorldState['experience']>['awareness'];
+  placements: Placement[];
+}
+const memoryAwarenessSelections = new WeakMap<object, MemoryAwarenessSelection>();
+/** Select only event-pin owners. The live feed needs no projected world, temporal
+ * page placement or received-value closure. Full release shares these exact rules.
+ * docs/projects/bookkeeping-simplification-tech-design.md#s1--ask-only-which-events-belong-in-the-live-feed */
+export function selectMemoryAwarenessResidency(
+  world: WorldState,
+  previous?: WorldState,
+): MemoryAwarenessSelection {
+  const reusable = isImmutableData(world);
+  const cached = reusable ? memoryAwarenessSelections.get(world.memories) : undefined;
+  if (
+    cached &&
+    cached.at === world.simTime &&
+    cached.sourceAwareness === world.experience?.awareness &&
+    cached.forgotten === world.experience?.forgotten &&
+    cached.corrections === world.experience?.corrections
+  )
+    return cached;
+  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+  let memories = world.memories;
+  let awareness = world.experience?.awareness ?? noOwners;
+  const placements: Placement[] = [];
+  for (const [actorId] of objectIndexEntriesAtLeast(memoryDue.read(memories), -world.simTime)) {
+    const entries = memories[actorId]!;
+    const retained = compactResidentRows(cutoff, entries, previous?.memories[actorId], (entry) =>
       entry.kind === 'commitment' && !entry.resolved ? Infinity : entry.at,
     );
-    changed ||= memories[actorId] !== entries;
+    if (retained !== entries) {
+      if (memories === world.memories) memories = { ...memories };
+      memories[actorId] = retained;
+      placements.push({ kind: 'memories', actorId, source: entries, selected: retained });
+    }
   }
-  for (const [actorId, entries] of Object.entries(awareness)) {
+  for (const [actorId] of objectIndexEntriesAtLeast(awarenessDue.read(awareness), -world.simTime)) {
+    const entries = awareness[actorId]!;
     // Sensory rows must remain resident until their native absolute expiry; evicting
     // them would strand their expiry in SQL. Native operation admission bounds intake.
     if (entries.some((entry) => entry.retentionClass === 'sensory')) continue;
-    awareness[actorId] = compact(
+    const retained = compactResidentRows(
+      cutoff,
       entries,
       previous?.experience?.awareness[actorId],
       (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
@@ -201,14 +362,75 @@ export function compactHistory(
       HOT_AWARENESS_ROWS,
       retainedAgreementEvidence(world, actorId),
     );
-    changed ||= awareness[actorId] !== entries;
+    if (retained !== entries) {
+      if (awareness === world.experience?.awareness) awareness = { ...awareness };
+      awareness[actorId] = retained;
+      placements.push({ kind: 'awareness', actorId, source: entries, selected: retained });
+    }
   }
-  for (const [actorId, entries] of Object.entries(summaries)) {
-    summaries[actorId] = compact(entries, undefined, () => -Infinity);
-    changed ||= summaries[actorId] !== entries;
+  const selected: MemoryAwarenessSelection = {
+    at: world.simTime,
+    sourceAwareness: world.experience?.awareness,
+    forgotten: world.experience?.forgotten,
+    corrections: world.experience?.corrections,
+    memories,
+    awareness,
+    placements,
+  };
+  if (reusable) {
+    // These selected containers are owned here and contain immutable source rows.
+    // Preserve their identity for derived pin indexes without projecting a world.
+    for (const placement of placements) Object.freeze(placement.selected);
+    Object.freeze(memories);
+    Object.freeze(awareness);
+    memoryAwarenessSelections.set(world.memories, selected);
   }
-  const occurrences = { ...world.actionExperience.occurrences };
-  for (const [actorId, entries] of Object.entries(occurrences)) {
+  return selected;
+}
+
+export function compactHistory(
+  world: WorldState,
+  previous?: WorldState,
+  options: { preview?: boolean } = {},
+): WorldState {
+  const reusable = isImmutableData(world);
+  const cached = reusable ? placementPlans.get(world.memories) : undefined;
+  if (
+    cached &&
+    cached.at === world.simTime &&
+    cached.awareness === world.experience?.awareness &&
+    cached.summaries === world.experience?.summaries &&
+    cached.occurrences === world.actionExperience.occurrences &&
+    cached.forgotten === world.experience?.forgotten &&
+    cached.corrections === world.experience?.corrections
+  )
+    return compactTemporalHistory(
+      projectPlacement(world, cached.projection, cached.placements, options),
+      options,
+    );
+  const selected = selectMemoryAwarenessResidency(world, previous);
+  const { memories, awareness } = selected;
+  let summaries = world.experience?.summaries ?? noOwners;
+  let changed =
+    memories !== world.memories || awareness !== (world.experience?.awareness ?? noOwners);
+  const placements = [...selected.placements];
+  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+  for (const [actorId] of objectIndexEntriesAtLeast(summaryDue.read(summaries), -world.simTime)) {
+    const entries = summaries[actorId]!,
+      retained = compactResidentRows(cutoff, entries, undefined, () => -Infinity);
+    if (retained !== entries) {
+      if (summaries === world.experience?.summaries) summaries = { ...summaries };
+      summaries[actorId] = retained;
+      placements.push({ kind: 'summaries', actorId, source: entries, selected: retained });
+      changed = true;
+    }
+  }
+  let occurrences = world.actionExperience.occurrences;
+  for (const [actorId] of objectIndexEntriesAtLeast(
+    occurrenceDue.read(occurrences),
+    -world.simTime,
+  )) {
+    const entries = occurrences[actorId]!;
     if (entries.length <= 128) continue;
     const prior = historyPositions.get(entries);
     const sourcePositions = new Map(entries.map((entry, index) => [entry.id, index]));
@@ -223,18 +445,284 @@ export function compactHistory(
       ]),
     );
     historyPositions.set(retained, { positions, next: prior?.next ?? entries.length });
+    if (occurrences === world.actionExperience.occurrences) occurrences = { ...occurrences };
     occurrences[actorId] = retained;
+    placements.push({ kind: 'occurrences', actorId, source: entries, selected: retained });
     changed = true;
   }
-  return changed
-    ? projectWorldHistory(
-        world,
-        {
-          memories,
-          occurrences,
-          ...(world.experience ? { awareness, summaries } : {}),
-        },
-        options,
-      )
-    : world;
+  const projection: PlacementProjection = changed
+    ? {
+        memories,
+        occurrences,
+        ...(world.experience ? { awareness, summaries } : {}),
+      }
+    : {};
+  if (reusable)
+    placementPlans.set(world.memories, {
+      at: world.simTime,
+      awareness: world.experience?.awareness,
+      summaries: world.experience?.summaries,
+      occurrences: world.actionExperience.occurrences,
+      forgotten: world.experience?.forgotten,
+      corrections: world.experience?.corrections,
+      projection,
+      placements,
+    });
+  const projected = changed ? projectPlacement(world, projection, placements, options) : world;
+  return compactTemporalHistory(projected, options);
+}
+
+export const HOT_TEMPORAL_BYTES = 128 * 1024;
+const temporalOverflow = new DerivedOwnerIndex<
+  NonNullable<NonNullable<WorldState['experience']>['temporal']>['actors'][string],
+  number,
+  ObjectIndexNode<number> | undefined
+>(
+  (actor) => actor.pages.reduce((bytes, page) => bytes + temporalPageResidentBytes(page), 0),
+  () => undefined,
+  (tree, id, _before, after) => objectIndexSet(tree, id, after),
+);
+/** Placement only. Canonical pages survive in SQL until the retention owner
+ * explicitly releases them, while native capture keeps only its bounded tail. */
+const sourcePlacements = new WeakMap<
+  object,
+  {
+    references: ReturnType<typeof referencedReceivedValues>;
+    sources: NonNullable<WorldState['receivedValues']>['sources'];
+  }
+>();
+export function compactTemporalHistory(
+  world: WorldState,
+  options: { preview?: boolean } = {},
+): WorldState {
+  const temporal = world.experience?.temporal;
+  if (!temporal && !world.receivedValues) return world;
+  const maximum = HOT_TEMPORAL_BYTES;
+  let changed = false;
+  let actors = temporal?.actors;
+  for (const [actorId] of objectIndexEntriesAfter(
+    temporalOverflow.read(actors ?? emptyTemporalOwners),
+    maximum,
+  )) {
+    const actor = actors![actorId]!,
+      pages = actor.pages;
+    if (pages.reduce((bytes, page) => bytes + temporalPageResidentBytes(page), 0) > maximum) {
+      // Temporal pages carry native logical addresses; residency must not assign new SQL positions.
+      let bytes = 0;
+      const retained: typeof pages = [];
+      for (let index = pages.length - 1; index >= 0; index--) {
+        const page = pages[index]!;
+        const durable = page.appendClosed === true && temporalPageMutation(page) !== 'edit';
+        if (!durable || !bytes || bytes + temporalPageResidentBytes(page) <= maximum) {
+          retained.push(page);
+          if (durable) bytes += temporalPageResidentBytes(page);
+        }
+      }
+      if (retained.length === pages.length) continue;
+      if (actors === temporal?.actors) actors = { ...actors };
+      actors![actorId] = { ...actor, pages: retained.reverse() };
+      changed = true;
+    }
+  }
+  const next = temporal && changed ? { ...temporal, actors: actors! } : temporal;
+  const scope =
+    next && next !== temporal
+      ? { ...world, experience: { ...world.experience!, temporal: next } }
+      : world;
+  const received = world.receivedValues;
+  const references = referencedReceivedValues(scope);
+  const reusable = received && isImmutableData(world);
+  const cached = reusable ? sourcePlacements.get(received.sources) : undefined;
+  let sources = received?.sources;
+  if (received && cached?.references !== references) {
+    const entries = Object.entries(received.sources);
+    const selected = entries.filter(([id]) => references.has(id));
+    sources = selected.length === entries.length ? received.sources : Object.fromEntries(selected);
+    if (reusable) sourcePlacements.set(received.sources, { references, sources });
+  } else if (cached) sources = cached.sources;
+  const receivedChanged = sources !== received?.sources;
+  if (!changed && !receivedChanged) return world;
+  const projected = projectWorldHistory(
+    world,
+    {
+      ...(next && next !== temporal ? { temporal: next } : {}),
+      ...(received && receivedChanged
+        ? { receivedValues: { ...received, sources: sources! } }
+        : {}),
+    },
+    options,
+  );
+  return projected;
+}
+
+/** Saved physical tails are the existing residency projection, never evidence
+ * authority. Keeping their exact IDs prevents a native append container from
+ * masquerading as one durable page during later correction or retirement. */
+const savedTemporalEdits = new WeakSet<object>();
+interface SavedTemporalPlacement {
+  tails: ReadonlyMap<string, readonly import('@open-legend/domain').TemporalPage[]>;
+  actors: ReadonlySet<string>;
+  acknowledgedBefore: number;
+}
+const savedTemporalPlacement = new WeakMap<WorldState, SavedTemporalPlacement>();
+export function acknowledgedTemporalOrder(world: WorldState): number | undefined {
+  return savedTemporalPlacement.get(world)?.acknowledgedBefore;
+}
+export function recordSavedTemporalPages(
+  world: WorldState,
+  previous: WorldState | undefined,
+  pages: readonly import('@open-legend/domain').TemporalPage[],
+  deleted: readonly string[] = [],
+  actors: readonly string[] = [],
+  edits: readonly PendingTemporalPage[] = [],
+): void {
+  const changedActors = new Set<string>(actors);
+  for (const page of pages) changedActors.add(page.actorId);
+  for (const edit of edits) {
+    changedActors.add(edit.after.actorId);
+    savedTemporalEdits.add(edit.after.batches);
+  }
+  for (const id of deleted) {
+    const path = JSON.parse(id) as string[];
+    if (path[4]) changedActors.add(path[4]);
+  }
+  const prior =
+    savedTemporalPlacement.get(previous!)?.tails ??
+    new Map(
+      Object.entries(previous?.experience?.temporal?.actors ?? {}).map(([actorId, actor]) => [
+        actorId,
+        actor.pages,
+      ]),
+    );
+  const removed = new Set(deleted),
+    grouped = new Map<string, Map<string, import('@open-legend/domain').TemporalPage>>();
+  for (const actorId of Object.keys(world.experience?.temporal?.actors ?? {}))
+    grouped.set(
+      actorId,
+      new Map(
+        (prior.get(actorId) ?? [])
+          .filter((page) => !removed.has(temporalPageRecordId(actorId, page.id)))
+          .map((page) => [page.id, page]),
+      ),
+    );
+  for (const page of pages) {
+    let actor = grouped.get(page.actorId);
+    if (!actor) grouped.set(page.actorId, (actor = new Map()));
+    actor.set(page.id, page);
+  }
+  const tails = new Map<string, readonly import('@open-legend/domain').TemporalPage[]>();
+  for (const [actorId, entries] of grouped) {
+    const ordered = [...entries.values()].sort((a, b) => compareTemporalPageOrder(b, a));
+    const selected: import('@open-legend/domain').TemporalPage[] = [];
+    let bytes = 0;
+    for (const page of ordered) {
+      if (bytes && bytes + temporalPageResidentBytes(page) > HOT_TEMPORAL_BYTES) break;
+      selected.push(page);
+      bytes += temporalPageResidentBytes(page);
+    }
+    tails.set(actorId, selected.reverse());
+  }
+  savedTemporalPlacement.set(world, {
+    tails,
+    actors: changedActors,
+    acknowledgedBefore: world.nextId,
+  });
+}
+/** A save may finish while newer native changes already exist. Remove only the
+ * committed append prefix, retain every newer/edited batch, and
+ * install the bounded canonical tail without altering any personal charge.
+ * A protected flush can reconcile all resident owners if ordinary residency
+ * work has yet to publish one or more acknowledged prefixes. */
+export function releaseSavedTemporalHistory(
+  world: WorldState,
+  durable: WorldState | undefined,
+  allActors = false,
+): WorldState {
+  if (!durable || durable.id !== world.id) return world;
+  const saved = savedTemporalPlacement.get(durable);
+  if (!saved) return world;
+  const { tails, acknowledgedBefore } = saved;
+  const temporal = world.experience?.temporal;
+  if (!temporal) return world;
+  const actors = { ...temporal.actors };
+  let changed = false;
+  for (const actorId of allActors ? Object.keys(temporal.actors) : saved.actors) {
+    const actor = temporal.actors[actorId];
+    if (!actor) continue;
+    const pending: import('@open-legend/domain').TemporalPage[] = [];
+    const present = new Set(actor.pages.map((page) => page.id));
+    const acknowledgedNative = new Set<string>();
+    const batchKey = (page: import('@open-legend/domain').TemporalPage, batchOrder: number) =>
+      JSON.stringify([page.physicalLife, page.epoch, batchOrder]);
+    for (const page of actor.pages) {
+      // A newer sparse correction must survive an older save acknowledgement.
+      // Empty edited blocks are retained until that exact deletion commits.
+      if (temporalPageMutation(page) === 'edit') {
+        if (!savedTemporalEdits.has(page.batches)) pending.push(page);
+        continue;
+      }
+      const kept = page.batches.filter((batch) => {
+        const acknowledged = batch.batchOrder < acknowledgedBefore;
+        if (acknowledged && page.appendClosed !== true)
+          acknowledgedNative.add(batchKey(page, batch.batchOrder));
+        return !acknowledged;
+      });
+      if (!kept.length) continue;
+      if (kept.length === page.batches.length) pending.push(page);
+      else {
+        const selected = immutableDataSnapshot(
+          selectTemporalPageEntries(
+            page,
+            kept.flatMap((batch) =>
+              batch.entries.map((entry) => ({
+                batchOrder: batch.batchOrder,
+                entryIndex: entry.entryIndex,
+              })),
+            ),
+            { world },
+          ),
+        );
+        noteTemporalResidency(selected, page);
+        pending.push(selected);
+      }
+    }
+    // An absent older tail may have been retired while this save was running.
+    // New physical pages may enter only while their exact acknowledged batches
+    // are still represented by the current native container being relocated.
+    const byId = new Map(
+      (tails.get(actorId) ?? [])
+        .filter(
+          (page) =>
+            present.has(page.id) ||
+            page.batches.every((batch) => acknowledgedNative.has(batchKey(page, batch.batchOrder))),
+        )
+        .map((page) => [page.id, page]),
+    );
+    for (const page of pending) byId.set(page.id, page);
+    const pages = [...byId.values()].sort((a, b) => compareTemporalPageOrder(a, b));
+    if (
+      pages.length !== actor.pages.length ||
+      pages.some((page, index) => page !== actor.pages[index])
+    ) {
+      // The recent charge directory has no physical placement. Preserve it
+      // verbatim, including later expiry, corrections and uncommitted headers.
+      actors[actorId] = { ...actor, pages };
+      changed = true;
+    }
+  }
+  if (!changed) return world;
+  const projected = projectWorldHistory(
+    world,
+    { temporal: { ...temporal, actors } },
+    { temporalSavedPages: tails },
+  );
+  if (world === durable) {
+    savedTemporalPlacement.set(projected, saved);
+  }
+  return projected;
+}
+
+export function inheritSavedTemporalTails(from: WorldState | undefined, to: WorldState): void {
+  const saved = from && savedTemporalPlacement.get(from);
+  if (saved) savedTemporalPlacement.set(to, saved);
 }

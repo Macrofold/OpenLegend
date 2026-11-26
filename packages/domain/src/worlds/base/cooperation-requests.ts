@@ -37,11 +37,9 @@ const knownAgreements = (world: WorldState, actorId: string) =>
       entry.status !== 'ended' &&
       (entry.status === 'pending' ? entry.expiresAt : entry.endAt!) > world.simTime,
   );
-function methods(world: WorldState, actorId?: string) {
+function methods(world: Pick<WorldState, 'recipes' | 'socialOfferPolicy'>, learned?: WorldState['knowledge'][string]) {
   const allowed = world.socialOfferPolicy?.cooperation?.helpMethods ?? [];
-  const known = actorId
-    ? new Set((world.knowledge[actorId] ?? []).map((entry) => entry.recipeId))
-    : undefined;
+  const known = learned && new Set(learned.map((entry) => entry.recipeId));
   return allowed.flatMap((pin) => {
     const recipe = world.recipes[pin.id];
     return recipe &&
@@ -72,12 +70,12 @@ function carryingOffers(world: WorldState, actorId: string) {
   });
 }
 export function cooperationRequestDescriptors(
-  world: WorldState,
-  actorId?: string,
+  world: Pick<WorldState, 'recipes' | 'socialOfferPolicy' | 'itemDefinitions'>,
+  actor?: {world: WorldState; id: string},
 ): ActivityRequestDescriptor[] {
   const policy = world.socialOfferPolicy?.cooperation;
   if (!policy) return [];
-  const agreements = actorId ? knownAgreements(world, actorId) : [];
+  const agreements = actor ? knownAgreements(actor.world, actor.id) : [];
   const recipient = {
     type: 'entity' as const,
     label: 'Companion',
@@ -94,7 +92,7 @@ export function cooperationRequestDescriptors(
       { value: 'new', label: 'Propose a new agreement' },
       ...agreements.map((entry) => ({
         value: receivedKey(entry.id, entry.revision),
-        label: `Revise current terms: ${cooperationTermsLabel(world, entry.terms)}`,
+        label: `Revise current terms: ${cooperationTermsLabel(actor!.world, entry.terms)}`,
       })),
     ],
   };
@@ -146,7 +144,7 @@ export function cooperationRequestDescriptors(
       },
     });
   if (policy.families.includes('help')) {
-    const recipes = methods(world, actorId);
+    const recipes = methods(world, actor && (actor.world.knowledge[actor.id] ?? []));
     const ports = [
       ...new Set(recipes.flatMap((recipe) => recipe.outputs.map((output) => output.port))),
     ];
@@ -190,10 +188,10 @@ export function cooperationRequestDescriptors(
           agreement: 'agreement',
         },
       });
-    const offers = actorId ? carryingOffers(world, actorId) : [];
+    const offers = actor ? carryingOffers(actor.world, actor.id) : [];
     // An actor without a current offered load has no executable carry form. Keep
     // the unscoped installed family for native routing, never an empty model enum.
-    if (!actorId || offers.length)
+    if (!actor || offers.length)
       requests.push({
         id: COOPERATION_REQUESTS.carry,
         label: policy.labels.carry,
@@ -232,7 +230,7 @@ export function cooperationRequestChoices(
   query?: ActivityRequestChoiceQuery,
   families?: readonly string[],
 ): { choices: ActivityRequestChoice[]; warnings: string[] } {
-  const descriptors = cooperationRequestDescriptors(world, actorId).filter(
+  const descriptors = cooperationRequestDescriptors(world, { world, id: actorId }).filter(
     (entry) => (!families || families.includes(entry.id)) && (!query || entry.id === query.family),
   );
   if (!descriptors.length) return { choices: [], warnings: [] };
@@ -317,7 +315,7 @@ export function cooperationRequestChoices(
       descriptor.id === COOPERATION_REQUESTS.prepare &&
       (!query || ['recipeId', 'outputPort'].includes(query.field))
     )
-      for (const recipe of methods(world, actorId)) {
+      for (const recipe of methods(world, world.knowledge[actorId] ?? [])) {
         if (query?.field === 'outputPort' && query.arguments.recipeId !== recipe.id) continue;
         add(
           descriptor.id,
@@ -356,7 +354,7 @@ export function bindCooperationRequest(
   request: ActivityRequest,
   permitted?: readonly string[],
 ): Command | Outcome {
-  const descriptor = cooperationRequestDescriptors(world, actorId).find(
+  const descriptor = cooperationRequestDescriptors(world, { world, id: actorId }).find(
     (entry) => entry.id === request.family,
   );
   const fail = () =>

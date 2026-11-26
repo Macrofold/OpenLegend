@@ -706,7 +706,7 @@ descriptions and bounds; trusted host code binds only the existing finite compil
 survival goal, automatic stock search, movement owner or provider retry. The same
 request descriptions and permitted choices feed character decisions, typed player
 action grounding and the ordinary activity reader. Known-method parameters must
-refer only to that actor's learned methods, separately from item definitions.
+refer only to that actor's learned activities, separately from item definitions.
 
 Use the existing actor-permitted request choices for known-method parameters.
 These requests serve character decisions and typed action grounding; the compact

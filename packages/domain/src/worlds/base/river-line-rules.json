@@ -1,0 +1,11 @@
+{
+  "familyId": "base:fishing-line",
+  "kind": "base:river-line",
+  "workSeconds": 240,
+  "packingLoad": 2,
+  "roles": [
+    { "id": "shaft", "label": "Shaft", "properties": ["shaft"], "quantity": 1 },
+    { "id": "line", "label": "Line", "properties": ["binding"], "quantity": 2 },
+    { "id": "hook", "label": "Hook", "properties": ["point"], "quantity": 1 }
+  ]
+}

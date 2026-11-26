@@ -149,7 +149,7 @@ quality. Gathering now offers explicit hands or one exact carried tool.
 - [x] Stop on a failed/refused/interrupted native step; preserve completed goods, consumed inputs and remaining count. Do not choose another source/tool, reroll a result or repeat beyond the requested count.
 - [x] Qualify Stop during cost-bearing manufacture, a source depleted midway, tool loss between batches, pause/save/reopen, restore fencing, death and caller disconnection. Use actual output ports, not a one-output shortcut. For meals include five berries from Food 10, clipped final nutrition, already full, independent fill between units, partial stock exhaustion, busy work, changed food/diet, exact receipt recovery and no automatic restart. [Current finite-work checks](../verification/first-playable-world/2026/2026-10-24-repair-survival-and-restoration.md#finite-work-and-cooperation-restoration--october-22) complete the source competition, multi-output, death and disconnection cases; reuse the prior meal/tool/receipt evidence.
 
-**Exit:** batching reduces input repetition while preserving finite chosen intent, accounting and intervention. No automatic survival routine, another actor's acceptance or fabricated learned method is installed.
+**Exit:** batching reduces input repetition while preserving finite chosen intent, accounting and intervention. No automatic survival routine, another actor's acceptance or fabricated learned activity is installed.
 
 ## SV07 — Preserve ordinary rewards and demonstrate useful invention
 

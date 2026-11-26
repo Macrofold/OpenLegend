@@ -1,4 +1,4 @@
-# YouTube viewing guide for OpenLegend research
+# YouTube viewing guide for Open Legend research
 
 **Selection date: September 23, 2026.** Companion to the [master brief](../README.md) and [game field guide](field-guide.md).
 

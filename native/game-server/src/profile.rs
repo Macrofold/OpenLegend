@@ -1,0 +1,407 @@
+//! The serve-process owner of optional profiling. The operator command pipe
+//! and export belong to a dedicated thread. No request can arm the recorder.
+
+mod record;
+
+use openlegend_simulation::profile::{self, Link, ObservationWindow, Observer, Outcome, Site};
+use record::{Capture, MAX_EXACT, Window};
+use serde::Deserialize;
+use std::{
+    fs::{File, OpenOptions},
+    io::{self, BufRead, BufWriter, Write},
+    path::Path,
+    sync::{
+        Mutex, OnceLock, TryLockError,
+        atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering},
+    },
+    time::Instant,
+};
+
+const MAX_COMMAND: u64 = 8192;
+const PREFIX: &str = "OpenLegend profile ";
+
+struct Recorder {
+    origin: Instant,
+    capture: Mutex<Option<Capture>>,
+    generation: AtomicU32,
+    selected: AtomicU64,
+    start_ns: AtomicU64,
+    end_ns: AtomicU64,
+    drain_ns: AtomicU64,
+    // Upper half identifies the only generation allowed to increment losses.
+    losses: AtomicU64,
+    closed: AtomicBool,
+}
+
+static RECORDER: OnceLock<Recorder> = OnceLock::new();
+
+impl Recorder {
+    fn new() -> Self {
+        Self {
+            origin: Instant::now(),
+            capture: Mutex::new(None),
+            generation: AtomicU32::new(0),
+            selected: AtomicU64::new(0),
+            start_ns: AtomicU64::new(0),
+            end_ns: AtomicU64::new(0),
+            drain_ns: AtomicU64::new(0),
+            losses: AtomicU64::new(0),
+            closed: AtomicBool::new(false),
+        }
+    }
+
+    fn now(&self) -> u64 {
+        self.origin.elapsed().as_nanos().min(u128::from(MAX_EXACT)) as u64
+    }
+
+    fn lose(&self, generation: u32) {
+        let _ = self
+            .losses
+            .try_update(Ordering::AcqRel, Ordering::Relaxed, |state| {
+                (generation != 0 && (state >> 32) as u32 == generation && (state as u32) < u32::MAX)
+                    .then(|| state + 1)
+            });
+    }
+
+    fn observation_time(&self, generation: u32, window: ObservationWindow) -> Option<u64> {
+        if generation == 0 || self.generation.load(Ordering::Acquire) != generation {
+            return None;
+        }
+        let now = self.now();
+        // Arming publishes the deadlines before enabling the generation. A
+        // concurrent stop or rearm still fences both writes and loss counts.
+        let eligible = match window {
+            ObservationWindow::Start => now < self.end_ns.load(Ordering::Relaxed),
+            ObservationWindow::Count => {
+                now >= self.start_ns.load(Ordering::Relaxed)
+                    && now < self.end_ns.load(Ordering::Relaxed)
+            }
+            ObservationWindow::Continue => now <= self.drain_ns.load(Ordering::Relaxed),
+        };
+        eligible.then_some(now)
+    }
+
+    fn record<T>(
+        &self,
+        generation: u32,
+        window: ObservationWindow,
+        update: impl FnOnce(&mut Capture, u64) -> Option<T>,
+    ) -> Option<T> {
+        let now = self.observation_time(generation, window)?;
+        let mut capture = match self.capture.try_lock() {
+            Ok(capture) => capture,
+            Err(TryLockError::WouldBlock) => {
+                self.lose(generation);
+                return None;
+            }
+            Err(TryLockError::Poisoned(_)) => {
+                self.lose(generation);
+                self.selected.store(0, Ordering::Release);
+                return None;
+            }
+        };
+        let capture = capture
+            .as_mut()
+            .filter(|capture| capture.generation == generation)?;
+        let update = update(capture, now);
+        if update.is_none() {
+            self.lose(generation);
+        }
+        update
+    }
+
+    fn arm(&self, capture: Capture, mask: u64) -> Result<(), &'static str> {
+        let mut slot = self.capture.lock().map_err(|_| "recorder storage failed")?;
+        if self.closed.load(Ordering::Acquire) {
+            return Err("the profiling operator has closed");
+        }
+        if slot.is_some() {
+            return Err("a capture is already armed");
+        }
+        if !openlegend_world_host::prepare_profile_dispatch() {
+            return Err("could not reserve dispatch observations");
+        }
+        let generation = capture.generation;
+        self.start_ns
+            .store(capture.window.start_ns, Ordering::Relaxed);
+        self.end_ns.store(capture.window.end_ns, Ordering::Relaxed);
+        self.drain_ns
+            .store(capture.window.drain_ns, Ordering::Relaxed);
+        *slot = Some(capture);
+        self.losses
+            .store(u64::from(generation) << 32, Ordering::Release);
+        self.generation.store(generation, Ordering::Release);
+        self.selected.store(mask, Ordering::Release);
+        Ok(())
+    }
+
+    fn close(&self) {
+        self.closed.store(true, Ordering::Release);
+        self.detach();
+    }
+
+    fn detach(&self) -> Option<(Capture, u64)> {
+        let detached = {
+            let mut slot = self
+                .capture
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            let mut capture = slot.take()?;
+            // Freeze the last possible observation before dispatch cleanup;
+            // that lock can delay teardown past a measurement boundary.
+            let stopped_at = self.now();
+            self.selected.store(0, Ordering::Release);
+            self.generation.store(0, Ordering::Release);
+            capture.lost = u64::from(self.losses.swap(0, Ordering::AcqRel) as u32);
+            (capture, stopped_at)
+        };
+        openlegend_world_host::clear_profile_dispatch();
+        Some(detached)
+    }
+}
+
+impl Observer for Recorder {
+    fn selected(&self, site: Site) -> bool {
+        self.selected.load(Ordering::Acquire) & site.mask() != 0
+    }
+
+    fn generation(&self) -> u32 {
+        self.generation.load(Ordering::Acquire)
+    }
+
+    fn begin(&self, site: Site, parent: Option<Link>) -> Option<Link> {
+        if !self.selected(site) {
+            return None;
+        }
+        self.record(
+            self.generation.load(Ordering::Acquire),
+            ObservationWindow::Start,
+            |capture, now| capture.begin(now, site, parent),
+        )
+        .flatten()
+    }
+
+    fn resume(&self, link: Link, lane: u32, active_parent: Option<Link>) -> bool {
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.resume(now, link, lane, active_parent),
+        )
+        .unwrap_or(false)
+    }
+
+    fn suspend(&self, link: Link, lane: u32) {
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.suspend(now, link, lane),
+        );
+    }
+
+    fn end(&self, link: Link, outcome: Outcome, work: Option<u64>) {
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.end(now, link, outcome, work),
+        );
+    }
+
+    fn count(&self, site: Site, value: u64) {
+        self.record(
+            self.generation.load(Ordering::Acquire),
+            ObservationWindow::Count,
+            |capture, now| capture.count(now, site, value),
+        );
+    }
+
+    fn omitted(&self, generation: u32, window: ObservationWindow) {
+        if self.observation_time(generation, window).is_some() {
+            self.lose(generation);
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase", deny_unknown_fields)]
+enum Command {
+    Ping {
+        id: u32,
+    },
+    Arm {
+        sites: Vec<String>,
+        #[serde(rename = "startNs")]
+        start_ns: u64,
+        #[serde(rename = "endNs")]
+        end_ns: u64,
+        #[serde(rename = "drainNs")]
+        drain_ns: u64,
+        seed: u64,
+        every: u8,
+        #[serde(rename = "traceBytes", default)]
+        trace_bytes: usize,
+    },
+    Stop {},
+}
+
+pub(crate) struct Operator {
+    recorder: &'static Recorder,
+}
+
+impl Drop for Operator {
+    fn drop(&mut self) {
+        self.recorder.close();
+    }
+}
+
+/// On-demand HTTP tooling can report whether the private recorder is attached
+/// and armed. It never takes the capture lock or borrows recorded samples.
+pub(crate) fn armed() -> Option<bool> {
+    let recorder = RECORDER.get()?;
+    (!recorder.closed.load(Ordering::Acquire))
+        .then(|| recorder.generation.load(Ordering::Acquire) != 0)
+}
+
+pub(crate) fn start_from_operator() -> Option<Operator> {
+    let mode = std::env::var_os("OPEN_LEGEND_PROFILE_CONTROL")?;
+    if mode != "stdin" {
+        notify_error("unsupported operator profiling transport");
+        return None;
+    }
+    match start() {
+        Ok(operator) => Some(operator),
+        Err(error) => {
+            notify_error(error);
+            None
+        }
+    }
+}
+
+fn start() -> Result<Operator, &'static str> {
+    let path = std::env::var_os("OPEN_LEGEND_PROFILE_OUTPUT")
+        .ok_or("no private capture output path was supplied")?;
+    let path = Path::new(&path);
+    if !path.is_absolute() {
+        return Err("capture output path must be absolute");
+    }
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let output = options
+        .open(path)
+        .map_err(|_| "could not create a new private capture export")?;
+    let recorder = RECORDER.get_or_init(Recorder::new);
+    if !profile::install(recorder) {
+        return Err("a profiling operator is already connected");
+    }
+    std::thread::Builder::new()
+        .name("openlegend-profile-operator".into())
+        .spawn(move || {
+            let result = commands(recorder, output);
+            recorder.close();
+            if let Err(error) = result {
+                notify_error(error);
+            }
+        })
+        .map_err(|_| {
+            recorder.close();
+            "could not start the operator control thread"
+        })?;
+    Ok(Operator { recorder })
+}
+
+fn commands(recorder: &'static Recorder, output: File) -> Result<(), &'static str> {
+    let mut input = io::stdin().lock();
+    let mut output = BufWriter::new(output);
+    let mut generation = 0u32;
+    while let Some(command) = next(&mut input)? {
+        match command {
+            Command::Ping { id } => {
+                notify(&serde_json::json!({ "type": "pong", "id": id, "nowNs": recorder.now() }))?;
+            }
+            Command::Arm {
+                sites,
+                start_ns,
+                end_ns,
+                drain_ns,
+                seed,
+                every,
+                trace_bytes,
+            } => {
+                if !(recorder.now() < start_ns
+                    && start_ns < end_ns
+                    && end_ns <= drain_ns
+                    && drain_ns <= MAX_EXACT)
+                {
+                    return Err("capture clock window is invalid or has already started");
+                }
+                generation = generation
+                    .checked_add(1)
+                    .ok_or("capture generation exhausted")?;
+                let window = Window {
+                    start_ns,
+                    end_ns,
+                    drain_ns,
+                    stop_ns: 0,
+                    complete: false,
+                };
+                let (capture, mask) =
+                    Capture::arm(generation, &sites, window, seed, every, trace_bytes)?;
+                if recorder.now() >= start_ns {
+                    return Err("arming overran the capture start");
+                }
+                recorder.arm(capture, mask)?;
+                notify(&serde_json::json!({ "type": "armed", "generation": generation }))?;
+            }
+            Command::Stop {} => {
+                let (mut capture, stopped_at) = recorder.detach().ok_or("no capture is armed")?;
+                let complete = capture.stop(stopped_at);
+                serde_json::to_writer(&mut output, &capture)
+                    .map_err(|_| "capture export failed")?;
+                output
+                    .write_all(b"\n")
+                    .and_then(|()| output.flush())
+                    .map_err(|_| "capture export failed")?;
+                notify(
+                    &serde_json::json!({ "type": "stopped", "generation": generation, "complete": complete }),
+                )?;
+            }
+        }
+    }
+    if recorder.detach().is_some() {
+        return Err("operator pipe closed with an armed capture");
+    }
+    Ok(())
+}
+
+fn next(input: &mut impl BufRead) -> Result<Option<Command>, &'static str> {
+    use std::io::Read;
+    let mut line = Vec::new();
+    let received = input
+        .take(MAX_COMMAND + 1)
+        .read_until(b'\n', &mut line)
+        .map_err(|_| "operator command read failed")?;
+    if received == 0 {
+        return Ok(None);
+    }
+    if received as u64 > MAX_COMMAND || line.last() != Some(&b'\n') {
+        return Err("operator command exceeds the line allowance or is incomplete");
+    }
+    serde_json::from_slice(&line)
+        .map(Some)
+        .map_err(|_| "invalid operator command")
+}
+
+fn notify(value: &serde_json::Value) -> Result<(), &'static str> {
+    let mut output = io::stdout().lock();
+    writeln!(output, "{PREFIX}{value}")
+        .and_then(|()| output.flush())
+        .map_err(|_| "operator response pipe failed")
+}
+
+fn notify_error(reason: &'static str) {
+    let _ = notify(&serde_json::json!({ "type": "error", "reason": reason }));
+}

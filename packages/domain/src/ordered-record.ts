@@ -120,7 +120,12 @@ export function validateOrderedRecord(
     if (
       entry.height !== Math.max(left, right) + 1 ||
       Math.abs(left - right) > 1 ||
-      entry.maximum !== 0
+      entry.maximum !==
+        Math.max(
+          typeof entry.value === 'number' ? entry.value : 0,
+          entry.left === undefined ? -Infinity : (entry.left as ObjectIndexNode<unknown>).maximum,
+          entry.right === undefined ? -Infinity : (entry.right as ObjectIndexNode<unknown>).maximum,
+        )
     )
       return invalid();
     if (entry.left !== undefined) pending.push({ node: entry.left, lower, upper: entry.key });

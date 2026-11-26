@@ -1,10 +1,10 @@
 # Vampire Survivors — full research dossier
 
-**G44 · Research pass and substantive audit remedies, September 26, 2026.** This dossier uses **Vampire Survivors 1.16.x** as its current product boundary, separating base rules, DLC, local cooperation and online cooperation. The audit adds the missing mode/progression operations, exact expansion inventory, group-access restrictions and an actually inspected helpful Steam sample. Historical rules and unresolved official-document discrepancies remain qualified. This is reference research, not accepted OpenLegend implementation requirements, and no game, network session, footage or soundtrack was tested.
+**G44 · Research pass and substantive audit remedies, September 26, 2026.** This dossier uses **Vampire Survivors 1.16.x** as its current product boundary, separating base rules, DLC, local cooperation and online cooperation. The audit adds the missing mode/progression operations, exact expansion inventory, group-access restrictions and an actually inspected helpful Steam sample. Historical rules and unresolved official-document discrepancies remain qualified. This is reference research, not accepted Open Legend implementation requirements, and no game, network session, footage or soundtrack was tested.
 
 [Preserved overview](../games/vampire-survivors.md) · [Detailed mechanics study](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
-Vampire Survivors is a compact demonstration that **automation can relocate agency instead of eliminating it**. The character attacks automatically, yet movement, weapon geometry, build selection, evolution dependencies, pickup timing, route choice and cooperative resource allocation remain meaningful. For OpenLegend, this is unusually relevant to delegation: a player does not need to manually issue every low-level action if the remaining intervention points still determine purpose and risk.
+Vampire Survivors is a compact demonstration that **automation can relocate agency instead of eliminating it**. The character attacks automatically, yet movement, weapon geometry, build selection, evolution dependencies, pickup timing, route choice and cooperative resource allocation remain meaningful. For Open Legend, this is unusually relevant to delegation: a player does not need to manually issue every low-level action if the remaining intervention points still determine purpose and risk.
 
 ## 1. Identity and current scope
 
@@ -71,7 +71,7 @@ Some characters are straightforward stat variants; later/base-update/DLC charact
 
 The roster has grown enormous by 2026, making **content discovery/selection itself** a UX problem. Patch 1.15 explicitly added character-setup and content-filter tooling to keep the menu manageable. [VS-A](#vs-a)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Extensibility needs:
 - discoverability;
@@ -133,7 +133,7 @@ Garlic covers the close inner zone and can affect susceptibility to knockback/fr
 The value is not just additive DPS:
 - one tool covers a geometry the other leaves exposed. [VS-C](#vs-c)
 
-OpenLegend effects should similarly preserve:
+Open Legend effects should similarly preserve:
 - range;
 - shape;
 - direction;
@@ -248,7 +248,7 @@ Therefore an automated combat build still creates movement decisions:
 - preserve a screen-clear pickup?
 - route toward a stage passive or secret?
 
-In a system with automatic workers/defenses, OpenLegend can preserve agency by making **where/when to collect or commit resources** meaningful.
+In a system with automatic workers/defenses, Open Legend can preserve agency by making **where/when to collect or commit resources** meaningful.
 
 ## 10. Stages, clocks and endpoints
 
@@ -266,7 +266,7 @@ Instead of asking the player to watch their solved build forever:
 - the run ends;
 - rewards/unlocks feed the next experiment.
 
-A persistent OpenLegend world cannot simply reset after thirty minutes. Once automation solves one problem it needs:
+A persistent Open Legend world cannot simply reset after thirty minutes. Once automation solves one problem it needs:
 - new goals;
 - social change;
 - exploration;
@@ -300,7 +300,7 @@ These cards can reshape:
 
 Version 1.15 added three Darkanas alongside other content. [VS-A](#vs-a)
 
-**Interpretation:** a run modifier can alter how later modifiers are obtained. That is more consequential than another flat bonus and creates another reason to explain timing, eligibility and limits. OpenLegend world packages can support explicit local laws or scenario modifiers, but these should be inspectable and versioned rather than hidden prompt text.
+**Interpretation:** a run modifier can alter how later modifiers are obtained. That is more consequential than another flat bonus and creates another reason to explain timing, eligibility and limits. Open Legend world packages can support explicit local laws or scenario modifiers, but these should be inspectable and versioned rather than hidden prompt text.
 
 ## 12. Gold, PowerUps and several kinds of progression
 
@@ -488,7 +488,7 @@ As platform/performance needs grew, poncle rebuilt/migrated the game to a more a
 That is a powerful engineering lesson:
 > infrastructure can be replaced without changing the player's learned semantics.
 
-OpenLegend should similarly treat behavior compatibility as a product contract when changing runtime internals.
+Open Legend should similarly treat behavior compatibility as a product contract when changing runtime internals.
 
 ## 20. Marketing, distribution and discovery
 
@@ -648,7 +648,7 @@ These are constructed rules-based illustrations, not claimed sessions played for
 
 **Goal:** keep developing an already maxed loadout. **Conditions:** Limit Break is enabled. **Action:** choose further weapon-stat upgrades, then collect an unmaxed stage passive. **Result:** ordinary upgrading temporarily returns before extra weapon growth resumes. **Next decision:** finish that new dependency or avoid adding it. A completion condition should be evaluated against actual current state. [VS-V](#vs-v)
 
-## 25. Transferable inspiration for OpenLegend
+## 25. Transferable inspiration for Open Legend
 
 ### A. Automate execution after the player establishes intent
 
@@ -707,7 +707,7 @@ Decide:
 
 By 2026 Vampire Survivors needs filters precisely because it succeeded at adding enormous amounts of content.
 
-OpenLegend's mechanics/character/world libraries need:
+Open Legend's mechanics/character/world libraries need:
 - search;
 - tags;
 - provenance;

@@ -1,6 +1,7 @@
 import { constructionPermissionCurrent } from './construction-contributions.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { releaseInvocationResources } from './resource-claims.js';
+import { materializeNativeEntity } from './native-values.js';
 import { finishPlanAction } from './agency.js';
 import type { ConstructionPermission } from './assembly-types.js';
 import {
@@ -202,6 +203,10 @@ export function reconcileConstructionAuthority(
           action.materialPermission,
         );
       if (!definition || problem) {
+        // Revocation is a real work change even in a retaining startup draft.
+        // docs/save-and-load.md#continuation-and-identity
+        materializeNativeEntity(world, entity.id);
+        delete world.nativeInterval;
         finishPlanAction(
           world,
           entity.id,
@@ -227,6 +232,8 @@ export function reconcileConstructionAuthority(
           p.revision === receipt.revision,
       );
     if (grant) continue;
+    materializeNativeEntity(world, entity.id);
+    delete world.nativeInterval;
     releaseInvocationResources(world, action.id);
     finishPlanAction(
       world,
@@ -269,6 +276,8 @@ export function reconcileCampAssetAuthority(
           work.grant.id,
         );
     if (grant?.id === work.grant.id && grant.revision === work.grant.revision) continue;
+    materializeNativeEntity(world, entity.id);
+    delete world.nativeInterval;
     finishPlanAction(
       world,
       entity.id,

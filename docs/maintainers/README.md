@@ -4,6 +4,8 @@
 
 Use this page to find the owner of work. Focused trackers own task status; specifications own behavior, limits inventories own restrictions, and topic verification reports own actual evidence. A linked proposal or completed design does not establish implemented or qualified behavior.
 
+[Unreal Engine 5 playable-client migration (UE01–UE08)](unreal-engine-5-migration.md) tracks the selected desktop direction, implementation and qualification against the stand-alone Rust and art baselines.
+
 ## First playable: survival, a defensible home and independent encounters
 
 Start with [first-playable delivery and validation (FPV01–FPV09)](first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival, camp, character, invention and conflict experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; the [playtest plan](../projects/first-playable-playtest-plan.md) owns participant-learning procedure. FPV routes missing mechanics to existing subsystem owners and distinguishes useful partial tests from complete acceptance.
@@ -15,6 +17,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 [Stealth, awareness and surprise](stealth-awareness.md) owns the completed integrated A–G design and its implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Shared and specialist design boundaries are reconciled; runtime delivery and qualification remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
 
 [Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light, canonical sampled values and their declared temporal limits. Implementation and qualification of the integrated A/E/F/G interfaces remain explicit in that tracker.
+
+[Core perception, attention and remembering (PS04-A)](product-scalability.md#ps04-a--core-attention-and-recording) owns broad-scene/detail, shared history, familiarity, justified cognition and selective retention. Its [paired design](../projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) and [runtime contract](../projects/attention-and-scenes-runtime-design.md) specify the installed supported-channel conversion; normal-speed and combined operating qualification remain unmet. Ordinary attention needs no watch action. Further received-batch and history-lifetime work has one design and delivery owner under BK below.
 
 [Attention and investigation](attention-and-investigation.md) owns finite observation/watch/search, compatible work, native curiosity and the preparation-evidence producer. Its specialist design is complete; ATI01–ATI08 remain runtime work.
 
@@ -30,7 +34,15 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Current engine research
 
-[Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
+[Native simulation core (NSC00–NSC08)](native-simulation-core.md) owns the designed Rust pipeline proof, conditional supported-game conversion, flexible work pooling and later adaptive cell placement. [Feature](../projects/native-simulation-core-feature-spec.md) and [technical design](../projects/native-simulation-core-tech-design.md) distinguish architecture targets from isolated experiments; no runtime migration or scale benefit is established. PF/BK and production distributed-delivery gates retain their existing owners.
+
+The [completed Rust game server record](completed/2026/rust-game-server.md) links the scoped adoption to the [current stand-alone host contract](../architecture.md#stand-alone-rust-host). [Full-game delivery](native-simulation-core.md#full-game-on-the-stand-alone-server) owns the remaining functionality, internal handoffs and default switch.
+
+[Native runtime foundations (NRF00–NRF16)](native-runtime-foundations.md) owns the JSON, scratch-lifetime, compatible-capture and ordered rate-read experiments, the [shared Rust–TypeScript bridge](native-runtime-foundations.md#shared-bridge-work), [player availability and installed warning work](native-runtime-foundations.md#send-availability-and-installed-warning-work), [multiplayer delivery](native-runtime-foundations.md#multiplayer-update-delivery), and [decoder and gameplay memory](native-runtime-foundations.md#decoder-and-gameplay-memory). The tracker distinguishes historical 128 MiB results, current 2 GiB work and remaining qualification.
+
+[Simpler saving and evidence lifetimes (BK)](production-data.md#bookkeeping-simplification) owns installed direct saving, grouped personal evidence, shared values, independent retained support and background cleanup. The [received-batch and lifetime conversion](../projects/bookkeeping-simplification-batch-design.md) is installed with connected correctness checks; BK23 retains failed AWS operating qualification. BK12/BK16 retain failed normal-speed and unmet sustainable-cleanup acceptance. Current save/privacy/accounting protections remain required throughout conversion.
+
+[Using engine research to improve Open Legend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
 
 [Shared browser presentation and renderer comparison (RCP)](renderer-comparison.md) owns shared presentation extraction, PlayCanvas/Three.js backends, developer switching and fair measurements. Its [feature specification](../projects/renderer-comparison-feature-spec.md), [technical design](../projects/renderer-comparison-tech-design.md) and [repertoire review](../projects/renderer-comparison-repertoire-review.md) preserve the current art/gameplay target while distinguishing design completion from implementation and evidence. Broader native/offline choices retain their conditional owners.
 
@@ -62,6 +74,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Intelligent individuals and efficient simulation
 
+[Runtime unification (RU01–RU11)](runtime-unification.md) specifies removal of duplicate sensing/preparation, incremental save work, one accepted mind and adoption of useful older capabilities into current owners. The [design pair](../projects/runtime-unification-feature-spec.md) distinguishes selected behavior from proposed implementation.
+
 [The research-to-design map](intelligent-simulation.md) links all nine selected refinements to four feature/technical pairs and existing delivery owners. Design is complete; implementation and behavioral/capacity evidence remain open.
 
 ## Situation-aware cognition context
@@ -90,7 +104,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 | DG32 — Shared equipment             | [Shared-equipment proposal](../projects/shared-equipment-and-institutions-feature-spec.md), [INV-20](inventions-and-world-evolution.md) and [limits](../limits/shared-equipment-and-institutions.md)                                                                                  |
 | DG33 — Afterlife and telepathy      | [Product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md), [BW15](base-world.md), [EWF10T](extensible-world-foundation.md), [world profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [limits](../limits/extraordinary-minds-and-afterlife.md) |
 | DG34 — Local campaign opportunities | [Campaign proposal](../projects/shared-campaigns-feature-spec.md), [PS07/PS08](product-scalability.md), [Ash Road](../worlds/base/shared-campaigns.md) and [PS limits](../limits/product-scalability.md)                                                                              |
-| DG35 — Platform choice              | [Browser/offline decision](../projects/completed/platform-and-offline-decision-brief.md) and [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play)                                                                                                         |
+| DG35 — Platform choice              | [Platform decisions](../projects/platform-and-offline-decision-brief.md) and [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play)                                                                                                         |
 
 Adult players, non-explicit presentation with optional sex, and browser delivery are selected. Mechanical tuning, technical delivery and service qualification retain their owners; additional platforms remain conditional.
 
@@ -110,7 +124,7 @@ Free sharing, paid distribution, visits and a funded program are separately scop
 
 ## Product design groups 11–15
 
-[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention reuse](inventions-and-world-evolution.md); DG13 [shelters](editable-shelters.md); DG14 [practical competence](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
+[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention reuse](inventions-and-world-evolution.md); DG13 [shelters](editable-shelters.md); DG14 [character skill](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
 
 Reuse the [shelter technical design](../projects/editable-shelters-tech-design.md) and [evidence](../verification/editable-shelters.md), and [competence technical design](../projects/authored-stats-tech-design.md) and [evidence](../verification/practical-competence.md). Their selected component evidence does not close larger home or character-quality requirements.
 

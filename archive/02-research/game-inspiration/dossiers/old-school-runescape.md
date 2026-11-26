@@ -1,6 +1,6 @@
 # Old School RuneScape — full research dossier
 
-**G49 · Complete research pass, September 26, 2026.** Scope: the separately operated Old School RuneScape service, including released Sailing and the September 2026 dog quest; historical reviews are version-labelled. This is neither modern RuneScape/RS3 nor RuneScape: Dragonwilds. Research interpretations below are **not accepted OpenLegend requirements**.
+**G49 · Complete research pass, September 26, 2026.** Scope: the separately operated Old School RuneScape service, including released Sailing and the September 2026 dog quest; historical reviews are version-labelled. This is neither modern RuneScape/RS3 nor RuneScape: Dragonwilds. Research interpretations below are **not accepted Open Legend requirements**.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Modern RuneScape](runescape.md)
 
@@ -10,7 +10,7 @@ Jagex launched OSRS in 2013 from a 2007 snapshot in response to community demand
 
 **Sailing is released.** The launch press page carries a November 14, 2025 publication label but a November 19 launch dateline; the dated launch notes establish November 19 as the release event. The current game has **24 skills**, not the 23 described in older reviews. Jagex lists PC, Steam, iOS and Android with cross-platform play/progression. Modern RuneScape's ability bars, Necromancy skill, rebuilt Construction 120 housing and Treasure Hunter history do not belong here. [S1](#s1) [S2](#s2) [M1](#m1)
 
-OSRS is useful for OpenLegend because its players can care about being a cook, collector or house-builder without those activities being mere delays before the only legitimate endgame. Its warning is equally important: persistence can dignify effort, but cannot make every repetitive action enjoyable.
+OSRS is useful for Open Legend because its players can care about being a cook, collector or house-builder without those activities being mere delays before the only legitimate endgame. Its warning is equally important: persistence can dignify effort, but cannot make every repetitive action enjoyable.
 
 ## 2. Character identity and the full skill lattice
 
@@ -43,7 +43,7 @@ The backpack's 28-slot limit is separate from worn equipment. Stackable goods, b
 
 Item families include tools, raw materials, food, potions, runes/ammunition, armour, weapons, jewellery, quest objects, clue-related equipment, cosmetics, pets and rare collectibles. Acquisition can come from gathering, recipes, shops, player trade, monster drops, quests or activity-specific rewards. Loss/consumption can mean using supplies, exhausting charges, spending materials, selling, dropping or encountering a death rule. Not every valuable item is tradeable, and not every upgrade is a larger numeric tier. [M1](#m1) [M7](#m7) [M11](#m11) [M19](#m19)
 
-**Interpretation:** limited loadout space makes preparation meaningful. A spare weapon, escape option and extra food compete with the capacity to bring loot home. OpenLegend should borrow that intelligible choice, not automatically inherit dozens of bank trips as an engagement target.
+**Interpretation:** limited loadout space makes preparation meaningful. A spare weapon, escape option and extra food compete with the capacity to bring loot home. Open Legend should borrow that intelligible choice, not automatically inherit dozens of bank trips as an engagement target.
 
 ## 5. Combat: apparently simple input, demanding execution
 
@@ -59,13 +59,13 @@ Prayer adds an independently draining combat resource. Protection and offensive 
 
 Four spellbooks are distinct toolsets: standard, Ancient Magicks, Lunar and Arceuus. Access and individual spells can require skills, quests or other unlocks; a player normally uses the currently selected book. Switching books is itself supported by world facilities, including appropriate player-owned-house altars. [M5](#m5)
 
-Combat spells coexist with teleportation, enchantment and utility. Runes act as material inputs, tying spellcasting to Runecraft, shops, loot and markets. Choosing magical capability can therefore change a travel route or a production routine, not just combat damage. The spellbook is a meaningful preparation constraint; it is not an OpenLegend-style promise that any described magical effect is executable. [M5](#m5) [M1](#m1)
+Combat spells coexist with teleportation, enchantment and utility. Runes act as material inputs, tying spellcasting to Runecraft, shops, loot and markets. Choosing magical capability can therefore change a travel route or a production routine, not just combat damage. The spellbook is a meaningful preparation constraint; it is not an Open Legend-style promise that any described magical effect is executable. [M5](#m5) [M1](#m1)
 
 ## 7. Geography, travel and quest-gated convenience
 
 Gielinor is navigable geography containing towns such as Lumbridge, Varrock and Port Sarim, dangerous regions, dungeons and later-added lands. Walking/running, shortcuts, transport NPCs, enchanted jewellery, spell teleports and networks such as fairy rings and spirit trees have different requirements. A Slayer assignment makes these distinctions practical: reaching a master or monster can be a repeated cost, and an unlocked route can remain useful for years. [M12](#m12)
 
-Agility is consequently both a training activity and a logistical capability. Sailing adds navigable ocean rather than merely another instant destination menu. **Interpretation:** unlocks that change familiar routes make progress physically legible. OpenLegend can adapt this to learned paths, trusted hosts and access rights, but should avoid making every trip a test of whether the player has memorized an external wiki.
+Agility is consequently both a training activity and a logistical capability. Sailing adds navigable ocean rather than merely another instant destination menu. **Interpretation:** unlocks that change familiar routes make progress physically legible. Open Legend can adapt this to learned paths, trusted hosts and access rights, but should avoid making every trip a test of whether the player has memorized an external wiki.
 
 ## 8. Sailing: another layer of the world, not an isolated XP bar
 
@@ -127,7 +127,7 @@ Public/private communication, friends, cross-world chat channels, clans, trading
 
 The shared world enables gifts, advice, rivalry and collective routines, but participation is often parallel rather than tightly cooperative. A crowd performing the same repetitive action is not automatically a meaningful social encounter. Conversely, an activity with differentiated roles can force communication even with a small group. [M13](#m13) [P1](#p1)
 
-There is no general recruitable tactical companion party, romance-affection system, freeform NPC dialogue engine or authored-by-player world-law language in the verified baseline. Pets and sailing crew are narrower systems. Thieving is an explicit action/skill, not proof of a general stealth/awareness simulation. These boundaries matter when comparing OSRS with OpenLegend's much broader agent aspirations.
+There is no general recruitable tactical companion party, romance-affection system, freeform NPC dialogue engine or authored-by-player world-law language in the verified baseline. Pets and sailing crew are narrower systems. Thieving is an explicit action/skill, not proof of a general stealth/awareness simulation. These boundaries matter when comparing OSRS with Open Legend's much broader agent aspirations.
 
 ## 15. Presentation, interface, sound and feel
 
@@ -205,7 +205,7 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 ## 21. Transferable inspiration and limits
 
-**Capabilities rather than exclusive identities.** Let a persistent person acquire roles through practice, tools, relationships and place. OSRS demonstrates the appeal; OpenLegend would still need intelligible teaching, discovery and limits to stop every actor becoming an indistinguishable master of everything.
+**Capabilities rather than exclusive identities.** Let a persistent person acquire roles through practice, tools, relationships and place. OSRS demonstrates the appeal; Open Legend would still need intelligible teaching, discovery and limits to stop every actor becoming an indistinguishable master of everything.
 
 **Logistical unlocks are real progression.** A new route, useful home facility or reliable supplier can be as satisfying as damage growth. Make that convenience visible, but do not fund engagement by preserving pointless transport friction.
 
@@ -213,7 +213,7 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 **Constraints change meaning.** Ironman, raid Invocations and bounded temporary modes demonstrate several scales of optional law. Their lesson is explicit, inspectable contracts—not a requirement to add OSRS's particular modes.
 
-**Authored stories and emergent biographies can coexist.** A funny local quest can produce an object, pet or access right that becomes part of a long personal history. OpenLegend could extend that with real provenance and agent memory; those capabilities are not already present in OSRS merely because players remember the game.
+**Authored stories and emergent biographies can coexist.** A funny local quest can produce an object, pet or access right that becomes part of a long personal history. Open Legend could extend that with real provenance and agent memory; those capabilities are not already present in OSRS merely because players remember the game.
 
 **Governance and trust are product mechanics.** A technically functional game can lose goodwill through pricing fears, support failures or opaque decisions. Votes require clear authority boundaries and follow-through. Do not imitate polling as decoration.
 

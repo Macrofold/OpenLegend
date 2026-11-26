@@ -1,4 +1,5 @@
 import { entityGet, entitySet, entityValues } from './entity-collection.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { equippedItems } from './equipment.js';
 import { canStand, distance3D, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
@@ -23,6 +24,7 @@ import { canReachEntity, nearbyLivingEntities } from './spatial.js';
 import { activelyParticipates } from './participation-state.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
+import { selectedObservationRules } from './world-composition.js';
 import type { Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface DeathScar {
@@ -37,6 +39,7 @@ export interface DeathScar {
 export interface ReincarnationPolicy {
   implementation: 'rest-replacement';
   qualifyingController: 'player';
+  corpseKind: Entity['kind'];
   restKind: Entity['kind'];
   radius: number;
   retainedTypeFraction: number;
@@ -55,11 +58,15 @@ export interface ReincarnationPolicy {
   arrivalText: string;
   arrivalNarration: string;
   continueLabel: string;
+  continueUnavailableText: string;
+  noUsableRestText: string;
   deathText: string;
   retainedLabel: string;
   lostLabel: string;
   treatmentLabel: string;
   treatmentText: string;
+  treatmentStartClause: string;
+  treatmentInterruptedText: string;
 }
 export interface PendingDeath {
   at: number;
@@ -97,7 +104,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     id: corpseId,
     name: entity.name,
     nameForm: entity.nameForm,
-    kind: 'remains',
+    kind: policy.corpseKind,
     appearance: entity.appearance,
     spatial: { ...entity.spatial },
     placement: entity.placement && { ...entity.placement },
@@ -197,7 +204,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   emit(
     world,
     events,
-    'player-death',
+    selectedObservationRules(world).body.playerDeathEvent,
     policy.deathText,
     entity,
     undefined,
@@ -271,7 +278,11 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
     actor = entity.actor!,
     death = actor.pendingDeath;
   if (!policy || !death || actor.alive || actor.controller !== policy.qualifyingController)
-    return outcome(false, 'respawn-unavailable', 'There is no lost life to continue.');
+    return outcome(
+      false,
+      'respawn-unavailable',
+      policy?.continueUnavailableText ?? 'There is no lost life to continue.',
+    );
   if (actor.participation?.phase !== undefined && actor.participation.phase !== 'active')
     return outcome(false, 'inactive', 'Return to the world before continuing.');
   const roots = worldRootEntities(world, true);
@@ -304,18 +315,14 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
       }
     }
   }
-  if (!choices.length)
-    return outcome(
-      false,
-      'respawn-unavailable',
-      'No usable rest spot is available. Your belongings and lost body remain saved.',
-    );
+  if (!choices.length) return outcome(false, 'respawn-unavailable', policy.noUsableRestText);
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
   const choice =
     choices[choices.length === 1 ? 0 : Math.floor(nextRandom(world) * choices.length)]!;
   const point = choice.points[Math.floor(nextRandom(world) * choice.points.length)]!;
   forgetProjectileBodyEncounters(world, entity.id, actor.physicalLife ?? 0);
+  retirePerceptionLife(world, entity.id);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   const appearance = world.appearanceRecipes?.[entity.id];
   if (appearance) appearance.physicalLife = actor.physicalLife;
@@ -420,6 +427,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
     !hasRecordFields(policy, [
       'implementation',
       'qualifyingController',
+      'corpseKind',
       'restKind',
       'radius',
       'retainedTypeFraction',
@@ -431,11 +439,15 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
       'arrivalText',
       'arrivalNarration',
       'continueLabel',
+      'continueUnavailableText',
+      'noUsableRestText',
       'deathText',
       'retainedLabel',
       'lostLabel',
       'treatmentLabel',
       'treatmentText',
+      'treatmentStartClause',
+      'treatmentInterruptedText',
     ]) ||
     !hasRecordFields(policy.placement, [
       'samples',
@@ -450,6 +462,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
   if (
     policy.implementation !== 'rest-replacement' ||
     policy.qualifyingController !== 'player' ||
+    !isSafeRecordId(policy.corpseKind) ||
     !['campfire', 'resource', 'item-pile'].includes(policy.restKind) ||
     !Number.isFinite(policy.retainedTypeFraction) ||
     policy.retainedTypeFraction < 0 ||
@@ -488,10 +501,19 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
       policy.arrivalText,
       policy.arrivalNarration,
       policy.continueLabel,
+      policy.continueUnavailableText,
+      policy.noUsableRestText,
       policy.deathText,
       policy.retainedLabel,
       policy.lostLabel,
-      ...(treatment ? [policy.treatmentLabel, policy.treatmentText] : []),
+      ...(treatment
+        ? [
+            policy.treatmentLabel,
+            policy.treatmentText,
+            policy.treatmentStartClause,
+            policy.treatmentInterruptedText,
+          ]
+        : []),
     ].every((text) => typeof text === 'string' && text.trim().length > 0 && text.length <= 1024) ||
     !validNameTemplate(policy.arrivalNarration, ['subject'])
   )

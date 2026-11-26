@@ -8,7 +8,7 @@
 
 ## Scope, base and risks
 
-Review the complete barter change against its integrated base for atomic effects, revision consent, permitted disclosures, current inventory/work/claims, draft recovery, ordinary resident decisions, modularity and growth with people/items/offers. Preserve one exact lot per side, gifts, native mutation ownership and the agreed deferred economic/reservation scope. Initial expected fixes affect roughly 150–300 logic lines; privacy, stale controls and hot-path reuse warrant this durable plan.
+Review the complete barter change against its integrated base for atomic effects, revision consent, permitted disclosures, current inventory/work/claims, draft recovery, ordinary NPC decisions, modularity and growth with people/items/offers. Preserve one exact lot per side, gifts, native mutation ownership and the agreed deferred economic/reservation scope. Initial expected fixes affect roughly 150–300 logic lines; privacy, stale controls and hot-path reuse warrant this durable plan.
 
 The unpublished branch was reconciled from `34233ae24365eb8911fe1995c9c232bd57f34616` to refreshed `origin/main` at `0a3ab79b7a698a7f1941dc23722f89220d1ba425` in `https://github.com/Macrofold/OpenLegend.git`. The controller restriction and barter shared checks coexist; upstream history and current PX02 dispositions were retained. Patch-series comparison confirmed those scoped resolutions. Work stays on `codex/px02-reciprocal-barter` in `/Users/mzw/.codex/worktrees/097e/OpenLegend`; no checkout or branch switch and no edits to the main checkout.
 

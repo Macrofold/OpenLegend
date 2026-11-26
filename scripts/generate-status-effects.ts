@@ -37,9 +37,6 @@ if (process.argv.includes('--check')) {
 } else if ((await readFile(socialOffersDestination, 'utf8').catch(() => '')) !== socialOffersOutput)
   await writeFile(socialOffersDestination, socialOffersOutput);
 
-const socialPerceptionValidation = await import('../packages/domain/src/social-perception.js');
-const validateSocialPerception: typeof import('../packages/domain/src/social-perception.js').validateSocialPerception =
-  socialPerceptionValidation.validateSocialPerception;
 const {
   compileBaseManufactureConfiguration,
   compileBaseMaterialConfiguration,
@@ -241,7 +238,6 @@ if (
   )
 )
   throw new Error('Invalid base-world knowledge policy.');
-validateSocialPerception(knowledge.socialPerception);
 const knowledgeOutput = await format(JSON.stringify(knowledge), {
   ...(await resolveConfig(knowledgeDestination.pathname)),
   parser: 'json',

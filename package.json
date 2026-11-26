@@ -5,12 +5,12 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.15.0"
   },
   "scripts": {
     "setup:lab": "tsx --env-file-if-exists=.env scripts/setup-cognition-lab.ts",
-    "dev": "pnpm config:generate && tsx watch --env-file-if-exists=.env apps/server/src/main.ts",
-    "start": "pnpm config:generate && node --import tsx --env-file-if-exists=.env apps/server/src/main.ts --production",
+    "dev": "node --env-file-if-exists=.env scripts/dev-rust-game-server.mjs",
+    "start": "sh bin/serve-rust-game.sh",
     "build": "pnpm config:generate && tsc --noEmit -p tsconfig.build.json && vite build --config apps/client/vite.config.ts && pnpm assets:check --build",
     "build:studies": "pnpm config:generate && vite build --config apps/client/vite.config.ts --mode studies",
     "assets": "tsx --env-file-if-exists=.env scripts/assets.ts",
@@ -48,6 +48,7 @@
     "@aws-sdk/client-sts": "3.1152.0",
     "@aws-sdk/credential-providers": "3.1152.0",
     "@aws-sdk/lib-dynamodb": "3.1161.0",
+    "@open-legend/ai": "workspace:*",
     "@open-legend/assets": "workspace:*",
     "@open-legend/network": "workspace:*",
     "@playwright/test": "1.58.2",

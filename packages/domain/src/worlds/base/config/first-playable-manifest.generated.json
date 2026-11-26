@@ -517,7 +517,7 @@
     "id": "item-35",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1p5m9re" },
     "quantity": 1,
     "parentId": "item-31"
   },
@@ -659,15 +659,15 @@
     "installer": "ordinary-scenario",
     "position": { "x": 103, "y": 0.10000000000000003, "z": 25, "surfaceId": "terrain-5-1" }
   },
-  "item-48": {
-    "id": "item-48",
+  "item-52": {
+    "id": "item-52",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1
   },
-  "item-49": {
-    "id": "item-49",
+  "item-53": {
+    "id": "item-53",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
@@ -680,86 +680,86 @@
     "installer": "ordinary-scenario",
     "position": { "x": 106, "y": 0.10000000000000003, "z": 26, "surfaceId": "terrain-5-1" }
   },
-  "item-50": {
-    "id": "item-50",
+  "item-54": {
+    "id": "item-54",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "knife", "version": 1, "digest": "1hpprbi" },
     "quantity": 1,
     "parentId": "orin"
   },
-  "item-51": {
-    "id": "item-51",
+  "item-55": {
+    "id": "item-55",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "cooked_meat", "version": 1, "digest": "1nuttzc" },
     "quantity": 2,
     "parentId": "orin"
   },
-  "item-52": {
-    "id": "item-52",
+  "item-58": {
+    "id": "item-58",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "item-10uvnqg", "version": 1, "digest": "lhm7zm" },
     "quantity": 1
   },
-  "item-53": {
-    "id": "item-53",
+  "item-59": {
+    "id": "item-59",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "item-hua8to", "version": 1, "digest": "eovb3" },
     "quantity": 1
   },
-  "item-54": {
-    "id": "item-54",
+  "item-60": {
+    "id": "item-60",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
     "quantity": 6,
     "parentId": "orin"
   },
-  "item-55": {
-    "id": "item-55",
+  "item-61": {
+    "id": "item-61",
     "change": "retained",
     "installer": "ordinary-scenario",
-    "definition": { "id": "field-sling-record", "version": 1, "digest": "11cybyh" },
+    "definition": { "id": "field-sling-record", "version": 1, "digest": "1p5m9re" },
     "quantity": 1,
     "parentId": "watchpost-cache"
   },
-  "item-56": {
-    "id": "item-56",
+  "item-62": {
+    "id": "item-62",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "cord", "version": 1, "digest": "ei5cxu" },
     "quantity": 2,
     "parentId": "watchpost-cache"
   },
-  "item-57": {
-    "id": "item-57",
+  "item-63": {
+    "id": "item-63",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "prepared_fiber", "version": 1, "digest": "1kizoko" },
     "quantity": 1,
     "parentId": "watchpost-cache"
   },
-  "item-58": {
-    "id": "item-58",
+  "item-64": {
+    "id": "item-64",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "stone", "version": 1, "digest": "11pubp0" },
     "quantity": 4,
     "parentId": "watchpost-cache"
   },
-  "item-59": {
-    "id": "item-59",
+  "item-65": {
+    "id": "item-65",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "item-stfmma", "version": 1, "digest": "8427iq" },
     "quantity": 4,
     "parentId": "watchpost-cache"
   },
-  "item-60": {
-    "id": "item-60",
+  "item-66": {
+    "id": "item-66",
     "change": "retained",
     "installer": "ordinary-scenario",
     "definition": { "id": "watchpost-directions", "version": 1, "digest": "se6i7n" },

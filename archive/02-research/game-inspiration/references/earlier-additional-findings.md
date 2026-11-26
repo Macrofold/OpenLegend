@@ -1,6 +1,6 @@
 # Additional findings retained from the earlier research passes
 
-These passages are preserved so consolidation does not silently discard earlier analysis. They are research opinions or historical evidence, not accepted OpenLegend requirements. Where a later case qualifies a statement, read it with that qualification. Formatting-only variants were retained conservatively.
+These passages are preserved so consolidation does not silently discard earlier analysis. They are research opinions or historical evidence, not accepted Open Legend requirements. Where a later case qualifies a statement, read it with that qualification. Formatting-only variants were retained conservatively.
 
 ## Contents
 
@@ -12,7 +12,7 @@ These passages are preserved so consolidation does not silently discard earlier 
 6. [What actually makes these worlds fun](../essays/what-actually-makes-these-worlds-fun.md#6-what-actually-makes-these-worlds-fun)
 7. [Virality and discovery](../essays/virality-and-discovery.md#7-virality-and-discovery)
 8. [Production and platform pitfalls](../essays/production-and-platform-pitfalls.md#8-production-and-platform-pitfalls)
-9. [Implications for OpenLegend](../essays/implications-for-openlegend.md#9-implications-for-openlegend)
+9. [Implications for Open Legend](../essays/implications-for-openlegend.md#9-implications-for-open-legend)
 10. [A practical validation program](../essays/a-practical-validation-program.md#10-a-practical-validation-program)
 11. [Prioritized study itinerary](../essays/prioritized-study-itinerary.md#11-prioritized-study-itinerary)
 12. [Sources](master-bibliography.md#12-sources)
@@ -31,15 +31,15 @@ Official discovery documentation discusses signals around early engagement, play
 
 **What seems load-bearing.** Roblox serves at least two products: an accessible place for people to find/play experiences, and an environment in which creators can build for that audience. A successful individual experience can attract friends; a useful social/discovery system can bring players to more experiences; audience opportunity can motivate creation. Those loops reinforce one another only when both sides receive value.
 
-**Why people may enjoy it.** Different experiences deliver different pleasures. It is misleading to identify one “Roblox gameplay loop” and attribute platform success to it. The platform-level promise is access to varied experiences and other people; the game-level promise might be social role-play, collecting, construction, competition, or exploration. OpenLegend must decide which promise it can fulfill before it has thousands of creators.
+**Why people may enjoy it.** Different experiences deliver different pleasures. It is misleading to identify one “Roblox gameplay loop” and attribute platform success to it. The platform-level promise is access to varied experiences and other people; the game-level promise might be social role-play, collecting, construction, competition, or exploration. Open Legend must decide which promise it can fulfill before it has thousands of creators.
 
-**Sharing and growth.** Social participation can make an invitation more persuasive than an advertisement: “join us here” supplies an immediate reason to launch. A playable creation is also a distribution object. My inference is that OpenLegend’s packs should eventually travel with an understandable playable demonstration, not just a technical manifest.
+**Sharing and growth.** Social participation can make an invitation more persuasive than an advertisement: “join us here” supplies an immediate reason to launch. A playable creation is also a distribution object. My inference is that Open Legend’s packs should eventually travel with an understandable playable demonstration, not just a technical manifest.
 
 **What is not enough.** More templates, easier scripting, or lower asset-generation cost does not ensure a creator gets discovered. A user who can create something in ten minutes but cannot find anyone to play it may leave. Likewise, a player should not have to become a creator to encounter worthwhile content.
 
-**Pitfalls.** Success produces obligations: moderation, abuse handling, content discovery, reliability, creator support, attribution, and economic expectations. Opening user-generated content is not simply outsourcing development. The annual report’s operating categories are a reminder of scale, not a reason to assume OpenLegend needs that infrastructure before its first good game. [RB1](sources-01.md#source-rb1)
+**Pitfalls.** Success produces obligations: moderation, abuse handling, content discovery, reliability, creator support, attribution, and economic expectations. Opening user-generated content is not simply outsourcing development. The annual report’s operating categories are a reminder of scale, not a reason to assume Open Legend needs that infrastructure before its first good game. [RB1](sources-01.md#source-rb1)
 
-**OpenLegend application.** Earn single-world value first. Then build the smallest creator-consumer loop: make a useful mechanic, show it in an appealing example, let another creator adopt or adapt it, and let ordinary players enjoy the result. Measure successful reuse and actual play, not just published artifact counts. Do not promise creator income from a theoretical marketplace.
+**Open Legend application.** Earn single-world value first. Then build the smallest creator-consumer loop: make a useful mechanic, show it in an appealing example, let another creator adopt or adapt it, and let ordinary players enjoy the result. Measure successful reuse and actual play, not just published artifact counts. Do not promise creator income from a theoretical marketplace.
 
 ## 3.4 Hades — continuity makes repetition emotionally productive
 
@@ -49,15 +49,15 @@ Official discovery documentation discusses signals around early engagement, play
 
 My interpretation is that Hades aligns several rewards around a coherent loop. Combat supplies immediacy, build choices supply adaptation, and character encounters give the repeated journey social texture. None needs to carry the whole experience alone. A player attracted by one layer can discover reasons to care about the others.
 
-**Why characters feel responsive.** Specific acknowledgement is powerful. Reacting to a relevant recent choice or encounter signals continuity more convincingly than an enormous biography available on demand. This is a direct challenge for an LLM game: more possible dialogue is not automatically better reactivity. OpenLegend’s characters should make the player think “you noticed that,” not “you can discuss any topic.”
+**Why characters feel responsive.** Specific acknowledgement is powerful. Reacting to a relevant recent choice or encounter signals continuity more convincingly than an enormous biography available on demand. This is a direct challenge for an LLM game: more possible dialogue is not automatically better reactivity. Open Legend’s characters should make the player think “you noticed that,” not “you can discuss any topic.”
 
-**Important versus optional.** The exact Greek setting, action-combat format, and death-loop fiction are not required for OpenLegend. The craft is harder to remove: readable feedback, distinctive character voices, strong art/music, responsive interactions, and carefully controlled pacing. Kasavin’s view of expressive flourishes is a useful counterweight to engineering-led attempts to remove everything that does not advance a mechanic. [HD2](sources-01.md#source-hd2) [HD3](sources-01.md#source-hd3)
+**Important versus optional.** The exact Greek setting, action-combat format, and death-loop fiction are not required for Open Legend. The craft is harder to remove: readable feedback, distinctive character voices, strong art/music, responsive interactions, and carefully controlled pacing. Kasavin’s view of expressive flourishes is a useful counterweight to engineering-led attempts to remove everything that does not advance a mechanic. [HD2](sources-01.md#source-hd2) [HD3](sources-01.md#source-hd3)
 
-**Sharing mechanism.** Distinctive characters, quotable moments, build discoveries, and emotionally interpretable scenes give different audiences material to discuss. This is an affordance-based explanation, not proof of which channel caused sales. OpenLegend will benefit from a recognizable cast and tone even if individual worlds eventually become highly customizable.
+**Sharing mechanism.** Distinctive characters, quotable moments, build discoveries, and emotionally interpretable scenes give different audiences material to discuss. This is an affordance-based explanation, not proof of which channel caused sales. Open Legend will benefit from a recognizable cast and tone even if individual worlds eventually become highly customizable.
 
 **Risks in applying the lesson.** Do not force every NPC to produce a remark after every action. Constant acknowledgement becomes noise and can feel performative. Do not prevent progress until a player reads a long dialogue. Do not make a character “remember” a relationship while ignoring it in material choices.
 
-**OpenLegend application.** Design small, meaningful callbacks: a helper asks about the result of an invention; someone recalls a promise before lending scarce materials; a failed expedition changes the next plan. Let silence and continued work be legitimate. Use memory to support selective continuity, not constant narration. Build some authored personalities and situations to establish quality before expecting generation alone to create attachment.
+**Open Legend application.** Design small, meaningful callbacks: a helper asks about the result of an invention; someone recalls a promise before lending scarce materials; a failed expedition changes the next plan. Let silence and continued work be legitimate. Use memory to support selective continuity, not constant narration. Build some authored personalities and situations to establish quality before expecting generation alone to create attachment.
 
 ## 4.4 Baldur’s Gate 3 — freedom benefits from authored identity
 
@@ -65,7 +65,7 @@ My interpretation is that Hades aligns several rewards around a coherent loop. C
 
 **Interpretation.** A player can appreciate systemic freedom more when the world contains people worth affecting. “I can change this relationship” is a more concrete promise than “the narrative branches.” Authored personality gives choices resistance and meaning: another character should not simply agree with whatever the player says.
 
-**Transfer.** OpenLegend should retain a crafted default cast and tone, even with generated inhabitants. Test whether an NPC has a recognizable preference, boundary, and alternative priority. Do not imitate production scale, cinematic presentation, or sheer authored-content volume. Borrow the clarity that a choice changes something the player cares about.
+**Transfer.** Open Legend should retain a crafted default cast and tone, even with generated inhabitants. Test whether an NPC has a recognizable preference, boundary, and alternative priority. Do not imitate production scale, cinematic presentation, or sheer authored-content volume. Borrow the clarity that a choice changes something the player cares about.
 
 ## 4.6 Terraria — sandbox freedom with a destination
 
@@ -73,7 +73,7 @@ My interpretation is that Hades aligns several rewards around a coherent loop. C
 
 **Interpretation.** It supplies an answer to a problem pure sandboxes can leave unresolved: “What might I work toward next?” Exploration and challenge create demand for new tools; building gives the resulting resources a personal destination.
 
-**Transfer.** OpenLegend can offer obvious near-term possibilities without prescribing every solution: repair shelter, prepare for an expedition, understand a strange object, help a particular person. The player may choose another goal. Direction and freedom are not opposites.
+**Transfer.** Open Legend can offer obvious near-term possibilities without prescribing every solution: repair shelter, prepare for an expedition, understand a strange object, help a particular person. The player may choose another goal. Direction and freedom are not opposites.
 
 **Pitfall.** Avoid solving uncertainty only by adding more material tiers. A new tool should create a new decision or capability, not merely raise a number. An authored discovery sequence can make a small world more satisfying than a larger undifferentiated one.
 
@@ -85,7 +85,7 @@ My interpretation is that Hades aligns several rewards around a coherent loop. C
 
 **Key versus optional.** A coherent home, characters, time rhythm, and manageable choices are stronger lessons than “add farming.” Multiplayer was not necessary for its initial commercial proof. The exceptional development history is not a repeatable staffing plan for another studio.
 
-**Transfer.** Give OpenLegend a home worth returning to and allow sessions that are not all crises. A character’s useful routine can make the place feel cared for. Avoid forcing every player into optimization, and do not treat long hours of repetitive play as proof that the loop feels rewarding rather than obligatory.
+**Transfer.** Give Open Legend a home worth returning to and allow sessions that are not all crises. A character’s useful routine can make the place feel cared for. Avoid forcing every player into optimization, and do not treat long hours of repetitive play as proof that the loop feels rewarding rather than obligatory.
 
 ## 4.14 Project Zomboid — practical knowledge under pressure
 
@@ -93,6 +93,6 @@ My interpretation is that Hades aligns several rewards around a coherent loop. C
 
 **Interpretation.** Ordinary objects acquire interesting roles when choices carry risk. Noise, visibility, timing, and preparation can make a mundane trip into a story. A simulation need not make every object intellectually complex; it needs a context in which its properties matter.
 
-**Transfer.** OpenLegend’s new senses and awareness framework should influence actual decisions: whether to approach, call for help, hide evidence, or risk an unfamiliar route. A detailed observation model that changes neither action eligibility nor anyone’s behavior is expensive decoration.
+**Transfer.** Open Legend’s new senses and awareness framework should influence actual decisions: whether to approach, call for help, hide evidence, or risk an unfamiliar route. A detailed observation model that changes neither action eligibility nor anyone’s behavior is expensive decoration.
 
 **Pitfall.** Custom settings are valuable when they tune an understandable experience. Exposing hundreds of sliders before the default is good transfers design labor to the player. Do not market planned social systems as delivered merely because the survival substrate already works.

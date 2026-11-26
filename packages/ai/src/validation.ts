@@ -6,7 +6,9 @@ import type {
   TypedQuestionMap,
   TokenUsage,
   JsonSchema,
+  GenerateRequest,
 } from './types.js';
+import { jsonQuotedUnits, schemaCompileWorkspace } from './schema-capacity.js';
 
 export class InvalidData extends Error {
   constructor(readonly code: string) {
@@ -22,8 +24,12 @@ export function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
-/** Canonical JSON: no implicit toJSON, omitted undefined values, cycles, or non-finite numbers. */
-export function serialize(value: unknown, maxBytes: number): string {
+/** Strict JSON, canonical by default: no implicit toJSON, omitted undefined values, cycles, or non-finite numbers. */
+export function serialize(
+  value: unknown,
+  maxBytes: number,
+  options: { preserveKeyOrder?: boolean } = {},
+): string {
   let nodes = 0;
   const ancestors = new Set<object>();
   function visit(v: unknown, depth: number): unknown {
@@ -46,7 +52,11 @@ export function serialize(value: unknown, maxBytes: number): string {
       result = Array.from(v, (item) => visit(item, depth + 1));
     } else {
       const obj: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
-      for (const key of Object.keys(v).sort()) {
+      // Schema property order controls the generated field order. Transport may
+      // preserve it while canonical validation/digests keep the default sorting.
+      const keys = Object.keys(v);
+      if (!options.preserveKeyOrder) keys.sort();
+      for (const key of keys) {
         const descriptor = Object.getOwnPropertyDescriptor(v, key);
         if (!descriptor || !('value' in descriptor)) throw new InvalidData('non_json_input');
         obj[key] = visit(descriptor.value, depth + 1);
@@ -67,7 +77,9 @@ export class PreparedJson {
   readonly #text: string;
   readonly #bytes: number;
   constructor(value: unknown, maxBytes: number) {
-    this.#text = serialize(value, maxBytes);
+    // Schema fields and offered choices have intentional order. Capture that
+    // order through the envelope; canonical comparisons use serialize directly.
+    this.#text = serialize(value, maxBytes, { preserveKeyOrder: true });
     this.#bytes = Buffer.byteLength(this.#text);
   }
   text(maxBytes: number): string {
@@ -250,7 +262,7 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
 /** Trusted caller schemas only. Local acyclic definitions share meaning, never
  * external loading, coercion, mutation, or default insertion.
  * docs/technical/situation-aware-cognition-context.md#95-ref-is-a-separate-gated-refinement */
-export function compileSchema(schema: unknown): ValidateFunction {
+export function compileSchema(schema: unknown, bounded = false): ValidateFunction {
   if (!record(schema) || schema.type !== 'object' || schema.anyOf !== undefined)
     throw new InvalidData('invalid_schema');
   const definitions = schema.$defs;
@@ -342,19 +354,168 @@ export function compileSchema(schema: unknown): ValidateFunction {
       ownProperties: true,
       validateFormats: false,
       inlineRefs: false,
+      // Native admission uses the pinned looped, single-render CodeGen profile.
+      // It preserves strict validation while bounding the compiler's scratch.
+      ...(bounded ? { loopRequired: 1, loopEnum: 1, code: { optimize: false } } : {}),
     }).compile(schema);
   } catch {
     throw new InvalidData('invalid_schema');
   }
 }
 
+/** Size the independent JSON copy without constructing the serialized text or
+ * a second graph. The carrier allowances match the host's JSON decode model. */
+export function jsonCaptureBytes(schema: unknown): number {
+  let nodes = 0;
+  let carriers = 0;
+  let textUnits = 0;
+  const string = (value: string) => {
+    carriers += 64;
+    // Count actual escaping before allocation, including isolated UTF-16 units.
+    textUnits += jsonQuotedUnits(value);
+  };
+  const visit = (value: unknown, depth: number): void => {
+    if (++nodes > 20_000 || depth > 32) throw new InvalidData('json_complexity_limit');
+    if (typeof value === 'string') {
+      string(value);
+      return;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      textUnits += 25;
+      return;
+    }
+    if (value === null || typeof value === 'boolean') {
+      textUnits += 5;
+      return;
+    }
+    if (!record(value) && !Array.isArray(value)) throw new InvalidData('non_json_input');
+    carriers += 256;
+    textUnits += 2;
+    if (Array.isArray(value)) {
+      if (value.length > 20_000) throw new InvalidData('json_complexity_limit');
+      carriers += 64 * value.length;
+      textUnits += value.length;
+      for (let index = 0; index < value.length; index++) {
+        const descriptor = Object.getOwnPropertyDescriptor(value, index);
+        if (!descriptor || !('value' in descriptor)) throw new InvalidData('non_json_input');
+        visit(descriptor.value, depth + 1);
+      }
+      return;
+    }
+    for (const key in value) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor) continue;
+      if (!('value' in descriptor)) throw new InvalidData('non_json_input');
+      carriers += 512;
+      textUnits += 2;
+      string(key);
+      visit(descriptor.value, depth + 1);
+    }
+  };
+  visit(schema, 0);
+  // Input, flattening and parsed string backing can overlap the graph.
+  return 64 * 1024 + carriers + 6 * textUnits;
+}
+
+/** Count the decoded carriers from bounded wire text before JSON.parse. Syntax
+ * and supported complexity remain the existing parser/serializer's concern. */
+export function jsonTextCaptureBytes(text: string): number {
+  let bytes = 64 * 1024 + 6 * text.length;
+  let quoted = false;
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+    if (quoted) {
+      if (character === '\\') index++;
+      else if (character === '"') quoted = false;
+    } else if (character === '"') {
+      quoted = true;
+      bytes += 64;
+    } else if (character === '{') bytes += 256;
+    else if (character === '[') bytes += 256 + 64;
+    else if (character === ':') bytes += 512;
+    else if (character === ',') bytes += 64;
+  }
+  return bytes;
+}
+
+function immutableJson(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return true;
+  if (!Object.isFrozen(value)) return false;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++)
+      if (!immutableJson(value[index])) return false;
+  } else {
+    for (const key in value)
+      if (Object.hasOwn(value, key) && !immutableJson((value as Record<string, unknown>)[key]))
+        return false;
+  }
+  return true;
+}
+
 /** Capture the exact schema once; later caller mutation cannot change its request
  * or the validator retained across the provider wait. No cross-request cache. */
-export function prepareSchema(schema: unknown, maxBytes: number) {
-  const captured: unknown = JSON.parse(serialize(schema, maxBytes));
-  const validate = compileSchema(captured);
-  freezeJson(captured);
-  return Object.freeze({ schema: captured as JsonSchema, validate });
+export function prepareSchema(
+  schema: unknown,
+  maxBytes: number,
+  reserve?: NonNullable<GenerateRequest['allocation']>['reserveBytes'],
+  borrow?: NonNullable<GenerateRequest['allocation']>['borrow'],
+) {
+  const capture = () =>
+    JSON.parse(serialize(schema, maxBytes, { preserveKeyOrder: true })) as JsonSchema;
+  if (!reserve) {
+    const captured = capture();
+    const validate = compileSchema(captured);
+    freezeJson(captured);
+    return Object.freeze({ schema: captured, validate, release: undefined });
+  }
+  // Fund the shape walk before it reads descriptors or allocates its stack
+  // and path work. The strict existing serializer still owns JSON validation.
+  const preflight = reserve(64 * 1024);
+  let cloneBytes: number;
+  let compiler: ReturnType<typeof schemaCompileWorkspace>;
+  let immutable = false;
+  try {
+    cloneBytes = jsonCaptureBytes(schema);
+    compiler = schemaCompileWorkspace(schema);
+    immutable = !!borrow && immutableJson(schema);
+  } finally {
+    preflight.release();
+  }
+  const input = immutable ? borrow!(schema as object) : undefined;
+  let retained: ReturnType<NonNullable<GenerateRequest['allocation']>['reserveBytes']> | undefined;
+  try {
+    retained = reserve((input ? 0 : cloneBytes) + compiler.retainedBytes);
+    let captured: JsonSchema;
+    const cloning = reserve(cloneBytes);
+    try {
+      // Keep strict JSON/size validation even when the independent input owner
+      // proves the complete graph immutable. Shallow freezes still copy.
+      captured = input
+        ? (serialize(schema, maxBytes, { preserveKeyOrder: true }), schema as JsonSchema)
+        : capture();
+    } finally {
+      cloning.release();
+    }
+    const compiling = reserve(compiler.peakBytes - compiler.retainedBytes);
+    try {
+      const validate = compileSchema(captured, true);
+      freezeJson(captured);
+      return Object.freeze({
+        schema: captured,
+        validate,
+        release: () => {
+          retained!.release();
+          input?.release();
+        },
+      });
+    } finally {
+      compiling.release();
+    }
+  } catch (error) {
+    retained?.release();
+    input?.release();
+    throw error;
+  }
 }
 
 export type PreparedSchema = ReturnType<typeof prepareSchema>;

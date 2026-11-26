@@ -6,7 +6,7 @@ This document records what the creator asked for. It does not turn every aspirat
 
 ## Product premise
 
-Open Legend is a persistent, shared simulation that people enter as embodied characters. Autonomous residents have physical needs, emotions, personalities, memories, relationships, and limited perception. They pursue lives, not just dialogue trees. Players inhabit the same world and influence it through movement, conversation, ordinary actions, and open-ended requests.
+Open Legend is a persistent, shared simulation that people enter as embodied characters. NPCs have physical needs, emotions, personalities, memories, relationships, and limited perception. They pursue lives, not just dialogue trees. Players inhabit the same world and influence it through movement, conversation, ordinary actions, and open-ended requests.
 
 The central promise is **a world that remembers people and learns new ways to interact as it is played**. A player inventing a plausible trap should potentially add a reusable capability to the world. That is an aspiration for extensible simulation, not a promise that any sentence becomes reality.
 

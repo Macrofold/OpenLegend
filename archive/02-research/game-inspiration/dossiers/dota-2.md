@@ -54,7 +54,7 @@ A **Tango** heals by consuming a tree. It can be shared with an ally, and a tree
 
 Fog of war hides unobserved activity; ordinary sight and detecting invisibility are distinct. Terrain, trees, elevation and day/night conditions affect vision, with hero-specific exceptions. Team members share supported information. [DT16](#dt16) The later **7.41c** record specifically says flying vision no longer bypasses the Roshan pit boundary. [DT17](#dt17)
 
-**Interpretation:** overhead presentation does not require universal knowledge. Conversely, Dota's team-shared vision is not evidence of separate private beliefs for each character. OpenLegend would need to choose whether a fact belongs to the human interface, the team or one embodied actor.
+**Interpretation:** overhead presentation does not require universal knowledge. Conversely, Dota's team-shared vision is not evidence of separate private beliefs for each character. Open Legend would need to choose whether a fact belongs to the human interface, the team or one embodied actor.
 
 An **Observer Ward** is an expiring placed source of ground vision, not a guarantee of detecting every invisible enemy. [DT18](#dt18) **Worked plan:** establish observation before approaching an objective, then reconsider after the ward expires or is removed. The map is physically similar but the available evidence is not.
 
@@ -116,7 +116,7 @@ A tutorial, a community guide, a recorded match and an editable example solve di
 
 Valve's March 2021 onboarding update introduced staged tutorials for mechanics such as wards, couriers and teleportation, alongside newcomer-oriented matches that could use bots and tolerate departures. That is a dated support intervention, not proof that every current newcomer queue behaves identically. [DT26](#dt26)
 
-**Interpretation:** knowing an ability's button is not yet understanding a team's plan. A safe learning space can teach controls while a human group teaches relevance and timing. The bot opponent is not evidence of the kind of private memory or open-ended character reasoning OpenLegend is pursuing.
+**Interpretation:** knowing an ability's button is not yet understanding a team's plan. A safe learning space can teach controls while a human group teaches relevance and timing. The bot opponent is not evidence of the kind of private memory or open-ended character reasoning Open Legend is pursuing.
 
 The 2023 Summer Update separated behavior and communication scoring and expanded reporting/feedback, according to contemporaneous reporting of Valve's release. [DT27](#dt27) **Interpretation:** eligibility to speak, perceived sportsmanship, matchmaking and actual cooperation are different problems. An improved report interface does not prove that all bad behavior disappears, and a frustrating loss is not by itself evidence of misconduct.
 
@@ -190,7 +190,7 @@ The named posts were inspected on a self-selected user-review page; they do not 
 
 **Creation and participation are different products.** Arcade tools, examples, guides, matchmaking and sustained maintenance each supply a different part of the experience. None makes the others automatic.
 
-Do not copy the full competitive contract into OpenLegend. Match resets, buyback, adversarial resource denial and human-team dependence serve this activity. Their transferable value is the legibility of consequences and meaningful composition, not a requirement to reproduce every punishment.
+Do not copy the full competitive contract into Open Legend. Match resets, buyback, adversarial resource denial and human-team dependence serve this activity. Their transferable value is the legibility of consequences and meaningful composition, not a requirement to reproduce every punishment.
 
 ## 17. Reading routes, coverage and preservation
 

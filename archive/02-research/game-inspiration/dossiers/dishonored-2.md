@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the 2016 campaign and explicitly dated subsequent modes. Five independent written reviews were read in full in the original pass, plus direct Steam accounts, creator interviews and practical guides. The follow-up read the entire dossier against R01–R14, retained the original evidence and added separately identified sources. It does not claim every original external URL was reread. No gameplay, audio listening, footage viewing, source-code inspection or present account-entitlement test was performed. Exact chaos weights and modern hardware behavior are not certified. Death of the Outsider is a separate game.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted Open Legend requirements. Scope: the 2016 campaign and explicitly dated subsequent modes. Five independent written reviews were read in full in the original pass, plus direct Steam accounts, creator interviews and practical guides. The follow-up read the entire dossier against R01–R14, retained the original evidence and added separately identified sources. It does not claim every original external URL was reread. No gameplay, audio listening, footage viewing, source-code inspection or present account-entitlement test was performed. Exact chaos weights and modern hardware behavior are not certified. Death of the Outsider is a separate game.
 
 ## 1. Identity, promise and edition boundaries
 
@@ -248,7 +248,7 @@ The dedicated all-time negative endpoint failed on both attempted URL variants i
 
 ## 11. Transferable patterns and constraints
 
-These are research interpretations, not accepted OpenLegend features or requests to copy names, characters, artwork or powers.
+These are research interpretations, not accepted Open Legend features or requests to copy names, characters, artwork or powers.
 
 **Separate intentions from consequences.** Case 1 shows why “use nonlethal tool” and “leave this person alive” are different specifications. Reliable attribution, status feedback and recovery opportunities are prerequisites. A simpler alternative is a narrower interaction set with explicit guarantees; pretending to simulate every collateral effect is not required.
 

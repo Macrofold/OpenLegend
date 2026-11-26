@@ -1,6 +1,6 @@
 # G132 — DayZ
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 DayZ is a useful study of a survival game where **the body, the inventory, the map and other people are all uncertain information problems**. A can of food may solve hunger but not thirst; a rifle may be useless without compatible ammunition; a long walk may be safe until weather, sickness or another survivor changes the route; a stranger can save an hour of preparation or end it in seconds. The standalone game deliberately offers little authored direction. Its strongest stories come from players turning scarcity, geography and fragile bodies into reasons to communicate, cooperate, deceive and remember.
 
@@ -516,7 +516,7 @@ Steam ranking is dynamic and playtime shown today may exceed playtime at publica
 
 The central disagreement is not whether DayZ can produce extraordinary stories. It is **how much friction and empty time a player should be asked to pay for the chance of producing one**.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research interpretations, not accepted product requirements.
 
@@ -577,7 +577,7 @@ The best DayZ systems make the player infer "I am cold and bleeding, so shelter 
 
 Community servers can make radically different products from the same survival core.
 
-**Limit:** fragmentation means players must understand which rules are native, server-authored or modded. OpenLegend should make provenance explicit if it ever supports comparable world packages.
+**Limit:** fragmentation means players must understand which rules are native, server-authored or modded. Open Legend should make provenance explicit if it ever supports comparable world packages.
 
 ## R14 — sources, routes, preservation and requirement map
 
@@ -627,7 +627,7 @@ This pass therefore does not overwrite a prior DayZ owner, and it does **not** c
 3. Open the **Stable 1.29** and **Experimental 1.30** pages side-by-side to avoid accidentally documenting motorbikes/UI tests as stable 2026 features.
 4. Compare **PC Gamer**, **Gamereactor** and **TheSixthAxis**: all see unique social possibility but disagree on whether waiting, roughness and technical friction are worth it.
 5. Sample current Steam positives and negatives for the 2026 version, especially accounts that simultaneously praise atmosphere and criticize time cost/cheating/server friction.
-6. For OpenLegend design research, focus on the worked interactions around navigation, condition/compatibility, strangers and persistence rather than copying DayZ's punitive timings.
+6. For Open Legend design research, focus on the worked interactions around navigation, condition/compatibility, strangers and persistence rather than copying DayZ's punitive timings.
 
 No video scene, spoken quote or timestamp is represented as watched in this pass.
 

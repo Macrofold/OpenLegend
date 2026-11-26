@@ -1,18 +1,18 @@
 # Current Unreal and Unity runtime systems
 
-| Research status             | Scope                                                                                              | Evidence cutoff |
-| --------------------------- | -------------------------------------------------------------------------------------------------- | --------------- |
-| Completed research snapshot | Current engine mechanisms, OpenLegend context, and relevant research frontiers; 15 linked chapters | 2026-10-23      |
+| Research status             | Scope                                                                                               | Evidence cutoff |
+| --------------------------- | --------------------------------------------------------------------------------------------------- | --------------- |
+| Completed research snapshot | Current engine mechanisms, Open Legend context, and relevant research frontiers; 15 linked chapters | 2026-10-23      |
 
-This collection investigates **how current Unreal and Unity systems work**: what creates work, how it is organized and scheduled, what can be reused, what invalidates it, and what the result actually guarantees. It relates those mechanisms to OpenLegend's current implementation and intended engine/world scope. It is comparative research; accepted product decisions and implementation responsibilities remain in the repository's existing owners.
+This collection investigates **how current Unreal and Unity systems work**: what creates work, how it is organized and scheduled, what can be reused, what invalidates it, and what the result actually guarantees. It relates those mechanisms to Open Legend's current implementation and intended engine/world scope. It is comparative research; accepted product decisions and implementation responsibilities remain in the repository's existing owners.
 
 The verified released-engine baseline is **Unreal Engine 5.8.4** and **Unity 6.6, editor 6000.6.7f1**. Package versions and feature maturity are recorded separately. [Chapter 01](01-evidence-and-version-baseline.md) provides the release evidence, version policy, source classifications, and access limitations. Research publications are identified by their actual paper revision or presentation date, with their experimental conditions retained.
 
 ## Start here
 
-For the practical connection to the game, read [Using engine research to improve OpenLegend](../../docs/engine-research-guide.md). It develops positive opportunities, maps each system family to existing designs, and explains how to carry a finding into a concrete decision. The detailed evidence remains in these chapters.
+For the practical connection to the game, read [Using engine research to improve Open Legend](../../docs/engine-research-guide.md). It develops positive opportunities, maps each system family to existing designs, and explains how to carry a finding into a concrete decision. The detailed evidence remains in these chapters.
 
-Read [OpenLegend context and coverage](00-openlegend-context-and-coverage.md) first for the connection to the current code, intended systems, and qualified historical performance evidence. Then read [evidence and versions](01-evidence-and-version-baseline.md) before using any subsystem claim as a statement about a current engine release.
+Read [Open Legend context and coverage](00-openlegend-context-and-coverage.md) first for the connection to the current code, intended systems, and qualified historical performance evidence. Then read [evidence and versions](01-evidence-and-version-baseline.md) before using any subsystem claim as a statement about a current engine release.
 
 For the motivating observation/prediction workload, the most direct sequence is [simulation and perception](02-simulation-and-perception.md), [AI and navigation](03-ai-navigation-and-crowds.md), [physics and queries](04-physics-and-spatial-queries.md), [data and concurrency](05-data-concurrency-memory.md), and [profiling](10-profiling-and-verification.md). The remaining chapters matter because streaming, animation, networking, serialization, and content lifetimes can change the inputs, consumers, or validity of that work.
 
@@ -20,7 +20,7 @@ For the motivating observation/prediction workload, the most direct sequence is 
 
 | Chapter                                                                                               | Questions and mechanisms covered                                                                                                                                                                                               |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [00 — OpenLegend context and coverage](00-openlegend-context-and-coverage.md)                         | Current code versus target architecture; animal escape, perception, motion boundaries, historical profiles; a map from intended product systems to the research.                                                               |
+| [00 — Open Legend context and coverage](00-openlegend-context-and-coverage.md)                        | Current code versus target architecture; animal escape, perception, motion boundaries, historical profiles; a map from intended product systems to the research.                                                               |
 | [01 — Evidence and version baseline](01-evidence-and-version-baseline.md)                             | Exact release/patch provenance, independently versioned packages, maturity labels, current documentation drift, performance interpretation, and material actually inspected.                                                   |
 | [02 — Simulation and perception](02-simulation-and-perception.md)                                     | Tick phases and dependencies, fixed/frame clocks, catch-up, scheduled decisions, sight/hearing, candidate work, retained stimuli, deferred results, knowledge and fairness boundaries.                                         |
 | [03 — AI, navigation, and crowds](03-ai-navigation-and-crowds.md)                                     | Behavior Trees, StateTree, EQS, Unity Behavior, Smart Objects, neural inference/training, navigation construction and invalidation, asynchronous paths, avoidance, lane graphs, and population representations.                |
@@ -40,7 +40,7 @@ Each subsystem chapter contains primary citations and a source register. Registe
 
 ## Findings that connect the chapters
 
-The following are **analytical comparisons across the cited chapters**, not proposed OpenLegend designs or measured OpenLegend outcomes.
+The following are **analytical comparisons across the cited chapters**, not proposed Open Legend designs or measured Open Legend outcomes.
 
 ### 1. Work has stages, and a budget usually constrains only some of them
 
@@ -60,7 +60,7 @@ A camera's visible set, a connection's replicated set, an audio mix's selected v
 
 ### 5. Population scale depends on what each represented entity is doing
 
-Stored entities, resident objects, rendered characters, pose evaluations, physics bodies, decision-makers, and independently retained histories are different populations. LOD and residency mechanisms act on particular representations or computations. A large visual crowd is not a measurement of the same number of continuously reasoning, physically interacting, persistently remembered participants. This also explains why counts from unrelated demonstrations cannot be converted directly into an OpenLegend capacity claim. [Data organization](05-data-concurrency-memory.md), [world scale](06-world-streaming-and-scale.md), [rendering](08-rendering-animation-and-audio.md).
+Stored entities, resident objects, rendered characters, pose evaluations, physics bodies, decision-makers, and independently retained histories are different populations. LOD and residency mechanisms act on particular representations or computations. A large visual crowd is not a measurement of the same number of continuously reasoning, physically interacting, persistently remembered participants. This also explains why counts from unrelated demonstrations cannot be converted directly into an Open Legend capacity claim. [Data organization](05-data-concurrency-memory.md), [world scale](06-world-streaming-and-scale.md), [rendering](08-rendering-animation-and-audio.md).
 
 ### 6. Time is part of correctness, not just performance
 
@@ -91,7 +91,7 @@ A living manual can contain an old paragraph. A recent crawl can retrieve an old
 
 ## Scope, validation, and relationship to existing work
 
-The [coverage map](00-openlegend-context-and-coverage.md) connects the engine study to OpenLegend's broader intended bodies, activities, ecology, construction, economy, relationships, institutions, communication, memory, and authored realities. Reusable engine machinery is separated from the domain-specific meaning of those systems. Commercial or community policy is not inferred from an unrelated engine API.
+The [coverage map](00-openlegend-context-and-coverage.md) connects the engine study to Open Legend's broader intended bodies, activities, ecology, construction, economy, relationships, institutions, communication, memory, and authored realities. Reusable engine machinery is separated from the domain-specific meaning of those systems. Commercial or community policy is not inferred from an unrelated engine API.
 
 This is a documentation and primary-source research snapshot. No engine installation, runtime modification, fresh performance experiment, model training, provider call, or reproduction of a paper's experiment was performed. Independent review checked subsystem claims, timing/lifecycle distinctions, source provenance, and cross-chapter consistency. The report records inaccessible material rather than treating discovery as full inspection. It is comprehensive across the identified system families, while proprietary internals and uninspected media remain explicit evidence limits.
 

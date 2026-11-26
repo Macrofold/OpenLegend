@@ -4,7 +4,13 @@ import { worldPlacement } from '../../spatial-state.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { nativeActor } from './bodies.js';
 import { nextEntityId } from '../../data.js';
-import { createActor, TRAIT_BANK } from './world.js';
+import {
+  createActor,
+  MAX_SELECTED_PERSON_TRAITS,
+  TRAIT_BANK,
+  PERSON_VOICE_STEPS,
+  RANDOM_PERSON_TRAITS,
+} from './world.js';
 import type {
   Entity,
   CharacterTrait,
@@ -19,7 +25,7 @@ export function personTraits(
   existing: readonly CharacterTrait[] = [],
 ) {
   const ids = [...new Set(draft.traitIds)];
-  if (ids.length > 8) return null;
+  if (ids.length > MAX_SELECTED_PERSON_TRAITS) return null;
   // Editing may retain a character's authored starting traits; creation can only select
   // catalogue traits. The current actor, not request JSON, supplies that extra vocabulary.
   const traits = ids.map(
@@ -33,6 +39,34 @@ export function spawnSpatial(type: GodSpawnDraft['type']) {
   return baseSpatial(
     type === 'person' ? 'person' : type === 'hare' ? 'hare' : type === 'deer' ? 'deer' : 'object',
   );
+}
+
+/** Fresh selected-world inputs for a person. Release compilation uses its own RNG
+ * copy and the same blank actor constructor as ordinary creator placement. */
+export const PERSON_STARTING_STOCK = { stone_tool: 1, berries: 3 } as const;
+export const PERSON_CREATION_CLEARANCE = 0.5;
+const personActor = (world: WorldState, identity: Parameters<typeof createActor>[3]) =>
+  createActor(world, 'npc', 75, identity);
+export const PERSON_APPEARANCE = { event: 'god-spawned', text: 'appeared in the clearing.' };
+export function personCreationTemplate(world: WorldState) {
+  if (world.profile?.id !== 'grounded-wilderness') return null;
+  const sample = { ...world, rngState: 1 };
+  return {
+    entity: {
+      id: 'person-template',
+      kind: 'npc',
+      name: 'Person',
+      nameForm: 'proper',
+      placement: worldPlacement({ x: 0, y: 0, z: 0 }, 'template'),
+      spatial: spawnSpatial('person'),
+      actor: personActor(sample, { traits: [], initialGoals: [] }),
+    },
+    startingStock: PERSON_STARTING_STOCK,
+    voice: PERSON_VOICE_STEPS,
+    randomTraits: RANDOM_PERSON_TRAITS,
+    appearance: PERSON_APPEARANCE,
+    clearance: PERSON_CREATION_CLEARANCE,
+  };
 }
 
 export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
@@ -55,7 +89,7 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
         name: draft.person.name.trim(),
         nameForm: 'proper',
         kind: 'npc',
-        actor: createActor(world, 'npc', 75, {
+        actor: personActor(world, {
           ...(traits.length ? { traits } : {}),
           personality: draft.person.personality.trim(),
           backstory: draft.person.backstory.trim(),

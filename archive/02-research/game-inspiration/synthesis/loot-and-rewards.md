@@ -14,7 +14,7 @@ Why does acquiring something feel exciting, deserved and worth using?
 
 ## Ownership boundary
 
-Owns acquisition and reward delivery. Item use/storage belongs to GEAR and long-term advancement to GROWTH. This is research, not an approved OpenLegend specification.
+Owns acquisition and reward delivery. Item use/storage belongs to GEAR and long-term advancement to GROWTH. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -28,7 +28,7 @@ Owns acquisition and reward delivery. Item use/storage belongs to GEAR and long-
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-loot) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
 
@@ -36,13 +36,13 @@ Use the [source and goal map](source-and-goal-map.md#topic-loot) to locate relev
 
 <!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 
 <!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Rewards beyond killing and numerical upgrades
 

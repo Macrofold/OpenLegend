@@ -11,7 +11,6 @@ export const rawNetworkOwners: Readonly<Record<string, string>> = {
 };
 
 export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
-  'apps/server/src/authentication.ts': ['openid-client'],
   'apps/server/src/asset-storage.ts': [
     '@aws-sdk/client-s3',
     '@aws-sdk/client-sts',
@@ -20,7 +19,6 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
     '@smithy/node-http-handler',
   ],
   'infrastructure/assets/study-access.cts': ['@aws-sdk/client-secrets-manager'],
-  'apps/server/src/world-mcp.ts': ['@modelcontextprotocol/node', '@modelcontextprotocol/server'],
   'scripts/performance/profile-browser.mjs': ['@playwright/test'],
   'scripts/art/texel-splatting/run.mjs': ['@playwright/test'],
   'scripts/verification-workers/aws.mjs': ['@aws-sdk/credential-providers'],
@@ -53,7 +51,18 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/lib-dynamodb',
     '@aws-sdk/client-lambda',
+    '@aws-sdk/client-ssm',
   ],
+  'scripts/verification-workers/deploy-controller.mjs': [
+    '@aws-sdk/client-cloudformation',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+    '@aws-sdk/client-ssm',
+  ],
+  'scripts/verification-workers/quarantine.mjs': ['@aws-sdk/client-ec2', '@aws-sdk/client-ssm'],
   'scripts/verification-workers/supervisor.mjs': [
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/lib-dynamodb',
@@ -61,50 +70,53 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
   ],
 };
 
+/** The Rust server uses its own socket owner. OIDC takes that owner's custom
+ * transport, and database transactions use the single locked store. */
+export const rustServerNetworkOwners: Readonly<Record<string, readonly RegExp[]>> = {
+  reqwest: [/^network\.rs$/, /^oidc\.rs$/, /^provider_transport(?:\.rs|\/)/],
+  openidconnect: [/^oidc\.rs$/],
+  tokio_postgres: [
+    // The Lab config opens its locked Store. Preparation and the library use Store transactions.
+    /^lab\/(mod|prepare|library|scenario|holds|decisions\/(settings|participants)|fields\/(context|store|exchange))\.rs$/,
+    /^store(?:\.rs|\/)/,
+    /^authority(?:\.rs|\/)/,
+    /^(boot|command_epoch|embodiment|launch)\.rs$/,
+  ],
+  tokio_postgres_rustls: [/^(boot|store)\.rs$/],
+};
+
 /** These runners execute local programs/files. Changing one to remote work must
  * move that invocation through runRemoteProcess with an explicit finite profile.
  */
 export const localProcessOwners: Readonly<Record<string, string>> = {
-  'scripts/cognition-lab/campaign.ts':
-    'Local Git tree inspection of the frozen adapter source only.',
+  'scripts/disposable-rust-game.ts': 'Restore a prepared backup and serve its signed game on loopback.',
+  'scripts/model-files.ts': 'Local macOS sips image reduction of fetched files only.',
   'scripts/cognition-lab/response-format.ts':
     'Local Git object existence check only; model calls reuse execute-ai and shared execution.',
   'scripts/decision-benchmark/main.ts': 'Local Git root inspection only.',
   'scripts/decision-benchmark/run.ts': 'Local Git revision/diff inspection only.',
-  'scripts/decision-benchmark/escalation.ts': 'Local Git revision/diff inspection only.',
-  'scripts/profile-server.ts': 'Local Git revision inspection only.',
-  'scripts/performance/cognition-lab-actions.ts':
-    'Local Git revision inspection only; native action measurements use an owned disposable loopback PostgreSQL fixture.',
-  'scripts/performance/cognition-lab-storage.ts':
-    'Local Git revision inspection only; measurements use disposable loopback PostgreSQL through the existing repository.',
-  'scripts/performance/cognition-lab-runtime.ts':
-    'Local Git revision inspection only; disposable native HTTP specimens use the existing bounded tool HTTP owner.',
-  'scripts/performance/profile-server.mjs':
-    'Local profiling server child; outgoing work uses script network boundary.',
-  'scripts/stress-data.ts': 'Local Git revision inspection only.',
+  'scripts/performance/rust-profile/registry.ts':
+    'Read-only Git object and probe inventory for offline Rust campaign planning.',
+  'scripts/performance/witness-sustained-driver.ts':
+    'Extracts only named archive members from a resolved local path and checks their digests before staging.',
+  'scripts/performance/witness-sustained.ts':
+    'Reads local Git and OS metadata, starts the supplied local Rust release on loopback, and forks the checked-in signed workload client.',
   'scripts/check-agent-guidance.mjs': 'Local Git inventory only.',
   'scripts/check-assets.ts': 'Local Git inventory only.',
-  'scripts/stress-native.ts': 'Local native workload child with its existing workload lifecycle.',
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
   'scripts/assets/inventory.ts': 'Local Git index inspection; no remote operation.',
-  'scripts/model-files.ts': 'Local macOS sips image reduction of fetched files only.',
-  'scripts/decision-benchmark/escalation-load.ts':
-    'Offline fixture load and local Git revision; external fetch is replaced by a throwing fixture.',
+  'scripts/assets/restore-rust-world.ts':
+    'Fixed local stopped Rust backup and restore commands; cloud permission reads remain in the existing recovery adapter.',
 };
 
 /** Command positions are closed; later arguments are local revision/path data.
  * Git global options (including -c aliases) cannot precede these commands. */
 export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
-  'scripts/cognition-lab/campaign.ts': ['ls-tree'],
   'scripts/cognition-lab/response-format.ts': ['cat-file'],
   'scripts/decision-benchmark/main.ts': ['rev-parse'],
   'scripts/decision-benchmark/run.ts': ['rev-parse', 'ls-files', 'diff'],
-  'scripts/decision-benchmark/escalation.ts': ['rev-parse', 'diff'],
-  'scripts/profile-server.ts': ['rev-parse', 'ls-files', 'branch'],
-  'scripts/performance/cognition-lab-actions.ts': ['rev-parse'],
-  'scripts/performance/cognition-lab-storage.ts': ['rev-parse'],
-  'scripts/performance/cognition-lab-runtime.ts': ['rev-parse'],
-  'scripts/stress-data.ts': ['rev-parse'],
+  'scripts/performance/rust-profile/registry.ts': ['cat-file', 'ls-tree', 'grep', 'diff'],
+  'scripts/performance/witness-sustained.ts': ['rev-parse', 'status'],
   'scripts/check-agent-guidance.mjs': ['ls-files'],
   'scripts/check-assets.ts': ['ls-files'],
   'scripts/assets/migration.ts': [
@@ -119,7 +131,6 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
     'ls-files',
   ],
   'scripts/assets/inventory.ts': ['ls-files'],
-  'scripts/decision-benchmark/escalation-load.ts': ['rev-parse', 'diff'],
 };
 
 /** Reviewed local programs other than Git and Node, named exactly; none reaches the network.
@@ -129,30 +140,77 @@ export const localToolCommands: Readonly<Record<string, readonly string[]>> = {
 };
 
 /** The only local Node children execute these checked-in files, never strings. */
-export const localNodeEntries: Readonly<Record<string, { kind: 'spawn' | 'fork'; entry: string }>> =
-  {
-    'scripts/stress-native.ts': { kind: 'spawn', entry: './profile-native.ts' },
-    'scripts/performance/profile-server.mjs': { kind: 'fork', entry: 'self' },
-  };
-
-export const acquisitionObservers: Readonly<Record<string, string>> = {
-  'scripts/decision-benchmark/escalation-load.ts':
-    'Offline test block replaces global fetch with a throwing implementation; no production dispatch.',
+export const localNodeEntries: Readonly<
+  Record<string, { kind: 'spawn' | 'fork' | 'spawnSync'; entry: string }>
+> = {
+  'scripts/performance/witness-sustained.ts': {
+    kind: 'fork',
+    entry: './witness-sustained-client.ts',
+  },
 };
 
+type ResolvedLocalPath = { readonly realPath: true };
+export type LocalBinaryArgument = string | readonly string[] | ResolvedLocalPath | null;
+
+/** Complete argv is closed and data is confined to the named local inputs.
+ * By default the runner is spawnSync for the existing offline compiler calls. */
+export const localBinaryCommands: Readonly<
+  Record<
+    string,
+    readonly {
+      readonly program: string | ResolvedLocalPath;
+      readonly kind?: 'execFile' | 'execFileSync' | 'spawn';
+      readonly args: readonly LocalBinaryArgument[];
+    }[]
+  >
+> = {
+  'scripts/disposable-rust-game.ts': [
+    { program: { realPath: true }, kind: 'execFile', args: ['restore-world', null, null] },
+    { program: { realPath: true }, kind: 'spawn', args: ['serve', null] },
+  ],
+  'scripts/performance/witness-sustained-driver.ts': [
+    {
+      program: 'tar',
+      kind: 'execFile',
+      args: [
+        '-xOzf',
+        { realPath: true },
+        [
+          'ordinary/typed-provider.mts',
+          'ordinary/stream.mts',
+          'ordinary/linux-process-accounting.mjs',
+        ],
+      ],
+    },
+  ],
+  'scripts/performance/witness-sustained.ts': [
+    { program: 'getconf', kind: 'execFileSync', args: [['CLK_TCK', 'PAGESIZE']] },
+    { program: { realPath: true }, kind: 'spawn', args: ['serve', null] },
+  ],
+  'scripts/assets/restore-rust-world.ts': [
+    {
+      program: 'openlegend-game-server',
+      kind: 'execFile',
+      args: ['backup-world', null, null],
+    },
+    {
+      program: 'openlegend-game-server',
+      kind: 'execFile',
+      args: ['restore-world', null, null, '--artwork-operator', null],
+    },
+  ],
+};
+
+export const acquisitionObservers: Readonly<Record<string, string>> = {};
+
 export const inboundOwners: Readonly<Record<string, string>> = {
-  'apps/server/src/shared-execution-http.ts':
-    'Scoped paid execution control; bounded bodies and persistent authority outside worker fixtures.',
-  'scripts/verification-workers/cli.mjs':
-    'Brief loopback port reservation before the owned SSM tunnel; no request handling or public bind.',
-  'apps/server/src/http.ts': 'Incoming game HTTP/SSE, bounded receive and blocked-write ownership.',
-  'apps/server/src/creation-host.ts': 'Incoming prepared-world HTTP, bounded receive ownership.',
-  'apps/server/src/world-mcp.ts': 'Incoming MCP HTTP transport.',
   'scripts/assets/serve.ts': 'Incoming local exact-asset HTTP.',
+  'apps/server/src/shared-execution-http.ts': 'Scoped execution control with bounded incoming requests.',
+  'scripts/verification-workers/cli.mjs': 'Loopback port reservation before the owned SSM tunnel.',
 };
 
 export const networkDependencies: Readonly<Record<string, string>> = {
-  '@aws-sdk/client-s3': 'asset-storage.ts',
+  '@aws-sdk/client-s3': 'Asset storage and bounded managed verification artifacts.',
   '@aws-sdk/client-cloudformation': 'Bounded managed verification control, never game runtime.',
   '@aws-sdk/client-dynamodb': 'Bounded managed verification control, never game runtime.',
   '@aws-sdk/lib-dynamodb': 'Bounded managed verification control, never game runtime.',
@@ -163,17 +221,12 @@ export const networkDependencies: Readonly<Record<string, string>> = {
   '@aws-sdk/client-scheduler': 'Bounded managed verification control, never game runtime.',
   '@aws-sdk/client-ssm': 'Bounded managed verification control, never game runtime.',
   '@aws-sdk/client-cloudtrail': 'Bounded managed verification control, never game runtime.',
-  '@aws-sdk/client-sts': 'asset-storage.ts',
-  '@aws-sdk/credential-providers': 'asset-storage.ts',
-  '@aws-sdk/rds-signer':
-    'asset-storage.ts; signs the asset authority token locally after a bounded sign-in lookup.',
+  '@aws-sdk/client-sts': 'Asset storage and managed verification account checks.',
+  '@aws-sdk/credential-providers': 'Asset storage and managed verification scoped credentials.',
+  '@aws-sdk/rds-signer': 'Signs the asset authority database token after the scoped credential lookup.',
   '@smithy/node-http-handler': 'asset-storage.ts',
   '@aws-sdk/client-secrets-manager':
     'Generated study-access source; the runtime supplies this exact SDK family.',
-  'openid-client': 'authentication.ts',
-  '@modelcontextprotocol/node':
-    'Incoming MCP transport; SDK must not create unclassified remote clients.',
-  '@modelcontextprotocol/server': 'Incoming MCP server.',
   pg: 'Existing PostgreSQL/storage authority; excluded from HTTP retry machinery.',
   '@playwright/test':
     'Browser verification and existing tooling; awaited HTTP in evaluated source is still checked.',
@@ -217,14 +270,26 @@ export const continuousBrowserPaths = new Set([
   '/api/chat/preview',
 ]);
 
-/** Dynamic loading is confined to these exact local source/binding owners. */
-export const dynamicModuleOwners: Readonly<Record<string, string>> = {
+/** Dynamic loading is confined to these exact local source/binding owners.
+ * Archived modules also pin the filenames. The fixture verifies hashes before
+ * writing any of those files to its private run directory. */
+export const dynamicModuleOwners: Readonly<
+  Record<string, string | { readonly members: readonly string[]; readonly purpose: string }>
+> = {
   'scripts/verification-workers/workspace-check.mjs':
-    'Loads only the admitted checkout workspace-binding guard, before any database or game starts.',
+    'Loads only the admitted checkout workspace-binding guard before any database or game starts.',
   'scripts/compare-world-survival.ts':
     'Loads exact selected local domain/spatial source paths for offline comparison.',
   'scripts/performance/workspace-bindings.ts':
-    'Resolves declared workspace package paths without invoking their network clients.',
+    'Verifies the managed case’s declared local workspace package bindings without loading them.',
+  'scripts/performance/witness-sustained.ts': {
+    members: ['typed-provider.mts', 'linux-process-accounting.mjs'],
+    purpose: 'Loads the verified loopback provider and Linux resource observer for this case.',
+  },
+  'scripts/performance/witness-sustained-client.ts': {
+    members: ['stream.mts'],
+    purpose: 'Loads the verified signed stream reader from its parent’s private run directory.',
+  },
 };
 
 /** Generated cloud source is checked against its canonical source by the required
@@ -234,18 +299,7 @@ export const generatedNetworkArtifacts: Readonly<Record<string, string>> = {
     'infrastructure/assets/study-access.cts',
 };
 
-export const fixtureToolOwners: Readonly<Record<string, string>> = {
-  'scripts/performance/profile-action-input.ts':
-    'Disposable PostgreSQL-backed native input measurement; no listener, inference worker or provider calls.',
-  'scripts/performance/cognition-lab-actions.ts':
-    'Owned disposable native action catalogue fixture; uses zero-budget config and no HTTP or inference client.',
-  'scripts/performance/cognition-lab-runtime.ts':
-    'Owned disposable game/lab HTTP fixture with native providers disabled; actual requests use the bounded tool HTTP owner.',
-  'scripts/capture-starting-art-study.ts':
-    'Disposable native HTTP journey through bounded test helper; no app deployment import.',
-  'scripts/decision-benchmark/escalation-load.ts':
-    'Offline fixture workload; external inference is blocked.',
-};
+export const fixtureToolOwners: Readonly<Record<string, string>> = {};
 
 /** Browser-only qualification entries are test authority, never application
  * imports. Each executable fixture needs its own reviewed source record. */

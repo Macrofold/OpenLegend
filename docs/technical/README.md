@@ -17,4 +17,6 @@ Use the [architecture map](../architecture.md) to locate an implemented owner; r
 
 [Verification workers](verification-workers.md) own the development pool, runner, source identity and artifact lifecycle.
 
+[Cognition walkthrough](cognition-walkthrough.md) explains the installed sensing, attention, decision, memory and saving cycles in plain language, including query limits and measured CPU costs.
+
 [Current features](../features/README.md) · [Unfinished work](../maintainers/README.md)

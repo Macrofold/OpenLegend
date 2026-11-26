@@ -178,7 +178,7 @@ export function ActionAttempts({
   const wordingNotice =
     view.ai.mode === 'fixture'
       ? 'Uses configured test responses.'
-      : !view.ai.jevConfigured || !view.ai.llmConfigured || view.ai.budget.limitUsd <= 0
+      : !view.ai.jevConfigured || !view.ai.llmConfigured || view.ai.allowanceLimitUsd <= 0
         ? 'Familiar wording only.'
         : 'May use intelligence allowance.';
   useEffect(() => {

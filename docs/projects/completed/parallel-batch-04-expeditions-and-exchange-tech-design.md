@@ -56,7 +56,7 @@ Completion requires the formerly refused southward escape to produce an actual m
 
 ## PX02 — Reciprocal offer contract
 
-**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary resident decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
+**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary NPC decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
 
 ### Current owner and intended model
 
@@ -78,7 +78,7 @@ Terms come from actor-permitted references. No response or choice catalogue may 
 
 Domain: `handover.ts`, `objects.ts`, `object-access.ts`, `resource-claims.ts`, `types.ts`, `worlds/base/handover.ts` and the kernel command route. Server: `handover-actions.ts`, `action-catalogue.ts`, `action-descriptions.ts`, current `world-service.ts` command dispatch and `decision-context.ts`. Protocol and client: current catalogue/item-offer projections and `apps/client/src/ui/inventory.tsx`/person actions. Locate all handover callers when changing the current offer shape.
 
-Build the native exact transfer first, then scoped projection/candidate descriptions, then the existing inventory/person panel interaction. The terms surface is read-only until explicit submission. Unknown/requested details remain unknown. Stale server replies preserve the draft but refresh authoritative terms before another acceptance. Reuse [inventory trade guidance](../../ui-ux/inventory.md#future-trading-inspect-agree-commit), [controls](../../ui-ux/controls.md) and existing design-system components.
+Build the native exact transfer first, then scoped projection/candidate descriptions, then the existing inventory/person panel interaction. The terms surface is read-only until explicit submission. Unknown/requested details remain unknown. Stale server replies preserve the draft but refresh authoritative terms before another acceptance. Reuse [inventory trade guidance](../../ui-ux/inventory.md#trading-inspect-agree-commit), [controls](../../ui-ux/controls.md) and existing design-system components.
 
 **Definition of done:** [PX02 acceptance](parallel-batch-04-expeditions-and-exchange-feature-spec.md#px02--trade-something-useful) through player and resident routes, including changed terms, joint atomicity, privacy, replay and restart. Compare a stacked consumable with an individual invented tool; neither depends on a canned meat/cord recipe. Existing one-way handover remains correct.
 

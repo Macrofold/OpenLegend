@@ -4,7 +4,7 @@
 
 **My interpretation of the fun.** The player designs a possibility space, then has to operate inside it. Adding another option can make that space worse by diluting useful combinations. An interesting choice therefore need not be an upgrade. Removing a card, declining a reward or accepting a short-term weakness can improve coherence.
 
-**What can frustrate.** Randomness and accumulation interact: a long plan may not receive its hoped-for support. Readable opposing intent and viable adaptation help distinguish a difficult decision from a blind guess. Different players will tolerate different amounts of variance and repeated setup; a strong critical response does not settle that preference for OpenLegend’s audience.
+**What can frustrate.** Randomness and accumulation interact: a long plan may not receive its hoped-for support. Readable opposing intent and viable adaptation help distinguish a difficult decision from a blind guess. Different players will tolerate different amounts of variance and repeated setup; a strong critical response does not settle that preference for Open Legend’s audience.
 
 **For creator packs.** Do not treat maximum installed mechanics as the ideal world. A smaller compatible set may produce a clearer and more distinctive experience. The World Agent should help creators see conflicts, redundancy and missing relationships—not reflexively add another subsystem whenever asked for variety. A pack can be good because of the choices it deliberately excludes.
 

@@ -1,0 +1,82 @@
+import { z } from 'zod';
+
+const reference = z.string().min(1).max(120);
+// Each branch already has an exclusive literal kind. The ordinary union emits
+// provider-supported anyOf while retaining the same strict native validation.
+export const situationQuerySchema = z
+  .union([
+    z
+      .object({
+        kind: z.literal('near'),
+        anchor: reference,
+        radius: z.number().finite().min(0).max(100),
+      })
+      .strict(),
+    z.object({ kind: z.literal('separation'), first: reference, second: reference }).strict(),
+    z
+      .object({
+        kind: z.literal('historical-spatial'),
+        anchor: reference,
+        other: reference.nullable(),
+        from: z.number().finite().nonnegative(),
+        through: z.number().finite().nonnegative(),
+        radius: z.number().finite().min(0).max(100),
+      })
+      .strict(),
+    z.object({ kind: z.literal('boundaries'), anchor: reference }).strict(),
+    z
+      .object({
+        kind: z.literal('history'),
+        subject: reference.nullable(),
+        from: z.number().finite().min(0),
+        through: z.number().finite().min(0),
+      })
+      .strict(),
+    z.object({ kind: z.literal('expand'), region: reference }).strict(),
+  ])
+  .describe(
+    'near, separation and boundaries use supplied current-body references: Received situation bodies, returned query bodies, or References rows marked currentBody:true. expand uses a supplied broad-region reference. history and historical-spatial use supplied received-subject or current-body references. A communication-only person reference grants no current spatial position.',
+  );
+export type SituationQuery = z.infer<typeof situationQuerySchema>;
+
+export const situationQueriesField = (maximum: number) =>
+  z.array(situationQuerySchema).max(maximum).nullable();
+
+export const SITUATION_QUERY_INSTRUCTIONS =
+  'First choose one mode and write queries before operations. Set queries to null for a complete decision. You may make one batch of the supplied read-only situation queries when needed. For a query batch return an empty operations list, queries, and no invention. A final continuation follows only if funded; otherwise the character continues current behavior. Coordinates and geometry are received measurements, never inferred intent. Partial coverage does not prove absence.';
+
+/** The provider chooses whether to ask before it starts writing effects. Keep the
+ * same field order and mode contract on every route that offers these queries. */
+export function withSituationQueries<T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  maximum: number,
+) {
+  return z.object({ queries: situationQueriesField(maximum), ...schema.shape }).strict();
+}
+
+/** The release compiler uses the same provider-facing input shape. Frame
+ * conversion and other transforms still run against the admitted live read. */
+export function situationResponseJsonSchema<T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  maximum: number,
+) {
+  return z.toJSONSchema(withSituationQueries(schema, maximum), { target: 'draft-7', io: 'input' });
+}
+
+/** A query is a request for evidence, never permission to execute beside it. */
+export function readSituationQueryResponse(value: unknown, maximum: number) {
+  const parsed = z
+    .object({ queries: situationQueriesField(maximum) })
+    .passthrough()
+    .safeParse(value);
+  if (!parsed.success) throw new Error('The response did not match the situation query contract.');
+  const response = parsed.data;
+  if (
+    response.queries?.length &&
+    (!Array.isArray(response['operations']) ||
+      response['operations'].length ||
+      response['invention'])
+  )
+    throw new Error('A situation query cannot execute response operations.');
+  return response;
+}

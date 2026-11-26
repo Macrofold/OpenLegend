@@ -23,7 +23,7 @@ EXPLORE owns the arrangement and discovery of places. Moving through them belong
 
 Sea of Stars repeatedly gives regions recognizable large forms, routes and material identities, then connects exploration to authored tools, puzzles, side activities and later revisits. The [G178 dossier](../dossiers/sea-of-stars.md) documents climbing, swimming, grappling, wind-driven object movement, shrines, fishing, Mirth, Wheels, artifacts and late-world access. The [art study](../../../../art-direction/research/sea-of-stars/README.md) shows how distinctive roots, coastlines, water, structures and light help those places remain recognizable.
 
-The useful evidence is not “make every region fantastical.” The game is heavily authored and sometimes compressed for navigation. OpenLegend needs physically coherent scale and persistent world state. The transfer is the relationship between recognizable form, a plausible local cause, and something worth doing there. Elden Ring extends this comparison through the route choices, local dungeon rules and consequential discoveries below; both games' authored spaces leave procedural construction unproven.
+The useful evidence is not “make every region fantastical.” The game is heavily authored and sometimes compressed for navigation. Open Legend needs physically coherent scale and persistent world state. The transfer is the relationship between recognizable form, a plausible local cause, and something worth doing there. Elden Ring extends this comparison through the route choices, local dungeon rules and consequential discoveries below; both games' authored spaces leave procedural construction unproven.
 
 ## Consolidated lessons and tradeoffs
 
@@ -33,9 +33,9 @@ The useful evidence is not “make every region fantastical.” The game is heav
 
 A large root, unusual watercourse, ruined work site or distinctive shelter can be a landmark, route clue and environmental story at once. Novelty is strongest when the player can understand how the feature relates to terrain, growth, weather or use.
 
-OpenLegend should prefer such relationships to isolated decorative landmarks. The world owner still decides whether the feature is climbable, harvestable, dangerous or merely visible.
+Open Legend should prefer such relationships to isolated decorative landmarks. The world owner still decides whether the feature is climbable, harvestable, dangerous or merely visible.
 
-Elden Ring adds a spatial test: its Erdtree, partial map information and layered entrances let players form intentions before receiving a task. Stormveil's front gate and side breach make architecture communicate different preparations and risks. The expansion's visible but indirectly accessible plateaus can make finding a connection rewarding; apparent proximity becomes frustrating when the route cannot be inferred or remembered. See the [landmark and route cases](../dossiers/elden-ring/02-world-exploration-and-narrative.md#2-landscape-as-an-information-system) and [expansion comparison](../dossiers/elden-ring/02-world-exploration-and-narrative.md#3-the-expansions-different-spatial-problem). For OpenLegend, follow the attraction through the usable entrance: what invites investigation, what suggests an approach, and what remains an interesting question?
+Elden Ring adds a spatial test: its Erdtree, partial map information and layered entrances let players form intentions before receiving a task. Stormveil's front gate and side breach make architecture communicate different preparations and risks. The expansion's visible but indirectly accessible plateaus can make finding a connection rewarding; apparent proximity becomes frustrating when the route cannot be inferred or remembered. See the [landmark and route cases](../dossiers/elden-ring/02-world-exploration-and-narrative.md#2-landscape-as-an-information-system) and [expansion comparison](../dossiers/elden-ring/02-world-exploration-and-narrative.md#3-the-expansions-different-spatial-problem). For Open Legend, follow the attraction through the usable entrance: what invites investigation, what suggests an approach, and what remains an interesting question?
 
 <a id="explore-l002"></a>
 
@@ -43,9 +43,9 @@ Elden Ring adds a spatial test: its Erdtree, partial map information and layered
 
 Sea of Stars' regions feel different through combinations of landform, palette, materials, traversal, inhabitants and activity. The same principle can serve a systemic world without giving every location a unique prop library.
 
-For OpenLegend, regional identity should survive reuse: wet versus dry ground, open versus sheltered vegetation, settlement adaptations, resources, routes and histories can recombine common families. Repetition is less harmful when the relationship changes; unrelated novelty everywhere can make the world incoherent and expensive.
+For Open Legend, regional identity should survive reuse: wet versus dry ground, open versus sheltered vegetation, settlement adaptations, resources, routes and histories can recombine common families. Repetition is less harmful when the relationship changes; unrelated novelty everywhere can make the world incoherent and expensive.
 
-Elden Ring's [local dungeon rules](../dossiers/elden-ring/02-world-exploration-and-narrative.md#26-repeated-architecture-can-support-different-rules) test this sharply: Sainted Hero's Grave makes drawing enemies into light decisive; Leyndell Catacombs turns similar-looking rooms into an orientation puzzle and fire pillars into lifts. Familiar architecture supports different decisions. This does not cancel repetition complaints: a new rule can also demand more attention than its payoff earns. OpenLegend should ask whether supported cover, hazards, inhabitants and uses change the journey, without promising a special mechanic for every ruin.
+Elden Ring's [local dungeon rules](../dossiers/elden-ring/02-world-exploration-and-narrative.md#26-repeated-architecture-can-support-different-rules) test this sharply: Sainted Hero's Grave makes drawing enemies into light decisive; Leyndell Catacombs turns similar-looking rooms into an orientation puzzle and fire pillars into lifts. Familiar architecture supports different decisions. This does not cancel repetition complaints: a new rule can also demand more attention than its payoff earns. Open Legend should ask whether supported cover, hazards, inhabitants and uses change the journey, without promising a special mechanic for every ruin.
 
 <a id="explore-l003"></a>
 
@@ -53,11 +53,11 @@ Elden Ring's [local dungeon rules](../dossiers/elden-ring/02-world-exploration-a
 
 Sea of Stars links exploration to new combinations, services, recipes, lore, traversal and settlement facilities. That makes a discovery more than a completion counter. Its true-ending structure also supplies a counterexample: optional activities can feel compulsory when narrative closure is placed behind broad collection requirements.
 
-OpenLegend should name what a discovery lets the player understand, attempt, obtain, revisit or change. A peaceful beautiful place can remain its own reward; not every destination needs combat loot. When progression is attached, it should add a useful option rather than merely inflate a checklist.
+Open Legend should name what a discovery lets the player understand, attempt, obtain, revisit or change. A peaceful beautiful place can remain its own reward; not every destination needs combat loot. When progression is attached, it should add a useful option rather than merely inflate a checklist.
 
 Elden Ring makes [exploration an alternative response to difficulty](../dossiers/elden-ring/02-world-exploration-and-narrative.md#1-the-central-design-achievement): leave an obstacle, acquire capability or understanding elsewhere, and return with a changed plan. That freedom weakens when another destination offers only an irrelevant reward or familiar repetition. Its [object and relationship cases](../dossiers/elden-ring/02-world-exploration-and-narrative.md#5-quest-case-studies-what-the-player-actually-does), including Alexander and Jar-Bairn's inheritance, also show how an acquisition can matter to another person. The attraction can be practical expression, attachment or a changed understanding of a place; a discovery need not become a repeatable grind to justify the trip.
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 [Gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) already require worthwhile destinations, useful consequences and reasons for another session. [ND18](../../../../docs/maintainers/needs-design.md#nd18--first-encounter-narration-for-places-and-inventory-items) owns broader first-encounter narration/discovery families. Spatial behavior, knowledge, authored world content and 3D presentation retain their existing owners.
 
@@ -76,7 +76,7 @@ Use those journeys to observe whether players choose to use a discovery, attempt
 
 ## Open questions and missing evidence
 
-These scoped contributions do not establish procedural exploration quality, very large persistent-map behavior, multiplayer discovery races or autonomous settlement change. Those need other sources and OpenLegend runtime evidence.
+These scoped contributions do not establish procedural exploration quality, very large persistent-map behavior, multiplayer discovery races or autonomous settlement change. Those need other sources and Open Legend runtime evidence.
 
 The useful next research comparisons are already in the candidate routes: Outer Wilds for knowledge-driven access, Subnautica for environment/capability progression, and Breath of the Wild for systemic traversal. No new implementation project follows merely from this focused incorporation.
 

@@ -24,6 +24,13 @@ import { readOnlyDraftView } from './draft.js';
 
 /** Numeric progress guard, not a biological tick. docs/simulation-time.md#native-interval-contract */
 export const TIME_EPSILON = 1e-6;
+/** First clock value satisfying an owner's elapsed comparison, including rounding. */
+export function elapsedDeadline(start: number, seconds: number): number {
+  let time = start + seconds;
+  while (time - start < seconds)
+    time += Math.max(Number.MIN_VALUE, Math.abs(time) * Number.EPSILON);
+  return time;
+}
 export type AttributeRates = Map<string, Map<string, number>>;
 export function addRate(
   rates: AttributeRates,
@@ -282,4 +289,13 @@ export function attributeBoundary(
     }
   }
   return result;
+}
+
+/** Convert an authored normal-play duration once; runtime speed and pause only
+ * determine how quickly the shared simulation clock advances. */
+export function normalSpeedSeconds(world: Pick<WorldState, 'timePolicy'>, seconds: number): number {
+  const rate = world.timePolicy?.normalGameSecondsPerSecond;
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0)
+    throw new Error('A normal-play duration requires an installed world clock rate.');
+  return seconds * rate;
 }

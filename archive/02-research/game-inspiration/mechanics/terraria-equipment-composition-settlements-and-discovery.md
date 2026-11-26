@@ -1,6 +1,6 @@
 # Terraria: equipment composition, settlements, and discovery
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Terraria chapter](../games/terraria.md), retaining its previous analysis, reviews, history, and videos. Sources below distinguish published features, historical player guides, attributed experiences, and our interpretation. No gameplay or source-code experiment was performed, and no OpenLegend implementation requirement follows from this document.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Terraria chapter](../games/terraria.md), retaining its previous analysis, reviews, history, and videos. Sources below distinguish published features, historical player guides, attributed experiences, and our interpretation. No gameplay or source-code experiment was performed, and no Open Legend implementation requirement follows from this document.
 
 ## 1. Equipment can change the shape of the world
 

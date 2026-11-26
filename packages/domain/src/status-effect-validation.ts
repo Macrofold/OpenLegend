@@ -146,6 +146,17 @@ export function validateStatusEffectPolicy(
   world: WorldState,
   value: unknown,
 ): asserts value is StatusEffectPolicy {
+  validateStatusEffectDefinitions(world, value);
+  validateStatusInstallation(world, value);
+}
+
+/** Definition admission is independent of a live population. The mutable
+ * runtime still admits the actual installed/per-actor work through its owner.
+ */
+export function validateStatusEffectDefinitions(
+  world: { moduleManifest: Pick<WorldState['moduleManifest'], 'definitions'> },
+  value: unknown,
+): asserts value is StatusEffectPolicy {
   object(value, ['revision', 'clockOffsetHours', 'namedTimes', 'definitions']);
   if (!Number.isSafeInteger(value.revision) || value.revision < 1) fail('revision.');
   number(value.clockOffsetHours, 0, 23.999999);
@@ -309,7 +320,6 @@ export function validateStatusEffectPolicy(
           fail('event template.');
       }
   }
-  validateStatusInstallation(world, value as unknown as StatusEffectPolicy);
 }
 export function validateStatusEffects(world: WorldState): void {
   validateStatusEffectPolicy(world, world.statusEffectPolicy);

@@ -15,7 +15,7 @@ The main tree and 178-subject roster at the selected base contained neither new 
 
 ## Outstanding work and evidence limits
 
-No unfinished task remains in these research passes. The dossiers' [Sea of Thieves evidence limits](dossiers/sea-of-thieves.md#r14) and [ATLAS evidence limits](dossiers/atlas.md#r14) retain the conditions for a stronger current-play comparison, missing review permalinks, private financial unknowns and untested service/mod behavior. Those qualifications are not completed empirical tests or an implementation backlog. Interpretations remain distinct from accepted OpenLegend priorities.
+No unfinished task remains in these research passes. The dossiers' [Sea of Thieves evidence limits](dossiers/sea-of-thieves.md#r14) and [ATLAS evidence limits](dossiers/atlas.md#r14) retain the conditions for a stronger current-play comparison, missing review permalinks, private financial unknowns and untested service/mod behavior. Those qualifications are not completed empirical tests or an implementation backlog. Interpretations remain distinct from accepted Open Legend priorities.
 
 ## Verification and preservation
 

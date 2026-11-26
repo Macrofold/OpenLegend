@@ -1,6 +1,6 @@
 # Enshrouded reception and enjoyment — evidence refresh
 
-Research cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md); research, not an approved OpenLegend design. No game installation, playtest, hardware benchmark or population survey was performed. The listed substantive review bodies were retrieved and read. Findings concern the versions identified below.
+Research cutoff: **October 25, 2026**. Part of the [G145 dossier](../enshrouded.md); research, not an approved Open Legend design. No game installation, playtest, hardware benchmark or population survey was performed. The listed substantive review bodies were retrieved and read. Findings concern the versions identified below.
 
 The [October 26 UTC comparison with Dragonwilds](05-comparison-with-dragonwilds.md) owns the subsequent supplied reviews/transcript, version and feature corrections, and paired Steam snapshots. The evidence and sample below retain their October 25 capture rather than being silently replaced.
 
@@ -79,7 +79,7 @@ Starting from a ruin gives someone a legible first problem: repair the roof, fur
 
 ### Friends can contribute differently without playing different games
 
-The observed building/material-gathering partnership illustrates complementary roles within a shared objective. **Research inference:** social value comes from recognizing useful contributions, not merely from the maximum simultaneous player count. In OpenLegend, a settlement's carpenter, trader, explorer, host or defender could each create things that other people want. This is a design opportunity, not evidence that a larger population automatically produces better play.
+The observed building/material-gathering partnership illustrates complementary roles within a shared objective. **Research inference:** social value comes from recognizing useful contributions, not merely from the maximum simultaneous player count. In Open Legend, a settlement's carpenter, trader, explorer, host or defender could each create things that other people want. This is a design opportunity, not evidence that a larger population automatically produces better play.
 
 ### A powerful builder does not compensate for every other required activity
 
@@ -104,15 +104,15 @@ An authored continent provides deliberate discoveries, but revisiting it does no
 | Shared progression                    | Separate the historical server-wide progression controversy, current supported individual completion/replay behavior, and players' remaining coordination complaints. Rented hosting provides availability and administration; it does not inherently align participants' levels, quests or schedules.                                                                                                                                                       |
 | Griefing, controller access and raids | This scoped sample does not measure their current incidence or establish the complete current safeguards/control feature set. Use official server/settings/accessibility documentation for mechanisms and clearly attributed player testimony for frustration. Do not fabricate a prevalence finding to fill a research category.                                                                                                                            |
 
-## OpenLegend implications to preserve as proposals
+## Open Legend implications to preserve as proposals
 
 1. **Make a settlement something the world can use.** A guest who stays, a workshop that supplies a neighbor, or a repaired route people begin traveling could make architecture matter beyond appearance. The positive goal is a visible relationship between what the player built and other lives. This requires useful behavior, not only ambient walking.
 2. **Keep creative expression and loss policy independent.** More destructive worlds can create rivalry and rebuilding stories; protected worlds can support ambitious long-term construction and relaxed social play. Neither is inherently the more authentic experience. Permanent destruction, resource theft, corpse looting, character combat and build permissions are different promises.
 3. **Offer meaningful rewards to builders and adventurers together.** New material behavior, new useful objects, a resident's expertise, a location or an opportunity can change future choices. A hidden chest whose contents only repeat an inferior stat roll weakens the connection between discovery and expectation.
 4. **Treat social pace as part of hosting.** Membership control solves who may enter. Separate design is needed for what an absent member misses, what others may change, how shared unlocks work, and whether a new participant can contribute without erasing everyone's history.
-5. **Teach sophisticated authoring through satisfying small successes.** Advanced logic can extend a construction game into a creator platform. The first useful mechanism should be understandable and debuggable before players need to understand a general circuit system. This does not select Sparkworks as OpenLegend's implementation.
+5. **Teach sophisticated authoring through satisfying small successes.** Advanced logic can extend a construction game into a creator platform. The first useful mechanism should be understandable and debuggable before players need to understand a general circuit system. This does not select Sparkworks as Open Legend's implementation.
 
-These implications combine the specific reactions above with OpenLegend's stated ambition. They do not prove demand for a particular paid world tier, validate many-player scale, or authorize implementation.
+These implications combine the specific reactions above with Open Legend's stated ambition. They do not prove demand for a particular paid world tier, validate many-player scale, or authorize implementation.
 
 ## Source and access notes
 

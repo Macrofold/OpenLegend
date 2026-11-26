@@ -32,25 +32,25 @@ The final EMNLP 2025 paper describes SocSci210: 2.9 million responses from 400,4
 
 ### Confidence in a prediction is different from concentration of the predicted choices
 
-Simile's August 2026 technical post trains a separate estimate of distribution error. On roughly 8,600 held-out questions, simple output features such as entropy and the top-option gap performed weakly; a hidden-activation probe reached AUROC 0.730 versus 0.566 for the basic features. The probe uses the prediction's existing forward pass. A further trained error head was not significantly better than the probe on the reported classification comparison. Question text and its experimental sample were kept together in cross-validation folds. These are company-reported results on its task, not an OpenLegend routing benchmark. [A4]
+Simile's August 2026 technical post trains a separate estimate of distribution error. On roughly 8,600 held-out questions, simple output features such as entropy and the top-option gap performed weakly; a hidden-activation probe reached AUROC 0.730 versus 0.566 for the basic features. The probe uses the prediction's existing forward pass. A further trained error head was not significantly better than the probe on the reported classification comparison. Question text and its experimental sample were kept together in cross-validation folds. These are company-reported results on its task, not an Open Legend routing benchmark. [A4]
 
 **Our transfer:** two attractive choices can both be well understood. Conversely, a strongly preferred option can rest on a false assumption. Do not equate a small action-score margin with uncertainty, or a large margin with permission to skip reconsideration.
 
-A cheap decision service could eventually return both a choice and a calibrated warning about error. But the hidden-activation approach requires access to model internals; it is not a feature that can be assumed available through an opaque API. Calibration would need OpenLegend-specific labels, including personally consequential mistakes. Asking another large model whether the first model is uncertain may cost more than the decision being avoided.
+A cheap decision service could eventually return both a choice and a calibrated warning about error. But the hidden-activation approach requires access to model internals; it is not a feature that can be assumed available through an opaque API. Calibration would need Open Legend-specific labels, including personally consequential mistakes. Asking another large model whether the first model is uncertain may cost more than the decision being avoided.
 
-The source measures error against real distributions. OpenLegend additionally needs to assess whether an action violates a character's accepted boundaries, ignores a relevant experience or closes an important option. Those are not interchangeable labels. A calibrated population average can still be wrong for a particular character.
+The source measures error against real distributions. Open Legend additionally needs to assess whether an action violates a character's accepted boundaries, ignores a relevant experience or closes an important option. Those are not interchangeable labels. A calibrated population average can still be wrong for a particular character.
 
 ### Counterfactual explanation is a research objective, not proof of causal identification
 
 Michael Bernstein's September 2026 *What-If Machine* essay argues that the mechanism behind behavior matters when evaluating interventions, rather than merely predicting an association. It is a useful statement of Simile's ambition, not by itself a causal-identification experiment. [A5]
 
-For OpenLegend, the practical question is whether changing an experience, relationship or available means leads to a coherent change in later behavior. A generated rationale can be persuasive even when the model would have selected the same action without the supposed reason. Test controlled contrasts: the same hunger with and without a promise; the same request from a trusted friend and a stranger; the same object after learning it belongs to someone else. Preserve other evidence where possible, and account for stochastic variation rather than interpreting one dramatic run as a general law.
+For Open Legend, the practical question is whether changing an experience, relationship or available means leads to a coherent change in later behavior. A generated rationale can be persuasive even when the model would have selected the same action without the supposed reason. Test controlled contrasts: the same hunger with and without a promise; the same request from a trusted friend and a stranger; the same object after learning it belongs to someone else. Preserve other evidence where possible, and account for stochastic variation rather than interpreting one dramatic run as a general law.
 
 ### Corporate use: faster hypothesis screening, followed by human research
 
 Simile's September 11 Itaú case reports shortening a research workflow from five weeks to four days and shifting subsequent human research toward uncertain or high-risk questions. This is a vendor/customer account of organizational workflow, not a GPU benchmark or independent proof of predictive accuracy. [A6]
 
-The useful analogy is **selective expensive verification**. OpenLegend could spend more evaluation effort on consequential failures and less on redundant confirmations that a valid activity should continue. However, an in-game character does not have a real human counterpart available to answer every difficult question. Creator judgment, blinded player studies and evidence-consistent alternative trajectories serve different purposes and should be reported separately.
+The useful analogy is **selective expensive verification**. Open Legend could spend more evaluation effort on consequential failures and less on redundant confirmations that a valid activity should continue. However, an in-game character does not have a real human counterpart available to answer every difficult question. Creator judgment, blinded player studies and evidence-consistent alternative trajectories serve different purposes and should be reported separately.
 
 ## 3. Large societies: inspect the denominator before copying the architecture
 
@@ -60,7 +60,7 @@ The useful analogy is **selective expensive verification**. OpenLegend could spe
 | **LMAgent**, December 2024 v1; fast-memory and ablation sections read | A shopping/social simulation caches low-importance routine memory processing. A 100-agent ablation reports about 40% fewer tokens with purchase accuracy 71.99 versus 72.27. This is a token result on that workload, not a measured 40% latency improvement or a cache for every decision. [A8] | That meaningful routine exceptions can safely be ignored, or that purchase prediction evaluates friendship and obligation. |
 | **OASIS**, v4; method and efficiency sections read | Hourly activity probabilities activate subsets of users; asynchronous inference and a separate environment/recommender support social-media interactions. Table 2 reports **18 hours per time step with 27 A100 GPUs at one million users**. It also reports human/agent differences in herd behavior. [A9] | A million simultaneously deliberating game characters, human equivalence, or interactive latency from the title alone. |
 | **Project Sid**, 2024; primary abstract reviewed | PIANO separates concurrent agent processes; reported Minecraft demonstrations range from 10 to 1,000-plus agents and investigate roles, rules and cultural transmission. The authors label the civilizational results preliminary. [A10] | Reproduced cost, exact persistence guarantees, an independently validated civilization, or implementation detail not inspected in this pass. |
-| **Concordia**, original DeepMind publication and project description | Associative memory and component-based agents interact through a Game Master that interprets intentions and can connect to external applications. [A11] | That an LLM should own OpenLegend's physics, authorization or factual history. |
+| **Concordia**, original DeepMind publication and project description | Associative memory and component-based agents interact through a Game Master that interprets intentions and can connect to external applications. [A11] | That an LLM should own Open Legend's physics, authorization or factual history. |
 | **Voyager**, original paper abstract and authors' project page | An automatic curriculum, executable skill library and feedback-driven improvement support extended Minecraft tasks without model-weight updates. [A12] | A general social mind, safe arbitrary generated code in our engine, or a universal need to maximize exploration. |
 
 The proposed applications below are ours, not findings claimed by these systems.
@@ -79,7 +79,7 @@ Measure which relevant facts were excluded. A memory system that returns useful 
 
 ### Reuse skills without importing generated-code authority
 
-Voyager is a strong motivation for remembering successful means. OpenLegend's boundary is different: a generated procedure should be supported data interpreted through trusted actions, not unreviewed JavaScript installed into the world. Learning a method, being physically capable of it, having permission to use it and deciding to use it now are separate conditions.
+Voyager is a strong motivation for remembering successful means. Open Legend's boundary is different: a generated procedure should be supported data interpreted through trusted actions, not unreviewed JavaScript installed into the world. Learning a method, being physically capable of it, having permission to use it and deciding to use it now are separate conditions.
 
 An exploration-maximizing curriculum would also be a poor universal personality. A satisfied character may repeat a familiar pleasure, care for someone or choose quiet. Novel action count is one possible experiment, not the definition of aliveness.
 
@@ -103,7 +103,7 @@ These are proposed study designs, not checks performed in this research pass.
 
 The strongest near-term research direction is to make an already valid choice useful for longer, with reliable outcomes and reconsideration cues. Calibration and learned routing are attractive only after representative traces exist. Large-population papers motivate concurrency, bounded information access and active-subset scheduling, but do not supply a ready-made interactive NPC budget.
 
-Open questions include how to detect quiet semantic novelty cheaply, how to retain justified changes of mind without causing constant switching, and how to preserve uncommon personalities under distillation. None is settled by a population-response benchmark. No paid provider experiment, model training, live society simulation or OpenLegend runtime benchmark was performed here. No adoption is approved by this document.
+Open questions include how to detect quiet semantic novelty cheaply, how to retain justified changes of mind without causing constant switching, and how to preserve uncommon personalities under distillation. None is settled by a population-response benchmark. No paid provider experiment, model training, live society simulation or Open Legend runtime benchmark was performed here. No adoption is approved by this document.
 
 ## Source register and access boundaries
 
@@ -120,4 +120,4 @@ All links accessed October 14, 2026. Revisions are pinned where the result depen
 - **A9:** Yang et al., [OASIS, v4](https://arxiv.org/html/2411.11581v4). Methods, efficiency table, activity model and evaluation limitations reviewed. HTML tables read directly; no claim that every appendix was reviewed.
 - **A10:** Altera and collaborators, [Project Sid](https://arxiv.org/abs/2411.00114), 2024. Primary abstract only; deeper implementation remains a source-access/coverage limitation.
 - **A11:** Google DeepMind, [Concordia publication](https://deepmind.google/research/publications/64717/), 2023, and [official project](https://github.com/google-deepmind/concordia). Architecture description, not an audited deployment.
-- **A12:** Wang et al., [Voyager paper](https://arxiv.org/abs/2305.16291) and [authors' project](https://voyager.minedojo.org/), 2023. Components and scope reviewed; headline performance is not imported as an OpenLegend forecast.
+- **A12:** Wang et al., [Voyager paper](https://arxiv.org/abs/2305.16291) and [authors' project](https://voyager.minedojo.org/), 2023. Components and scope reviewed; headline performance is not imported as an Open Legend forecast.

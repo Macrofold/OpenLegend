@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -415,7 +415,7 @@ An unbylined written review records returning repeatedly during the review perio
 
 The read evidence does not establish the full screen-reader, color-vision, subtitle, haptic or audio-mix settings. It does establish that readability and finger coordination deserve separate analysis from the appeal of the combat rules.
 
-### Research questions for OpenLegend
+### Research questions for Open Legend
 
 These are hypotheses to investigate, not instructions to copy systems:
 

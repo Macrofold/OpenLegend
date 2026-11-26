@@ -113,7 +113,7 @@ Native multiplayer, a good private group and a welcoming public lobby are separa
 
 The Company establishes an absurdly indifferent employer and a dangerous work routine. Sigurd's logs and bestiary annotations reveal a previous crew through found records rather than a companion dialogue tree. They are read through the terminal; a sticky note supplies the access clue. The notes are fallible in-world testimony, not an omniscient encyclopedia. The player's own rescue or betrayal can remain narratively important without becoming a bespoke scripted quest. [G32] [G33]
 
-There is no demonstrated native romance system, diplomatic faction simulation, player-written spell language or recruitable LLM party in this loop. A human friend's improvised story and a fan-made voice mimic are not evidence that the base creatures generate dialogue. This boundary is particularly important for OpenLegend comparisons.
+There is no demonstrated native romance system, diplomatic faction simulation, player-written spell language or recruitable LLM party in this loop. A human friend's improvised story and a fan-made voice mimic are not evidence that the base creatures generate dialogue. This boundary is particularly important for Open Legend comparisons.
 
 ### Art, sound, readability and access
 
@@ -195,7 +195,7 @@ A later **Derp, December 6, 2025** account combines affection for mastery with o
 
 **Synthesis:** social access, lasting progression, variety, execution fairness and sensory access are separate dimensions. Increasing content may help one without repairing another. It is also possible for a negative recommendation to contain a strongly positive account of the central experience.
 
-## 9. OpenLegend patterns and limits — interpretation
+## 9. Open Legend patterns and limits — interpretation
 
 **Make complementary knowledge actionable.** A remote inhabitant who knows a gate, route or recent danger can contribute without becoming another combatant. An omniscient narrator eliminates the cooperation being borrowed.
 
@@ -211,7 +211,7 @@ A later **Derp, December 6, 2025** account combines affection for mastery with o
 
 **Separate social design from social availability.** A wonderful private-group experience does not prove solo value, inclusive public matching or equivalent accessibility. AI partners would need to provide useful independent action, not merely imitate friends' screams.
 
-These are research observations, not accepted OpenLegend architecture changes or implementation tasks.
+These are research observations, not accepted Open Legend architecture changes or implementation tasks.
 
 ## 10. Coverage, preservation and viewing
 

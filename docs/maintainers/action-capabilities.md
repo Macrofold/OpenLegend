@@ -151,7 +151,7 @@ Generated relative `move` invocations retain a server-captured position/support/
 
 ## AC06 — Typed method composition and result ports
 
-The delivered [AE project](../action-experience.md) is a concrete consumer of this work: structured nested records, decision-relevant context, committed partial/multiple-output experience links and learned method continuation. AE uses the canonical invoke/sequence/branch/repeat/wait vocabulary; output commitment is separate from terminal success and grants no automatic failure continuation. [AE01/AE02/AE09](action-experience.md) coordinate those slices under AC/AG ownership; this does not mark AC06 delivered or authorize a second interpreter.
+The delivered [AE project](../action-experience.md) is a concrete consumer of this work: structured nested records, decision-relevant context, committed partial/multiple-output experience links and learned activity continuation. AE uses the canonical invoke/sequence/branch/repeat/wait vocabulary; output commitment is separate from terminal success and grants no automatic failure continuation. [AE01/AE02/AE09](action-experience.md) coordinate those slices under AC/AG ownership; this does not mark AC06 delivered or authorize a second interpreter.
 
 **Owner:** AG03 continuation and family-output adapters. **Depends on:** AC02–AC04. **Touchpoints:** `agency.ts`, `response.ts`, native completion receipts, request schemas and plan projection.
 
@@ -216,6 +216,8 @@ PW10 contributes only to AC08.1/8.2: the chosen camp activity uses the existing 
 - [ ] AC09.5 Keep ordinary invocation available under the appropriate invention lock: a known mechanic's use is not authoring. Definition changes continue through INV.
 
 PW03/PW10 add a concrete AC09.1/9.2/9.5 consumer: ordinary transfers and closed activity requests retain native scope/resource semantics without authoring during use. Two woven designs passed native craft/custody scenarios; injected director finite/watch choices passed existing response admission. Family descriptors and action/predicate adapters remain separate contracts. The complete text/menu/NPC/plan and live-preference matrix remains open ([PW03](parallel-batch-01-playable-week.md#pw03--craftable-containers-and-camp-supplies), [PW10](parallel-batch-01-playable-week.md#pw10--chosen-camp-activities-and-reusable-finite-methods)).
+
+AC09.1 includes the Rust Craft preview. The recipe menu and All actions show the selected method's materials, duration, and already-selected kept tool. The saved activity uses the same facts, and the Base action display definition supplies the preview and start wording to Rust and TypeScript. Craft still owns stock, replacement and reservations. Signed gameplay and a rendered All actions tooltip verify the result. [Caller evidence](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#post-cutover-sling-craft-and-storage-follow-up)
 
 ### AC09.6 — Equipped contact strikes (implemented; acceptance partial)
 
@@ -401,7 +403,7 @@ The current [AR integration](action-reconciliation.md) rebases native grounding/
 
 ## Learned food activities: proposal boundary
 
-The earlier [discussion-only survival proposal](../projects/embodied-survival-tech-design.md#learned-activities-discussion-only) did not authorize automatic learned routines. Subsequent [AE delivery](action-experience.md) implements personally acquired finite methods, actual output bindings, scoped offers and selected execution through the existing AG03 frontier. Requested holding/time predicates and bounded repetitions are also delivered; broader AC06.3–AC06.5 semantics and family coverage remain open. Reuse those owners rather than build a second plan or learning store. General conditional hunting/cooking routines, inferred branches and automatic survival policy are not established by the finite examples. A cognition opportunity may offer the remaining activity alongside alternatives; committed receipts persist even when omitted from that display. Current heat, access, outputs and resources still require native revalidation. The historical individual-choice trials remain what they measured, not evidence for the later learned-method path.
+The earlier [discussion-only survival proposal](../projects/embodied-survival-tech-design.md#learned-activities-discussion-only) did not authorize automatic learned routines. Subsequent [AE delivery](action-experience.md) implements personally acquired finite methods, actual output bindings, scoped offers and selected execution through the existing AG03 frontier. Requested holding/time predicates and bounded repetitions are also delivered; broader AC06.3–AC06.5 semantics and family coverage remain open. Reuse those owners rather than build a second plan or learning store. General conditional hunting/cooking routines, inferred branches and automatic survival policy are not established by the finite examples. A cognition opportunity may offer the remaining activity alongside alternatives; committed receipts persist even when omitted from that display. Current heat, access, outputs and resources still require native revalidation. The historical individual-choice trials remain what they measured, not evidence for the later learned activity path.
 
 ## Future improvements from the foundation review
 

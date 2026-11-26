@@ -1,12 +1,12 @@
 # Texel splatting and perspective stability
 
-Research reviewed October 14, 2026. This is a promising **separate rendering experiment**, not a demonstrated fix for OpenLegend's animated mercenary. It changes how scene samples are placed; it does not turn the character into a permanent volume of colored cubes.
+Research reviewed October 14, 2026. This is a promising **separate rendering experiment**, not a demonstrated fix for Open Legend's animated mercenary. It changes how scene samples are placed; it does not turn the character into a permanent volume of colored cubes.
 
 ## What the paper establishes
 
 Dylan Ebert's [paper, project and demonstration](https://dylanebert.com/texel-splatting/) address a real weakness of camera snapping: in perspective, objects at different depths move across the image at different rates. A single camera offset cannot align them all. The method captures scene surfaces from stable positions, shades the captured samples, then draws them as small world-space quadrilaterals. These are texel splats, distinct from the Gaussian splats commonly used for reconstructed scenes.
 
-The [March 2026 paper](https://arxiv.org/pdf/2603.14587) combines camera-centered, grid-centered and previous captures. It explicitly retains limitations around newly visible surfaces, transitions between capture positions, animated geometry and view-dependent effects. It is evidence for improving perspective stability, not a guarantee that every pixel remains unchanged under every camera or pose change. Its reported device timings are not OpenLegend measurements.
+The [March 2026 paper](https://arxiv.org/pdf/2603.14587) combines camera-centered, grid-centered and previous captures. It explicitly retains limitations around newly visible surfaces, transitions between capture positions, animated geometry and view-dependent effects. It is evidence for improving perspective stability, not a guarantee that every pixel remains unchanged under every camera or pose change. Its reported device timings are not Open Legend measurements.
 
 ## What the public implementation contains
 
@@ -23,7 +23,7 @@ A capture is a group of images looking in six directions from one location, ofte
 
 That distinction matters for the complaint about pixels moving. A stationary stone wall, a head turning on its neck and a cape folding are different workloads. Stabilizing the wall does not establish that eyes remain readable through head motion, nor that a garment covers the body. Cloth intersections remain an asset/animation problem.
 
-## Fit with OpenLegend
+## Fit with Open Legend
 
 The inspected client pins PlayCanvas 2.22.2. Its [scene startup](../../../apps/client/src/scene.ts) uses `pc.Application`; the installed implementation constructs a WebGL graphics device. The texel-splatting demo instead uses WebGPU compute and rendering. PlayCanvas documents [compute shaders as WebGPU-only](https://developer.playcanvas.com/user-manual/graphics/shaders/compute-shaders/). Existing Gaussian-splat support does not supply this different algorithm.
 
@@ -56,4 +56,4 @@ Measure complete-frame CPU/GPU time and memory, not only the final splat pass. C
 
 The [E07 hardware experiment](../../../docs/verification/texel-splatting.md) has now run the pinned source against 46 existing starting-scene static meshes at three capture densities, with matched ordinary-renderer controls, camera/light paths, motion recordings, complete-operation/stage timing and resource accounting. It uses a [repeatable local tool](../../../scripts/art/texel-splatting/README.md); no second playable world or application graphics-backend change was introduced.
 
-The result is to **defer application integration**. Fixed captures provide a useful static sampling reference, but grid replacement and newly revealed regions still change samples, and thin/grazing deck details remain problematic. The experiment does not qualify animated heads, faces, cloth or the application's selection/read-through lifecycle. The evidence report records actual diagnostic costs and concurrent-machine limitations; no production resolution, frame budget or device capacity is adopted from it.
+The result is to **defer application integration**. Fixed captures provide a useful static sampling reference, but grid replacement and newly revealed regions still change samples, and thin/grazing deck details remain problematic. The experiment does not qualify animated heads, faces, cloth or the application's selection/see-through reveal lifecycle. The evidence report records actual diagnostic costs and concurrent-machine limitations; no production resolution, frame budget or device capacity is adopted from it.

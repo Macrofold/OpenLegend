@@ -5,6 +5,7 @@ import { nextId } from './data.js';
 import { bodiesTouch, sensesFor, type ContactEpisode } from './perception.js';
 import { distance, hasLineOfEffect } from './spatial.js';
 import { capabilityBlocked } from './status-capabilities.js';
+import { reconcileContactEvidence, endCurrentEvidence } from './perception-evidence.js';
 import type { ActorComponent, Entity, Position, WorldEvent, WorldState } from './types.js';
 
 interface ContactCandidate {
@@ -30,6 +31,7 @@ export function* updateContactEpisodes(
     (sense) => sense.implementation === 'body-contact-v1',
   );
   if (!actor.alive || capabilityBlocked(world, observer, 'perception') || !touch) {
+    endCurrentEvidence(world, observer.id, 'touch');
     if (Object.keys(prior).length) actor.contacts = {};
     return;
   }
@@ -114,4 +116,5 @@ export function* updateContactEpisodes(
     Object.entries(contacts).some(([id, episode]) => episode !== prior[id])
   )
     actor.contacts = contacts;
+  reconcileContactEvidence(world, observer);
 }

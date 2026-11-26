@@ -64,7 +64,7 @@ This matters mechanically because Dreams is not like an RPG whose combat, invent
 
 Media Molecule's launch campaign, **Art's Dream**, follows a musician separated from his band and uses multiple genres to demonstrate the common toolset. Reviews describe point-and-click adventure interactions with dialogue/item puzzles, action/platforming sections, top-down or side-on combat, musical interludes and later genre shifts. The value is not merely variety: one story carries the player between different control and rule systems without pretending they are one systemic world. [DR49](#dr49) [DR51](#dr51)
 
-**OpenLegend lesson:** a mechanics platform benefits from authored exemplars that demonstrate *combinations* of primitives, not only API-style tutorials. An example should be enjoyable even for someone who never opens the editor.
+**Open Legend lesson:** a mechanics platform benefits from authored exemplars that demonstrate *combinations* of primitives, not only API-style tutorials. An example should be enjoyable even for someone who never opens the editor.
 
 <a id="9-arts-dream-gives-varied-mechanics-one-emotional-subject"></a>
 <a id="study-9"></a>
@@ -127,7 +127,7 @@ Dreams is useful precisely because several requested categories are **creator-de
 | Economy / trade | No shared in-fiction economy. Creators can implement currencies and shops; Dreams itself was a paid platform without an in-Dreams creator marketplace. |
 | Endgame | Defined per creation. At the platform level the long-term loop is discover → play → learn → create/remix → release → receive engagement → iterate. |
 
-This separation is important for OpenLegend: **generic primitives do not require generic fiction**. A health primitive can support a fighter, destructible door or machine; a variable can be reputation, hunger, spell charge or political support. Dreams keeps many low-level capabilities content-agnostic and lets authored composition provide semantic meaning.
+This separation is important for Open Legend: **generic primitives do not require generic fiction**. A health primitive can support a fighter, destructible door or machine; a variable can be reputation, hunger, spell charge or political support. Dreams keeps many low-level capabilities content-agnostic and lets authored composition provide semantic meaning.
 
 ## 7. The gameplay grammar: sense → process → act → remember
 
@@ -187,7 +187,7 @@ That supports several useful workflows:
 
 Audio is similarly constructive. Sound Mode supports instruments, effects, music and voice; sound gadgets can be triggered by logic and can create polyphonic voices. The web Audio Importer accepts original WAV material under its rules. [DR46](#dr46)
 
-**OpenLegend lesson:** presentation should be able to subscribe to state without *being* the state. “Door is locked” can drive an animation, sound, subtitle and interaction affordance independently. The reverse also matters: a glowing/red object should not imply damage unless world rules make that relationship true.
+**Open Legend lesson:** presentation should be able to subscribe to state without *being* the state. “Door is locked” can drive an animation, sound, subtitle and interaction affordance independently. The reverse also matters: a glowing/red object should not imply damage unless world rules make that relationship true.
 
 <a id="5-animation-can-be-performed-edited-or-baked"></a>
 <a id="study-5"></a>
@@ -242,7 +242,7 @@ A detailed object may be affordable once but expensive when stamped repeatedly. 
 
 **Constructed choice:** create twenty unique enemies, or one configurable enemy Element with several behaviors and appearances. Reuse saves budget but can make the world repetitive. The tool does not solve that tradeoff; it makes the cost visible.
 
-For OpenLegend inventions, this is a useful precedent for exposing **capability budgets** rather than allowing an extension to silently consume unbounded simulation, cognition, rendering or persistence resources.
+For Open Legend inventions, this is a useful precedent for exposing **capability budgets** rather than allowing an extension to silently consume unbounded simulation, cognition, rendering or persistence resources.
 
 <a id="8-preservation-and-progression-also-have-resource-limits"></a>
 <a id="study-8"></a>
@@ -272,7 +272,7 @@ Elements can be reusable characters, sculptures, music, sounds or microchips con
 
 Collaboration is not the same as synchronous multiplayer. Multiple creators can contribute to a project, and remixing provides asynchronous composability. The platform never shipped its planned **online multiplayer** feature; local/couch multiplayer can be authored for creations, including templates supporting up to four local players. [DR53](#dr53) [DR54](#dr54)
 
-**OpenLegend lesson:** invention packs should carry provenance, compatibility and permissions through composition. “Can use this” and “can modify/publish derivatives of this” are different rights.
+**Open Legend lesson:** invention packs should carry provenance, compatibility and permissions through composition. “Can use this” and “can modify/publish derivatives of this” are different rights.
 
 <a id="6-collaboration-grants-specific-rights-not-universal-ownership"></a>
 <a id="study-6"></a>
@@ -479,46 +479,46 @@ These are qualitative themes, not prevalence estimates.
 
 The sampled reviews are not a census. A review posted in 2026 can describe its author's purchase years earlier; it is not automatically a current catalogue audit. Wishes for missing platforms, unverified financial explanations and sweeping claims about all community work are not promoted into facts. Positive attachment and legitimate criticism can coexist.
 
-## 16. Transferable inspiration for OpenLegend
+## 16. Transferable inspiration for Open Legend
 
 ### A. Build a compositional grammar, not a catalogue of bespoke features
 
-Dreams gets enormous expressive range from a relatively small vocabulary: observe, signal, gate, store, emit, move, damage/heal, display, animate and compose. OpenLegend's invention layer can use the same principle: new systems should combine stable primitives rather than require engine changes for every spell, profession, political system or machine.
+Dreams gets enormous expressive range from a relatively small vocabulary: observe, signal, gate, store, emit, move, damage/heal, display, animate and compose. Open Legend's invention layer can use the same principle: new systems should combine stable primitives rather than require engine changes for every spell, profession, political system or machine.
 
-**Limit:** Dreams' primitives do not enforce world semantic consistency. OpenLegend wants a persistent simulation whose laws matter across inventions, so extension APIs need stronger contracts around authority, identity, causality and persistence.
+**Limit:** Dreams' primitives do not enforce world semantic consistency. Open Legend wants a persistent simulation whose laws matter across inventions, so extension APIs need stronger contracts around authority, identity, causality and persistence.
 
 ### B. Make components independently useful
 
-An Element can be a tree, controller, song or logic chip without pretending to be a complete game. OpenLegend inventions should similarly be able to contribute one capability: a new need model, crafting recipe family, spell grammar, behavior policy, vehicle component or social institution.
+An Element can be a tree, controller, song or logic chip without pretending to be a complete game. Open Legend inventions should similarly be able to contribute one capability: a new need model, crafting recipe family, spell grammar, behavior policy, vehicle component or social institution.
 
 **Limit:** a library full of low-level parts can become impossible to navigate. Packaging, examples, compatibility metadata and discovery are product features.
 
 ### C. Give every invention a visible cost envelope
 
-Thermometers teach creators that a feature is not free. OpenLegend likely needs budgets for simulation frequency, entity count, persistent state, LLM/cognition work, event subscriptions and rendering/network cost. A creator should see the tradeoff before a world becomes unstable.
+Thermometers teach creators that a feature is not free. Open Legend likely needs budgets for simulation frequency, entity count, persistent state, LLM/cognition work, event subscriptions and rendering/network cost. A creator should see the tradeoff before a world becomes unstable.
 
 ### D. Separate content, logic, state and presentation
 
-Dreams lets animation, sound and visuals respond to logic rather than collapsing them together. This is especially important for OpenLegend's extensibility: a “burning” state should have authoritative rules, while particles, light, sound and UI independently represent it.
+Dreams lets animation, sound and visuals respond to logic rather than collapsing them together. This is especially important for Open Legend's extensibility: a “burning” state should have authoritative rules, while particles, light, sound and UI independently represent it.
 
 ### E. Treat examples as part of the language
 
-Art's Dream demonstrates what composition can become. For OpenLegend, a few ambitious first-party worlds/invention packs may teach more than a long reference manual—provided the examples are built with the same public mechanisms available to players.
+Art's Dream demonstrates what composition can become. For Open Legend, a few ambitious first-party worlds/invention packs may teach more than a long reference manual—provided the examples are built with the same public mechanisms available to players.
 
 ### F. Provenance and remix rights must survive composition
 
-Dreams' genealogy is valuable. If OpenLegend lets inventions build on inventions, the world should be able to answer: *which pack introduced this behavior, what version is active, who owns it, what depends on it, and may this derivative be redistributed?*
+Dreams' genealogy is valuable. If Open Legend lets inventions build on inventions, the world should be able to answer: *which pack introduced this behavior, what version is active, who owns it, what depends on it, and may this derivative be redistributed?*
 
 ### G. Do not equate creation supply with player value
 
-Dreams is the sharpest warning in this library so far: technically astounding creation can coexist with discovery friction and an unsolved long-term platform model. OpenLegend should measure whether players return to *play worlds*, whether creators find audiences, and whether reusable inventions reduce effort—three separate outcomes.
+Dreams is the sharpest warning in this library so far: technically astounding creation can coexist with discovery friction and an unsolved long-term platform model. Open Legend should measure whether players return to *play worlds*, whether creators find audiences, and whether reusable inventions reduce effort—three separate outcomes.
 
 <a id="16-transferable-inspiration-and-limits"></a>
 <a id="study-16"></a>
 
 ### Detailed study 16: Transferable inspiration and limits
 
-**Let people enter at the depth they need.** Play, place, modify, compose and author are different levels. A reusable OpenLegend mechanic should arrive with a comprehensible working situation, not require learning the whole engine before encountering value.
+**Let people enter at the depth they need.** Play, place, modify, compose and author are different levels. A reusable Open Legend mechanic should arrive with a comprehensible working situation, not require learning the whole engine before encountering value.
 
 **A component is not a finished invitation.** Dreams' Scene/Dream distinction makes the packaging problem explicit. A new capability needs purpose, an entry point and legible consequences before ordinary players can judge it.
 
@@ -530,7 +530,7 @@ Dreams is the sharpest warning in this library so far: technically astounding cr
 
 **Give small contributions a destination, but do not promise an audience automatically.** Templates, collective events and curated routes can make participation concrete. The operating and discovery work remains real; more generated artifacts alone is not evidence of a healthy platform.
 
-These are research interpretations, not accepted OpenLegend implementation tasks. The earlier caution remains: the evidence cannot establish which unshipped feature, if any, would have changed Dreams' commercial trajectory.
+These are research interpretations, not accepted Open Legend implementation tasks. The earlier caution remains: the evidence cannot establish which unshipped feature, if any, would have changed Dreams' commercial trajectory.
 
 ## 17. Requirement and preservation check
 
@@ -583,7 +583,7 @@ Read Art's Dream for authored identity, then the Ancient Dangers lesson for expl
 
 Useful viewing routes are linked directly from the official beginner guide, Art's Dream pages, animation release, music update and VR release notes. They include an Art's Dream introduction, mode demonstrations and Inside the Box examples. These are verified source-linked routes, **not full recordings watched for this research**. The narrative pages and reviews contain spoilers; no invented timestamps or observed play sessions are supplied. [DR06](#dr06) [DR14](#dr14) [DR16](#dr16) [DR22](#dr22) [DR25](#dr25)
 
-**Per-game preservation:** the complete paired chapter and the original supplied master's §5.1 were compared. The September 2023 live-support/access distinction, separate Project Spark shutdown, creator/player viability argument, missing-feature counterfactual caution and two OpenLegend product questions remain intact in their existing owner. No separate earlier Dreams mechanics study exists to replace. The original packet's source annotations and cross-game essays remain preserved, not silently rewritten by this pass. This dossier extends their narrower evidence and qualifies later changes. The independent seven-file packet-wide audit remains pending.
+**Per-game preservation:** the complete paired chapter and the original supplied master's §5.1 were compared. The September 2023 live-support/access distinction, separate Project Spark shutdown, creator/player viability argument, missing-feature counterfactual caution and two Open Legend product questions remain intact in their existing owner. No separate earlier Dreams mechanics study exists to replace. The original packet's source annotations and cross-game essays remain preserved, not silently rewritten by this pass. This dossier extends their narrower evidence and qualifies later changes. The independent seven-file packet-wide audit remains pending.
 
 **Evidence limits:** no personal play, full-video/complete-soundtrack inspection, proprietary-code access, representative sentiment coding or audited game-profit evidence. Some original interviews were accessible through substantive indexed text rather than direct page retrieval. Old official guides themselves contain retired features; dated release/support notes take precedence for those specific claims. The accessible documentation establishes supported behavior, not universal absence of defects.
 

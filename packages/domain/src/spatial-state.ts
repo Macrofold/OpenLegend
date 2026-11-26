@@ -92,7 +92,13 @@ export interface FlightRoute {
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
 }
 export type Placement =
-  | { mode: 'world'; position: WorldPoint; supportSurfaceId: string | null; revision: number }
+  | {
+      mode: 'world';
+      position: WorldPoint;
+      supportSurfaceId: string | null;
+      revision: number;
+      motionContinuityRevision?: number;
+    }
   | { mode: 'contained'; parentEntityId: string; revision: number }
   | { mode: 'attached'; parentEntityId: string; portId: string; revision: number }
   | ({
@@ -225,7 +231,7 @@ export function setSpatialPosition(
   entity: Entity,
   point: WorldPoint,
   supportSurfaceId: string | null,
-  movement?: { steps: number; heading: number },
+  movement?: { steps?: number; heading?: number; continuity?: 'physical' | 'relocation' },
 ): void {
   if (!finitePoint(point)) throw new Error('Invalid authoritative position.');
   const before = worldPosition(entity),
@@ -258,6 +264,8 @@ export function setSpatialPosition(
     entityId: entity.id,
     before,
     after: point,
+    ...(supportSurfaceId === placement.supportSurfaceId ? { supportUnchanged: true as const } : {}),
+    ...(movement?.continuity === 'physical' ? {} : { discontinuity: true as const }),
   });
   // One owned placement avoids proxy writes at every waypoint. Keep the physical
   // component attached: flight/fall controllers may hold its mutable progress.
@@ -268,6 +276,10 @@ export function setSpatialPosition(
     position: { x: point.x, y: point.y, z: point.z },
     supportSurfaceId,
     revision: placement.revision + steps,
+    motionContinuityRevision:
+      movement?.continuity === 'physical'
+        ? placement.motionContinuityRevision
+        : placement.revision + steps,
   };
   if (heading !== entity.spatial.heading) entity.spatial.heading = heading;
   releaseGroundedFlight(entity);

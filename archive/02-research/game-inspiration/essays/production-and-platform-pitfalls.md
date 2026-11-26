@@ -2,7 +2,7 @@
 
 ### The recurring traps
 
-| Trap | Why it is dangerous | Practical response for OpenLegend |
+| Trap | Why it is dangerous | Practical response for Open Legend |
 |---|---|---|
 | Building the framework before the experience | Interfaces accumulate without evidence of a satisfying loop | Keep an end-to-end playable scenario as an acceptance gate |
 | Measuring possibility instead of consequence | New nouns/prose look varied while decisions stay the same | Track changed actions, relationships, and viable alternatives |
@@ -23,7 +23,7 @@ These recommendations combine the contrasts above, especially EverQuest Next, Wo
 
 **More code is not the same as more validated play.** An AI can add many mutually compatible interfaces without proving that a player understands the resulting activity. Treat generated implementation capacity as a way to run more good experiments—not as justification to postpone selection.
 
-**A feature’s integration cost can exceed its local implementation cost.** Wube’s retrospective is a concrete reminder that distributed dependencies make change and regression management expensive. OpenLegend’s module boundaries are valuable insofar as they reduce repeated work and preserve coherent behavior. They should not become abstractions without consumers. [FA2](../references/sources-01.md#source-fa2)
+**A feature’s integration cost can exceed its local implementation cost.** Wube’s retrospective is a concrete reminder that distributed dependencies make change and regression management expensive. Open Legend’s module boundaries are valuable insofar as they reduce repeated work and preserve coherent behavior. They should not become abstractions without consumers. [FA2](../references/sources-01.md#source-fa2)
 
 **A service-dependent mechanic has an ongoing experience cost.** Latency, budgeting, interrupted generation, and variable output quality are part of the product. Native actions and useful character routines should continue where appropriate without a fresh model call. A fallback must remain truthful; it should not fabricate completion or secretly change the rules.
 

@@ -80,7 +80,7 @@ The accepted [runtime-art direction](../03-design-proposals/visual-direction.md#
 
 ## Cost controls are product requirements
 
-An owner who accelerates time, creates many interactions or leaves autonomous residents running can generate substantial costs. Bound spending for each world and across the service without making cost control a substitute for an enjoyable game.
+An owner who accelerates time, creates many interactions or leaves NPCs running can generate substantial costs. Bound spending for each world and across the service without making cost control a substitute for an enjoyable game.
 
 - **Scope absence promises to the offered world.** The first ordinary private-hosting offer may pause without active play under its disclosed profile. Optional continued communities use [DG17's finite provisioned periods](../../docs/projects/continuing-lives-feature-spec.md#15-dg17--a-first-funded-unattended-community), explicit funding and coherent stop/resume; no monthly renewal itself promises background progression. Stored history still incurs costs. This is not a new universal absence rule for every authored world.
 - **Use ordinary code for established mechanics.** Gathering, needs, resting and known interactions should not require fresh model calls each time. Reserve AI for useful conversation, deliberation, interpretation and novel mechanics.

@@ -1,6 +1,7 @@
 import type {
   EntityView,
   GameView,
+  PlayerProfile,
   SurfacePoint,
   ConstructionShape,
   AppearanceRecipe,
@@ -121,6 +122,7 @@ export interface WorldRenderer {
   sampleFrameRate(): number | null;
   setPerceptionOptions(options: PerceptionOptions): void;
   setShadowQuality(quality: ShadowQuality): void;
+  setPlayerPreferences(preferences: PlayerProfile['preferences'] | undefined): void;
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;
   setView(view: GameView): void;

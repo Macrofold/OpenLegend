@@ -1,4 +1,4 @@
-# Practical competence
+# Character skill
 
 CF02 now consumes this release owner: handling contributes to aim steadiness, while later moving-body/cover geometry determines contact. It removes the previous extra fleeing multiplier and records practice once at committed release, without credit for aiming/cancellation or reloading an occurrence. [Batch 06 evidence](../verification/rivals-and-contested-ground.md) retains combined player/opponent qualification as open; it does not close human appreciation or all competence uses.
 
@@ -30,6 +30,7 @@ Product preparation is complete. Runtime evidence is recorded separately below; 
 - [x] Count actual eligible released shots once, including misses, with improvement applying only to later shots.
 - [x] Deliver the real inert-target route with one-shot selection, material use, actual result, occupied/invalid refusal and selected finish-or-cancel behavior.
 - [x] Show scoped useful outcomes and inspectable progress through existing character/action surfaces; qualify the complete independent journey.
+- [x] Ordinary Rust sling launches and inert practice capture the current handling and credit the same installed family at release. One missed Hunt and five inert hits earned the Base improvement. Only the next shot used improved handling. Stop, exact receipt retry and cold continuation passed. A separately installed rule changed the result, and omitting the rule left ordinary shooting available. The practice offer describes handling and the target's lack of evasion. [Authored rule](../worlds/base/practical-competence.md#what-earns-the-improvement) · [Signed caller evidence](../benchmarks/native-runtime-foundations/2026/2026-11-24-rust-server-completion.md#post-cutover-sling-craft-and-storage-follow-up).
 
 ## PC04 — Voluntary coaching
 
@@ -65,6 +66,6 @@ The checked delivery below records the original qualified coaching consumer. Cur
 
 The October 14 world-boundary correction makes the installed skill definition the source of rank/progress/effect text, exact practice/coaching offers and spoken eligibility. A different two-release definition, voluntary separately chosen feedback, speech refusal and four-boundary PostgreSQL restoration passed [focused native evidence](../verification/world-engine-boundaries.md#ranged-rules-materials-replacement-life-and-practice). This closes the reported ownership defect without changing the bundled six/three-release tuning or closing PC05 population and PC06 human-appreciation gaps.
 
-EWF02/EWF04 retain typed-state and permitted presentation. AC and existing native action owners retain actual execution, interruption and resources. AE retains action occurrence evidence and tentative learned methods; this proposal does not relax its current no-general-teaching/automatic-confidence boundaries. SC retains the one authoritative contribution. INV retains exact admitted sling definitions and authorized rule changes. Existing memory, privacy, simulation-time and persistence owners remain controlling.
+EWF02/EWF04 retain typed-state and permitted presentation. AC and existing native action owners retain actual execution, interruption and resources. AE retains action occurrence evidence and tentative learned activities; this proposal does not relax its current no-general-teaching/automatic-confidence boundaries. SC retains the one authoritative contribution. INV retains exact admitted sling definitions and authorized rule changes. Existing memory, privacy, simulation-time and persistence owners remain controlling.
 
 Numerical competence is not a new cognition controller. Broad practical skills, personality development, general method teaching, social checks, paid training and a permanent progression economy remain outside this consumer.

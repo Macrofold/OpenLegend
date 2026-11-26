@@ -194,7 +194,7 @@ const invocationFields: Partial<
     required: ['targetId', 'definitionId', 'operation'],
     optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
   },
-  say: { required: ['text'], optional: ['targetId', 'volume'] },
+  say: { required: ['text'], optional: ['targetId', 'targetRole', 'selfIntroduction', 'volume'] },
   express: { required: ['verb'], optional: ['targetId'] },
 };
 /** Native boundary phases and finite activities use the same operation fields. */
@@ -275,6 +275,40 @@ export function activityInvocationFields(
   }
   return invocationFields[command];
 }
+/** The native learner consumes this same finite syntax table. It neither adds
+ * executors nor turns a template role into a current physical permission. */
+export function activityLearningLanguage() {
+  return {
+    textCharacters: ACTIVITY_BINDING_TEXT_CHARACTERS,
+    commands: Object.fromEntries(
+      Object.entries(invocationFields).map(([command, fields]) => [
+        command,
+        {
+          ...fields,
+          bindings: Object.fromEntries(
+            [...fields.required, ...(fields.optional ?? [])].flatMap((field) => {
+              const kind = nativeBindingKind(field);
+              return kind
+                ? [
+                    [
+                      field,
+                      {
+                        kind,
+                        output: nativeOutputBinding(field),
+                        self: activitySelfBinding(field),
+                      },
+                    ],
+                  ]
+                : [];
+            }),
+          ),
+        },
+      ]),
+    ),
+  };
+}
+export const activitySelfBinding = (field: string): boolean =>
+  field === 'sourceId' || field === 'destinationId';
 export function exactFields(value: object, fields: string[]): void {
   if (
     !value ||
@@ -402,6 +436,7 @@ export function activityRoleKinds(
   return roles;
 }
 
+export const ACTIVITY_BINDING_TEXT_CHARACTERS = 1500;
 export function validActivityBinding(
   kind: 'object' | 'place' | 'text' | 'self',
   value: ActivityBinding | undefined,
@@ -415,7 +450,9 @@ export function validActivityBinding(
     );
   return (
     typeof value === 'string' &&
-    (kind === 'text' ? !!value.trim() && value.length <= 1500 : isSafeRecordId(value))
+    (kind === 'text'
+      ? !!value.trim() && value.length <= ACTIVITY_BINDING_TEXT_CHARACTERS
+      : isSafeRecordId(value))
   );
 }
 

@@ -112,7 +112,7 @@ No answer is imputed from smiling text, playtime, return visits, an NPC appraisa
 
 ## 6. Private answers, withdrawal and an honest end to collection
 
-A research answer is a private form response. It is not Talk, Whisper, a journal entry, narration, a character’s thought or input to the world agent. It does not enter a human or NPC conversation and is never passed to an AI provider for sentiment scoring or summarization. The [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary) applies to derivatives and exports as well as direct reads.
+A research answer is a private form response. It is not Talk, Whisper, a journal entry, narration, a character’s thought or input to the world agent. It does not enter an in-world conversation between characters and is never passed to an AI provider for sentiment scoring or summarization. The [human-private boundary](../../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary) applies to derivatives and exports as well as direct reads.
 
 Separate three roles in the experience. The player controls their participation and responses. The selected research custodian can handle consent, correction and deletion. A specifically authorized analyst can see the minimum pseudonymous study records needed for the declared question. A world creator, facilitator, game administrator or friend receives no research-reading grant simply from that existing role. Infrastructure administrators are not magically unable to access stored information; the notice must describe the real access arrangement honestly.
 

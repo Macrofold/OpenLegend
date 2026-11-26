@@ -8,6 +8,7 @@ import { BASE_FIBER_CLEANING, BASE_CORD_TWISTING } from './material-methods.js';
 import { learnRecipe } from '../../knowledge.js';
 import { initializeIdentity } from '../../identity.js';
 import { migrateCognition } from '../../experience.js';
+import { mindFor } from '../../mind.js';
 import { initializePerception } from '../../kernel.js';
 import { reconcileConditions } from '../../conditions.js';
 import {
@@ -29,6 +30,7 @@ import { KNOWN_SHIELD_METHOD } from './shield-family.js';
 import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
 import { RIVER_LINE_METHOD } from './river-fishing.js';
 import { BASE_SOLO_CLEARING, STARTER_EXTENT, starterGroundAt } from './landscape.js';
+import { BASE_EVENT_APPRAISAL_RULES } from './appraisals.js';
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { reserveEntityId } from '../../data.js';
 import { baseConstructionProfile } from './canopy-scene.js';
@@ -135,6 +137,8 @@ export interface BaseOpeningActor {
   fullness: number;
   position: Position;
   supportSurfaceId: string;
+  appearance?: string;
+  sensitivityAppearance?: string;
 }
 interface BaseScenePlacement {
   id: string;
@@ -203,6 +207,11 @@ export function baseOpeningEditorFields(
       ['description', 'description'],
       ['personality', 'personality and interests'],
       ['backstory', 'authored personal history'],
+    ] as const)
+      result.push({ path: [key, field], label: `${label}: ${meaning}`, kind: 'text' });
+    for (const [field, meaning] of [
+      ['appearance', 'appearance reference'],
+      ['sensitivityAppearance', 'appearance that startles this person'],
     ] as const)
       result.push({ path: [key, field], label: `${label}: ${meaning}`, kind: 'text' });
     result.push({
@@ -310,8 +319,13 @@ const text = (
 ): value is string => typeof value === 'string' && Array.from(value).length <= maximum;
 const integer = (value: unknown, maximum: number, minimum = 0): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= minimum && value <= maximum;
-function fields(value: unknown, required: readonly string[], meaning: string) {
-  if (!hasRecordFields(value, required)) throw new Error(`Invalid ${meaning} fields.`);
+function fields(
+  value: unknown,
+  required: readonly string[],
+  meaning: string,
+  optional: readonly string[] = [],
+) {
+  if (!hasRecordFields(value, required, optional)) throw new Error(`Invalid ${meaning} fields.`);
   return value;
 }
 function point(value: unknown): value is Position {
@@ -350,6 +364,7 @@ function actor(value: unknown): asserts value is BaseOpeningActor {
       'supportSurfaceId',
     ],
     'opening person',
+    ['appearance', 'sensitivityAppearance'],
   );
   if (
     !isSafeRecordId(record.id) ||
@@ -365,7 +380,10 @@ function actor(value: unknown): asserts value is BaseOpeningActor {
     record.traits.length > BASE_OPENING_PROFILE.limits.traits ||
     !Array.isArray(record.initialGoals) ||
     record.initialGoals.length > BASE_OPENING_PROFILE.limits.goals ||
-    record.initialGoals.some((value) => !text(value, 1000) || !value.trim())
+    record.initialGoals.some((value) => !text(value, 1000) || !value.trim()) ||
+    [record.appearance, record.sensitivityAppearance].some(
+      (value) => value !== undefined && value !== '' && !isSafeRecordId(value),
+    )
   )
     throw new Error('Invalid opening person, placement or authored intention.');
   const traits = new Set<string>();
@@ -704,6 +722,7 @@ export function buildBaseInitialWorld(
       name: person.name,
       nameForm: 'proper',
       description: person.description,
+      ...(person.appearance ? { appearance: person.appearance } : {}),
       kind: person === candidate.player ? 'player' : 'npc',
       spatial: baseSpatial('person'),
       placement: worldPlacement(structuredClone(person.position), person.supportSurfaceId),
@@ -716,6 +735,15 @@ export function buildBaseInitialWorld(
     });
     world.memories[person.id] = [];
     world.knowledge[person.id] = [];
+    if (person.sensitivityAppearance) {
+      const mind = mindFor(world, person.id);
+      mind.sensitivities = {
+        rule: { ...definitionPin(BASE_EVENT_APPRAISAL_RULES) },
+        cues: [person.sensitivityAppearance],
+        onsets: {},
+      };
+      (world.minds ??= {})[person.id] = mind;
+    }
   }
   for (const scene of candidate.scene) {
     reserveEntityId(world, scene.id);

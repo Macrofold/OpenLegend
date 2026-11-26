@@ -295,6 +295,8 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  /** Authored detail-tracking capacity; selected-world admission supplies its bound. */
+  attentionCapacity?: number;
   /** Owner-only occurrence notice; contains no assailant identity or location. */
   attackModeNotice?: import('./combat-encounters.js').AttackModeNotice;
   /** Personally acquired short-lived danger and own offense; never public actor data. */
@@ -319,6 +321,9 @@ export interface ActorComponent {
   attributes?: Record<string, import('./world-modules.js').AttributeState>;
   /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
   traits?: CharacterTrait[];
+  /** Installed source features and recognition capability are independent of memory. */
+  voiceProfile?: import('./worlds/base/recognition.js').VoiceFeatures;
+  individualRecognition?: { attributeId: string };
   /** God-authored identity seeds are descriptive context, never mechanical authority. */
   description?: string;
   personality?: string;
@@ -408,6 +413,11 @@ export interface Entity extends Named {
   heat?: HeatComponent;
 }
 export interface MemoryRecord {
+  /** Lossless observer-permitted source body; not the authoritative world event. */
+  evidence?: import('./speech.js').EventEvidence;
+  observation?: import('./perception-evidence.js').ObservationContribution;
+  observations?: import('./perception-evidence.js').ObservationContribution[];
+  manifest?: import('./experience-manifest.js').ExperienceManifest;
   /** Actual native attempt that produced this personal result, not new execution authority. */
   activityId?: string;
   obligation?: import('./commitments.js').Obligation;
@@ -417,7 +427,12 @@ export interface MemoryRecord {
   sequence?: number;
   id: string;
   actorId: string;
-  kind: 'episode' | 'belief' | 'commitment' | 'reflection';
+  /** A creator supplied this personal episode without an observed event. */
+  creatorAuthored?: true;
+  kind: 'episode' | 'belief' | 'commitment' | 'reflection' | 'impression';
+  impression?: import('./remembered-impressions.js').RememberedImpression;
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
+  retention?: import('./remembered-impressions.js').ExperienceRetention;
   source: 'observed' | 'heard' | 'felt' | 'internal' | 'inferred' | 'self_thought';
   responseId?: string;
   summary: string;
@@ -432,6 +447,7 @@ export interface KnowledgeRecord {
   learnedAt: number;
   source: 'authored' | 'invented' | 'taught' | 'practiced' | 'record';
   evidenceId: string;
+  sourceReceipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
 }
 /** Closed, trusted occurrence scope; only native/server code assigns it.
  * - external: exposed through senses to the audience resolved at occurrence time.
@@ -450,7 +466,7 @@ export interface WorldEvent {
   sequence: number;
   at: number;
   type: string;
-  text: string;
+  text: import('./narration.js').NativeText;
   actorId?: string;
   targetId?: string;
   audience: string[];
@@ -541,10 +557,9 @@ export interface WorldState {
     Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>
   >;
   perceptionEpisodes?: Record<string, Record<string, string>>;
+  timePolicy?: { normalGameSecondsPerSecond: number };
   itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
-  /** Shared outward-feature baseline for the completed perception phase, not private knowledge. */
-  perceptionFeatures: Record<string, string>;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
@@ -568,6 +583,8 @@ export interface WorldState {
   simTime: number;
   /** Sampling progress affects evidence times; rates and perception caches are rebuilt. */
   nativeInterval?: { remainingSeconds: number; endsAt?: number };
+  /** Coalesced ordinary sensing work; no per-observer recurring empty timers. */
+  sensory?: import('./perception-timing.js').SensoryContinuation;
   paused: boolean;
   profile: { id: 'grounded-wilderness'; version: 1 };
   map: WorldMap;
@@ -591,6 +608,9 @@ export interface WorldState {
   minds?: Record<string, ActorMind>;
   visibleObjects?: Record<string, string[]>;
   visiblePeople?: Record<string, string[]>;
+  /** Active acquired sensory working set and current leases, owned by exposure. */
+  perceptionEvidence?: import('./perception-evidence.js').PerceptionEvidenceState;
+  receivedValues?: import('./received-values.js').ReceivedValueState;
   knowledge: Record<string, KnowledgeRecord[]>;
   events: WorldEvent[];
   /** Durable history rows outside the active event working set; not deleted evidence. */
@@ -878,6 +898,7 @@ export type Command = Envelope &
         type: 'say';
         text: string;
         targetId?: string;
+        targetRole?: import('./speech.js').SpeechTargetRole;
         selfIntroduction?: string;
         volume?: import('./acoustics.js').SpeechVolume;
       }

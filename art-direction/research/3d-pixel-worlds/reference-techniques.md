@@ -2,7 +2,7 @@
 
 **Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
-Reviewed October 14, 2026. **Confirmed** below means supported by a creator, official documentation or the supplied transcript. **Observed** means visible in the saved media. **Proposed** means an OpenLegend recommendation. A screenshot cannot establish mesh topology, texture resolution, shader code or performance.
+Reviewed October 14, 2026. **Confirmed** below means supported by a creator, official documentation or the supplied transcript. **Observed** means visible in the saved media. **Proposed** means an Open Legend recommendation. A screenshot cannot establish mesh topology, texture resolution, shader code or performance.
 
 ## Garbage Country and Noio's Blender tools
 
@@ -20,7 +20,7 @@ Noio's [Pixel Unwrapper, formerly PixPaint](https://github.com/noio/Pixel-Unwrap
 
 [Official studio](https://stonelabgames.com/) · [Steam](https://store.steampowered.com/app/2177510/EthrA/) · [requested Kickstarter](https://www.kickstarter.com/projects/ethra/ethra-by-stonelabstudio/description) · [saved environments and characters](gallery.md#ethra).
 
-**Confirmed by the developer:** in a [2023 Unity discussion](https://www.reddit.com/r/Unity3D/comments/157dsnb/after_3_years_we_are_releasing_the_first_teaser/), `fikiy` describes a 3D world with pixel-art textures, 2D sprite characters, and some 3D weapons. In a [January 2026 explanation](https://www.reddit.com/r/EthrA/comments/1qktz70/how_is_that_possible_to_make_a_game_lookinn_like/), the same developer explains that separate sprites form body parts, those parts rotate horizontally and vertically, and the assembled character is animated like a 3D character. The developer also reports CPU optimization work; that is not an OpenLegend crowd benchmark.
+**Confirmed by the developer:** in a [2023 Unity discussion](https://www.reddit.com/r/Unity3D/comments/157dsnb/after_3_years_we_are_releasing_the_first_teaser/), `fikiy` describes a 3D world with pixel-art textures, 2D sprite characters, and some 3D weapons. In a [January 2026 explanation](https://www.reddit.com/r/EthrA/comments/1qktz70/how_is_that_possible_to_make_a_game_lookinn_like/), the same developer explains that separate sprites form body parts, those parts rotate horizontally and vertically, and the assembled character is animated like a 3D character. The developer also reports CPU optimization work; that is not an Open Legend crowd benchmark.
 
 Thus the supported description is **an articulated sprite character in a 3D scene**, not automatically a single billboard, cube figure or ordinary skinned mesh with a pixel filter. Exact part geometry, view counts, depth handling and orientation rules remain undisclosed. Later secondary descriptions of model rendering are insufficient to establish a pipeline change against these direct explanations.
 
@@ -66,7 +66,7 @@ The [fan wiki](https://thelastnight.fandom.com/wiki/The_Last_Night_Wiki) provide
 
 This is a strong example of **ordinary polygon construction plus pixel texture artwork**. Geometry makes stairs, arches, walls and props; an atlas supplies coordinated surface detail. It does not require one cube for every painted pixel.
 
-**Proposed construction lesson:** establish module dimensions and shared texture density, paint compatible stone/wood/edge regions, build corners and transitions, then compose rooms and light them. For OpenLegend, use comparable methods on our own permitted assets. Appearance modules must still agree with real openings and obstacles. The product's stylized small characters are not the selected human-proportion reference.
+**Proposed construction lesson:** establish module dimensions and shared texture density, paint compatible stone/wood/edge regions, build corners and transitions, then compose rooms and light them. For Open Legend, use comparable methods on our own permitted assets. Appearance modules must still agree with real openings and obstacles. The product's stylized small characters are not the selected human-proportion reference.
 
 ## Mark Knight's illustrations
 
@@ -121,7 +121,7 @@ Status checked against the GitHub issues on October 14, 2026. An open proposal d
 | [7174 — stencil operations](https://github.com/godotengine/godot-proposals/issues/7174)         | Closed/completed; 4.5 milestone | Masking/compositing support, subject to the actual engine/backend interface.               |
 | [2713 — custom projection](https://github.com/godotengine/godot-proposals/issues/2713)          | Open                            | Custom camera matrices, including reflection clipping techniques.                          |
 
-The [current spatial-shader reference](https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/spatial_shader.html) distinguishes changing `LIGHT_VERTEX` from moving rendered geometry. These issues explain historical constraints in Godot; they are not a migration checklist for OpenLegend.
+The [current spatial-shader reference](https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/spatial_shader.html) distinguishes changing `LIGHT_VERTEX` from moving rendered geometry. These issues explain historical constraints in Godot; they are not a migration checklist for Open Legend.
 
 ## t3ssel8r and the resolution comparison
 
@@ -137,7 +137,7 @@ The resolution-comparison discussion is a useful visual prompt. However, changin
 
 **Confirmed by developer Dominick John in the interview:** conventional 3D rather than voxels, a custom Godot rendering approach, point-filtered pixel artwork, color lookup work and additional stabilization that is not fully disclosed. Blender, Affinity and Aseprite appear in the tool discussion.
 
-**For OpenLegend:** freely explorable pixel-styled 3D is a credible visual target. This is not a published drop-in algorithm or evidence that point filtering alone prevents all shimmer. The unresolved parts should stay unresolved in our documentation; do not fill them with guesses about cubemaps, hidden voxels or a particular temporal algorithm. Its engine customization is a production choice, not proof that OpenLegend must fork or replace PlayCanvas.
+**For OpenLegend:** freely explorable pixel-styled 3D is a credible visual target. This is not a published drop-in algorithm or evidence that point filtering alone prevents all shimmer. The unresolved parts should stay unresolved in our documentation; do not fill them with guesses about cubemaps, hidden voxels or a particular temporal algorithm. Its engine customization is a production choice, not proof that Open Legend must fork or replace PlayCanvas.
 
 ## Realtime rendering and animation follow-up
 

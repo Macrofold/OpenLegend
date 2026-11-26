@@ -1,20 +1,93 @@
 import { createHash } from 'node:crypto';
 import { perceivedEventType } from '@open-legend/domain';
 import type { Awareness, EventEvidence, WorldEvent } from '@open-legend/domain';
-import type { StorySource } from './history.js';
+import type { StorySource } from './history-writer.js';
 import { HistoryBatch } from './history-batch.js';
-import { encodeStoryAccount } from './personal-accounts.js';
-import type { SqlDatabase } from './store.js';
+import { encodeStoryAccount, encodeTemporalStoryAccount } from './personal-accounts.js';
+import type { ReceivedEventAccount } from './received-event-accounts.js';
+import { isPostgresText } from './sql-rows.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export interface AppendHistoryInput {
   event: WorldEvent;
-  accounts: [actorId: string, awareness: Awareness][];
+  accounts: [actorId: string, account: ReceivedEventAccount][];
 }
 
 /** Only observer-permitted identities enter participant indexes. */
 export function perspectiveColumns(source: StorySource): unknown[] {
-  const { sourceId, targetId } = source.evidence;
-  return [source.order, perceivedEventType(source.evidence), sourceId ?? null, targetId ?? null];
+  const { sourceId, targetId, actorId } = source.evidence;
+  const type = perceivedEventType(source.evidence);
+  const peer =
+    type !== 'speech'
+      ? null
+      : sourceId === actorId && targetId
+        ? targetId
+        : targetId === actorId || targetId == null
+          ? (sourceId ?? null)
+          : null;
+  return [source.order, type, sourceId ?? null, targetId ?? null, peer];
+}
+
+export function historyEventRow(worldId: string, event: WorldEvent, encoded: string): unknown[] {
+  const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
+  return [
+    worldId,
+    event.id,
+    position,
+    encoded,
+    typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
+    [
+      ...new Set(
+        Object.values(event.data ?? {}).filter(
+          (value): value is string =>
+            typeof value === 'string' && value !== event.id && isPostgresText(value),
+        ),
+      ),
+    ],
+    typeof event.data?.['utteranceId'] === 'string' ? event.data['utteranceId'] : null,
+  ];
+}
+export function historyPerspectiveRow(
+  worldId: string,
+  event: WorldEvent,
+  actorId: string,
+  evidence: EventEvidence,
+  awareness: Awareness | undefined,
+  position: number,
+  eventRevision: string,
+  temporal?: ReceivedEventAccount['temporal'],
+) {
+  const source: StorySource = {
+    id: event.id,
+    text: evidence.text,
+    evidence,
+    revision: createHash('sha256')
+      .update(eventRevision + JSON.stringify(evidence))
+      .digest('hex'),
+    time: event.at,
+    order: position,
+    type: evidence.eventType!,
+    ...(evidence.content !== undefined ? { content: evidence.content } : {}),
+  };
+  const account = temporal
+    ? encodeTemporalStoryAccount(source, temporal)
+    : encodeStoryAccount(source, awareness);
+  return {
+    source,
+    account,
+    row: [
+      worldId,
+      event.id,
+      actorId,
+      account.payload,
+      ...perspectiveColumns(source),
+      event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
+      temporal?.receipt.physicalLife ?? null,
+      temporal?.receipt.epoch ?? null,
+      temporal?.receipt.batchOrder ?? null,
+      temporal?.receipt.entryIndex ?? null,
+    ],
+  };
 }
 
 /** Shared exact append-row owner. It consumes permitted accounts, never selects a
@@ -26,26 +99,13 @@ export class HistoryAppendWriter extends HistoryBatch {
     private readonly worldId: string,
   ) {
     super(database);
-    this.accountRevision = database.projectionRevision;
   }
   event(event: WorldEvent, encoded: string) {
-    const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
-    const pending = this.add('history_events', [
-      this.worldId,
-      event.id,
-      position,
-      encoded,
-      typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
-      [
-        ...new Set(
-          Object.values(event.data ?? {}).filter(
-            (value): value is string => typeof value === 'string' && value !== event.id,
-          ),
-        ),
-      ],
-    ]);
-    return { position, pending };
+    const row = historyEventRow(this.worldId, event, encoded);
+    const pending = this.add('history_events', row);
+    return { position: Number(row[2]), pending };
   }
+
   perspective(
     event: WorldEvent,
     actorId: string,
@@ -53,31 +113,22 @@ export class HistoryAppendWriter extends HistoryBatch {
     awareness: Awareness | undefined,
     position: number,
     eventRevision: string,
+    temporal?: ReceivedEventAccount['temporal'],
   ) {
-    const source: StorySource = {
-      id: event.id,
-      text: evidence.text,
+    const { source, account, row } = historyPerspectiveRow(
+      this.worldId,
+      event,
+      actorId,
       evidence,
-      revision: createHash('sha256')
-        .update(eventRevision + JSON.stringify(evidence))
-        .digest('hex'),
-      time: event.at,
-      order: position,
-      type: evidence.eventType!,
-      ...(evidence.content !== undefined ? { content: evidence.content } : {}),
-    };
-    const account = encodeStoryAccount(source, awareness);
-    const append = () =>
-      this.add('history_perspectives', [
-        this.worldId,
-        event.id,
-        actorId,
-        account.payload,
-        ...perspectiveColumns(source),
-        event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
-      ]);
+      awareness,
+      position,
+      eventRevision,
+      temporal,
+    );
+    const append = () => this.add('history_perspectives', row);
+    const body = account.body;
     const pending =
-      account.body === undefined
+      body === undefined
         ? append()
         : (async () => {
             if (this.accountRevision === undefined) {
@@ -93,8 +144,10 @@ export class HistoryAppendWriter extends HistoryBatch {
               account.account.kind,
               event.id,
               account.account.revision,
-              account.body,
+              body,
               this.accountRevision,
+              'external-story',
+              Buffer.byteLength(body),
             ]);
             if (retained) await retained;
             await append();

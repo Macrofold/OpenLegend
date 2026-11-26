@@ -21,7 +21,7 @@ Implement all of Batch 06 — Rivals and contested ground, covering CF01–CF05 
 
 Start from local main containing this consolidated Batch 06 prompt. After selecting and refreshing that base under AGENTS.md, create and switch to the new branch codex/rivals-and-contested-ground.
 
-Start readiness: Ready on the documented local-main baseline. Equipment/shield defense, sling practice, physical method learning, known places, voluntary outings and ordinary resident decisions are already available. The technical design records the inspected commits and evidence; confirm the required implementation is present on your actual base.
+Start readiness: Ready on the documented local-main baseline. Equipment/shield defense, sling practice, physical method learning, known places, voluntary outings and ordinary NPC decisions are already available. The technical design records the inspected commits and evidence; confirm the required implementation is present on your actual base.
 Open prerequisites: None. CF01–CF05 are parts of your assignment, not deliveries to obtain from other agents. Complete them together without peer communication, intermediate handoffs or waiting for another task.
 
 Read these documents first:

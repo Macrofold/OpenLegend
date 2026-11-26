@@ -1,6 +1,6 @@
 # Beyond the dossiers — games in the AI era
 
-**Research expansion, October 14, 2026.** Companion to the [main synthesis](../essays/fun-and-sustainable-engagement.md), [theory critique](fun-research-expansion-theory.md) and [mobile/recent-game cases](fun-research-expansion-mobile-and-recent.md). This paper separates observed human experience, prototype capability, product descriptions and our OpenLegend hypotheses. It does not propose a replacement engine architecture, authorize paid calls or certify the current game's AI quality.
+**Research expansion, October 14, 2026.** Companion to the [main synthesis](../essays/fun-and-sustainable-engagement.md), [theory critique](fun-research-expansion-theory.md) and [mobile/recent-game cases](fun-research-expansion-mobile-and-recent.md). This paper separates observed human experience, prototype capability, product descriptions and our Open Legend hypotheses. It does not propose a replacement engine architecture, authorize paid calls or certify the current game's AI quality.
 
 ## 1. The useful question is what participation becomes possible
 
@@ -51,7 +51,7 @@ The comparison concerns command entry, not proof of superiority over excellent d
 
 **Inspected:** indexed publisher abstract and article-body sections; direct page rendering failed. In a 2 × 2 within-subject study of 72 participants, dynamic item status and adaptive character dialogue each improved reported presence, autonomy and enjoyment in a short 2D farming prototype. No statistically significant interaction was detected; this must not become a claim of super-additive synergy or proof of independence.
 
-**Our use:** this is a closer match to OpenLegend's useful-invention question than a demonstration of fluent prose alone. It motivates comparing outputs that affect supported play with equally polished but functionally irrelevant outputs. Its single prototype and short task do not establish universal 3D behavior, enduring enjoyment, commercial viability or broad physics generation.
+**Our use:** this is a closer match to Open Legend's useful-invention question than a demonstration of fluent prose alone. It motivates comparing outputs that affect supported play with equally polished but functionally irrelevant outputs. Its single prototype and short task do not establish universal 3D behavior, enduring enjoyment, commercial viability or broad physics generation.
 
 <a id="a05"></a>
 ### A05 — Conversation timing is not one latency number
@@ -60,7 +60,7 @@ The comparison concerns command entry, not proof of superiority over excellent d
 
 **Inspected:** indexed publisher abstract, highlights and introductory methods description. A 34-participant study varied initial delay and streamed-output pace across four values each in a simulated RPG conversation environment. Output pace produced more pronounced differences than initial delay; the highest delays tended to hurt experience, while moderate pacing was sometimes preferred over instant output. Character personality also mattered.
 
-**Our use:** evaluate the time until the player can understand and act, not just the first token. Reading burden, interruptions and whether the player can keep participating belong in that evaluation. This is not an optimal delay specification for OpenLegend or a reason to insert artificial waits everywhere. Quiet textual conversation, voiced dialogue and an urgent encounter can require different timing.
+**Our use:** evaluate the time until the player can understand and act, not just the first token. Reading burden, interruptions and whether the player can keep participating belong in that evaluation. This is not an optimal delay specification for Open Legend or a reason to insert artificial waits everywhere. Quiet textual conversation, voiced dialogue and an urgent encounter can require different timing.
 
 <a id="a06"></a>
 ### A06 — Role-sensitive constraints: distinguish human findings from model ratings
@@ -78,7 +78,7 @@ The comparison concerns command entry, not proof of superiority over excellent d
 
 **Inspected:** publisher and author abstracts. Ten Stardew Valley players tried iterative character-mod creation with fine-grained controls. They welcomed expressing their ideas but reported difficulty realizing complex visions and concerns about originality and community participation. These are small-study accounts, not proof of an automatic diverse creator economy.
 
-**Our use:** generation should support selecting, rejecting and revising, not just produce more assets. Creating a person for a world and playing a character inside that world are different authority modes. OpenLegend should not give the embodied player arbitrary author control merely because both interfaces can accept language. Compatibility, credit, curation and whether another person enjoys the result remain separate questions.
+**Our use:** generation should support selecting, rejecting and revising, not just produce more assets. Creating a person for a world and playing a character inside that world are different authority modes. Open Legend should not give the embodied player arbitrary author control merely because both interfaces can accept language. Compatibility, credit, curation and whether another person enjoys the result remain separate questions.
 
 <a id="a08"></a>
 ### A08 — Generative Agents: believable activity is not yet demonstrated game value
@@ -87,7 +87,7 @@ The comparison concerns command entry, not proof of superiority over excellent d
 
 **Inspected:** published and author abstracts. The work places 25 agents in a small simulated town and examines believable individual and emergent social behavior, including coordinated attendance at a party. Ablations investigate contributions of observation, planning and reflection. Those are valuable behavioral results, not a demonstrated enjoyable adventure or production-scale persistence guarantee.
 
-**Our use:** someone independently doing something can make a world legible and surprising, but the player still needs a reason to notice or participate. More offscreen activity is not automatically a better game. For an OpenLegend encounter, test the particular actor's own purpose and its visible consequence rather than counting simulated conversations or treating synthetic populations as substitute playtesters.
+**Our use:** someone independently doing something can make a world legible and surprising, but the player still needs a reason to notice or participate. More offscreen activity is not automatically a better game. For an Open Legend encounter, test the particular actor's own purpose and its visible consequence rather than counting simulated conversations or treating synthetic populations as substitute playtesters.
 
 ## 3. Products and demonstrations: what is actually being offered
 
@@ -103,7 +103,7 @@ The vampire premise gives conversation an objective: gain the confidence and acc
 
 **Source:** Ubisoft, [*Ubisoft Reveals Teammates — An AI Experiment to Change the Game*](https://news.ubisoft.com/it-it/article/3mWlITIuWuu0MoVuR6o8ps/ubisoft-reveals-teammates-an-ai-experiment-to-change-the-game), November 21, 2025. The localized URL returned English article text.
 
-**Inspected:** announcement text, not video playback or the prototype. Ubisoft describes natural voice interaction with an assistant and accompanying characters that respond through dialogue and actions. **Our inference:** contextual orders can reduce command-search work while retaining a concrete activity. The announcement is evidence of the experiment's intended interaction, not comparative proof that it is enjoyable, a generally available feature in another Ubisoft title, or a reason OpenLegend should become an omnipotent assistant interface.
+**Inspected:** announcement text, not video playback or the prototype. Ubisoft describes natural voice interaction with an assistant and accompanying characters that respond through dialogue and actions. **Our inference:** contextual orders can reduce command-search work while retaining a concrete activity. The announcement is evidence of the experiment's intended interaction, not comparative proof that it is enjoyable, a generally available feature in another Ubisoft title, or a reason Open Legend should become an omnipotent assistant interface.
 
 <a id="a11"></a>
 ### A11 — Genie 3 and Project Genie: visual possibility is not a durable world contract
@@ -112,7 +112,7 @@ The vampire premise gives conversation an objective: gain the confidence and acc
 
 **Inspected:** official articles, not a hands-on session. The model announcement describes navigable generated environments with limited interaction duration and action/agent limitations. The January prototype specifies 60-second generations and control/physics limitations; May expands grounding and access. The January availability restriction is therefore not a complete October availability claim, and its generation cap is retained as launch evidence rather than independently retested current behavior.
 
-**Our inference:** these are significant possibilities for exploring and remixing appearances. They do not themselves establish stable inventory, ownership, independent characters or multi-session consequences. OpenLegend's claim that a made tool remains usable requires evidence about that tool's rules and history, not merely a convincing video of it being used. Generated visual scenes and authoritative simulation are different research targets, not rival labels for the same achievement.
+**Our inference:** these are significant possibilities for exploring and remixing appearances. They do not themselves establish stable inventory, ownership, independent characters or multi-session consequences. Open Legend's claim that a made tool remains usable requires evidence about that tool's rules and history, not merely a convincing video of it being used. Generated visual scenes and authoritative simulation are different research targets, not rival labels for the same achievement.
 
 ## 4. Learnings to carry into the main principles
 
@@ -130,7 +130,7 @@ These are **our cross-source hypotheses**, not newly measured effects.
 
 **Generation must earn its place against good authored alternatives.** Test whether an authored encounter with excellent responses already provides the desired value. AI may be worthwhile precisely where the player supplies an unanticipated intention, where a remembered event changes a relationship, or where an accepted invention becomes usable. More fluent exposition of a fixed result is not automatically a strong reason to add runtime generation.
 
-## 5. Mapping to OpenLegend without mistaking targets for delivered behavior
+## 5. Mapping to Open Legend without mistaking targets for delivered behavior
 
 The pinned [repository README](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/README.md) documents native interaction and a finite, checked recipe-invention route. The [product priorities](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/docs/repertoires/gameplay-priorities.md) require a small genuine instance of invention and independent, observation-grounded character consequence in the playable adventure. This is a documentation snapshot, not a fresh playtest or permission to claim all target behavior is delivered.
 
@@ -151,4 +151,4 @@ Use the same task, comparable content and a strong baseline. Counterbalance expo
 
 Human evidence remains small, task-specific and often short-term; some central work is a preprint. Abstract-only sources cannot support a full methodological appraisal. The generative-farming, Minecraft-command and dialogue studies test different interventions and are not pooled into an effect size. Model judges and scripted test actors can check some consistency properties but do not establish human fun, willingness to return or emotional attachment. Vendor demonstrations establish their stated capability and limits, not mass-audience outcomes.
 
-No games, prototypes, videos or paid model services were run for this paper. Publication dates are distinguished from product-release dates and evolving access. Source failures remain explicit. The main essay adopts these as sharper research questions and bounded principles, not as proof that adding AI will make OpenLegend fun.
+No games, prototypes, videos or paid model services were run for this paper. Publication dates are distinguished from product-release dates and evolving access. Source failures remain explicit. The main essay adopts these as sharper research questions and bounded principles, not as proof that adding AI will make Open Legend fun.

@@ -16,7 +16,7 @@ A game integration supplies character and scene information to an external appli
 
 Mantella supports configurable language-model providers, including OpenRouter, and local or hosted speech components. Consequently, “Mantella's model” is not one fixed checkpoint. Quality and latency depend on configuration, context, model, serving path and the game's integration. Its documentation also describes optional NPC-to-NPC radiant conversation, advanced actions and vision. These are configurable capabilities, not evidence of an always-thinking society running the same loop for every unloaded NPC. [Installation/configuration][install]
 
-The useful architectural comparison with Kevin is not which demo looks more impressive. Kevin tightly combines a selected companion with a custom motor controller. Mantella concentrates on broad character coverage, scene dialogue and game actions. OpenLegend needs persistent independent agency and consistent physical consequences, so neither project's breadth or entertainment value should be mistaken for a drop-in semantic contract.
+The useful architectural comparison with Kevin is not which demo looks more impressive. Kevin tightly combines a selected companion with a custom motor controller. Mantella concentrates on broad character coverage, scene dialogue and game actions. Open Legend needs persistent independent agency and consistent physical consequences, so neither project's breadth or entertainment value should be mistaken for a drop-in semantic contract.
 
 ## 3. Exactly what context is assembled
 
@@ -35,7 +35,7 @@ The useful architectural comparison with Kevin is not which demo looks more impr
 
 The default single-character prompt is compactly organized into identity, background, history, current scene and rules. It asks for spoken dialogue rather than narration or thoughts and directs the model to remain in character. This is a substantial part of the apparent consistency. It is not necessary to insert an explicit internal monologue before each spoken line. [Prompt definitions][prompts]
 
-The implementation has a consequential overflow policy: when its configured prompt fraction is exceeded, it tries full biography plus summaries, then biography without summaries, then neither. The inspected fraction is 45% of the model context limit. Thus a running conversation can remain fluent while losing identity or memory context. This is an implementation tradeoff to inspect, not a recommendation for OpenLegend, whose current accepted identity and required evidence cannot silently disappear.
+The implementation has a consequential overflow policy: when its configured prompt fraction is exceeded, it tries full biography plus summaries, then biography without summaries, then neither. The inspected fraction is 45% of the model context limit. Thus a running conversation can remain fluent while losing identity or memory context. This is an implementation tradeoff to inspect, not a recommendation for Open Legend, whose current accepted identity and required evidence cannot silently disappear.
 
 ## 4. “They stay in character” has several causes
 
@@ -43,7 +43,7 @@ Our interpretation is that at least five factors can contribute: a coherent supp
 
 A skeptical scholar demanding evidence and a guard dismissing strange claims can both be plausible continuations of those roles. This does not prove that either agent internally maintains a sound causal model, checks every visual anomaly or has a stable belief-revision policy. A model may also confidently invent a book's rarity, a secret or a past experience because it fits the scene.
 
-For OpenLegend's original world, model pretraining cannot be relied upon to supply the right lore. Supply authored and legitimately learned knowledge, not a world wiki that includes every secret. Evaluate whether the character remains recognizable when names and famous-franchise cues are removed, circumstances change and a tempting player assertion contradicts permitted evidence.
+For Open Legend's original world, model pretraining cannot be relied upon to supply the right lore. Supply authored and legitimately learned knowledge, not a world wiki that includes every secret. Evaluate whether the character remains recognizable when names and famous-franchise cues are removed, circumstances change and a tempting player assertion contradicts permitted evidence.
 
 The most useful transfer is **situated characterization with real stakes**, not a stronger “never break character” sentence alone. Distinguish personal disposition, private belief, actual observation, hearsay and operator instructions. A character can refuse, doubt, lie or change their mind; none of those choices permits the system to fabricate an observation.
 
@@ -53,13 +53,13 @@ The inspected multi-NPC prompt includes the participating biographies and summar
 
 That distinction is especially relevant to the video's apparent group belief changes. Shared prompt material can help a model produce coherent disagreement or a dramatic chorus. It can also make information available across character boundaries inside a single generation. Source inspection establishes that architecture, not a finding that every Mantella conversation leaks a specific secret.
 
-OpenLegend's accepted direction is independent actor interpretation and actual participation. A future batched implementation may share immutable common computation, but it must not merge private motives or authorize one model to invent another person's consent. Compare a shared-scene writer as a diagnostic baseline or an explicitly different product mode, not as an unnoticed optimization of independent minds.
+Open Legend's accepted direction is independent actor interpretation and actual participation. A future batched implementation may share immutable common computation, but it must not merge private motives or authorize one model to invent another person's consent. Compare a shared-scene writer as a diagnostic baseline or an explicitly different product mode, not as an unnoticed optimization of independent minds.
 
 ## 6. How memory works, and what it does not prove
 
 `Summaries` stores conversation summaries in text files and loads the latest summaries for a character/world identity. In a multi-character prompt it concatenates memories with character labels. On saving conversation state, it builds per-NPC message threads from recorded join/leave participation. Characters with identical heard histories can share one summarization call. Pending sharing can append an attributed summary to a recipient. [Summary implementation][summaries]
 
-This is more careful than assuming every nearby person heard the entire conversation. It also shows that **sharing computation is possible when the actual input experience is the same**. It is not the same as OpenLegend's graded acoustic evidence, stable identity, exact source versions, current-format restore and forgetting contract.
+This is more careful than assuming every nearby person heard the entire conversation. It also shows that **sharing computation is possible when the actual input experience is the same**. It is not the same as Open Legend's graded acoustic evidence, stable identity, exact source versions, current-format restore and forgetting contract.
 
 The inspected code has message-count thresholds for ordinary summaries, with different treatment of reload and radiant conversations. Small interactions can therefore be omitted by policy. Any compression can additionally lose a correction, uncertainty or causal qualification. The presence of a summary file does not establish that a later choice correctly uses it.
 
@@ -85,13 +85,13 @@ A model saying “I see no chickens” is therefore not evidence of deep resista
 
 The transcript contains a useful diagnostic case: a character denies attacking while native combat continues. Without the actual model context and evidence of intended deception, the transcript alone cannot establish whether this is missing or stale own-action evidence, model error or a deliberate lie. A coherent character needs permitted current own-action state and recent actual outcomes; that does not require every spoken claim to be honest. Do not invent deceptive intent afterward to excuse a grounding error. Saying “let us stop” cannot stop a combat package unless the change is actually admitted and executed.
 
-For OpenLegend, include own ongoing action, requested-but-unaccepted changes, completed outcomes and relevant transition failures in the required evidence path. Keep world facts, personal belief and chosen speech distinct. Refusal, incapacity, service failure and native rejection must not silently become a different character motivation. Do not paper over contradictions with more dramatic prose, or erase legitimate fictional deception to make every utterance factually correct.
+For Open Legend, include own ongoing action, requested-but-unaccepted changes, completed outcomes and relevant transition failures in the required evidence path. Keep world facts, personal belief and chosen speech distinct. Refusal, incapacity, service failure and native rejection must not silently become a different character motivation. Do not paper over contradictions with more dramatic prose, or erase legitimate fictional deception to make every utterance factually correct.
 
 ## 8. Voice and latency lessons
 
 Mantella's real-time guidance emphasizes the whole pipeline: model first-token latency and throughput, prompt size, local versus remote execution, transcription endpointing, lip-sync preparation and sentence delivery. It describes fast-response and lazy lip-sync options, and proactive transcription that overlaps processing with speech detection. These are documented engineering tactics, not independently reproduced latency measurements. [Real-time guide][realtime]
 
-Streaming audio alone is insufficient when the application buffers an entire text response first. Conversely, extremely short independently synthesized chunks may worsen prosody or speaker consistency. Measure useful first audio and sustained playback, not only an endpoint's first byte. The [voice dossier](05-realtime-voice-and-serving.md) compares these tradeoffs and preserves OpenLegend's existing text-first and audience boundaries.
+Streaming audio alone is insufficient when the application buffers an entire text response first. Conversely, extremely short independently synthesized chunks may worsen prosody or speaker consistency. Measure useful first audio and sustained playback, not only an endpoint's first byte. The [voice dossier](05-realtime-voice-and-serving.md) compares these tradeoffs and preserves Open Legend's existing text-first and audience boundaries.
 
 Mantella's own fine-tuned-model page explicitly describes its older Skyrim Llama 3 8B fine-tune as outdated and no longer recommended against newer general models. That is useful contrary evidence to the assumption that a roleplay-labelled checkpoint must be superior. Its historical synthetic interaction dataset is a possible training-method reference, not proof of current quality. [Fine-tuning documentation][finetunes]
 
@@ -99,17 +99,17 @@ Mantella's own fine-tuned-model page explicitly describes its older Skyrim Llama
 
 The author's separate [Chasm repository][chasm] packages character cards, lore/action discovery, local speech, witnessed events, schedules and save-aware memory. Selected source inspection supports several concrete lessons:
 
-| Mechanism | Source-level observation | OpenLegend interpretation |
+| Mechanism | Source-level observation | Open Legend interpretation |
 | --- | --- | --- |
 | Speaker selection | `orchestrator.rs` uses native scores for crosshair, name, recency, distance and topic plus jitter, replacing another model call | Cheap turn allocation is a legitimate comparison, but forced top-speaker/group responses are not independent willingness. |
 | Event bundling | `witness.rs` batches witnessed events and separates memory-only intake from reaction triggers | Remembering every eligible event need not generate speech or a model call for each event. |
-| Witness eligibility | Range-based captured witnesses can have optional sight gates | Useful bridge mechanism, not proof of exact line of sight, hearing or identity for OpenLegend. |
+| Witness eligibility | Range-based captured witnesses can have optional sight gates | Useful bridge mechanism, not proof of exact line of sight, hearing or identity for Open Legend. |
 | Learned habits | Journaled intentions can become event-triggered opportunities for a fresh action turn | External-memory adaptation is not weight training or a verified model-free reflex. |
 | Long actions | Schedules and movement continue outside a dialogue turn | Preserve intent through native work rather than keeping an LLM session alive. |
 | Completion shortcuts | Some scheduler steps use fixed settling delays; failed or missing journeys may allow progress | Do not confuse elapsed time or command submission with actual completion. |
 | Save semantics | Some operational report/completion ledgers deliberately carry forward while tasks rewind | “Everything rolls back” needs field-by-field evidence; do not copy broad README claims as lifecycle guarantees. |
 
-These observations come from the inspected `README.md`, bridge guide, `orchestrator.rs`, `witness.rs` and `scheduler.rs` at source snapshot `d740b9742869e436576d93180f7b5886afdfa9db`. No build, comprehensive security audit or gameplay benchmark was performed. The actor-witness and task semantics are interesting references, not an adopted replacement for existing OpenLegend owners.
+These observations come from the inspected `README.md`, bridge guide, `orchestrator.rs`, `witness.rs` and `scheduler.rs` at source snapshot `d740b9742869e436576d93180f7b5886afdfa9db`. No build, comprehensive security audit or gameplay benchmark was performed. The actor-witness and task semantics are interesting references, not an adopted replacement for existing Open Legend owners.
 
 ## 10. Practical conclusions
 

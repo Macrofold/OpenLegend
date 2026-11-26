@@ -1,3 +1,4 @@
+import copy from './handover-copy.json' with { type: 'json' };
 import { person, subjectNarration } from '../../narration.js';
 
 // Authored sharing policy for the bundled world, not a universal consent law.
@@ -6,59 +7,90 @@ import { person, subjectNarration } from '../../narration.js';
 // docs/worlds/base/social.md#offering-and-accepting-possessions
 export const BASE_HANDOVER = {
   /** Compact generated suggestions; retained exact disclosures remain addressable. */
-  candidateLots: 6,
+  candidateLots: copy.candidateLots,
+  nearestProposalRecipients: copy.nearestProposalRecipients,
+  residentProposalLots: copy.residentProposalLots,
+  residentProposals: copy.residentProposals,
+  typedProposalLots: copy.typedProposalLots,
+  typedProposals: copy.typedProposals,
+  /** Internal lot identities give equal-priority proposals a stable order. */
+  compareLotIds: (a: string, b: string) => Number(a > b) - Number(a < b),
+  copy,
   text: {
-    title: 'Trade',
-    newOffer: 'New offer',
-    review: 'Review changed terms',
-    refresh: 'Review current items',
-    choose: 'Choose an item',
-    whole: 'This object must be offered whole.',
-    giveQuantity: 'Quantity you give',
-    receiveQuantity: 'Quantity you receive',
-    selectionHint:
-      'Search or page through your belongings and the items this person has offered you. Their items and amounts may have changed.',
-    exchanged: (terms: string) => `Exchanged ${terms}.`,
-    into: 'Into your possessions',
-    to: 'To',
-    remembered: 'Last disclosed; current availability is unknown.',
-    noTransfer: 'Nothing moves before acceptance.',
-    give: 'You give',
-    receive: 'You receive',
-    offer: 'Offer',
-    accept: 'Accept',
-    decline: 'Decline',
-    withdraw: 'Withdraw',
-    counter: 'Counteroffer',
-    gift: 'Nothing — a gift',
-    waiting: 'Waiting for their reply',
-    incoming: 'Your reply is needed',
-    changed: 'The terms changed. Review both sides before replying.',
-    unavailable: 'The agreed items are no longer available.',
-    giftUnavailable: 'The offered items are no longer available.',
-    unknown: 'No item has been disclosed. They can offer an item first.',
+    title: copy.title,
+    newOffer: copy.newOffer,
+    review: copy.review,
+    refresh: copy.refresh,
+    choose: copy.choose,
+    whole: copy.whole,
+    giveQuantity: copy.giveQuantity,
+    receiveQuantity: copy.receiveQuantity,
+    selectionHint: copy.selectionHint,
+    exchanged: (terms: string) => copy.reciprocalAccepted.replace('{terms}', () => terms),
+    into: copy.into,
+    to: copy.to,
+    remembered: copy.remembered,
+    noTransfer: copy.noTransfer,
+    give: copy.give,
+    receive: copy.receive,
+    offer: copy.offer,
+    accept: copy.accept,
+    decline: copy.decline,
+    withdraw: copy.withdraw,
+    counter: copy.counter,
+    gift: copy.gift,
+    waiting: copy.waiting,
+    incoming: copy.incoming,
+    changed: copy.changed,
+    unavailable: copy.reciprocalUnavailable,
+    giftUnavailable: copy.giftUnavailable,
+    unknown: copy.unknown,
     carriedLot: (name: string, index: number) => `${name} (carried stack ${index + 1})`,
-    disclosedLot: (name: string, index: number) => `${name} (disclosed stack ${index + 1})`,
+    disclosedLot: (name: string, index: number) =>
+      copy.disclosedLot.replace(/\{(name|number)\}/g, (_slot, key) =>
+        key === 'name' ? name : String(index + 1),
+      ),
     actionLabel: (verb: string, terms: string, person: string, incoming: boolean) =>
       `${verb} ${terms} ${incoming ? 'from' : 'to'} ${person}`,
-    acceptDescription: (receive: string, give?: string) =>
-      `Receive ${receive}${give ? ` and give ${give}; both move together or neither.` : ' into my possession now.'}`,
-    declineDescription: (person: string, terms: string, give?: string) =>
-      `Decline ${person}'s offer of ${terms}. Close this proposal${give ? ` while keeping my ${give}` : ''}; receive nothing and transfer nothing.`,
+    acceptDescription: (receive: string, give: string) =>
+      copy.replyAcceptTrade.replace(/\{(receive|give)\}/g, (_slot, key) =>
+        key === 'receive' ? receive : give,
+      ),
+    declineDescription: (person: string, terms: string, give: string) =>
+      copy.replyDeclineTrade.replace(/\{(person|terms|give)\}/g, (_slot, key) =>
+        key === 'person' ? person : key === 'terms' ? terms : give,
+      ),
     withdrawDescription: (terms: string) => `Withdraw my offer of ${terms}; nothing moves.`,
     counterDescription: (give: string, receive: string) =>
-      `Counteroffer: give ${give} to receive ${receive}. This replaces the earlier terms; they must accept the new revision.`,
+      (receive ? copy.counterDescription : copy.counterGiftDescription).replace(
+        /\{(give|receive)\}/g,
+        (_slot, key) => (key === 'give' ? give : receive),
+      ),
     exchangeDescription: (give: string, receive: string) =>
-      `Give ${give} to receive ${receive}. Availability is checked when agreeing.`,
+      copy.exchangeDescription.replace(/\{(give|receive)\}/g, (_slot, key) =>
+        key === 'give' ? give : receive,
+      ),
     giftDescription: (give: string, person: string, minutes: number) =>
-      `Offer ${give} to ${person}. Nothing moves unless they accept within ${minutes} game minutes; I keep it meanwhile and can withdraw it.`,
-    replyDuringWork: 'Replying does not interrupt unrelated work.',
-    draftChanged:
-      'The offer changed or ended. Keep your draft and review the current terms, or submit a new offer.',
-    terms: (give: string, receive?: string) => (receive ? `${give} for ${receive}` : give),
-    witness: (verb: string) => `${verb} an item exchange with someone nearby.`,
+      copy.giftDescription.replace(/\{(give|person|minutes)\}/g, (_slot, key) =>
+        key === 'give' ? give : key === 'person' ? person : String(minutes),
+      ),
+    replyGift: (accept: boolean, person: string, terms: string) =>
+      (accept ? copy.replyAcceptGift : copy.replyDeclineGift).replace(
+        /\{(person|terms)\}/g,
+        (_slot, key) => (key === 'person' ? person : terms),
+      ),
+    replyDuringWork: copy.replyDuringWork,
+    draftChanged: copy.draftChanged,
+    terms: (give: string, receive?: string) =>
+      receive ? `${give}${copy.reciprocalSeparator}${receive}` : give,
+    witness: (verb: string) => copy.witnessExchange.replace('{verb}', () => verb),
     participantEvent: (personId: string, verb: string, terms: string) =>
-      subjectNarration(personId, `${verb} an exchange of ${terms}.`),
+      subjectNarration(
+        personId,
+        copy.participantExchange.replace(/\{(verb|terms)\}/g, (_key, part) =>
+          part === 'verb' ? verb : terms,
+        ),
+      ),
     giftEvent: (personId: string, verb: string, terms: string) =>
       verb === 'expired' || verb === 'lapsed'
         ? { parts: [person(personId, 'possessive'), ` offer of ${terms} ${verb}.`] }
@@ -68,7 +100,6 @@ export const BASE_HANDOVER = {
               ? `offered ${terms} to someone nearby.`
               : `${verb} an offer of ${terms}.`,
           ),
-    decision:
-      'Choose freely using the exact items, your current needs, possessions and goals. Declining is a valid choice. No item moves before acceptance.',
+    decision: copy.decision,
   },
 } as const;

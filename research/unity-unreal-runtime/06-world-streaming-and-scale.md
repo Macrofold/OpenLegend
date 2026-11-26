@@ -1,6 +1,6 @@
 # 06 — World streaming, representation, and simulation scale
 
-Research reviewed on **2026-10-23**, against the release families established in [01](01-evidence-and-version-baseline.md). This chapter studies how the engines limit resident content and active work. It contains no proposed OpenLegend architecture and no measured capacity claim.
+Research reviewed on **2026-10-23**, against the release families established in [01](01-evidence-and-version-baseline.md). This chapter studies how the engines limit resident content and active work. It contains no proposed Open Legend architecture and no measured capacity claim.
 
 ## Several different meanings of “the world is loaded”
 
@@ -16,7 +16,7 @@ The table is an analytical distinction used throughout this chapter. It does not
 | Network relevance     | Which connection receives which replicated objects and updates?                     | A complete model of perception, secrecy, or remembered evidence |
 | Persistence           | Which identities and changes survive unloading or restarting?                       | That the original actors, jobs, or pointers remain valid        |
 
-This separation matters to OpenLegend's combination of persistent authored places and autonomous characters. A rendering or bandwidth optimization does not, by itself, explain what an absent character does over elapsed world time.
+This separation matters to Open Legend's combination of persistent authored places and autonomous characters. A rendering or bandwidth optimization does not, by itself, explain what an absent character does over elapsed world time.
 
 ## Unreal World Partition
 

@@ -4,7 +4,7 @@
 
 [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Library](../README.md) · [Original KOTOR dossier](star-wars-knights-of-the-old-republic.md)
 
-**Spoilers:** the opening sections discuss recruitment and progression. The story section and examples reveal companion development, planet resolutions, party separation and the final opponent. This is reference research, not an accepted OpenLegend feature specification. Constructed examples below are rules-based illustrations, not claims of personally recorded play.
+**Spoilers:** the opening sections discuss recruitment and progression. The story section and examples reveal companion development, planet resolutions, party separation and the final opponent. This is reference research, not an accepted Open Legend feature specification. Constructed examples below are rules-based illustrations, not claims of personally recorded play.
 
 **September 27 audit:** all R01–R14 sections and the mechanics inventory were reread. The audit added the original 2005 Obsidian postmortem, the 2015 Aspyr desktop update, a directly reported US sales milestone, and all-time Steam helpful/negative material. It preserves the base-game / TSLRCM distinction rather than treating later restoration-heavy player testimony as launch reception.
 

@@ -4,7 +4,7 @@ import {
   advanceWithNavigation,
   prepareWorldNavigation,
 } from '../../../tests/fixtures/navigation.js';
-import { headingFrame } from './follow.js';
+import { headingFrame } from '@open-legend/spatial';
 import {
   bindActionInvocation,
   captureActorFrame,
@@ -46,11 +46,13 @@ const relative: ActionInvocation = {
 const response: ActorResponse = {
   operations: [
     {
+      act: null, goal: null, plan: null, think: null,
       localId: 'voice',
       requiresAccepted: [],
       talk: { text: 'Still walking.', addresseeEntityId: null, volume: 'normal' },
     },
     {
+      talk: null, goal: null, plan: null, think: null,
       localId: 'step',
       requiresAccepted: [],
       act: {
@@ -96,6 +98,7 @@ function commit(world: WorldState, capturedActorFrame?: string, reply = response
     {},
     undefined,
     {},
+    {}, undefined, {},
     capturedActorFrame,
   );
 }

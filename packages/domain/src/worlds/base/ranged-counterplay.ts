@@ -1,3 +1,5 @@
+import arms from './config/armament-manufacture.json' with { type: 'json' };
+import display from './config/ordinary-activity-display.json' with { type: 'json' };
 import { quadraticRoots, SPATIAL_LIMITS, type WorldPoint } from '@open-legend/spatial';
 import { bodyCenter } from '../../spatial.js';
 import type { Entity, WorldState } from '../../types.js';
@@ -42,7 +44,7 @@ export function baseObservedAimPoint(
 }
 
 /** Bundled straight-flight tuning. See docs/worlds/base/ranged-counterplay.md. */
-export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: 3 } as const;
+export const BASE_PROJECTILE_SPEED = { stone: 0.5, arrow: arms.arrowFlightSpeed } as const;
 export const BASE_PROJECTILE_CONTACT_WARNING =
   'This shot can injure any body in its path, including someone other than your target. Once fired, it cannot be recalled.';
 
@@ -67,7 +69,7 @@ export const BASE_RANGED_TEXT = {
   readyLabel: 'Aim ready',
   notReady: 'The selected aim is still preparing.',
   cancelled: 'Aim ended without firing. No projectile was spent.',
-  ammunitionUnavailable: 'The selected ammunition is unavailable.',
+  ammunitionUnavailable: display.ranged.ammunitionUnavailable,
   reservationUnavailable: 'One projectile could not be reserved.',
   selectedChanged: 'The selected body, tool or ammunition changed.',
   targetLost: 'The selected target is no longer perceived.',
@@ -83,6 +85,7 @@ export const BASE_RANGED_TEXT = {
   contactHit: 'was contacted by a projectile.',
   contactStopped: 'stopped a projectile without injury.',
   contactSource: ' The projectile came from ',
+  terminated: 'A committed projectile terminated.',
   observedHit: 'hit ',
   observedNoInjury: 'did not injure ',
   observedCover: 'saw the projectile stop against solid cover.',
@@ -91,6 +94,34 @@ export const BASE_RANGED_TEXT = {
 };
 
 export const BASE_EVASION_KEYWORDS = ['evade', 'dodge'];
+const evasionRecovery = '{label} is ready in {seconds} game seconds. Walking remains available.';
+const evasionDistance = 'Choose a distinct supported destination within {maximum} m.';
+export const BASE_EVASION_ENDED_EVENT = 'evasion-ended';
+const evasionChoiceLabel = '{label} {direction}';
+const evasionChoiceDetails =
+  'Move {distance} m along the selected supported path in {seconds} game seconds; wait {repeatSeconds} game seconds between evasions. {description}';
+
+function evasionWords(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (marker, key: string) =>
+    Object.hasOwn(values, key) ? String(values[key]) : marker,
+  );
+}
+
+export function baseEvasionChoiceLabel(label: string, direction: string): string {
+  return evasionWords(evasionChoiceLabel, { label, direction });
+}
+
+export function baseEvasionChoiceDetails(
+  distance: number,
+  profile: { seconds: number; repeatSeconds: number; description: string },
+): string {
+  return evasionWords(evasionChoiceDetails, {
+    distance: distance.toFixed(2),
+    seconds: profile.seconds,
+    repeatSeconds: profile.repeatSeconds,
+    description: profile.description,
+  });
+}
 export const BASE_EVASION_TEXT = {
   description:
     'Choose a short supported evasive movement. Current distance, duration and repeat limits are disclosed with the action.',
@@ -99,22 +130,59 @@ export const BASE_EVASION_TEXT = {
     'Other supported short destinations are not listed; ordinary movement remains available.',
   unavailable: 'This body cannot make that evasive movement.',
   recovery: (label: string, seconds: number) =>
-    `${label} is ready in ${seconds} game seconds. Walking remains available.`,
-  distance: (maximum: number) => `Choose a distinct supported destination within ${maximum} m.`,
+    evasionRecovery.replace('{seconds}', String(seconds)).replace('{label}', () => label),
+  distance: (maximum: number) => evasionDistance.replace('{maximum}', String(maximum)),
   blockedPath: 'That short path is blocked or unsupported.',
   interrupted: 'The chosen movement was interrupted.',
   obstructed: 'The chosen movement stopped at a physical obstruction.',
+  started: 'started the chosen evasive movement.',
   finished: 'finished the chosen evasive movement.',
   completed: 'The chosen movement ended.',
   injuryInterrupted: 'Injury interrupted the chosen movement.',
 };
+
+export function baseEvasionOccurrenceRules() {
+  return {
+    unavailable: BASE_EVASION_TEXT.unavailable,
+    recovery: evasionRecovery,
+    distance: evasionDistance,
+    blockedPath: BASE_EVASION_TEXT.blockedPath,
+    interrupted: BASE_EVASION_TEXT.interrupted,
+    obstructed: BASE_EVASION_TEXT.obstructed,
+    started: BASE_EVASION_TEXT.started,
+    finished: BASE_EVASION_TEXT.finished,
+    completed: BASE_EVASION_TEXT.completed,
+    injuryInterrupted: BASE_EVASION_TEXT.injuryInterrupted,
+    endedEvent: BASE_EVASION_ENDED_EVENT,
+    distanceFact: 'Distance (m)',
+    durationFact: 'Duration (game seconds)',
+    repeatFact: 'Repeat interval (game seconds)',
+    pathFact: 'Path',
+    directions: BASE_EVASION_DIRECTIONS,
+    choiceLabel: evasionChoiceLabel,
+    choiceDetails: evasionChoiceDetails,
+    destinationScope: BASE_EVASION_TEXT.destinationScope,
+  };
+}
+
+export const BASE_RANGED_CHOICE_LABEL = '{label} at {target} with {tool}';
 
 export function rangedChoiceLabel(
   type: 'aim' | 'shoot-once' | 'release-shot',
   target: string,
   tool: string,
 ): string {
-  return `${type === 'aim' ? BASE_RANGED_TEXT.aimName : type === 'release-shot' ? BASE_RANGED_TEXT.shootingName : BASE_RANGED_TEXT.shotName} at ${target} with ${tool}`;
+  const label =
+    type === 'aim'
+      ? BASE_RANGED_TEXT.aimName
+      : type === 'release-shot'
+        ? BASE_RANGED_TEXT.shootingName
+        : BASE_RANGED_TEXT.shotName;
+  const fields = { label, target, tool };
+  return BASE_RANGED_CHOICE_LABEL.replace(
+    /\{(label|target|tool)\}/g,
+    (_, key: keyof typeof fields) => fields[key],
+  );
 }
 
 /** Small local choices are examples, not an assertion that other destinations are impossible. */

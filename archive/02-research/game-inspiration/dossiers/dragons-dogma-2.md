@@ -1,6 +1,6 @@
 # G127 — Dragon's Dogma 2
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Dragon's Dogma 2 is especially useful as a study of **single-player companionship that borrows other players' experience without turning into co-op**. Its Pawn system, dangerous travel, physical combat, limited fast travel, day/night pressure and persistent NPC consequences make a trip feel like a party expedition rather than movement between content markers.
 

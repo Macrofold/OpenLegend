@@ -1,0 +1,124 @@
+//! Actual allocations owned by the immutable selected policy fields.
+use super::*;
+use crate::host::retained_size::heap_record;
+heap_record!(OccurrenceRules {
+    id,
+    version,
+    important_events,
+    important_value,
+    speech_event,
+    sound_event,
+    encounter_event,
+    contact_event,
+    fire_out,
+    flight,
+    ranged,
+    guard_interrupted,
+    evasion,
+    speech_importance,
+    sound_importance,
+    received_urgency,
+    unintelligible_speech_importance,
+    semantic_events,
+    semantic_importance,
+    ordinary_importance,
+    urgent_events,
+    urgent_value,
+    speech_urgency,
+    ordinary_urgency,
+    activity_events,
+    native_target_events,
+    projectile_contact_event,
+    projectile_passage_event,
+    importance_policy,
+    significant_reason,
+    response
+});
+heap_record!(FireOutRule {
+    event_type,
+    message
+});
+heap_record!(FlightRules {
+    takeoff_event,
+    landing_event,
+    takeoff_suffix,
+    landing_before_surface,
+    fall_suffix
+});
+heap_record!(EvasionOccurrenceRules {
+    unavailable,
+    recovery,
+    distance,
+    blocked_path,
+    interrupted,
+    obstructed,
+    started,
+    finished,
+    completed,
+    injury_interrupted,
+    ended_event,
+    distance_fact,
+    duration_fact,
+    repeat_fact,
+    path_fact,
+    directions,
+    choice_label,
+    choice_details,
+    destination_scope
+});
+heap_record!(EvasionDirection { label });
+heap_record!(RangedOccurrenceRules {
+    shot_released,
+    released,
+    projectile_ended,
+    shot_ended,
+    aim_ready,
+    prepared,
+    injury_interrupted,
+    menu,
+    contact_hit,
+    contact_stopped,
+    contact_source,
+    terminated,
+    observed_hit,
+    observed_no_injury,
+    observed_cover,
+    observed_range_end,
+    stopped
+});
+heap_record!(super::RangedMenuWords {
+    title,
+    aim_label,
+    aim_description,
+    shoot_label,
+    shoot_description,
+    release_label,
+    release_description,
+    release_not_ready,
+    hunt_label,
+    hunt_species
+});
+heap_record!(ResponseRules {
+    offers,
+    thought,
+    interpretation,
+    expression
+});
+heap_record!(InterpretationRule { importance });
+heap_record!(ThoughtRule {
+    source,
+    summary_prefix,
+    importance
+});
+heap_record!(ExpressionRules {
+    guidance,
+    unsupported_guidance,
+    event_type,
+    body_plans,
+    unsupported_body,
+    unavailable,
+    accepted,
+    out_of_reach, contacted
+});
+
+crate::install::definition_layout!(OccurrenceRules; arrays [String, super::super::base_decision_offers::ProbeOffer, super::super::base_decision_offers::InstalledRequest]; maps [super::super::base_decision_offers::RequestField]);

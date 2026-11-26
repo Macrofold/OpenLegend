@@ -3,7 +3,7 @@
 **G61 · Complete research pass, September 26, 2026.** This pass studies the original 2005 GameCube tactical RPG and distinguishes the Japanese and international difficulty/localization boundaries. The January 2026 Nintendo GameCube – Nintendo Classics release on Nintendo Switch 2 is a distribution/emulation wrapper around the original game, not a mechanically redesigned edition. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
 
-Path of Radiance is especially useful to OpenLegend because it makes **persistent people**, not disposable pieces, the substrate of a tactics game. Map consequences survive into later chapters; relationships advance across deployments; an intermission Base moves conversation and resource decisions out of battle; Bonus Experience rewards *how* a map is solved; and Shove/Rescue make one character's physical relationship to another a tactical verb rather than only an attack modifier.
+Path of Radiance is especially useful to Open Legend because it makes **persistent people**, not disposable pieces, the substrate of a tactics game. Map consequences survive into later chapters; relationships advance across deployments; an intermission Base moves conversation and resource decisions out of battle; Bonus Experience rewards *how* a map is solved; and Shove/Rescue make one character's physical relationship to another a tactical verb rather than only an attack modifier.
 
 ## 1. Identity, scope, and player promise
 
@@ -111,7 +111,7 @@ This is more than a hub menu. It creates two distinct cognitive modes:
 - **battle:** spatial uncertainty, threat, tempo and immediate consequences;
 - **base:** reflection, social context, allocation and preparation.
 
-For OpenLegend this is evidence for allowing a world to have **context-sensitive action surfaces** without pretending those contexts are different universes. A person can be the same persistent actor while what is salient/available changes radically in camp versus combat.
+For Open Legend this is evidence for allowing a world to have **context-sensitive action surfaces** without pretending those contexts are different universes. A person can be the same persistent actor while what is salient/available changes radically in camp versus combat.
 
 ## 5. Bonus Experience: reward the manner of solving a map
 
@@ -172,7 +172,7 @@ This gives exposition a gameplay reason to be inspected without making every lin
 - opportunity;
 - concrete resource.
 
-OpenLegend should preserve that uncertainty rather than tagging every useful conversation so aggressively that listening becomes database scanning.
+Open Legend should preserve that uncertainty rather than tagging every useful conversation so aggressively that listening becomes database scanning.
 
 ## 8. Laguz: stateful bodies rather than conventional equipment users
 
@@ -188,7 +188,7 @@ The key design consequence is temporal:
 - its threat and vulnerability change during the encounter;
 - the opponent can reason about *when* power will be available.
 
-This is a useful model for any OpenLegend body state such as:
+This is a useful model for any Open Legend body state such as:
 - lycanthropy;
 - powered armor charge;
 - magical possession;
@@ -223,7 +223,7 @@ This turns embodiment into composition:
 
 Many mounted units can use remaining movement after certain actions, creating hit-and-withdraw, trade-chain and rescue logistics unavailable to ordinary infantry. GameSpot called out this ability as one of Path of Radiance's important tactical nuances. [PR03](#pr03)
 
-For OpenLegend, these are stronger inspirations than another damage formula. Physical relationships—push, carry, hand off, screen, extract—can make agents feel like bodies occupying a world.
+For Open Legend, these are stronger inspirations than another damage formula. Physical relationships—push, carry, hand off, screen, extract—can make agents feel like bodies occupying a world.
 
 ## 10. Map objectives, terrain, and authored situations
 
@@ -239,7 +239,7 @@ Maps use terrain, doors, villages/visit locations, chokepoints, height/visual dr
 
 The 2005 staff interview is unusually revealing about 3D map production. The team rejected attractive 3D layouts when scenery obscured units, shortened buildings, adjusted tree scale and made some ship sails transparent because tactical legibility had priority over realism. They also used weather such as snow/rain for atmosphere without wanting it to compromise readability. [PR08](#pr08)
 
-That is a direct OpenLegend lesson:
+That is a direct Open Legend lesson:
 > a simulated world can be rich and physical without making important state hard to perceive.
 
 ### A map-specific stealth exception
@@ -291,7 +291,7 @@ Some allied/partner forces are AI-controlled rather than direct pieces. Ike can 
 - **direct authority** over deployed player units;
 - **intent-setting** for allied autonomous units.
 
-That is a small but relevant OpenLegend precedent. Not every friendly actor needs to be a puppet. Command granularity can be part of the relationship/role contract.
+That is a small but relevant Open Legend precedent. Not every friendly actor needs to be a puppet. Command granularity can be part of the relationship/role contract.
 
 The interface supports tactical inspection—movement/threat, equipment, combat forecasts and terrain are intended to make risk legible before commitment. Reviews repeatedly praised the underlying usability even while criticizing the 3D presentation. [PR03](#pr03) [PR16](#pr16)
 
@@ -589,9 +589,9 @@ The same systems produce different outcomes:
 - simple class paths can mean clarity **or** low customization;
 - a lean Base can mean focused pacing **or** fewer social activities.
 
-OpenLegend should preserve those tradeoffs instead of extracting only “popular feature = good.”
+Open Legend should preserve those tradeoffs instead of extracting only “popular feature = good.”
 
-## 23. Transferable inspiration for OpenLegend
+## 23. Transferable inspiration for Open Legend
 
 ### A. Make a person mechanically identifiable across systems
 
@@ -605,7 +605,7 @@ Path of Radiance's strongest unit identity is composite:
 - relationship graph;
 - campaign history.
 
-OpenLegend should avoid reducing an agent to either:
+Open Legend should avoid reducing an agent to either:
 - prose personality with generic mechanics, or
 - mechanics sheet with interchangeable dialogue.
 
@@ -616,7 +616,7 @@ Identity becomes convincing when the layers reinforce one another.
 The support system's key idea is not “C/B/A ranks.” It is:
 > repeated shared participation creates eligibility for a later social state change.
 
-OpenLegend can generalize that to memories/events rather than fixed chapter counts:
+Open Legend can generalize that to memories/events rather than fixed chapter counts:
 - survived a raid together;
 - worked the same mine for a season;
 - raised a child;
@@ -629,7 +629,7 @@ The conversation should emerge from the history instead of the history existing 
 
 The Base demonstrates a clean shift in salience without changing the characters themselves.
 
-For OpenLegend:
+For Open Legend:
 - combat should foreground threat, movement, cover and intent;
 - camp/home should foreground conversation, planning, maintenance and memory;
 - workshop should foreground materials/tools/experimentation.
@@ -644,7 +644,7 @@ BEXP makes secondary conduct legible:
 - preservation;
 - optional protection.
 
-OpenLegend can reward or remember method, not just outcome. An NPC/faction/world may care that the player:
+Open Legend can reward or remember method, not just outcome. An NPC/faction/world may care that the player:
 - solved a conflict without killing;
 - protected civilians;
 - kept a promise;
@@ -657,7 +657,7 @@ The reward need not always be XP; reputation, trust, knowledge and future opport
 
 Shove, Rescue, Take and Drop show how a small body-interaction vocabulary creates tactics.
 
-OpenLegend should treat:
+Open Legend should treat:
 - carry;
 - drag;
 - hand off;
@@ -696,7 +696,7 @@ Path of Radiance's partner commands are primitive, but the authority distinction
 - direct units: exact orders;
 - allied autonomous actors: broad intent.
 
-OpenLegend can make this much richer through trust, hierarchy and competence:
+Open Legend can make this much richer through trust, hierarchy and competence:
 - “hold this bridge”;
 - “keep the children safe”;
 - “trade only above this reserve”;
@@ -708,14 +708,14 @@ An ally remains an agent, not a remote limb.
 
 The staff's decision to shorten/transparentize 3D scenery rather than hide tactical units is an unusually concrete precedent.
 
-OpenLegend's simulation may become far denser than Path of Radiance, which makes the principle more important:
+Open Legend's simulation may become far denser than Path of Radiance, which makes the principle more important:
 > if a consequential rule cannot be perceived or queried, the player cannot make meaningful decisions about it.
 
 ### J. Loss matters most when it removes a unique future
 
 Permadeath works emotionally because the dead unit is a named person with future relationships and utility.
 
-OpenLegend does not need Fire Emblem's exact reset contract, but consequential death should propagate:
+Open Legend does not need Fire Emblem's exact reset contract, but consequential death should propagate:
 - memories;
 - vacancies;
 - grief;
@@ -730,11 +730,11 @@ That produces story without requiring a scripted “sad death scene” for every
 
 ### Do not copy reset-punishment as a substitute for consequence
 
-Path of Radiance often converts death into **replay the map** because players can reset. OpenLegend can often do better by letting the world continue and making recovery/consequence interesting.
+Path of Radiance often converts death into **replay the map** because players can reset. Open Legend can often do better by letting the world continue and making recovery/consequence interesting.
 
 ### Do not make hidden secondary criteria essential without signaling
 
-BEXP can reward mastery, but hidden turn thresholds or obscure recruitment requirements encourage guide dependence. If an OpenLegend world cares about conduct, characters and environmental signals should make that value inferable.
+BEXP can reward mastery, but hidden turn thresholds or obscure recruitment requirements encourage guide dependence. If an Open Legend world cares about conduct, characters and environmental signals should make that value inferable.
 
 ### Do not equate more enemies with better difficulty
 
@@ -742,11 +742,11 @@ Player feedback around Path of Radiance's harder modes repeatedly distinguishes 
 
 ### Do not overfit authored support graphs to generative relationships
 
-Fixed compatibility pairs produce polished writing but cannot represent arbitrary living-world relationships. OpenLegend needs open relationship state, with authored structures used where they create value.
+Fixed compatibility pairs produce polished writing but cannot represent arbitrary living-world relationships. Open Legend needs open relationship state, with authored structures used where they create value.
 
 ### Do not universalize a Base
 
-Path of Radiance benefits from separating battle and intermission because it is chapter-based. An OpenLegend world may be continuous. The transferable principle is **contextual salience**, not a mandatory hub screen.
+Path of Radiance benefits from separating battle and intermission because it is chapter-based. An Open Legend world may be continuous. The transferable principle is **contextual salience**, not a mandatory hub screen.
 
 ### Do not treat low-leverage cyclic modifiers as depth by default
 

@@ -1,5 +1,5 @@
 import { useSimulationClock, GameDeadline, EventTime } from './event-time';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentProps } from 'react';
 import { useTradeDraft, type TradeDraft, type TradeDraftLot } from '../trade-drafts';
 import type {
   ActionOption,
@@ -7,6 +7,7 @@ import type {
   GameView,
   InventoryItemView,
   ItemTradeView,
+  ItemTradeSummary,
   TradeLotView,
   TradeDisclosuresPage,
 } from '@open-legend/protocol';
@@ -18,20 +19,35 @@ import { InventoryCollection } from './inventory-collection';
 import { useInventoryCollection } from './use-inventory-collection';
 import { ConversationThread } from './conversation';
 import type { InventoryCommandRecovery } from './use-inventory-command';
-import { post } from '../api';
+import { postContactRead } from '../api';
 import { LoadingIndicator } from '../design-system/loading';
 import './inventory.css';
 import './item-trade.css';
 
-export type TradeNegotiationTarget = { element: HTMLElement; person: { id: string; name: string } };
-export const itemTradeTitle = (trade: Pick<ItemTradeView, 'labels' | 'personName'>) =>
+export type TradeNegotiationTarget = {
+  element: HTMLElement;
+  person: { id: string; name: string; communicationReference?: string };
+};
+export const itemTradeTitle = (trade: Pick<ItemTradeSummary, 'labels' | 'personName'>) =>
   `${trade.labels.title} with ${trade.personName}`;
 type TradeContext = Pick<
   GameView,
   'worldId' | 'saveTimeline' | 'access' | 'conversation' | 'historyEpoch'
 > & {
-  player: Pick<GameView['player'], 'id' | 'inventoryRevision' | 'canUseInventory' | 'portrait'>;
-  entities: Array<Pick<GameView['entities'][number], 'id' | 'portrait'>>;
+  player: Pick<
+    GameView['player'],
+    | 'id'
+    | 'inventoryRevision'
+    | 'inventoryReadRevision'
+    | 'canUseInventory'
+    | 'portrait'
+    | 'position'
+    | 'supportSurfaceId'
+  >;
+  entities: Array<
+    Pick<GameView['entities'][number], 'id' | 'portrait'> &
+      Partial<Pick<GameView['entities'][number], 'position' | 'supportSurfaceId'>>
+  >;
 };
 const entry = (lot: TradeLotView, quantity = String(lot.quantity)): TradeDraftLot => ({
   lot,
@@ -58,7 +74,106 @@ const fromInventory = (item: InventoryItemView): TradeLotView => ({
   whole: !!item.container || !!item.individual,
 });
 
-export function ItemTrade({
+/** One selected pane owns its details. Same-owner refresh keeps the draft and
+ * reading position; only current permitted results enable native submission. */
+export function ItemTrade(
+  props: Omit<ComponentProps<typeof ItemTradeDetails>, 'trade'> & {
+    trade: ItemTradeSummary;
+  },
+) {
+  const { trade, view, connected, visible = true } = props;
+  const available = visible && connected;
+  const [availability, setAvailability] = useState({ available, revision: 0 });
+  if (availability.available !== available)
+    setAvailability({ available, revision: availability.revision + 1 });
+  const [refresh, setRefresh] = useState(0);
+  const privacy = JSON.stringify([trade.scope, view.historyEpoch, view.access?.scope]);
+  const target = view.entities.find((entity) => entity.id === trade.personId);
+  const key = JSON.stringify([
+    privacy,
+    trade.revision,
+    view.player.inventoryRevision,
+    view.player.canUseInventory,
+    view.player.position,
+    view.player.supportSurfaceId,
+    target?.position,
+    target?.supportSurfaceId,
+    availability.revision,
+    refresh,
+  ]);
+  const [result, setResult] = useState<{
+    key: string;
+    privacy: string;
+    trade?: ItemTradeView;
+    error?: string;
+  }>();
+  const currentKey = useRef<string | null>(null);
+  currentKey.current = available ? key : null;
+  useEffect(() => {
+    if (!available) return;
+    const controller = new AbortController();
+    void postContactRead<{ ok: boolean; trade?: ItemTradeView; message?: string }>(
+      '/api/trade',
+      { personId: trade.personId },
+      [trade.personId],
+      controller.signal,
+    )
+      .then((reply) => {
+        if (controller.signal.aborted || currentKey.current !== key) return;
+        setResult({
+          key,
+          privacy,
+          ...(reply.ok && reply.trade
+            ? { trade: reply.trade }
+            : { error: reply.message ?? 'These offers are unavailable. Refresh to try again.' }),
+        });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted || currentKey.current !== key) return;
+        setResult((previous) => ({
+          key,
+          privacy,
+          ...(previous?.privacy === privacy ? { trade: previous.trade } : {}),
+          error: error instanceof Error ? error.message : 'These offers could not be read.',
+        }));
+      });
+    return () => controller.abort();
+  }, [key, available]);
+  const displayed = result?.privacy === privacy ? result : undefined;
+  const current = available && displayed?.key === key && !!displayed.trade && !displayed.error;
+  return (
+    <>
+      {!displayed?.trade && (props.showHeading !== false || props.onClose) && (
+        <div className="ol-inventory-toolbar">
+          {props.showHeading !== false && <h3 className="ol-heading">{itemTradeTitle(trade)}</h3>}
+          {props.onClose && (
+            <Button variant="quiet" onPress={props.onClose}>
+              Close
+            </Button>
+          )}
+        </div>
+      )}
+      <LoadingIndicator active={available && result?.key !== key} label="Reading current offers" />
+      {displayed?.error && (
+        <p role="status">
+          {displayed.error}{' '}
+          <Button
+            variant="quiet"
+            disabled={!available}
+            onPress={() => setRefresh((value) => value + 1)}
+          >
+            Refresh
+          </Button>
+        </p>
+      )}
+      {displayed?.trade && (
+        <ItemTradeDetails {...props} trade={displayed.trade} connected={!!current} />
+      )}
+    </>
+  );
+}
+
+function ItemTradeDetails({
   trade,
   view,
   connected,
@@ -124,7 +239,12 @@ export function ItemTrade({
     initialId: view.player.id,
     scope: view.access?.scope ?? trade.scope,
     displayOwner: privateOwner,
-    revisionKey: JSON.stringify([view.player.inventoryRevision, view.player.canUseInventory]),
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
+    revisionKey: JSON.stringify([
+      view.player.inventoryRevision,
+      view.player.inventoryReadRevision.details,
+      view.player.canUseInventory,
+    ]),
     visible,
     connected,
     expectedRootId: view.player.id,
@@ -178,7 +298,8 @@ export function ItemTrade({
     !!draft?.give.length &&
     [...draft.give, ...draft.receive].every(validLot) &&
     draft.give.length + draft.receive.length <= trade.maximumLots &&
-    (!draft.constructionUse || draft.give.length === 1);
+    (!draft.constructionUse || draft.give.length === 1) &&
+    (!trade.giftOnly || (!draft.prior && !draft.receive.length && !draft.constructionUse));
   function draftFrom(value?: ItemTradeView['offers'][number]): TradeDraft {
     return {
       give:
@@ -545,7 +666,7 @@ export function ItemTrade({
               </Button>
             </section>
           )}
-          {draft && (
+          {draft && !trade.giftOnly && (
             <details
               className="ol-trade-request-details"
               open={requestsOpen}
@@ -672,7 +793,7 @@ export function ItemTrade({
                     {action.reason && <p className="ol-caption">{action.reason}</p>}
                   </div>
                 ))}
-                {offer && (
+                {offer && !trade.giftOnly && (
                   <Button variant="quiet" disabled={blocked} onPress={() => begin(offer)}>
                     {labels.counter}
                   </Button>
@@ -777,13 +898,14 @@ function TradeDisclosurePicker({
     const abort = new AbortController();
     const timer = setTimeout(
       () => {
-        void post<TradeDisclosuresPage>(
+        void postContactRead<TradeDisclosuresPage>(
           '/api/trade/disclosures',
           {
             personId: trade.personId,
             query,
             ...(cursor ? { cursor } : {}),
           },
+          [trade.personId],
           abort.signal,
         )
           .then((result) => {

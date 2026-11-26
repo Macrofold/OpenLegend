@@ -1,0 +1,4109 @@
+//! One operation-local physical undo owner, shared by nested native commands.
+//! It records changed subrecords, never a world/actor clone. Receiver/history
+//! journals must join this same candidate before an actual Ready path exists.
+
+use crate::activity::{ActivityCheckpoint, ActivityJournal};
+use crate::commands::{CommandCheckpoint, CommandJournal};
+use crate::events::{
+    AcquiredOccurrence, CompletedOccurrence, EventEmissionIntent, OccurrenceCheckpoint,
+};
+use crate::experience::{ExperienceCheckpoint, ExperienceJournal};
+use crate::host::retained_size::{HeapBytes, heap_sum};
+use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey, CapacityError};
+use crate::identity::{IdentityExhausted, IdentityState, IssuedIdentity, MAX_SAFE_INTEGER};
+use crate::received::{ReceivedValuesCheckpoint, TemporalCheckpoint};
+use crate::reception::{
+    CurrentCheckpoint, CurrentJournal, EpisodeCheckpoint, EpisodeJournal, OriginalCheckpoint,
+    OriginalJournal, SensoryCheckpoint, SensoryJournal,
+};
+use crate::simulation::{PhysicalState, SimulationState};
+use crate::state::{Action, EntityHandle, NativeInterval, Placement, Point};
+use crate::status::AttributeDefinition;
+use crate::values::{
+    AttributeState, NativeValueBinding, NativeValueWindow, StatusInstance, ValueEntityMut,
+    ValueError, materialize_episode,
+};
+use crate::work::{InvocationEdit, WorkDemand, WorkError, WorkPlan, WorkRequest, WorkUndo};
+use indexmap::{IndexMap, IndexSet};
+use std::mem::size_of;
+use std::sync::Arc;
+
+mod action_storage;
+mod agency;
+mod attributes;
+mod attack_notice;
+mod attack_timing;
+mod combat_observation;
+mod personal_encounters;
+mod person_creation;
+pub(crate) mod person_profile;
+mod body;
+mod conditions;
+mod contact;
+use contact::ContactPhase;
+mod flight;
+mod projectile;
+pub(crate) use projectile::CrossingChange;
+mod foraging;
+mod heat;
+mod hearth;
+mod inventory;
+pub(crate) mod gift;
+mod item_holds;
+mod material;
+mod structures;
+pub(crate) use inventory::can_receive_trade_container;
+pub use inventory::CreatorInventory;
+pub(crate) use inventory::creator_inventory;
+pub(crate) use inventory::partitionable_stock;
+pub use inventory::{OwnedArrangement, OwnedMove, OwnedStockLot, OwnedStockSelection};
+pub(crate) use inventory::{OwnedMoveError, can_split_stock, drop_item_problem, inventory_work_bound, same_container_merge};
+pub(crate) use inventory::{OwnedDebits, can_debit_lot, can_debit_lot_after_hold};
+pub(crate) use inventory::{EquipmentDecision, EquipmentRequest, equipment_can_equip, equipment_conflicts, equipment_fits};
+mod participation;
+mod practice;
+mod coaching;
+mod rates;
+mod restore;
+mod routes;
+mod save;
+mod semantic;
+pub(crate) use semantic::occupied_purpose;
+mod sensing;
+mod status;
+mod temporal;
+mod territorial;
+mod values;
+pub(crate) use status::{
+    PendingStatusEnd, StatusActivationAnswer, StatusActivationCursor, StatusActivationProgress,
+    StatusActivationStep, StatusEnd, StatusReconcileCursor, StatusReconcileStep,
+};
+pub(crate) use temporal::{
+    AcquisitionLease, ReceivedLease, TemporalLoan, TemporalScopes, TemporalScopesCheckpoint,
+};
+
+#[derive(Debug)]
+pub(crate) enum ExecutionError {
+    ConstructionGatherNeedsAuthority,
+    Capacity,
+    MissingEntity,
+    MissingActor,
+    MissingBody,
+    Sensor(crate::reception::SensorError),
+    UnsupportedFamily,
+    InvalidPosition,
+    InvalidHealth,
+    InvalidCheckpoint,
+    UnfinishedOccurrence,
+    Identity,
+    Invariant,
+    Values(ValueError),
+    Work(WorkError),
+    Received(crate::received::ReceivedError),
+    Activity(crate::activity::ActivityError),
+    Experience(crate::experience::ExperienceError),
+    OwnerRollback,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct OccurrenceToken {
+    serial: u64,
+    id: String,
+    order: u64,
+    sequence: u64,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum OccurrencePhase {
+    Acquiring,
+    Acquired,
+}
+#[derive(Clone)]
+struct PendingOccurrence {
+    token: OccurrenceToken,
+    phase: OccurrencePhase,
+}
+
+pub(crate) struct StagedOccurrence {
+    pub token: OccurrenceToken,
+    pub intent: EventEmissionIntent,
+    pub id: String,
+    pub order: u64,
+    pub sequence: u64,
+    pub at: f64,
+}
+pub(crate) struct CompletedAction {
+    actor_id: String,
+    action_id: String,
+}
+impl CompletedAction {
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.actor_id
+    }
+    pub(crate) fn action_id(&self) -> &str {
+        &self.action_id
+    }
+}
+pub(crate) struct PendingActionFinish {
+    actor_id: String,
+    action_id: String,
+    personal: crate::activity::PendingActivityResult,
+    outcome: crate::commands::Outcome,
+}
+impl PendingActionFinish {
+    pub(crate) fn personal(&self) -> &crate::activity::PendingActivityResult {
+        &self.personal
+    }
+}
+pub(crate) enum ActionFinish {
+    Complete(CompletedAction),
+    Personal(PendingActionFinish),
+}
+
+struct CandidateFrame {
+    material_gather: usize,
+    outings: crate::outings::OutingCheckpoint,
+    restore_metadata: usize,
+    memory: crate::host::MemoryCheckpoint,
+    knowledge: crate::knowledge::KnowledgeCheckpoint,
+    learned: usize,
+    markers: crate::knowledge::cartography::MarkerCheckpoint,
+    encounters: crate::events::EncounterCheckpoint,
+    appraisals: crate::appraisals::AppraisalCheckpoint,
+    cognition: crate::cognition::CognitionCheckpoint,
+    physical: PhysicalCheckpoint,
+    received: Option<ReceivedValuesCheckpoint>,
+    occurrences: OccurrenceCheckpoint,
+    temporal: TemporalCheckpoint,
+    acquisitions: TemporalScopesCheckpoint,
+    originals: OriginalCheckpoint,
+    current: CurrentCheckpoint,
+    sensory: SensoryCheckpoint,
+    episodes: EpisodeCheckpoint,
+    activity: ActivityCheckpoint,
+    experience: ExperienceCheckpoint,
+    commands: CommandCheckpoint,
+    responses: crate::response::ResponseCheckpoint,
+    recognition: crate::worlds::InstalledRecognitionCheckpoint,
+    sensory_cursor: PhysicalChangeCursor,
+    attention_cursor: PhysicalChangeCursor,
+    // This is only the finite synchronous emitter call stack, not event bodies,
+    // physical state or accumulated history. Saved work limits bound its depth.
+    pending: Vec<PendingOccurrence>,
+}
+pub(crate) struct CandidateCheckpoint {
+    depth: usize,
+}
+
+/// All owner journals enter/leave one nested checkpoint together. Its release
+/// token certifies semantic closure; Ready additionally needs complete encoded
+/// output, save/host admission and the actual current authority/input checks.
+pub(crate) struct CandidateJournal {
+    pub(crate) material_gather: crate::construction_gather::ConstructionGather,
+    pub(crate) outings: crate::outings::OutingJournal,
+    pub(crate) restore_metadata: crate::restore::MetadataJournal,
+    pub knowledge: crate::knowledge::KnowledgeJournal,
+    pub learned: crate::install::LearnedJournal,
+    pub markers: crate::knowledge::cartography::MarkerJournal,
+    owner: Arc<()>,
+    base_cut: u64,
+    installed: Arc<crate::simulation::InstalledWorld>,
+    pub encounters: crate::events::EncounterScopes,
+    budget: ByteBudget,
+    pub cognition: crate::cognition::CognitionJournal,
+    pub meters: crate::work::WorkMeters,
+    pub originals: OriginalJournal,
+    pub current: CurrentJournal,
+    pub sensory: SensoryJournal,
+    pub episodes: EpisodeJournal,
+    pub activity: ActivityJournal,
+    pub experience: ExperienceJournal,
+    pub commands: CommandJournal,
+    pub responses: crate::response::ResponseJournal,
+    pub acquisitions: TemporalScopes,
+    pub recognition: crate::worlds::InstalledRecognitionJournal,
+    root_received: Option<ReceivedValuesCheckpoint>,
+    root_occurrences: OccurrenceCheckpoint,
+    root_temporal: TemporalCheckpoint,
+    root_originals: OriginalCheckpoint,
+    root_current: CurrentCheckpoint,
+    root_sensory: SensoryCheckpoint,
+    root_episodes: EpisodeCheckpoint,
+    root_activity: ActivityCheckpoint,
+    root_experience: ExperienceCheckpoint,
+    root_commands: CommandCheckpoint,
+    root_knowledge: crate::knowledge::KnowledgeCheckpoint,
+    root_markers: crate::knowledge::cartography::MarkerCheckpoint,
+    root_outings: crate::outings::OutingCheckpoint,
+    root_responses: crate::response::ResponseCheckpoint,
+    root_recognition: crate::worlds::InstalledRecognitionCheckpoint,
+    root_cognition: crate::cognition::CognitionCheckpoint,
+    root_appraisals: crate::appraisals::AppraisalCheckpoint,
+    sensory_cursor: PhysicalChangeCursor,
+    attention_cursor: PhysicalChangeCursor,
+    frames: Vec<CandidateFrame>,
+    pending: Vec<PendingOccurrence>,
+    next_occurrence: u64,
+    next_provider_serial: u64,
+    // This guard also funds outer frames/meters. Drop it after their backing
+    // allocations and every other owned journal, including on cancellation.
+    pub physical: PhysicalJournal,
+    // Pins outlive every undo owner above, including their backing allocation.
+    memory: crate::host::CandidateMemory,
+    root_memory: crate::host::MemoryCheckpoint,
+}
+/// Sealed before Ready. This certifies closed semantic work, not row/save or
+/// host-input admission; those independent products must also be prepared.
+pub(crate) struct PreparedJournalRelease {
+    owner: Arc<()>,
+    candidate: CandidateKey,
+}
+impl CandidateJournal {
+    pub(crate) fn byte_budget(&self) -> &ByteBudget {
+        &self.budget
+    }
+    /// The receiver's semantic owners select their own rows. The final SQL
+    /// prefix later removes redundant cascade deletes; private ledger metadata
+    /// still retains every exact child tombstone until acceptance.
+    pub(crate) fn encode_reception_changes(
+        &self,
+        state: &SimulationState,
+        output: &mut crate::records::RowEncoder<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), crate::records::RecordEncodingError> {
+        let reception = &state.reception;
+        self.markers.encode_changes(
+            &reception.map_markers, &state.installed.schema, &state.records, output, budget,
+        )?;
+        self.knowledge.encode_changes(
+            &reception.actor_knowledge,
+            &state.installed.schema,
+            &state.records,
+            output,
+            budget,
+        )?;
+        let schema = &state.installed.schema;
+        let records = &state.records;
+        self.learned.encode(&state.learned_capabilities, records, output, budget)?;
+        crate::reception::encode_perception_owner_changes(
+            reception,
+            schema,
+            records,
+            &self.originals,
+            self.root_originals,
+            &self.current,
+            self.root_current,
+            output,
+            budget,
+        )?;
+        self.current.encode_contact_changes(
+            reception,
+            self.root_current,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_scene_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_motion_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_visibility_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.episodes.encode_changes(
+            reception,
+            self.root_episodes,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.recognition.encode_changes(
+            reception,
+            self.root_recognition,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.sensory
+            .encode_changes(reception, self.root_sensory, records, output, budget)?;
+        if let Some(values) = &reception.received_values {
+            crate::received::encode_received_value_changes(values, records, output, budget)?;
+        }
+        Ok(())
+    }
+    /// Disposable provider binding freshness, independent of gameplay identity
+    /// and retained across nested rollback to fence every late answer.
+    pub(crate) fn next_provider_serial(&mut self) -> Result<u64, ExecutionError> {
+        let next = self
+            .next_provider_serial
+            .checked_add(1)
+            .filter(|value| *value <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Invariant)?;
+        self.next_provider_serial = next;
+        Ok(next)
+    }
+
+    /// This closes the owners currently joined here. The outer coordinator
+    /// additionally owes actual receiver, record-encoding and save products.
+    pub(crate) fn require_closed_operations(&self) -> Result<(), ExecutionError> {
+        if !self.frames.is_empty()
+            || !self.pending.is_empty()
+            || !self.meters.is_idle()
+            || !self.activity.is_complete()
+        {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        self.current.require_closed()?;
+        self.encounters.require_closed()?;
+        self.acquisitions.require_closed()
+    }
+    pub(crate) fn prepare_release(
+        &mut self,
+        state: &mut SimulationState,
+        candidate: CandidateKey,
+    ) -> Result<PreparedJournalRelease, ExecutionError> {
+        self.require_closed_operations()?;
+        if candidate.base_cut != self.base_cut
+            || state.accepted_cut != self.base_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        self.physical
+            .queue_gift_reviews(&mut state.physical, &state.inventory)?;
+        self.physical.settle_agency_memory(&mut state.physical)?;
+        Ok(PreparedJournalRelease {
+            owner: self.owner.clone(),
+            candidate,
+        })
+    }
+    pub(crate) fn validate_release(
+        &self,
+        state: &SimulationState,
+        prepared: &PreparedJournalRelease,
+        candidate: CandidateKey,
+    ) -> Result<(), ExecutionError> {
+        self.require_closed_operations()?;
+        if !Arc::ptr_eq(&self.owner, &prepared.owner)
+            || prepared.candidate != candidate
+            || candidate.base_cut != self.base_cut
+            || state.accepted_cut != self.base_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        Ok(())
+    }
+    /// All current buffers remain owned by the accepted canonical state or its
+    /// detached products. Destroy before-images and their real backing storage
+    /// before releasing this candidate's transient allowance. No SQL ACK occurs.
+    pub(crate) fn finish_accepted(
+        self,
+        state: &mut SimulationState,
+        prepared: PreparedJournalRelease,
+        accepted: &AcceptedCandidate,
+    ) -> Result<(), (ExecutionError, Self)> {
+        let closed = self.require_closed_operations();
+        if let Err(error) = closed {
+            return Err((error, self));
+        }
+        if !Arc::ptr_eq(&self.owner, &prepared.owner)
+            || prepared.candidate != accepted.key()
+            || accepted.key().base_cut != self.base_cut
+            || self.base_cut.checked_add(1) != Some(state.accepted_cut)
+            || state.records.accepted_cut() != state.accepted_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            // A rejected binding must not destroy the only rollback owner.
+            return Err((ExecutionError::InvalidCheckpoint, self));
+        }
+        if state.physical.bodies.settle_memory().is_err() {
+            return Err((ExecutionError::Invariant, self));
+        }
+        state.temporal.discard_undo();
+        state.occurrences.discard_undo();
+        state.appraisals.discard_undo();
+        if let Some(values) = &mut state.reception.received_values {
+            values.discard_undo();
+        }
+        // Dropping self destroys all physical/personal/current before-images;
+        // it does not remove canonical records or the independent save suffix.
+        drop(prepared);
+        drop(self);
+        Ok(())
+    }
+    pub(crate) fn begin(
+        state: &SimulationState,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let memory = budget.begin_candidate_memory()?;
+        let root_memory = memory.checkpoint()?;
+        let group = state.installed.work_policy.policy().group;
+        let mut physical = PhysicalJournal::begin(&state.physical, budget)?;
+        physical.reserve(
+            size_of::<Self>()
+                + 2 * size_of::<usize>()
+                + crate::work::WorkMeters::heap_bound(group)?,
+        )?;
+        let originals = OriginalJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_originals = originals.checkpoint();
+        let current = CurrentJournal::new(budget).map_err(ExecutionError::Received)?;
+        let root_current = current.checkpoint();
+        let sensory = SensoryJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_sensory = sensory.checkpoint(&state.reception);
+        let episodes = EpisodeJournal::new(budget).map_err(ExecutionError::Received)?;
+        let root_episodes = episodes.checkpoint(&state.reception);
+        let activity = ActivityJournal::new(budget).map_err(ExecutionError::Activity)?;
+        let root_activity = activity.checkpoint();
+        let experience = ExperienceJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_experience = experience.checkpoint();
+        let commands = CommandJournal::new(budget)?;
+        let knowledge = crate::knowledge::KnowledgeJournal::new(budget)?;
+        let root_knowledge = knowledge.checkpoint(&state.reception.actor_knowledge);
+        let markers = crate::knowledge::cartography::MarkerJournal::default();
+        let root_markers = markers.checkpoint();
+        let outings = crate::outings::OutingJournal::new(budget)?;
+        let root_outings = outings.checkpoint(&state.outings);
+        let root_commands = commands.checkpoint();
+        let responses = crate::response::ResponseJournal::new(budget)?;
+        let root_responses = responses.checkpoint();
+        let acquisitions = TemporalScopes::new(budget)?;
+        let recognition = crate::worlds::InstalledRecognitionJournal::new(budget)
+            .map_err(ExecutionError::Received)?;
+        let root_recognition = recognition.checkpoint(&state.reception);
+        let sensory_cursor = physical.change_cursor();
+        let cognition = crate::cognition::CognitionJournal::new(budget)?;
+        let root_cognition = cognition.checkpoint();
+        Ok(Self {
+            material_gather: Default::default(),
+            restore_metadata: crate::restore::MetadataJournal::new(budget)?,
+            owner: Arc::new(()),
+            base_cut: state.accepted_cut,
+            installed: state.installed.clone(),
+            encounters: crate::events::EncounterScopes::new(budget)?,
+            budget: budget.clone(),
+            root_appraisals: state.appraisals.checkpoint(),
+            cognition,
+            root_cognition,
+            physical,
+            meters: crate::work::WorkMeters::new(group)?,
+            originals,
+            current,
+            sensory,
+            episodes,
+            activity,
+            experience,
+            commands,
+            knowledge,
+            learned: Default::default(),
+            markers,
+            outings,
+            responses,
+            acquisitions,
+            recognition,
+            root_received: state
+                .reception
+                .received_values
+                .as_ref()
+                .map(|v| v.checkpoint()),
+            root_occurrences: state.occurrences.checkpoint(),
+            root_temporal: state.temporal.checkpoint(),
+            root_originals,
+            root_current,
+            root_sensory,
+            root_episodes,
+            root_activity,
+            root_experience,
+            root_commands,
+            root_knowledge,
+            root_markers,
+            root_outings,
+            root_responses,
+            root_recognition,
+            sensory_cursor,
+            attention_cursor: sensory_cursor,
+            frames: Vec::new(),
+            pending: Vec::new(),
+            next_occurrence: 0,
+            next_provider_serial: 0,
+            memory,
+            root_memory,
+        })
+    }
+    pub(crate) fn checkpoint(
+        &mut self,
+        state: &SimulationState,
+    ) -> Result<CandidateCheckpoint, ExecutionError> {
+        let encounters = self.encounters.checkpoint()?;
+        self.physical.reserve(
+            size_of::<CandidateFrame>() * 2
+                + self
+                    .pending
+                    .iter()
+                    .map(|p| size_of::<PendingOccurrence>() * 2 + p.token.id.len())
+                    .sum::<usize>(),
+        )?;
+        self.frames
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let acquisitions = self.acquisitions.checkpoint()?;
+        let physical = match self.physical.checkpoint(&state.physical) {
+            Ok(physical) => physical,
+            Err(error) => {
+                self.acquisitions.keep(acquisitions)?;
+                return Err(error);
+            }
+        };
+        let token = CandidateCheckpoint {
+            depth: self.frames.len(),
+        };
+        self.frames.push(CandidateFrame {
+            material_gather: self.material_gather.checkpoint(),
+            outings: self.outings.checkpoint(&state.outings),
+            restore_metadata: self.restore_metadata.checkpoint(),
+            memory: self.memory.checkpoint()?,
+            knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
+            learned: self.learned.checkpoint(),
+            markers: self.markers.checkpoint(),
+            encounters,
+            appraisals: state.appraisals.checkpoint(),
+            cognition: self.cognition.checkpoint(),
+            physical,
+            received: state
+                .reception
+                .received_values
+                .as_ref()
+                .map(|v| v.checkpoint()),
+            occurrences: state.occurrences.checkpoint(),
+            temporal: state.temporal.checkpoint(),
+            acquisitions,
+            originals: self.originals.checkpoint(),
+            current: self.current.checkpoint(),
+            sensory: self.sensory.checkpoint(&state.reception),
+            episodes: self.episodes.checkpoint(&state.reception),
+            activity: self.activity.checkpoint(),
+            experience: self.experience.checkpoint(),
+            commands: self.commands.checkpoint(),
+            responses: self.responses.checkpoint(),
+            recognition: self.recognition.checkpoint(&state.reception),
+            sensory_cursor: self.sensory_cursor,
+            attention_cursor: self.attention_cursor,
+            pending: self.pending.clone(),
+        });
+        Ok(token)
+    }
+    pub(crate) fn keep(
+        &mut self,
+        state: &mut SimulationState,
+        token: CandidateCheckpoint,
+    ) -> Result<(), ExecutionError> {
+        if self.frames.len() != token.depth + 1 {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        let frame = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.acquisitions.validate_keep(frame.acquisitions)?;
+        if let Err(error) = self.physical.prepare_keep(frame.physical) {
+            // Capacity is still tentative here. The linear child token must
+            // restore its state before it is consumed, including IDs/history.
+            self.rollback_to(state, token)?;
+            return Err(error);
+        }
+        let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.acquisitions.keep(frame.acquisitions)?;
+        self.physical.keep(frame.physical)
+    }
+    pub(crate) fn rollback_to(
+        &mut self,
+        state: &mut SimulationState,
+        token: CandidateCheckpoint,
+    ) -> Result<(), ExecutionError> {
+        if self.frames.len() != token.depth + 1 {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.material_gather.rollback(frame.material_gather);
+        self.restore_metadata
+            .rollback_to(state, frame.restore_metadata)?;
+        self.encounters.rollback_to(frame.encounters);
+        self.acquisitions.rollback_to(frame.acquisitions)?;
+        state.appraisals.rollback_to(frame.appraisals)?;
+        self.cognition
+            .rollback_to(&mut state.minds, frame.cognition)?;
+        self.recognition
+            .rollback_to(&mut state.reception, frame.recognition)
+            .map_err(ExecutionError::Received)?;
+        self.activity
+            .rollback_to(&mut state.activity, frame.activity)
+            .map_err(ExecutionError::Activity)?;
+        self.commands
+            .rollback_to(&mut state.commands, frame.commands)?;
+        self.knowledge
+            .rollback_to(&mut state.reception.actor_knowledge, frame.knowledge)?;
+        self.learned.rollback_to(&mut state.learned_capabilities, frame.learned)?;
+        self.markers.rollback_to(&mut state.reception.map_markers, frame.markers)?;
+        self.outings
+            .rollback_to(&mut state.outings, frame.outings)?;
+        self.responses
+            .rollback_to(&mut state.responses, frame.responses)?;
+        self.experience
+            .rollback_to(&mut state.experience, frame.experience)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.episodes
+            .rollback_to(&mut state.reception, frame.episodes)
+            .map_err(ExecutionError::Received)?;
+        state
+            .occurrences
+            .rollback_to(frame.occurrences)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        state
+            .temporal
+            .rollback_to(frame.temporal)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.current
+            .rollback_to(&mut state.reception, frame.current)
+            .map_err(ExecutionError::Received)?;
+        self.originals
+            .rollback_to(&mut state.reception, frame.originals)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory
+            .rollback_to(&mut state.reception, frame.sensory)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory_cursor = frame.sensory_cursor;
+        self.attention_cursor = frame.attention_cursor;
+        match (frame.received, state.reception.received_values.as_mut()) {
+            (Some(checkpoint), Some(values)) => values
+                .rollback_to(checkpoint)
+                .map_err(|_| ExecutionError::OwnerRollback)?,
+            (None, _) => {
+                state.reception.received_values = None;
+            }
+            _ => return Err(ExecutionError::OwnerRollback),
+        }
+        self.pending = frame.pending;
+        self.physical.rollback_to(
+            &mut state.physical,
+            &mut state.inventory,
+            &mut state.administration.object_membership,
+            frame.physical,
+        )?;
+        self.memory.rollback(frame.memory)?;
+        Ok(())
+    }
+    pub(crate) fn rollback_all(
+        &mut self,
+        state: &mut SimulationState,
+    ) -> Result<(), ExecutionError> {
+        self.restore_metadata.rollback_to(state, 0)?;
+        self.encounters.rollback_all()?;
+        self.acquisitions.rollback_all()?;
+        state.appraisals.rollback_to(self.root_appraisals)?;
+        self.cognition
+            .rollback_to(&mut state.minds, self.root_cognition)?;
+        self.recognition
+            .rollback_to(&mut state.reception, self.root_recognition)
+            .map_err(ExecutionError::Received)?;
+        self.activity
+            .rollback_to(&mut state.activity, self.root_activity)
+            .map_err(ExecutionError::Activity)?;
+        self.commands
+            .rollback_to(&mut state.commands, self.root_commands)?;
+        self.knowledge
+            .rollback_to(&mut state.reception.actor_knowledge, self.root_knowledge)?;
+        self.learned.rollback_to(&mut state.learned_capabilities, 0)?;
+        self.markers.rollback_to(&mut state.reception.map_markers, self.root_markers)?;
+        self.outings
+            .rollback_to(&mut state.outings, self.root_outings)?;
+        self.responses
+            .rollback_to(&mut state.responses, self.root_responses)?;
+        self.experience
+            .rollback_to(&mut state.experience, self.root_experience)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.episodes
+            .rollback_to(&mut state.reception, self.root_episodes)
+            .map_err(ExecutionError::Received)?;
+        state
+            .occurrences
+            .rollback_to(self.root_occurrences)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        state
+            .temporal
+            .rollback_to(self.root_temporal)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.current
+            .rollback_to(&mut state.reception, self.root_current)
+            .map_err(ExecutionError::Received)?;
+        self.originals
+            .rollback_to(&mut state.reception, self.root_originals)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory
+            .rollback_to(&mut state.reception, self.root_sensory)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory_cursor = PhysicalChangeCursor { at: 0 };
+        self.attention_cursor = PhysicalChangeCursor { at: 0 };
+        match (self.root_received, state.reception.received_values.as_mut()) {
+            (Some(checkpoint), Some(values)) => values
+                .rollback_to(checkpoint)
+                .map_err(|_| ExecutionError::OwnerRollback)?,
+            (None, _) => {
+                state.reception.received_values = None;
+            }
+            _ => return Err(ExecutionError::OwnerRollback),
+        }
+        self.frames.clear();
+        self.pending.clear();
+        self.physical.rollback_all(
+            &mut state.physical,
+            &mut state.inventory,
+            &mut state.administration.object_membership,
+        )?;
+        self.memory.rollback(self.root_memory)?;
+        Ok(())
+    }
+}
+
+pub(crate) struct CoreMutation<'a> {
+    pub state: &'a mut SimulationState,
+    pub journal: &'a mut CandidateJournal,
+}
+impl CoreMutation<'_> {
+    pub(crate) fn begin_received_value_scope(&mut self) -> Result<(), ExecutionError> {
+        if let Some(values) = &mut self.state.reception.received_values {
+            self.journal.physical.reserve(
+                values
+                    .new_preparation_scope_bound()
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            values
+                .begin_preparation_scope()
+                .map_err(ExecutionError::Received)?;
+        }
+        Ok(())
+    }
+    /// Source finishPlanAction duties precede its optional plan-step branch.
+    /// An absent plan never skips semantic closure, personal recording or work.
+    pub(crate) fn begin_finish_action(
+        &mut self,
+        actor_id: &str,
+        action_id: &str,
+        result: crate::commands::Outcome,
+    ) -> Result<ActionFinish, ExecutionError> {
+        let actor = self
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        for plan in [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
+            .into_iter()
+            .flatten()
+        {
+            crate::plans::require_supported_activity(plan)?;
+        }
+        self.journal.physical.reserve(
+            actor_id.len()
+                + action_id.len()
+                + result.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.physical().finish_semantic_work(actor_id, action_id)?;
+        crate::combat_encounters::end_owned(self, actor_id, action_id)?;
+        // Source finishPlanAction publishes this behavior change even when an
+        // immediate command has no continuing action. It owes a sensory recheck.
+        self.physical().behavior_changed(actor_id, true)?;
+        let pending = self
+            .journal
+            .activity
+            .prepare_end(
+                &mut self.state.activity,
+                actor_id,
+                action_id,
+                result.clone(),
+                self.state.physical.header.sim_time,
+                &self
+                    .state
+                    .installed
+                    .ordinary_actions
+                    .value()
+                    .before_attempt_facts,
+                &self.state.installed.retained.items,
+            )
+            .map_err(ExecutionError::Activity)?;
+        if let Some(personal) = pending {
+            return Ok(ActionFinish::Personal(PendingActionFinish {
+                actor_id: actor_id.to_owned(),
+                action_id: action_id.to_owned(),
+                personal,
+                outcome: result,
+            }));
+        }
+        self.physical().release_work(action_id)?;
+        let evidence = self
+            .state
+            .activity
+            .occurrence_for(actor_id, action_id)
+            .map_err(ExecutionError::Activity)?
+            .and_then(|entry| entry.result_evidence.as_ref());
+        self.journal.physical.reserve(
+            evidence
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let evidence = evidence.cloned();
+        crate::plans::finish_plan_action(self, actor_id, action_id, result, evidence)?;
+        Ok(ActionFinish::Complete(CompletedAction {
+            actor_id: actor_id.to_owned(),
+            action_id: action_id.to_owned(),
+        }))
+    }
+    pub(crate) fn complete_finish_action(
+        &mut self,
+        pending: PendingActionFinish,
+        acquired: &crate::experience::AcquiredActivityResult,
+    ) -> Result<CompletedAction, ExecutionError> {
+        self.complete_activity_result(pending.personal, acquired)?;
+        self.physical().release_work(&pending.action_id)?;
+        self.journal.physical.reserve(
+            acquired
+                .evidence()
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let evidence = acquired.evidence().cloned();
+        crate::plans::finish_plan_action(
+            self,
+            &pending.actor_id,
+            &pending.action_id,
+            pending.outcome,
+            evidence,
+        )?;
+        Ok(CompletedAction {
+            actor_id: pending.actor_id,
+            action_id: pending.action_id,
+        })
+    }
+    pub(crate) fn remove_observer_episodes(
+        &mut self,
+        observer: &str,
+    ) -> Result<(), ExecutionError> {
+        self.physical().clear_personal_encounters(observer)?;
+        self.journal
+            .episodes
+            .remove_observer(&mut self.state.reception, observer)
+            .map(|_| ())
+            .map_err(ExecutionError::Received)
+    }
+    pub(crate) fn complete_activity_result(
+        &mut self,
+        pending: crate::activity::PendingActivityResult,
+        acquired: &crate::experience::AcquiredActivityResult,
+    ) -> Result<(), ExecutionError> {
+        let actor = acquired.actor_id();
+        let evidence = self
+            .journal
+            .activity
+            .complete_result(&mut self.state.activity, pending, acquired)
+            .map_err(ExecutionError::Activity)?;
+        self.physical().set_result_evidence(actor, evidence)
+    }
+    pub(crate) fn physical(&mut self) -> PhysicalMutation<'_> {
+        PhysicalMutation {
+            state: &mut self.state.physical,
+            journal: &mut self.journal.physical,
+        }
+    }
+    /// Drain before a real selection as well as publication: a command can
+    /// change body/capabilities and receive an occurrence before its finalizer.
+    /// This derived reader consumes notices once without queuing sight twice.
+    pub(crate) fn sync_attention_changes(&mut self) -> Result<(), ExecutionError> {
+        let through = self.journal.physical.change_cursor();
+        for change in self
+            .journal
+            .physical
+            .changes_since(self.journal.attention_cursor)?
+        {
+            match change {
+                PhysicalChange::Body { .. }
+                | PhysicalChange::Participation { .. }
+                | PhysicalChange::Contribution { .. }
+                | PhysicalChange::Spatial {
+                    discontinuity: true,
+                    ..
+                } => {
+                    self.journal.current.invalidate_all_attention_work()?;
+                }
+                PhysicalChange::Behavior {
+                    entity_id,
+                    outward_change: true,
+                } => {
+                    self.journal.current.invalidate_attention_work(entity_id)?;
+                }
+                // Membership here is Source's rootMembershipChanged spatial
+                // notice, not direct-contents query membership. Attribute and
+                // private animal bookkeeping notices do not clear attention.
+                PhysicalChange::Membership { .. }
+                | PhysicalChange::Navigation { .. }
+                | PhysicalChange::Spatial {
+                    discontinuity: false,
+                    ..
+                }
+                | PhysicalChange::Behavior {
+                    outward_change: false,
+                    ..
+                }
+                | PhysicalChange::Attribute { .. }
+                | PhysicalChange::ObservationParameters { .. }
+                | PhysicalChange::AnimalClock { .. } => {}
+            }
+        }
+        self.journal.attention_cursor = through;
+        Ok(())
+    }
+    pub(crate) fn sync_sensory_changes(&mut self) -> Result<(), ExecutionError> {
+        self.sync_attention_changes()?;
+        let through = self.journal.physical.change_cursor();
+        for change in self
+            .journal
+            .physical
+            .changes_since(self.journal.sensory_cursor)?
+        {
+            self.journal
+                .sensory
+                .queue_physical_change(
+                    &mut self.state.reception,
+                    self.state.physical.header.sim_time,
+                    change,
+                    self.state.installed.maximum_change_scopes,
+                )
+                .map_err(ExecutionError::Received)?;
+        }
+        self.journal.sensory_cursor = through;
+        Ok(())
+    }
+    /// Allocate in source order before any receiver can allocate its own source
+    /// IDs. Only an already acquired parent's native reactions may nest events.
+    pub(crate) fn stage_event(
+        &mut self,
+        intent: EventEmissionIntent,
+    ) -> Result<StagedOccurrence, ExecutionError> {
+        if self
+            .journal
+            .pending
+            .last()
+            .is_some_and(|p| p.phase != OccurrencePhase::Acquired)
+        {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        let max_depth = self
+            .state
+            .installed
+            .work_policy
+            .policy()
+            .group
+            .depth
+            .ok_or(ExecutionError::Invariant)?;
+        if self.journal.pending.len() as u64 >= max_depth {
+            return Err(ExecutionError::Work(WorkError::Contract(
+                crate::work::WorkUnit::Depth,
+            )));
+        }
+        let serial = self.journal.next_occurrence;
+        let next = serial.checked_add(1).ok_or(ExecutionError::Invariant)?;
+        let sequence = self
+            .state
+            .physical
+            .header
+            .sequence
+            .checked_add(1)
+            .filter(|n| *n <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal
+            .physical
+            .reserve(size_of::<PendingOccurrence>() * 2 + 128)?;
+        self.journal
+            .pending
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let issued = self.state.physical.identity.allocate("event")?;
+        let order = self.state.physical.identity.next_id();
+        let token = OccurrenceToken {
+            serial,
+            id: issued.id.clone(),
+            order,
+            sequence,
+        };
+        self.journal.pending.push(PendingOccurrence {
+            token: token.clone(),
+            phase: OccurrencePhase::Acquiring,
+        });
+        self.journal.next_occurrence = next;
+        Ok(StagedOccurrence {
+            token,
+            intent,
+            id: issued.id,
+            order,
+            sequence,
+            at: self.state.physical.header.sim_time,
+        })
+    }
+    /// The automatic family may create only from a still-owned freshly issued
+    /// original when historical outcomes are cold; a past event is no negative
+    /// lookup proof merely because its active scope is complete.
+    pub(crate) fn owns_pending_occurrence(&self, event: &crate::events::WorldEvent) -> bool {
+        self.journal.pending.iter().any(|pending| {
+            pending.token.id == event.id
+                && Some(pending.token.order) == event.order
+                && pending.token.sequence == event.sequence
+        })
+    }
+    pub(crate) fn acquired_occurrence(
+        &mut self,
+        acquired: &AcquiredOccurrence,
+    ) -> Result<(), ExecutionError> {
+        let pending = self
+            .journal
+            .pending
+            .last_mut()
+            .ok_or(ExecutionError::UnfinishedOccurrence)?;
+        if pending.phase != OccurrencePhase::Acquiring
+            || pending.token.id != acquired.event_id()
+            || pending.token.order != acquired.order()
+            || pending.token.sequence != acquired.sequence()
+        {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        pending.phase = OccurrencePhase::Acquired;
+        Ok(())
+    }
+    pub(crate) fn complete_occurrence(
+        &mut self,
+        complete: &CompletedOccurrence,
+    ) -> Result<(), ExecutionError> {
+        let pending = self
+            .journal
+            .pending
+            .last()
+            .ok_or(ExecutionError::UnfinishedOccurrence)?;
+        if pending.phase != OccurrencePhase::Acquired
+            || pending.token.id != complete.event_id()
+            || pending.token.order != complete.order()
+            || pending.token.sequence != complete.sequence()
+        {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        self.journal.pending.pop();
+        Ok(())
+    }
+}
+impl From<CapacityError> for ExecutionError {
+    fn from(_: CapacityError) -> Self {
+        Self::Capacity
+    }
+}
+impl From<crate::received::ReceivedError> for ExecutionError {
+    fn from(value: crate::received::ReceivedError) -> Self {
+        Self::Received(value)
+    }
+}
+impl From<crate::experience::ExperienceError> for ExecutionError {
+    fn from(value: crate::experience::ExperienceError) -> Self {
+        Self::Experience(value)
+    }
+}
+impl From<ValueError> for ExecutionError {
+    fn from(value: ValueError) -> Self {
+        Self::Values(value)
+    }
+}
+impl From<WorkError> for ExecutionError {
+    fn from(value: WorkError) -> Self {
+        Self::Work(value)
+    }
+}
+impl From<IdentityExhausted> for ExecutionError {
+    fn from(_: IdentityExhausted) -> Self {
+        Self::Identity
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum PhysicalChange {
+    Participation {
+        entity_id: String,
+    },
+    Membership {
+        entity_id: String,
+        before: Option<Point>,
+        after: Option<Point>,
+    },
+    Navigation {
+        entity_id: String,
+    },
+    Spatial {
+        entity_id: String,
+        before: Point,
+        after: Point,
+        support_unchanged: bool,
+        discontinuity: bool,
+    },
+    Body {
+        entity_id: String,
+    },
+    Behavior {
+        entity_id: String,
+        outward_change: bool,
+    },
+    Attribute {
+        entity_id: String,
+        outward_change: bool,
+    },
+    ObservationParameters {
+        entity_id: String,
+        request_detail: bool,
+    },
+    Contribution {
+        entity_id: String,
+    },
+    AnimalClock {
+        entity_id: String,
+    },
+}
+#[derive(Clone, Copy)]
+pub(crate) struct PhysicalChangeCursor {
+    at: usize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Continuity {
+    Physical,
+    Relocation,
+}
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct MovementWrite {
+    pub steps: u64,
+    pub heading: Option<f64>,
+    pub continuity: Continuity,
+}
+#[derive(Clone, Copy)]
+pub(crate) enum PlanGenerationWrite {
+    Preserve,
+    Advance,
+}
+pub(crate) struct ActionWrite {
+    pub generation: PlanGenerationWrite,
+    pub behavior: Option<bool>,
+}
+pub(crate) struct ActionRouteWrite {
+    pub path: Vec<crate::state::SurfacePoint>,
+    pub navigation: Option<crate::state::NavigationPending>,
+    pub stage: String,
+    pub replans: Option<u64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+enum UndoKey {
+    Participation(usize, u64),
+    RestoreActor(usize, u64),
+    ExitExposure(String),
+    Contact(usize, u64, String),
+    CoachingPresence,
+    CoachingEpisode(String),
+    CoachingParticipant(usize,u64),
+    AgencyPlaces(usize, u64),
+    AgencyPlan(usize, u64),
+    AgencyGoals(usize, u64),
+    AgencyIntents(usize, u64),
+    AgencySuspended(usize, u64),
+    AgencyHistory(usize, u64),
+    AgencyRevision(usize, u64),
+    PlanGeneration(usize, u64),
+    BodyRevision(usize, u64),
+    BodyLifecycle(usize, u64),
+    LocalPose(usize, u64),
+    Remains(usize, u64),
+    PendingDeath(usize, u64),
+    Scar(usize, u64, String),
+    Contacts(usize, u64),
+    Placement(usize, u64),
+    Flight(usize, u64),
+    ProjectileProgress(String),
+    ProjectileRetire(String),
+    Heading(usize, u64),
+    Heat(usize, u64),
+    Territorial(usize, u64),
+    TerritorialPlace(usize, u64),
+    Health(usize, u64),
+    CombatReady(usize, u64),
+    EvasionReady(usize, u64),
+    PersonProfile(usize, u64),
+    PersonTraits(usize,u64),
+    AttackModeNotice(usize, u64),
+    PersonalEncounters(usize, u64),
+    ContactPhase(usize, u64),
+    StrikeMotion(usize, u64),
+    AttackObservers(usize, u64),
+    AttackExecution(usize, u64),
+    Action(usize, u64),
+    ActionPath(usize, u64),
+    ActionRoute(usize, u64),
+    ActionFollow(usize, u64),
+    ActionReplans(usize, u64),
+    ActionNavigation(usize, u64),
+    ActionRemaining(usize, u64),
+    ActionSample(usize, u64),
+    ActionAimMotion(usize, u64),
+    SensoryProgress(usize, u64),
+    AnimalEpisode(usize, u64),
+    Foraging(usize, u64),
+    ResourceStock(usize, u64),
+    AnimalWander(usize, u64),
+    AnimalPhysicalLife(usize, u64),
+    AcousticPattern(usize, u64, String),
+    SemanticMeta(usize, u64),
+    SemanticResolved(usize, u64),
+    ResultEvidence(usize, u64),
+    Status(usize, u64, String),
+    Attribute(usize, u64, String),
+    Condition(usize, u64, String),
+    Practice(usize, u64, String),
+    NativeWindow,
+    Invocation(String),
+}
+
+struct ClockSnapshot {
+    sequence: u64,
+    sim_time: f64,
+    paused: bool,
+    native_interval: Option<NativeInterval>,
+}
+impl ClockSnapshot {
+    fn capture(state: &PhysicalState) -> Self {
+        Self {
+            sequence: state.header.sequence,
+            sim_time: state.header.sim_time,
+            paused: state.header.paused,
+            native_interval: state.header.native_interval.clone(),
+        }
+    }
+    fn restore(self, state: &mut PhysicalState) {
+        state.header.sequence = self.sequence;
+        state.header.sim_time = self.sim_time;
+        state.header.paused = self.paused;
+        state.header.native_interval = self.native_interval;
+    }
+}
+
+struct Frame {
+    serial: u64,
+    undo_start: usize,
+    gift_review_start: usize,
+    changes_start: usize,
+    clock: ClockSnapshot,
+    identity: IdentityState,
+    written: IndexSet<UndoKey>,
+}
+#[derive(Clone, Copy)]
+pub(crate) struct PhysicalCheckpoint {
+    depth: usize,
+    serial: u64,
+}
+
+struct EpisodeUndo {
+    episode: String,
+    binding: (usize, NativeValueBinding),
+    elapsed_seconds: f64,
+    sim_time: f64,
+    binding_count: u64,
+    subject_index: usize,
+    links: Vec<(usize, String, String)>,
+    entity: EntityHandle,
+    attributes: Vec<(String, AttributeState)>,
+    status_id: String,
+    status: crate::state::FundedStatus,
+    status_index: usize,
+}
+#[derive(Clone, Copy)]
+struct WindowClock {
+    elapsed_seconds: f64,
+    sim_time: f64,
+    binding_count: u64,
+}
+enum Undo {
+    Gate(Box<structures::GateUndo>),
+    StructureEdit(structures::EditUndo),
+    Gift(crate::handover::GiftUndo),
+    ProjectileLaunch {
+        id: String,
+        present: bool,
+    },
+    ProjectileProgress {
+        id: String,
+        before: crate::projectile::FlightPosition,
+    },
+    ProjectilePassage {
+        id: String,
+        receiver: String,
+        life: u64,
+        ordinal: u64,
+        present: bool,
+    },
+    ProjectileCrossings {
+        id: String,
+        before: Option<crate::projectile::ProjectileCrossings>,
+        storage: Option<crate::host::ResidentReservation>,
+    },
+    ProjectileRetire {
+        position: usize,
+        id: String,
+        before: Box<crate::projectile::FundedProjectile>,
+    },
+    InventoryAvailability(inventory::ContentsBefore),
+    MaterialWet { item: EntityHandle, before: bool },
+    MaterialDetails { root: EntityHandle, before: u64 },
+    ItemHoldAdded { id: String, ordinal: u64, parent_present: bool },
+    ItemHoldEnded {
+        key: String,
+        hold: Box<crate::item_holds::HeldRecord>,
+        amount: f64,
+        _custody: ByteReservation,
+    },
+    Flight {
+        entity: EntityHandle,
+        before: Option<crate::flight::FlightProgress>,
+        fall_velocity: Option<f64>,
+    },
+    Territorial {
+        entity: EntityHandle,
+        before: crate::native_controller::territorial::Progress,
+    },
+    TerritorialPlace {
+        entity: EntityHandle,
+        home: crate::state::SurfacePoint,
+        refuge: crate::state::SurfacePoint,
+    },
+    Heat {
+        entity: EntityHandle,
+        before: crate::state::Heat,
+    },
+    RestoreActor {
+        entity: EntityHandle,
+        controller: String,
+        inspection: Option<crate::state::InventoryInspection>,
+    },
+    Participation {
+        entity: EntityHandle,
+        before: Option<crate::state::Participation>,
+    },
+    ExitExposure {
+        actor: String,
+        before: Option<(usize, f64)>,
+        root_present: bool,
+    },
+    Contact {
+        entity: EntityHandle,
+        subject: String,
+        before: (usize, crate::reception::ContactEpisode),
+    },
+    CoachingPresence { before: bool },
+    CoachingEpisode { id:String, before:Option<(usize, crate::install::CoachingEpisode)>, present:bool },
+    CoachingParticipant {entity:EntityHandle, before:Option<String>},
+    Practice {
+        entity: EntityHandle,
+        key: String,
+        before: crate::state::PracticeProgress,
+    },
+    AgencyPlaces {
+        entity: EntityHandle,
+        before: Option<Vec<crate::state::RememberedPlace>>,
+        order: crate::state::AgencyOrder,
+    },
+    AgencyPlan {
+        entity: EntityHandle,
+        before: Option<crate::plans::ActorPlan>,
+    },
+    AgencyGoals {
+        entity: EntityHandle,
+        before: crate::state::FundedGoals,
+    },
+    AgencyIntents {
+        entity: EntityHandle,
+        before: crate::state::FundedIntents,
+    },
+    AgencySuspended {
+        entity: EntityHandle,
+        before: Option<Option<crate::plans::ActorPlan>>,
+        order: crate::state::AgencyOrder,
+    },
+    AgencyHistory {
+        entity: EntityHandle,
+        before: Vec<crate::plans::PlanStep>,
+    },
+    AgencyRevision {
+        entity: EntityHandle,
+        before: u64,
+    },
+    PlanGeneration {
+        entity: EntityHandle,
+        before: u64,
+    },
+    AddedEntity(crate::state::EntityInsertion),
+    RemovedPhysicalRoot(Box<crate::state::RemovedPhysicalRoot>),
+    Inventory(Box<inventory::InventoryUndo>),
+    BodyRevision {
+        entity: EntityHandle,
+        before: u64,
+    },
+    BodyLifecycle {
+        entity: EntityHandle,
+        alive: bool,
+        incapacitated: bool,
+        physical_life: Option<u64>,
+        conditions: Option<crate::state::BodyConditions>,
+        fall_velocity: Option<f64>,
+        local_avoidance_ready_at: Option<f64>,
+    },
+    LocalPose {
+        entity: EntityHandle,
+        before: Option<crate::state::LocalPose>,
+        ready_at: Option<f64>,
+    },
+    Remains {
+        entity: EntityHandle,
+        before: Option<crate::state::Remains>,
+    },
+    PendingDeath {
+        entity: EntityHandle,
+        before: Option<crate::body::PendingDeath>,
+        combat_ready_at: Option<f64>,
+        evasion_ready_at: Option<f64>,
+    },
+    Scar {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, f64)>,
+        root_present: bool,
+    },
+    Contacts {
+        entity: EntityHandle,
+        before: IndexMap<String, crate::reception::ContactEpisode>,
+    },
+    SensoryProgress {
+        entity: EntityHandle,
+        before: Option<crate::reception::SensoryProgress>,
+    },
+    Condition {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, crate::state::ConditionEpisode)>,
+        root_present: bool,
+    },
+    ActionNavigation {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedActionNavigation,
+    },
+    ActionRemaining {
+        entity: EntityHandle,
+        action_id: String,
+        before: f64,
+        ready: Option<bool>,
+    },
+    CombatReady {
+        entity: EntityHandle,
+        before: Option<f64>,
+    },
+    EvasionReady {
+        entity: EntityHandle,
+        before: Option<f64>,
+    },
+    PersonTraits{entity:EntityHandle,before:Option<Vec<crate::state::CharacterTrait>>},
+    PersonProfile {
+        entity: EntityHandle,
+        before: Box<person_profile::AuthoredProfile>,
+    },
+    AttackModeNotice {
+        entity: EntityHandle,
+        before: Option<crate::state::AttackModeNotice>,
+    },
+    PersonalEncounters {
+        entity: EntityHandle,
+        before: Option<Box<crate::combat_encounters::PersonalEncounters>>,
+    },
+    ContactPhase {
+        entity: EntityHandle,
+        action_id: String,
+        before: ContactPhase,
+    },
+    AttackObservers {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::state::FundedAttackObservers>,
+    },
+    AttackExecution {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedAttackExecution,
+    },
+    StrikeMotion {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::state::FundedStrikeMotion>,
+    },
+    ActionSample {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<f64>,
+    },
+    ActionAimMotion {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<crate::projectile::ObservedMotion>,
+    },
+    ActionReplans {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<u64>,
+    },
+    ActionRoute {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedActionRoute,
+    },
+    ActionFollow {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedActionFollow,
+    },
+    Heading {
+        entity: EntityHandle,
+        before: f64,
+    },
+    NativeWindow {
+        before: Option<WindowClock>,
+    },
+    RetainedBinding {
+        episode: String,
+        entity_id: String,
+    },
+    Attribute {
+        entity: EntityHandle,
+        id: String,
+        before: AttributeState,
+    },
+    Placement {
+        entity: EntityHandle,
+        before: Placement,
+        heading: f64,
+    },
+    Health {
+        entity: EntityHandle,
+        before: f64,
+    },
+    Action {
+        entity: EntityHandle,
+        before: Option<crate::state::FundedAction>,
+        plan_generation: u64,
+    },
+    ActionPath {
+        entity: EntityHandle,
+        action_id: String,
+        before: crate::state::FundedActionPath,
+    },
+    AnimalEpisode {
+        entity: EntityHandle,
+        before: Option<crate::native_response::NativeResponseEpisode>,
+    },
+    Foraging {
+        entity: EntityHandle,
+        before: crate::state::FundedForaging,
+    },
+    ResourceStock {
+        entity: EntityHandle,
+        quantity: u64,
+        revision: Option<u64>,
+    },
+    AnimalWander {
+        entity: EntityHandle,
+        before: crate::native_response::WanderClock,
+    },
+    AnimalPhysicalLife {
+        entity: EntityHandle,
+        before: u64,
+    },
+    AcousticPattern {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, crate::native_response::AcousticPattern)>,
+    },
+    SemanticMeta {
+        entity: EntityHandle,
+        interval: u64,
+        discovery: String,
+        reservation: Option<String>,
+        occupied_purpose: Option<String>,
+    },
+    SemanticResolved {
+        entity: EntityHandle,
+        before: IndexMap<String, crate::state::ResolvedSemanticCause>,
+    },
+    ResultEvidence {
+        entity: EntityHandle,
+        before: Option<crate::activity::ResultEvidence>,
+        order: crate::state::AgencyOrder,
+    },
+    Status {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, crate::state::FundedStatus)>,
+        root_present: bool,
+    },
+    Episode(EpisodeUndo),
+    Work(WorkUndo),
+}
+
+/// The reservation stays alive until rollback/acceptance has destroyed or
+/// transferred all owned scratch. Nested rollback does not claim freed capacity
+/// while Vec allocations and before-values are still retained by this batch.
+pub(crate) struct PhysicalJournal {
+    budget: ByteBudget,
+    undo: Vec<Undo>,
+    frames: Vec<Frame>,
+    changes: Vec<PhysicalChange>,
+    gift_review_through: usize,
+    next_frame: u64,
+    // Rust drops fields in declaration order: storage must precede its guard.
+    reservation: ByteReservation,
+}
+impl PhysicalJournal {
+    pub(crate) fn begin(
+        state: &PhysicalState,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let mut value = Self {
+            budget: budget.clone(),
+            reservation: budget.reserve(size_of::<Self>() + size_of::<Frame>())?,
+            undo: Vec::new(),
+            frames: Vec::with_capacity(1),
+            changes: Vec::new(),
+            gift_review_through: 0,
+            next_frame: 1,
+        };
+        value.frames.push(Frame {
+            serial: 0,
+            undo_start: 0,
+            gift_review_start: 0,
+            changes_start: 0,
+            clock: ClockSnapshot::capture(state),
+            identity: state.identity,
+            written: IndexSet::new(),
+        });
+        Ok(value)
+    }
+    fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
+        use crate::host::retained_size::map_storage;
+        let undo_capacity = if self.undo.len() == self.undo.capacity() {
+            self.undo
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(4))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let changes_needed = self
+            .changes
+            .len()
+            .checked_add(2)
+            .ok_or(ExecutionError::Capacity)?;
+        let change_capacity = if changes_needed > self.changes.capacity() {
+            self.changes
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(changes_needed).max(4))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let written = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let key_capacity = if written.written.len() == written.written.capacity() {
+            written
+                .written
+                .len()
+                .checked_add(1)
+                .and_then(|n| n.checked_mul(2))
+                .and_then(|n| n.checked_add(8))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let total = heap_sum([
+            self.reservation.bytes(),
+            bytes,
+            undo_capacity
+                .checked_mul(size_of::<Undo>())
+                .ok_or(ExecutionError::Capacity)?,
+            change_capacity
+                .checked_mul(size_of::<PhysicalChange>())
+                .ok_or(ExecutionError::Capacity)?,
+            map_storage::<UndoKey, ()>(key_capacity).ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        self.reservation.resize(total)?;
+        if undo_capacity > 0 {
+            self.undo
+                .try_reserve_exact(undo_capacity - self.undo.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        if change_capacity > 0 {
+            self.changes
+                .try_reserve_exact(change_capacity - self.changes.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        if key_capacity > 0 {
+            let frame = self
+                .frames
+                .last_mut()
+                .ok_or(ExecutionError::InvalidCheckpoint)?;
+            frame
+                .written
+                .try_reserve_exact(key_capacity - frame.written.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn checkpoint(
+        &mut self,
+        state: &PhysicalState,
+    ) -> Result<PhysicalCheckpoint, ExecutionError> {
+        let serial = self.next_frame;
+        self.next_frame = serial
+            .checked_add(1)
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.reserve(size_of::<Frame>() * 2)?;
+        if self.frames.len() == self.frames.capacity() {
+            let capacity = self
+                .frames
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(2))
+                .ok_or(ExecutionError::Capacity)?;
+            self.reservation.resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(
+                        capacity
+                            .checked_mul(size_of::<Frame>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            self.frames
+                .try_reserve_exact(capacity - self.frames.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        let token = PhysicalCheckpoint {
+            depth: self.frames.len(),
+            serial,
+        };
+        self.frames.push(Frame {
+            serial,
+            undo_start: self.undo.len(),
+            gift_review_start: self.gift_review_through,
+            changes_start: self.changes.len(),
+            clock: ClockSnapshot::capture(state),
+            identity: state.identity,
+            written: IndexSet::new(),
+        });
+        Ok(token)
+    }
+    fn check_top(&self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
+        if checkpoint.depth == 0
+            || self.frames.len() != checkpoint.depth + 1
+            || self
+                .frames
+                .last()
+                .is_none_or(|f| f.serial != checkpoint.serial)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        Ok(())
+    }
+    fn prepare_keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
+        self.check_top(checkpoint)?;
+        let child = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let parent_index = self.frames.len() - 2;
+        let parent = &self.frames[parent_index];
+        let needed = parent
+            .written
+            .len()
+            .checked_add(child.written.len())
+            .ok_or(ExecutionError::Capacity)?;
+        if needed > parent.written.capacity() {
+            let capacity = needed
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(8))
+                .ok_or(ExecutionError::Capacity)?;
+            let bytes = crate::host::retained_size::map_storage::<UndoKey, ()>(capacity)
+                .ok_or(ExecutionError::Capacity)?;
+            self.reservation.resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let parent = &mut self.frames[parent_index];
+            parent
+                .written
+                .try_reserve_exact(capacity - parent.written.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        Ok(())
+    }
+    fn agency_handle(frame: &Frame, key: &UndoKey) -> Option<EntityHandle> {
+        let (slot, generation) = match key {
+            UndoKey::AgencyPlan(slot, generation)
+            | UndoKey::AgencySuspended(slot, generation)
+            | UndoKey::AgencyHistory(slot, generation)
+            | UndoKey::AgencyPlaces(slot, generation)
+            | UndoKey::ResultEvidence(slot, generation) => (*slot, *generation),
+            _ => return None,
+        };
+        // Existing sparse write keys suffice. A fixed precedence visits each
+        // actor once without another dirty registry or a repeated plan scan.
+        let keys = [
+            UndoKey::AgencyPlan(slot, generation),
+            UndoKey::AgencySuspended(slot, generation),
+            UndoKey::AgencyHistory(slot, generation),
+            UndoKey::AgencyPlaces(slot, generation),
+            UndoKey::ResultEvidence(slot, generation),
+        ];
+        (keys
+            .iter()
+            .find(|candidate| frame.written.contains(*candidate))
+            == Some(key))
+        .then_some(EntityHandle { slot, generation })
+    }
+    fn settle_agency_frame(
+        state: &mut PhysicalState,
+        frame: &Frame,
+        reservation: &mut ByteReservation,
+        restoring: bool,
+    ) -> Result<(), ExecutionError> {
+        for key in &frame.written {
+            let Some(handle) = Self::agency_handle(frame, key) else {
+                continue;
+            };
+            // A root inverse may already have removed a body created within
+            // that candidate, including its whole metadata allocation owner.
+            if restoring && state.entities.resolve(handle).is_none() {
+                continue;
+            }
+            state
+                .entities
+                .settle_agency_memory(handle, reservation, restoring)?;
+        }
+        Ok(())
+    }
+    fn settle_agency_memory(&mut self, state: &mut PhysicalState) -> Result<(), ExecutionError> {
+        let [frame] = self.frames.as_slice() else {
+            return Err(ExecutionError::InvalidCheckpoint);
+        };
+        Self::settle_agency_frame(state, frame, &mut self.reservation, false)
+    }
+    pub(crate) fn keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
+        self.prepare_keep(checkpoint)?;
+        let child = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.frames
+            .last_mut()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .written
+            .extend(child.written);
+        Ok(())
+    }
+    pub(crate) fn rollback_to(
+        &mut self,
+        state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
+        checkpoint: PhysicalCheckpoint,
+    ) -> Result<(), ExecutionError> {
+        self.check_top(checkpoint)?;
+        let child = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.rollback_frame(state, inventory, membership, child)
+    }
+    pub(crate) fn rollback_all(
+        &mut self,
+        state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
+    ) -> Result<(), ExecutionError> {
+        while let Some(frame) = self.frames.pop() {
+            self.rollback_frame(state, inventory, membership, frame)?;
+        }
+        state
+            .bodies
+            .settle_memory()
+            .map_err(|_| ExecutionError::Invariant)
+    }
+    fn rollback_frame(
+        &mut self,
+        state: &mut PhysicalState,
+        inventory: &mut crate::install::Inventory,
+        membership: &mut crate::administration::ObjectMembership,
+        frame: Frame,
+    ) -> Result<(), ExecutionError> {
+        while self.undo.len() > frame.undo_start {
+            let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
+            match undo {
+                Undo::ProjectileLaunch { id, present } => {
+                    state.projectiles.flights.shift_remove(&id).ok_or(ExecutionError::Invariant)?;
+                    state.projectiles.present = present;
+                }
+                Undo::ProjectileProgress { id, before } => {
+                    state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?.flight.set_progress(before);
+                }
+                Undo::ProjectilePassage { id, receiver, life, ordinal, present } => {
+                    let flight = state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?;
+                    flight.passages.rollback_add(&receiver, life, ordinal)?;
+                    flight.flight.set_passages(present);
+                }
+                Undo::ProjectileCrossings { id, before, storage } => {
+                    let row = state.projectiles.flights.get_mut(&id).ok_or(ExecutionError::Invariant)?;
+                    row.flight.encounters = before;
+                    row.crossing_storage = storage;
+                }
+                Undo::ProjectileRetire { position, id, before } => {
+                    if state.projectiles.flights.shift_insert(position, id, before).is_some() {
+                        return Err(ExecutionError::Invariant);
+                    }
+                }
+                Undo::InventoryAvailability(before) => before.restore(state)?,
+                Undo::MaterialWet { item, before } => inventory.exposure.set_wet(item, before),
+                Undo::MaterialDetails { root, before } => {
+                    let entity = state.entities.resolve(root).ok_or(ExecutionError::Invariant)?;
+                    inventory.set_material_detail_revision(&entity.id, before)?;
+                }
+                Undo::ItemHoldAdded { id, ordinal, parent_present } => {
+                    state.holds.remove(&id)?;
+                    state.holds.coverage.next_ordinal = ordinal;
+                    state.holds.coverage.parent_present = parent_present;
+                }
+                Undo::ItemHoldEnded { key, mut hold, amount, .. } => {
+                    use crate::item_holds::ClaimState;
+                    hold.value.revision -= 1;
+                    hold.value.state = ClaimState::Held;
+                    hold.value.amount = amount;
+                    state.holds.put(key, *hold)?;
+                }
+                Undo::AgencyPlan { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .plan = before;
+                }
+                Undo::AgencyGoals { entity, before } => {
+                    drop(state.entities.swap_funded_goals(entity, before)?);
+                }
+                Undo::AgencyIntents { entity, before } => {
+                    drop(state.entities.swap_funded_intents(entity, before)?);
+                }
+                Undo::Gift(undo) => undo.revert(&mut state.gifts)?,
+                Undo::Gate(patch) => {
+                    let root = patch.root;
+                    patch.restore(state)?;
+                    state.entities.settle_authored_memory(root, &mut self.reservation, true)?;
+                }
+                Undo::StructureEdit(patch) => patch.restore(state, &mut self.reservation)?,
+                Undo::CoachingEpisode {id,before,present} => {
+                    let removed=crate::install::CoachingState::row_bytes(&id,state.coaching.records.get(&id)).ok_or(ExecutionError::Capacity)?;
+                    let added=crate::install::CoachingState::row_bytes(&id,before.as_ref().map(|(_,e)|e)).ok_or(ExecutionError::Capacity)?;
+                    let bytes=state.coaching.payload_bytes.checked_sub(removed).and_then(|v|v.checked_add(added)).ok_or(ExecutionError::Capacity)?;
+                    if let Some((position,episode))=before {
+                        state.coaching.records.shift_insert(position,id,episode);
+                    } else {state.coaching.records.shift_remove(&id);}
+                    state.coaching.settle(bytes,state.coaching.records.capacity(),&self.budget,&mut self.reservation,true)?;
+                    state.coaching.present=present;
+                }
+                Undo::CoachingParticipant {entity,before} => {
+                    state.entities.resolve_mut(entity).and_then(|e|e.actor.as_mut()).ok_or(ExecutionError::Invariant)?.coaching_episode_id=before;
+                }
+                Undo::CoachingPresence { before } => {
+                    state.coaching.present = before;
+                }
+                Undo::Participation { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .participation = before;
+                    state.entities.settle_participation_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
+                Undo::Contact {
+                    entity,
+                    subject,
+                    before: (position, value),
+                } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|actor| actor.contacts.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .shift_insert(position, subject, value);
+                }
+                Undo::ExitExposure {
+                    actor,
+                    before,
+                    root_present,
+                } => {
+                    let rows = &mut state.participation.exposures;
+                    if let Some((position, deadline)) = before {
+                        rows.as_mut()
+                            .ok_or(ExecutionError::Invariant)?
+                            .shift_insert(position, actor, deadline);
+                    } else if let Some(rows) = rows {
+                        rows.shift_remove(&actor);
+                    }
+                    if !root_present {
+                        *rows = None;
+                    }
+                    state.participation.settle_restored(&mut self.reservation)?;
+                }
+                Undo::AgencyPlaces {
+                    entity,
+                    before,
+                    order,
+                } => {
+                    let agency = &mut state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency;
+                    agency.places = before;
+                    agency.order = order;
+                }
+                Undo::AgencySuspended {
+                    entity,
+                    before,
+                    order,
+                } => {
+                    let agency = &mut state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency;
+                    agency.suspended = before;
+                    agency.order = order;
+                }
+                Undo::AgencyHistory { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .history = before;
+                }
+                Undo::AgencyRevision { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .revision = before;
+                }
+                Undo::PlanGeneration { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .plan_generation = before;
+                }
+                Undo::Inventory(before) => {
+                    before.restore(state, inventory, membership, &mut self.reservation)?;
+                }
+                Undo::RemovedPhysicalRoot(before) => {
+                    let id = state.entities.restore_physical_root(*before, &mut self.reservation)?;
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::AddedEntity(before) => {
+                    let (id, renumbered) = state
+                        .entities
+                        .undo_insertion(before, &mut self.reservation)
+                        .map_err(|_| ExecutionError::Invariant)?;
+                    if renumbered {
+                        state.bodies.refresh_ordering(&state.entities)?;
+                    }
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::BodyRevision { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.body.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .revision = before;
+                }
+                Undo::BodyLifecycle {
+                    entity,
+                    alive,
+                    incapacitated,
+                    physical_life,
+                    conditions,
+                    fall_velocity,
+                    local_avoidance_ready_at,
+                } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+                    actor.alive = alive;
+                    actor.incapacitated = incapacitated;
+                    actor.physical_life = physical_life;
+                    if let Some(conditions) = conditions {
+                        actor.body.as_mut().ok_or(ExecutionError::MissingBody)?.conditions = conditions;
+                    }
+                    entity.spatial.fall_velocity = fall_velocity;
+                    entity.spatial.local_avoidance_ready_at = local_avoidance_ready_at;
+                    let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::LocalPose { entity, before, ready_at } => {
+                    let body = state.entities.resolve_mut(entity).ok_or(ExecutionError::Invariant)?;
+                    body.spatial.local_pose = before;
+                    body.spatial.local_avoidance_ready_at = ready_at;
+                    let id = body.id.clone();
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::Remains { entity, before } => {
+                    let current = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    current.remains = before;
+                    let id = current.id.clone();
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::PendingDeath {
+                    entity: handle,
+                    before,
+                    combat_ready_at,
+                    evasion_ready_at,
+                } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(handle)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+                    actor.pending_death = before;
+                    actor.combat_ready_at = combat_ready_at;
+                    actor.evasion_ready_at = evasion_ready_at;
+                    let id = entity.id.clone();
+                    state.entities.settle_operational_memory(handle, &mut self.reservation, true)?;
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::Scar {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let scars = actor.scars.as_mut().ok_or(ExecutionError::Invariant)?;
+                    scars.shift_remove(&key);
+                    if let Some((position, value)) = before {
+                        scars.shift_insert(position, key, value);
+                    }
+                    if !root_present {
+                        if !scars.is_empty() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        actor.scars = None;
+                    }
+                }
+                Undo::Contacts { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .contacts = Some(before);
+                }
+                Undo::NativeWindow { before } => match before {
+                    None => {
+                        if state.pending_values.as_ref().is_some_and(|window| {
+                            !window.bindings.is_empty() || !window.by_entity.is_empty()
+                        }) {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        state.pending_values = None;
+                    }
+                    Some(before) => {
+                        let window =
+                            state
+                                .pending_values
+                                .get_or_insert_with(|| NativeValueWindow {
+                                    elapsed_seconds: before.elapsed_seconds,
+                                    sim_time: before.sim_time,
+                                    binding_count: before.binding_count,
+                                    bindings: IndexMap::new(),
+                                    by_entity: IndexMap::new(),
+                                });
+                        window.elapsed_seconds = before.elapsed_seconds;
+                        window.sim_time = before.sim_time;
+                        window.binding_count = before.binding_count;
+                    }
+                },
+                Undo::RetainedBinding { episode, entity_id } => {
+                    if let Some(window) = state.pending_values.as_mut() {
+                        if window.bindings.shift_remove(&episode).is_some() {
+                            window.binding_count = window
+                                .binding_count
+                                .checked_sub(1)
+                                .ok_or(ExecutionError::Invariant)?;
+                        }
+                        if let Some(subject) = window.by_entity.get_mut(&entity_id) {
+                            // Conditional rates can select another attribute
+                            // subset later in the same checkpoint. All links
+                            // to this introduced episode must leave together.
+                            subject.retain(|_, value| value != &episode);
+                            if subject.is_empty() {
+                                window.by_entity.shift_remove(&entity_id);
+                            }
+                        }
+                        if window.binding_count == 0 {
+                            state.pending_values = None;
+                        }
+                    }
+                }
+                Undo::Condition {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let map = actor.conditions.as_mut().ok_or(ExecutionError::Invariant)?;
+                    map.shift_remove(&key);
+                    if let Some((position, before)) = before {
+                        map.shift_insert(position, key, before);
+                    }
+                    if !root_present {
+                        if !map.is_empty() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        actor.conditions = None;
+                    }
+                }
+                Undo::Attribute { entity, id, before } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let attributes = if let Some(actor) = entity.actor.as_mut() {
+                        actor.attributes.as_mut()
+                    } else {
+                        entity.attributes.as_mut()
+                    }
+                    .ok_or(ExecutionError::Invariant)?;
+                    *attributes.get_mut(&id).ok_or(ExecutionError::Invariant)? = before;
+                }
+                Undo::Practice {
+                    entity,
+                    key,
+                    before,
+                } => {
+                    *state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.practice.as_mut())
+                        .and_then(|practice| practice.get_mut(&key))
+                        .ok_or(ExecutionError::Invariant)? = before;
+                    state.entities.settle_practice_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::Flight { entity, before, fall_velocity } => {
+                    let current = state.entities.resolve_mut(entity).ok_or(ExecutionError::Invariant)?;
+                    current.spatial.flight = before;
+                    current.spatial.fall_velocity = fall_velocity;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::Placement {
+                    entity,
+                    before,
+                    heading,
+                } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    entity.placement = Some(before);
+                    entity.spatial.heading = heading;
+                    let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id)?;
+                }
+                Undo::ActionNavigation {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    drop(action_storage::swap_navigation(
+                        state, entity, &action_id, before,
+                    )?);
+                }
+                Undo::ActionRemaining {
+                    entity,
+                    action_id,
+                    before,
+                    ready,
+                } => {
+                    let action = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?;
+                    action.remaining_seconds = before;
+                    if let Some(ready) = ready {
+                        action.ranged.as_mut().ok_or(ExecutionError::Invariant)?.ready = ready;
+                    }
+                }
+                Undo::CombatReady { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .combat_ready_at = before;
+                }
+                Undo::EvasionReady { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .evasion_ready_at = before;
+                }
+                Undo::PersonTraits{entity,before}=>{
+                    state.entities.resolve_mut(entity).and_then(|row|row.actor.as_mut()).ok_or(ExecutionError::MissingActor)?.traits=before;
+                    state.entities.settle_authored_memory(entity,&mut self.reservation,true)?;
+                }
+                Undo::PersonProfile { entity, before } => {
+                    before.swap(
+                        state
+                            .entities
+                            .resolve_mut(entity)
+                            .ok_or(ExecutionError::MissingActor)?,
+                    )?;
+                    state
+                        .entities
+                        .settle_authored_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::AttackModeNotice { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .attack_mode_notice = before;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
+                Undo::PersonalEncounters { entity, before } => {
+                    state.entities.resolve_mut(entity).and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?.encounters = before;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::ContactPhase {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    let action = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?;
+                    before.restore(action);
+                }
+                Undo::AttackObservers { entity, action_id, before } => {
+                    drop(state.entities.swap_attack_observers(entity, &action_id, before, &self.budget)?);
+                }
+                Undo::AttackExecution { entity, action_id, before } => {
+                    drop(state.entities.swap_attack_execution(entity, &action_id, before, &self.budget)?);
+                }
+                Undo::StrikeMotion {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    drop(state.entities.swap_funded_strike_motion(
+                        entity,
+                        &action_id,
+                        before,
+                        &self.budget,
+                    )?);
+                }
+                Undo::ActionAimMotion { entity, action_id, before } => {
+                    state.entities.resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .and_then(|action| action.ranged.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .observed_motion = before;
+                }
+                Undo::ActionSample {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?
+                        .motion_sample_remaining_metres = before;
+                }
+                Undo::SensoryProgress { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .sensory_progress = before;
+                }
+                Undo::ActionReplans {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?
+                        .replans = before;
+                }
+                Undo::ActionRoute {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    drop(action_storage::swap_route(
+                        state, entity, &action_id, before,
+                    )?);
+                }
+                Undo::ActionFollow { entity, action_id, before } => {
+                    drop(state.entities.swap_action_follow(entity, &action_id, before)?);
+                }
+                Undo::Heading { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .spatial
+                        .heading = before;
+                }
+                Undo::Heat { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .heat = Some(before);
+                }
+                Undo::Territorial { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.threat.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .progress = before;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
+                Undo::TerritorialPlace { entity, home, refuge } => {
+                    let policy = &mut state.entities.resolve_mut(entity)
+                        .and_then(|entity| entity.threat.as_mut())
+                        .ok_or(ExecutionError::Invariant)?.policy;
+                    policy.home = home;
+                    policy.refuge = refuge;
+                    state.entities.settle_operational_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::RestoreActor {
+                    entity,
+                    controller,
+                    inspection,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    actor.controller = controller;
+                    actor.inventory_inspection = inspection;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                    let id = state
+                        .entities
+                        .resolve(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .id
+                        .as_str();
+                    state.bodies.refresh(&state.entities, id)?;
+                }
+                Undo::Health { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .health = before
+                }
+                Undo::ResultEvidence {
+                    entity,
+                    before,
+                    order,
+                } => {
+                    let agency = &mut state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency;
+                    agency.last_result_evidence = before;
+                    agency.order = order;
+                }
+                Undo::Status {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    state
+                        .entities
+                        .restore_funded_status(entity, &key, before, root_present)?;
+                }
+                Undo::Action {
+                    entity,
+                    before,
+                    plan_generation,
+                } => {
+                    drop(state.entities.swap_funded_action(entity, before)?);
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .plan_generation = plan_generation;
+                }
+                Undo::ActionPath {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    drop(action_storage::swap_path(
+                        state, entity, &action_id, before,
+                    )?);
+                }
+                Undo::AnimalEpisode { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.animal.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .episode = before;
+                }
+                Undo::Foraging { entity, before } => {
+                    drop(state.entities.swap_funded_foraging(entity, before)?);
+                }
+                Undo::ResourceStock {
+                    entity,
+                    quantity,
+                    revision,
+                } => {
+                    let stock = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|value| value.resource.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    stock.quantity = quantity;
+                    stock.revision = revision;
+                }
+                Undo::AnimalWander { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.animal.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .wander = before;
+                }
+                Undo::AnimalPhysicalLife { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.animal.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .physical_life = before;
+                }
+                Undo::AcousticPattern {
+                    entity,
+                    key,
+                    before,
+                } => {
+                    let patterns = &mut state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.animal.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .acoustic_patterns;
+                    patterns.shift_remove(&key);
+                    if let Some((index, value)) = before {
+                        patterns.shift_insert(index, key, value);
+                    }
+                }
+                Undo::SemanticMeta {
+                    entity,
+                    interval,
+                    discovery,
+                    reservation,
+                    occupied_purpose,
+                } => {
+                    let semantic = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|a| a.agency.semantic.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    semantic.interval = interval;
+                    semantic.discovery = discovery;
+                    semantic.reservation = reservation;
+                    semantic.occupied_purpose = occupied_purpose;
+                    state
+                        .entities
+                        .settle_semantic_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::SemanticResolved { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|a| a.agency.semantic.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .resolved = before;
+                    state
+                        .entities
+                        .settle_semantic_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::Episode(undo) => restore_episode(state, undo)?,
+                Undo::Work(undo) => state.work.rollback(undo)?,
+            }
+        }
+        // Only root publication settles this aggregate backing. A child
+        // rollback must not adopt its parent's still-tentative plan buffers.
+        if frame.serial == 0 {
+            Self::settle_agency_frame(state, &frame, &mut self.reservation, true)?;
+        }
+        self.changes.truncate(frame.changes_start);
+        self.gift_review_through = frame.gift_review_start;
+        frame.clock.restore(state);
+        // A rejected private candidate issued nothing. High-water preservation
+        // belongs only to the separate accepted gameplay-restore owner.
+        state.identity = frame.identity;
+        Ok(())
+    }
+    fn first(&self, key: &UndoKey) -> Result<bool, ExecutionError> {
+        Ok(!self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .written
+            .contains(key))
+    }
+    fn retain(&mut self, key: UndoKey, undo: Undo) -> Result<(), ExecutionError> {
+        if self.undo.len() == self.undo.capacity()
+            || self
+                .frames
+                .last()
+                .is_none_or(|frame| frame.written.len() == frame.written.capacity())
+        {
+            return Err(ExecutionError::Invariant);
+        }
+        self.frames
+            .last_mut()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .written
+            .insert(key);
+        self.undo.push(undo);
+        Ok(())
+    }
+    fn change(&mut self, change: PhysicalChange) -> Result<(), ExecutionError> {
+        if self.changes.len() == self.changes.capacity() {
+            return Err(ExecutionError::Invariant);
+        }
+        self.changes.push(change);
+        Ok(())
+    }
+    pub(crate) fn changes(&self) -> &[PhysicalChange] {
+        &self.changes
+    }
+    /// Source revisits an observer's assigned spatial fields until its owned
+    /// draft finishes. These existing keys survive kept children and disappear
+    /// with rollback; route progress and hydrated rows never write them.
+    pub(crate) fn spatially_written(&self, entity: EntityHandle) -> bool {
+        self.frames.iter().any(|frame| {
+            frame
+                .written
+                .contains(&UndoKey::Placement(entity.slot, entity.generation))
+                || frame
+                    .written
+                    .contains(&UndoKey::Heading(entity.slot, entity.generation))
+        })
+    }
+    pub(crate) fn change_cursor(&self) -> PhysicalChangeCursor {
+        PhysicalChangeCursor {
+            at: self.changes.len(),
+        }
+    }
+    pub(crate) fn changes_since(
+        &self,
+        cursor: PhysicalChangeCursor,
+    ) -> Result<&[PhysicalChange], ExecutionError> {
+        self.changes
+            .get(cursor.at..)
+            .ok_or(ExecutionError::InvalidCheckpoint)
+    }
+    pub(crate) fn scratch_bytes(&self) -> usize {
+        self.reservation.bytes()
+    }
+}
+
+pub(crate) struct PhysicalMutation<'a> {
+    pub state: &'a mut PhysicalState,
+    pub journal: &'a mut PhysicalJournal,
+}
+impl PhysicalMutation<'_> {
+    /// A selected resting facing changes orientation and emits Source's
+    /// zero-distance spatial notice. It neither moves placement nor advances
+    /// the route/continuity counters used to recognize actual motion.
+    pub(crate) fn set_heading(&mut self, id: &str, heading: f64) -> Result<(), ExecutionError> {
+        if !heading.is_finite() {
+            return Err(ExecutionError::InvalidPosition);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        if entity.spatial.flight.is_some() {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        let position = entity
+            .world_position()
+            .ok_or(ExecutionError::InvalidPosition)?;
+        self.journal
+            .reserve(size_of::<Undo>() * 2 + size_of::<PhysicalChange>() * 2 + id.len() * 2)?;
+        let key = UndoKey::Heading(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::Heading {
+                    entity: handle,
+                    before: entity.spatial.heading,
+                },
+            )?;
+        }
+        self.journal.change(PhysicalChange::Spatial {
+            entity_id: id.to_owned(),
+            before: position,
+            after: position,
+            support_unchanged: true,
+            discontinuity: false,
+        })?;
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .ok_or(ExecutionError::Invariant)?
+            .spatial
+            .heading = heading;
+        Ok(())
+    }
+    pub(crate) fn settle_entity(&mut self, id: &str) -> Result<(), ExecutionError> {
+        let Some(bindings) = self
+            .state
+            .pending_values
+            .as_ref()
+            .and_then(|window| window.by_entity.get(id))
+        else {
+            return Ok(());
+        };
+        self.journal.reserve(
+            bindings.len() * size_of::<String>() * 2
+                + bindings.values().map(String::len).sum::<usize>(),
+        )?;
+        // Object.values takes a snapshot before the first materialization
+        // removes any binding. Preserve duplicates and source iteration order.
+        let episodes: Vec<String> = bindings.values().cloned().collect();
+        for episode in episodes {
+            self.settle_episode(&episode)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn admit_status_work(
+        &mut self,
+        actor_id: &str,
+        episode: &str,
+        work: &crate::status::CompiledStatusWork,
+    ) -> Result<(), ExecutionError> {
+        self.journal.reserve(
+            actor_id.len()
+                + episode.len()
+                + work.pin.id.len() * 2
+                + work.pin.digest.len()
+                + size_of::<WorkRequest>(),
+        )?;
+        self.admit_work(work.request(actor_id, episode)?)
+    }
+    pub(crate) fn reserve_status_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
+        self.journal.reserve(bytes)
+    }
+    pub(crate) fn replace_status(
+        &mut self,
+        id: &str,
+        status_id: &str,
+        status: crate::state::FundedStatus,
+    ) -> Result<(), ExecutionError> {
+        if !status.is_funded_by(&self.journal.budget) {
+            return Err(ExecutionError::Invariant);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        if status.contribution.is_some()
+            || entity
+                .status_effects
+                .as_ref()
+                .and_then(|s| s.get(status_id))
+                .is_some_and(|s| s.contribution.is_some())
+        {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        if let Some(episode) = entity
+            .status_effects
+            .as_ref()
+            .and_then(|s| s.get(status_id))
+            .map(|s| s.episode.as_str())
+        {
+            self.journal.reserve(episode.len())?;
+            let episode = episode.to_owned();
+            self.settle_episode(&episode)?;
+        }
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal.reserve(status_id.len())?;
+        let key = UndoKey::Status(handle.slot, handle.generation, status_id.to_owned());
+        let first = self.journal.first(&key)?;
+        let root_present = entity.status_effects.is_some();
+        let new = !entity
+            .status_effects
+            .as_ref()
+            .is_some_and(|map| map.contains_key(status_id));
+        self.journal.reserve(
+            size_of::<Undo>() * 2
+                + size_of::<PhysicalChange>() * 2
+                + status_id.len() * 3
+                + id.len() * 2,
+        )?;
+        if first && new {
+            // Empty-root creation/reservation can fail before the actual value
+            // is installed. Its inverse already owns exact parent presence.
+            self.journal.retain(
+                key.clone(),
+                Undo::Status {
+                    entity: handle,
+                    key: status_id.to_owned(),
+                    before: None,
+                    root_present,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .prepare_status_insert(handle, status_id, &self.journal.budget)?;
+        self.journal.change(PhysicalChange::Contribution {
+            entity_id: id.to_owned(),
+        })?;
+        let before = self
+            .state
+            .entities
+            .swap_funded_status(handle, status_id, status)?;
+        if first && !new {
+            self.journal.retain(
+                key,
+                Undo::Status {
+                    entity: handle,
+                    key: status_id.to_owned(),
+                    before,
+                    root_present,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    pub(crate) fn set_result_evidence(
+        &mut self,
+        id: &str,
+        evidence: Option<crate::activity::ResultEvidence>,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        if self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.actor.as_ref())
+            .is_none()
+        {
+            return Err(ExecutionError::MissingActor);
+        }
+        let key = UndoKey::ResultEvidence(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        let before_bytes = if first {
+            self.state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.actor.as_ref())
+                .ok_or(ExecutionError::MissingActor)?
+                .agency
+                .last_result_evidence
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        // Producers keep their construction guards. This setter additionally
+        // owns the moved incoming value and first inverse until publication
+        // transfers canonical custody; no caller-specific scope may end it.
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                before_bytes,
+                evidence.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.journal
+            .undo
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let actor = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        let order = actor.agency.order;
+        actor.agency.order.result_evidence();
+        let before = std::mem::replace(&mut actor.agency.last_result_evidence, evidence);
+        if first {
+            self.journal.retain(
+                key,
+                Undo::ResultEvidence {
+                    entity: handle,
+                    before,
+                    order,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    pub(crate) fn draw(&mut self) -> f64 {
+        self.state.identity.draw()
+    }
+    pub(crate) fn allocate(&mut self, prefix: &str) -> Result<IssuedIdentity, ExecutionError> {
+        Ok(self.state.identity.allocate(prefix)?)
+    }
+    pub(crate) fn reserve_response_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
+        self.journal.reserve(bytes)
+    }
+
+    /// Rollback moves the actual previous funded controller state back. Admit
+    /// the journal and new body before changing the live slot.
+    pub(crate) fn replace_foraging(
+        &mut self,
+        id: &str,
+        next: crate::state::FundedForaging,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::Foraging(entity.slot, entity.generation);
+        let first = self.journal.first(&key)?;
+        if !self.journal.budget.resident().owns(&next.storage) {
+            return Err(ExecutionError::Invariant);
+        }
+        let previous = self
+            .state
+            .entities
+            .resolve(entity)
+            .and_then(|entity| entity.animal.as_ref())
+            .and_then(|animal| animal.foraging.as_deref())
+            .ok_or(ExecutionError::Invariant)?;
+        let behavior = next.value.mode != previous.mode || next.value.work != previous.work;
+        self.journal
+            .reserve(2 * size_of::<Undo>() + 4 * size_of::<PhysicalChange>() + id.len() * 4)?;
+        if first {
+            self.journal
+                .budget
+                .retain_record(self.state.entities.foraging_storage(entity)?)?;
+        }
+        self.journal.change(PhysicalChange::AnimalClock {
+            entity_id: id.to_owned(),
+        })?;
+        if behavior {
+            // A work binding or mode can change metabolic policy, but does
+            // not itself disclose an action or movement.
+            self.journal.change(PhysicalChange::Behavior {
+                entity_id: id.to_owned(),
+                outward_change: false,
+            })?;
+        }
+        let before = self.state.entities.swap_funded_foraging(entity, next)?;
+        if first {
+            self.journal
+                .retain(key, Undo::Foraging { entity, before })?;
+        }
+        Ok(())
+    }
+
+    /// Prepare one separately owned controller replacement. The caller states
+    /// how much new backing its edit can retain beyond the complete copy.
+    pub(crate) fn change_foraging(
+        &mut self,
+        id: &str,
+        growth: usize,
+        edit: impl FnOnce(&mut crate::native_response::ForagingContinuation),
+    ) -> Result<(), ExecutionError> {
+        let Some(before) = self
+            .state
+            .entities
+            .get(id)
+            .and_then(|entity| entity.animal.as_ref())
+            .and_then(|animal| animal.foraging.as_deref())
+        else {
+            return Ok(());
+        };
+        let budget = self.journal.budget.clone();
+        let bytes = heap_sum([
+            size_of::<crate::native_response::ForagingContinuation>(),
+            before.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            growth,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        let mut next = Box::new(before.clone());
+        edit(&mut next);
+        if *next == *before {
+            return Ok(());
+        }
+        self.replace_foraging(
+            id,
+            crate::state::FundedForaging::adopt(next, storage, &budget)?,
+        )
+    }
+
+    /// Debit an admitted amount at the exact stock revision. The caller owns
+    /// access and reach and joins the result in this mutation checkpoint.
+    pub(crate) fn debit_resource(
+        &mut self,
+        id: &str,
+        expected_revision: u64,
+        amount: u64,
+    ) -> Result<bool, ExecutionError> {
+        let Some(entity) = self.state.entities.handle(id) else {
+            return Ok(false);
+        };
+        let Some(stock) = self
+            .state
+            .entities
+            .resolve(entity)
+            .and_then(|value| value.resource.as_ref())
+        else {
+            return Ok(false);
+        };
+        let (quantity, revision) = (stock.quantity, stock.revision);
+        if amount == 0 || quantity < amount || revision.unwrap_or(0) != expected_revision {
+            return Ok(false);
+        }
+        let next = expected_revision
+            .checked_add(1)
+            .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Identity)?;
+        let key = UndoKey::ResourceStock(entity.slot, entity.generation);
+        if self.journal.first(&key)? {
+            self.journal.reserve(2 * size_of::<Undo>())?;
+            self.journal.retain(
+                key,
+                Undo::ResourceStock {
+                    entity,
+                    quantity,
+                    revision,
+                },
+            )?;
+        }
+        let stock = self
+            .state
+            .entities
+            .resolve_mut(entity)
+            .and_then(|value| value.resource.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        stock.quantity = quantity - amount;
+        stock.revision = Some(next);
+        // The permitted visual body includes the quantity, including every
+        // nonempty change. Invalidate current sight at the actual stock write.
+        self.behavior_changed(id, true)?;
+        Ok(true)
+    }
+
+    /// The animal controller owns these bounded subrecords. Their guards join
+    /// the same physical checkpoint used by action and value writes.
+    pub(crate) fn snapshot_episode(
+        &mut self,
+        id: &str,
+    ) -> Result<&mut Option<crate::native_response::NativeResponseEpisode>, ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::AnimalEpisode(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            let before = &self
+                .state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.animal.as_ref())
+                .ok_or(ExecutionError::UnsupportedFamily)?
+                .episode;
+            self.journal.reserve(
+                crate::native_response::episode_clone_bytes(before)
+                    .checked_add(size_of::<Undo>() * 2)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            self.journal.retain(
+                key,
+                Undo::AnimalEpisode {
+                    entity: handle,
+                    before: before.clone(),
+                },
+            )?;
+        }
+        Ok(&mut self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.animal.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .episode)
+    }
+    pub(crate) fn snapshot_wander(
+        &mut self,
+        id: &str,
+    ) -> Result<&mut crate::native_response::WanderClock, ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::AnimalWander(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            let before = &self
+                .state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.animal.as_ref())
+                .ok_or(ExecutionError::UnsupportedFamily)?
+                .wander;
+            self.journal.reserve(size_of::<Undo>() * 2)?;
+            self.journal.retain(
+                key,
+                Undo::AnimalWander {
+                    entity: handle,
+                    before: before.clone(),
+                },
+            )?;
+        }
+        Ok(&mut self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.animal.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .wander)
+    }
+    pub(crate) fn set_animal_physical_life(
+        &mut self,
+        id: &str,
+        value: u64,
+    ) -> Result<(), ExecutionError> {
+        if value > MAX_SAFE_INTEGER {
+            return Err(ExecutionError::Invariant);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let before = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.animal.as_ref())
+            .ok_or(ExecutionError::UnsupportedFamily)?
+            .physical_life;
+        if before == value {
+            return Ok(());
+        }
+        let key = UndoKey::AnimalPhysicalLife(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.reserve(size_of::<Undo>() * 2)?;
+            self.journal.retain(
+                key,
+                Undo::AnimalPhysicalLife {
+                    entity: handle,
+                    before,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.animal.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .physical_life = value;
+        Ok(())
+    }
+    pub(crate) fn set_acoustic_pattern(
+        &mut self,
+        id: &str,
+        key: &str,
+        value: Option<crate::native_response::AcousticPattern>,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let patterns = &self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.animal.as_ref())
+            .ok_or(ExecutionError::UnsupportedFamily)?
+            .acoustic_patterns;
+        if patterns.get(key) == value.as_ref() {
+            return Ok(());
+        }
+        let undo_key = UndoKey::AcousticPattern(handle.slot, handle.generation, key.to_owned());
+        if self.journal.first(&undo_key)? {
+            let prior = patterns
+                .get_full(key)
+                .map(|(index, _, value)| (index, value));
+            self.journal.reserve(
+                crate::native_response::acoustic_pattern_clone_bytes(prior.map(|(_, value)| value))
+                    .checked_add(size_of::<Undo>() * 2 + key.len() * 4)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            self.journal.retain(
+                undo_key,
+                Undo::AcousticPattern {
+                    entity: handle,
+                    key: key.to_owned(),
+                    before: prior.map(|(index, value)| (index, value.clone())),
+                },
+            )?;
+        }
+        let patterns = &mut self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.animal.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .acoustic_patterns;
+        if let Some(value) = value {
+            patterns.insert(key.to_owned(), value);
+        } else {
+            patterns.shift_remove(key);
+        }
+        Ok(())
+    }
+    pub(crate) fn behavior_changed(
+        &mut self,
+        id: &str,
+        outward_change: bool,
+    ) -> Result<(), ExecutionError> {
+        self.journal
+            .reserve(size_of::<PhysicalChange>() * 2 + id.len() * 2)?;
+        self.journal.change(PhysicalChange::Behavior {
+            entity_id: id.to_owned(),
+            outward_change,
+        })
+    }
+    pub(crate) fn animal_clock_changed(&mut self, id: &str) -> Result<(), ExecutionError> {
+        self.journal
+            .reserve(size_of::<PhysicalChange>() * 2 + id.len() * 2)?;
+        self.journal.change(PhysicalChange::AnimalClock {
+            entity_id: id.to_owned(),
+        })
+    }
+
+    /// Geometry is proved by the existing provider before reaching this owner.
+    /// All callers share the same revision, continuity and heading assignment.
+    pub(crate) fn set_position(
+        &mut self,
+        id: &str,
+        point: Point,
+        support: Option<String>,
+        movement: Option<MovementWrite>,
+    ) -> Result<(), ExecutionError> {
+        self.set_position_inner(id, point, support, movement, false)
+    }
+
+    pub(crate) fn set_flight_position(
+        &mut self,
+        id: &str,
+        point: Point,
+        support: Option<String>,
+    ) -> Result<(), ExecutionError> {
+        self.set_position_inner(id, point, support, Some(MovementWrite {
+            steps: 1,
+            heading: None,
+            continuity: Continuity::Physical,
+        }), true)
+    }
+
+    fn set_position_inner(
+        &mut self,
+        id: &str,
+        point: Point,
+        support: Option<String>,
+        movement: Option<MovementWrite>,
+        flight_owned: bool,
+    ) -> Result<(), ExecutionError> {
+        if ![point.x, point.y, point.z].into_iter().all(f64::is_finite) {
+            return Err(ExecutionError::InvalidPosition);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        // Ground travel cannot overwrite a current air corridor or falling body.
+        if !flight_owned && (entity.spatial.flight.is_some() || entity.spatial.fall_velocity.is_some()) {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        let Some(Placement::World {
+            position: before,
+            support_surface_id: prior_support,
+            revision,
+            motion_continuity_revision,
+        }) = &entity.placement
+        else {
+            return Err(ExecutionError::InvalidPosition);
+        };
+        let dx = point.x - before.x;
+        let dz = point.z - before.z;
+        let heading = movement.and_then(|m| m.heading).unwrap_or_else(|| {
+            if dx.hypot(dz) > 1e-8 {
+                crate::spatial::atan2(dx, dz)
+            } else {
+                entity.spatial.heading
+            }
+        });
+        let steps = movement.map_or(1, |m| m.steps);
+        let next_revision = revision
+            .checked_add(steps)
+            .filter(|n| *n <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::InvalidPosition)?;
+        if steps == 0 || steps > MAX_SAFE_INTEGER || !heading.is_finite() {
+            return Err(ExecutionError::InvalidPosition);
+        }
+        let changed = point != *before || support != *prior_support;
+        if !changed && movement.is_none() && heading == entity.spatial.heading {
+            return Ok(());
+        }
+        let key = UndoKey::Placement(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.journal.reserve(
+            size_of::<Undo>() * 2
+                + size_of::<PhysicalChange>() * 2
+                + id.len() * 4
+                + prior_support.as_ref().map_or(0, String::len)
+                + support.as_ref().map_or(0, String::len),
+        )?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::Placement {
+                    entity: handle,
+                    before: entity
+                        .placement
+                        .as_ref()
+                        .ok_or(ExecutionError::Invariant)?
+                        .clone(),
+                    heading: entity.spatial.heading,
+                },
+            )?;
+        }
+        let continuity = if movement.is_some_and(|m| m.continuity == Continuity::Physical) {
+            *motion_continuity_revision
+        } else {
+            Some(next_revision)
+        };
+        if changed || movement.is_some() {
+            self.journal.change(PhysicalChange::Spatial {
+                entity_id: id.to_owned(),
+                before: *before,
+                after: point,
+                support_unchanged: support == *prior_support,
+                discontinuity: !movement.is_some_and(|m| m.continuity == Continuity::Physical),
+            })?;
+            let entity = self
+                .state
+                .entities
+                .resolve_mut(handle)
+                .ok_or(ExecutionError::Invariant)?;
+            entity.placement = Some(Placement::World {
+                position: point,
+                support_surface_id: support,
+                revision: next_revision,
+                motion_continuity_revision: continuity,
+            });
+            entity.spatial.heading = heading;
+        } else {
+            self.state
+                .entities
+                .resolve_mut(handle)
+                .ok_or(ExecutionError::Invariant)?
+                .spatial
+                .heading = heading;
+        }
+        self.state.bodies.refresh(&self.state.entities, id)?;
+        Ok(())
+    }
+
+    /// Raw native health, preserving the current whole-point rounding law. Body
+    /// lifecycle/condition reconciliation remains an ordered required phase.
+    pub(crate) fn set_health(
+        &mut self,
+        id: &str,
+        mut value: f64,
+        native_health: Option<&AttributeDefinition>,
+    ) -> Result<bool, ExecutionError> {
+        if !value.is_finite() {
+            return Err(ExecutionError::InvalidHealth);
+        }
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let actor = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let body = actor.body.as_ref().ok_or(ExecutionError::MissingBody)?;
+        if native_health
+            .and_then(|d| d.native_health.as_ref())
+            .is_some_and(|health| health.precision == "whole-points")
+            && value != actor.health
+        {
+            let delta = value - actor.health;
+            value = actor.health + delta.signum() * (delta.abs() + 0.5).floor().max(1.0);
+        }
+        value = crate::values::js_max(0.0, crate::values::js_min(body.max_health, value));
+        if actor.health == value {
+            return Ok(false);
+        }
+        let key = UndoKey::Health(handle.slot, handle.generation);
+        self.journal
+            .reserve(size_of::<Undo>() * 2 + size_of::<PhysicalChange>() * 2 + id.len() * 4)?;
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::Health {
+                    entity: handle,
+                    before: actor.health,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .health = value;
+        Ok(true)
+    }
+
+    /// Called only after the action family has completed prior-plan lifecycle
+    /// and admitted its replacement; the moved before-value is never cloned.
+    pub(crate) fn replace_action(
+        &mut self,
+        id: &str,
+        action: Option<crate::state::FundedAction>,
+        write: ActionWrite,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        if action
+            .as_ref()
+            .is_some_and(|a| !a.storage.is_funded_by(&self.journal.budget))
+        {
+            return Err(ExecutionError::Invariant);
+        }
+        let actor = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let next = match write.generation {
+            PlanGenerationWrite::Preserve => actor.plan_generation,
+            PlanGenerationWrite::Advance => actor
+                .plan_generation
+                .checked_add(1)
+                .filter(|n| *n <= MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Invariant)?,
+        };
+        let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
+            != action.as_ref().map(|action| action.id.as_str());
+        if binding_changed && actor.action.as_ref().is_some_and(|action| action.is_operating_gate()) {
+            self.set_gate_edit(id, false)?;
+        }
+        let actor = self.state.entities.resolve(handle).and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        if let Some((count, key)) = actor.action.as_ref()
+            .filter(|_| binding_changed)
+            .and_then(crate::item_holds::ActionHoldKey::owned_by)
+        {
+            self.release_action_holds(handle, count, key)?;
+        }
+        let actor = self.state.entities.resolve(handle).and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let first = self
+            .journal
+            .first(&UndoKey::Action(handle.slot, handle.generation))?;
+        self.journal
+            .reserve(size_of::<Undo>() * 2 + size_of::<PhysicalChange>() * 2 + id.len() * 4)?;
+        self.journal
+            .undo
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        if let Some(outward_change) = write.behavior {
+            self.journal.change(PhysicalChange::Behavior {
+                entity_id: id.to_owned(),
+                outward_change,
+            })?;
+        }
+        let generation = actor.plan_generation;
+        if (first || binding_changed) && actor.action.is_some() {
+            self.state
+                .entities
+                .action_storage(handle)?
+                .retain(&self.journal.budget)?;
+        }
+        let before = self.state.entities.swap_funded_action(handle, action)?;
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::Invariant)?
+            .plan_generation = next;
+        // Preserve each binding transition. Field inverses taken while a new
+        // action runs must see that action again before the earlier binding is
+        // restored. The old action moves into this inverse without cloning.
+        if first || binding_changed {
+            self.journal.retain(
+                UndoKey::Action(handle.slot, handle.generation),
+                Undo::Action {
+                    entity: handle,
+                    before,
+                    plan_generation: generation,
+                },
+            )?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn settle_episode(&mut self, episode: &str) -> Result<(), ExecutionError> {
+        let Some(binding) = self
+            .state
+            .pending_values
+            .as_ref()
+            .and_then(|window| window.bindings.get(episode))
+        else {
+            return Ok(());
+        };
+        let handle = self
+            .state
+            .entities
+            .handle(&binding.entity_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        self.journal.reserve(
+            binding
+                .attributes
+                .len()
+                .checked_mul(size_of::<String>())
+                .and_then(|n| {
+                    binding
+                        .attributes
+                        .keys()
+                        .try_fold(n, |sum, id| sum.checked_add(id.len()))
+                })
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let attributes: Vec<String> = binding.attributes.keys().cloned().collect();
+        // One episode can select a different conditional attribute subset later
+        // in this candidate. Its first binding image cannot stand in for the
+        // separate before-value of a newly selected sparse attribute.
+        for id in &attributes {
+            self.snapshot_attribute(handle, id)?;
+        }
+        let Some(window) = &self.state.pending_values else {
+            return Ok(());
+        };
+        let Some((binding_index, _, binding)) = window.bindings.get_full(episode) else {
+            return Ok(());
+        };
+        let handle = self
+            .state
+            .entities
+            .handle(&binding.entity_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        let attributes = actor
+            .attributes
+            .as_ref()
+            .ok_or(ValueError::MissingAttribute)?;
+        let statuses = entity
+            .status_effects
+            .as_ref()
+            .ok_or(ValueError::MissingStatus)?;
+        let (status_index, _, status) = statuses
+            .get_full(&binding.status_id)
+            .ok_or(ValueError::MissingStatus)?;
+        let (subject_index, _, links) = window
+            .by_entity
+            .get_full(&binding.entity_id)
+            .ok_or(ValueError::InvalidContinuation)?;
+        let mut bytes = heap_sum([
+            size_of::<Undo>() * 2,
+            binding.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            episode
+                .len()
+                .checked_mul(4)
+                .ok_or(ExecutionError::Capacity)?,
+            binding
+                .entity_id
+                .len()
+                .checked_mul(2)
+                .ok_or(ExecutionError::Capacity)?,
+            binding.status_id.len(),
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        for id in binding.attributes.keys() {
+            let attribute = attributes.get(id).ok_or(ValueError::MissingAttribute)?;
+            bytes = heap_sum([
+                bytes,
+                size_of::<(String, AttributeState)>(),
+                size_of::<(usize, String, String)>(),
+                // The value owner preflights a temporary projection before it
+                // edits any anchor. Numeric windows cannot project categories.
+                size_of::<(String, AttributeState)>(),
+                attribute.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                id.len().checked_mul(3).ok_or(ExecutionError::Capacity)?,
+                episode.len(),
+            ])
+            .ok_or(ExecutionError::Capacity)?;
+        }
+        self.journal.reserve(bytes)?;
+        // Each removal changes the positions observed by later inverses. A
+        // re-retained episode can be removed again within the same checkpoint.
+        let mut prior_attributes = Vec::with_capacity(binding.attributes.len());
+        let mut prior_links = Vec::with_capacity(binding.attributes.len());
+        for id in binding.attributes.keys() {
+            prior_attributes.push((
+                id.clone(),
+                attributes
+                    .get(id)
+                    .ok_or(ValueError::MissingAttribute)?
+                    .clone(),
+            ));
+            let (index, _, value) = links.get_full(id).ok_or(ValueError::InvalidContinuation)?;
+            prior_links.push((index, id.clone(), value.clone()));
+        }
+        // A binding's authored attribute order need not match the subject
+        // index. Restore low positions first, including an empty subject.
+        prior_links.sort_by_key(|(position, _, _)| *position);
+        self.journal.undo.push(Undo::Episode(EpisodeUndo {
+            episode: episode.to_owned(),
+            binding: (binding_index, binding.clone()),
+            elapsed_seconds: window.elapsed_seconds,
+            sim_time: window.sim_time,
+            binding_count: window.binding_count,
+            subject_index,
+            links: prior_links,
+            entity: handle,
+            attributes: prior_attributes,
+            status_id: binding.status_id.clone(),
+            status: crate::state::FundedStatus::copy(status, &self.journal.budget)?,
+            status_index,
+        }));
+        let entity = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+        materialize_episode(
+            &mut self.state.pending_values,
+            episode,
+            ValueEntityMut {
+                id: &entity.id,
+                attributes: actor.attributes.as_mut().ok_or(ExecutionError::Invariant)?,
+                statuses: entity
+                    .status_effects
+                    .as_mut()
+                    .ok_or(ExecutionError::Invariant)?,
+            },
+        )?;
+        Ok(())
+    }
+
+    fn apply_work(&mut self, plan: WorkPlan) -> Result<(), ExecutionError> {
+        for edit in plan.edits {
+            let id = match &edit {
+                InvocationEdit::Put(value) => &value.id,
+                InvocationEdit::Remove(id) => id,
+            };
+            let key = UndoKey::Invocation(id.clone());
+            let first = self.journal.first(&key)?;
+            self.journal.reserve(
+                size_of::<Undo>() * 2
+                    + id.len() * 4
+                    + self.state.work.invocation(id).map_or(0, |i| {
+                        i.id.len()
+                            + i.root_id.len()
+                            + i.actor_id.len()
+                            + i.module_id.len()
+                            + i.definition_pin.id.len()
+                            + i.definition_pin.digest.len()
+                            + i.parent_id.as_ref().map_or(0, String::len)
+                    }),
+            )?;
+            self.journal
+                .undo
+                .try_reserve(1)
+                .map_err(|_| ExecutionError::Capacity)?;
+            let undo = self.state.work.apply(edit)?;
+            // Keep structural inverses in their real order even when this
+            // invocation's earlier value was already captured. Otherwise a
+            // later removal leaves holes when older absolute positions replay.
+            // Removed records move into this inverse; no extra clone is needed.
+            if first || undo.changes_membership() {
+                self.journal.retain(key, Undo::Work(undo))?;
+            }
+        }
+        Ok(())
+    }
+    pub(crate) fn admit_work(&mut self, request: WorkRequest) -> Result<(), ExecutionError> {
+        self.settle_episode(&request.id)?;
+        if let Some(parent) = &request.parent_id {
+            self.settle_episode(parent)?;
+        }
+        let plan = self.state.work.plan_admission(
+            request,
+            &self.state.entities,
+            self.state.header.sim_time,
+        )?;
+        self.apply_work(plan)
+    }
+    pub(crate) fn charge_work(
+        &mut self,
+        id: &str,
+        demand: WorkDemand,
+    ) -> Result<(), ExecutionError> {
+        self.settle_episode(id)?;
+        let plan = self.state.work.plan_charge(id, demand)?;
+        self.apply_work(plan)
+    }
+    pub(crate) fn advance_work_interval(&mut self, id: &str) -> Result<(), ExecutionError> {
+        self.settle_episode(id)?;
+        let plan = self
+            .state
+            .work
+            .plan_interval(id, self.state.header.sim_time)?;
+        self.apply_work(plan)
+    }
+    pub(crate) fn release_work(&mut self, id: &str) -> Result<(), ExecutionError> {
+        self.settle_episode(id)?;
+        let plan = self.state.work.plan_release(id)?;
+        self.apply_work(plan)
+    }
+
+    /// The finally-equivalent path/placement boundary, including a blocked
+    /// operation's successful prefix. Provider waits never publish this cursor.
+    pub(crate) fn finish_motion(
+        &mut self,
+        mut cursor: crate::movement::MotionCursor,
+    ) -> Result<bool, ExecutionError> {
+        if cursor.is_forecast() {
+            return Err(ExecutionError::Invariant);
+        }
+        let result = cursor.result().ok_or(ExecutionError::Invariant)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(cursor.actor)
+            .ok_or(ExecutionError::MissingEntity)?;
+        self.journal.reserve(entity.id.len())?;
+        let id = entity.id.clone();
+        if let Some(action_id) = cursor.action_id.as_ref() {
+            let action = entity
+                .actor
+                .as_ref()
+                .and_then(|a| a.action.as_ref())
+                .ok_or(ExecutionError::MissingActor)?;
+            if action.id != *action_id || action.path != cursor.path {
+                return Err(ExecutionError::Invariant);
+            }
+            // The evasion's sole point is its immutable commitment, even if
+            // ordinary geometry reaches it within tolerance before the deadline.
+            if cursor.consumed_points > 0 && !action.is_evading() {
+                let tail = cursor
+                    .path
+                    .get(cursor.consumed_points..)
+                    .ok_or(ExecutionError::Invariant)?;
+                let tail_bytes = tail
+                    .iter()
+                    .try_fold(
+                        tail.len()
+                            .checked_mul(size_of::<crate::state::SurfacePoint>())
+                            .ok_or(ExecutionError::Capacity)?,
+                        |bytes, point| bytes.checked_add(point.heap_bytes()?),
+                    )
+                    .ok_or(ExecutionError::Capacity)?;
+                // The previous path carries its resident guard into the inverse.
+                // Only the new split backing and its moved point buffers need
+                // custody here, not a second charge for the previous path.
+                self.journal.reserve(
+                    (size_of::<Undo>() * 2 + action_id.len() * 2)
+                        .checked_add(tail_bytes)
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                self.journal
+                    .undo
+                    .try_reserve(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                let key = UndoKey::ActionPath(cursor.actor.slot, cursor.actor.generation);
+                let first = self.journal.first(&key)?;
+                let remaining = cursor.path.split_off(cursor.consumed_points);
+                let bytes = remaining.heap_bytes().ok_or(ExecutionError::Capacity)?;
+                let storage = self.journal.reservation.split_off(bytes)?;
+                if first {
+                    self.state
+                        .entities
+                        .retain_action_path(cursor.actor, &self.journal.budget)?;
+                }
+                let before = action_storage::swap_path(
+                    self.state,
+                    cursor.actor,
+                    action_id,
+                    crate::state::FundedActionPath::from_storage(
+                        remaining,
+                        storage,
+                        &self.journal.budget,
+                    )?,
+                )?;
+
+                if first {
+                    self.journal.retain(
+                        key,
+                        Undo::ActionPath {
+                            entity: cursor.actor,
+                            action_id: cursor.action_id.take().ok_or(ExecutionError::Invariant)?,
+                            before,
+                        },
+                    )?;
+                }
+            }
+        }
+        if cursor.steps > 0 {
+            self.set_position(
+                &id,
+                cursor.position.point(),
+                Some(cursor.position.surface_id),
+                Some(MovementWrite {
+                    steps: cursor.steps,
+                    heading: Some(cursor.heading),
+                    continuity: Continuity::Physical,
+                }),
+            )?;
+        }
+        self.record_territorial_travel(cursor.actor, cursor.travelled)?;
+        self.record_foraging_travel(&id, cursor.travelled)?;
+        Ok(result)
+    }
+}
+
+fn restore_episode(state: &mut PhysicalState, undo: EpisodeUndo) -> Result<(), ExecutionError> {
+    let entity_id = undo.binding.1.entity_id.clone();
+    let window = state
+        .pending_values
+        .get_or_insert_with(|| NativeValueWindow {
+            elapsed_seconds: undo.elapsed_seconds,
+            sim_time: undo.sim_time,
+            binding_count: undo.binding_count,
+            bindings: IndexMap::new(),
+            by_entity: IndexMap::new(),
+        });
+    window.elapsed_seconds = undo.elapsed_seconds;
+    window.sim_time = undo.sim_time;
+    window.binding_count = undo.binding_count;
+    if !window.by_entity.contains_key(&entity_id) {
+        window
+            .by_entity
+            .shift_insert(undo.subject_index, entity_id.clone(), IndexMap::new());
+    }
+    let subject = window
+        .by_entity
+        .get_mut(&entity_id)
+        .ok_or(ExecutionError::Invariant)?;
+    subject.retain(|_, value| value != &undo.episode);
+    for (index, id, value) in undo.links {
+        subject.shift_insert(index, id, value);
+    }
+    window
+        .bindings
+        .shift_insert(undo.binding.0, undo.episode, undo.binding.1);
+    let entity = state
+        .entities
+        .resolve_mut(undo.entity)
+        .ok_or(ExecutionError::Invariant)?;
+    let attributes = entity
+        .actor
+        .as_mut()
+        .and_then(|a| a.attributes.as_mut())
+        .ok_or(ExecutionError::Invariant)?;
+    for (id, value) in undo.attributes {
+        *attributes.get_mut(&id).ok_or(ExecutionError::Invariant)? = value;
+    }
+    state.entities.restore_funded_status(
+        undo.entity,
+        &undo.status_id,
+        Some((undo.status_index, undo.status)),
+        true,
+    )?;
+    Ok(())
+}

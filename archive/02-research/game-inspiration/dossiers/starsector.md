@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Baseline: the best-substantiated released 0.98a family, with historical builds and mods separated. The original seven independent written accounts are preserved; two newly read substantive reviews bring the collection to **five genuine reviews, three explicitly labeled previews and one author's two-part critical essay**. These are dated early-access/player reviews, not five contemporary reviews of a final 1.0 release. The follow-up read the entire dossier against R01–R14 and added separately identified evidence, without implying every original external source was reread. Current official-download verification and full direct wiki-page retrieval were limited; detailed qualifications appear below. No gameplay, audio listening, footage viewing, mod installation or source-code execution was performed.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted Open Legend requirements. Baseline: the best-substantiated released 0.98a family, with historical builds and mods separated. The original seven independent written accounts are preserved; two newly read substantive reviews bring the collection to **five genuine reviews, three explicitly labeled previews and one author's two-part critical essay**. These are dated early-access/player reviews, not five contemporary reviews of a final 1.0 release. The follow-up read the entire dossier against R01–R14 and added separately identified evidence, without implying every original external source was reread. Current official-download verification and full direct wiki-page retrieval were limited; detailed qualifications appear below. No gameplay, audio listening, footage viewing, mod installation or source-code execution was performed.
 
 ## 1. Identity, version and player promise
 
@@ -283,7 +283,7 @@ The follow-up resolves the actual five-genuine-written-review requirement withou
 
 ## 12. Transferable patterns, prerequisites and counterexamples
 
-These are **research interpretations**, not accepted OpenLegend features, copied names or an implementation specification.
+These are **research interpretations**, not accepted Open Legend features, copied names or an implementation specification.
 
 **Join tactical and strategic consequences.** The wreck case works because acquisition changes travel and maintenance, not just the inventory count. The dependency is that costs are visible early enough to plan. A simpler alternative is a few meaningful expedition constraints rather than dozens of maintenance commodities.
 

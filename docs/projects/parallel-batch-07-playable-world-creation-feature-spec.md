@@ -12,7 +12,7 @@ Let an authorized creator describe a small world, preserve the parts they care a
 
 This allocation implements the first supported creation journey in [world creation §§2–11](world-creation-feature-spec.md#2-boundaries-inherited-from-the-project). That document remains the product behavior owner. The work covers one existing supported world family, retained proposals, meaningful clarification, concrete preview, readiness, exact start, recovery and first play. Its [technical design](parallel-batch-07-playable-world-creation-tech-design.md) selects the missing initial-world assembly and empty-target integration. OC01–OC05 are internal stages of **one assignment**, not five parallel tasks.
 
-The original editable familiar reference contains one human-controlled character, one autonomous resident, a useful locality, reachable finite supplies and an activity with a payoff. The creator can choose a supported solitary or harsh variation; the software must not secretly add a resident or emergency resources. The reference population is a bounded release profile, not a universal world law. Broader communities retain their existing qualification.
+The original editable familiar reference contains one player-controlled character, a useful locality with one NPC who lives there and makes their own decisions, reachable finite supplies and an activity with a payoff. The creator can choose a supported solitary or harsh variation; the software must not secretly add an NPC or emergency resources. The reference population is a bounded release profile, not a universal world law. Broader communities retain their existing qualification.
 
 ## Why this work now
 
@@ -34,7 +34,7 @@ This priority remains a hypothesis. The strongest contrary evidence would be cre
 6. Pursue the chosen activity. In the familiar proof, genuinely request a supported new tool, gather its actual inputs, make it and use it in the current hunting/food loop. A dependable known method remains available. A resident responds through ordinary cognition to permitted events; no authored success script makes them agree or provide a reward.
 7. Leave at a worthwhile stopping point, reopen and find the actual created world and consequences intact. The player can use the gained capability again. No replay of world creation, free items or fresh paid generation is needed to restore it.
 
-The contrasting supported opening is solitary gathering and making: it deliberately omits the resident, offers a finite accessible resource and an existing supported container or tool activity, and preserves a different selected layout. It must use the same initial assembly contract. This is an authored scenario variation, not evidence of arbitrary new physics or autonomous goal formation.
+The contrasting supported opening is solitary gathering and making: it deliberately omits the NPC, offers a finite accessible resource and an existing supported container or tool activity, and preserves a different selected layout. It must use the same initial assembly contract. This is an authored scenario variation, not evidence of arbitrary new physics or autonomous goal formation.
 
 ## Boundaries and meaningful failure
 

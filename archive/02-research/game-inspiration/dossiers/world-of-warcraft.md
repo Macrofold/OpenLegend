@@ -242,7 +242,7 @@ No Steam release/review surface for this exact service was established. Conseque
 
 **Distinguish authored spectacle from simulated society.** WoW achieves recognizable cultural places through art, quests, repeated visits and players. That does not require every NPC to possess a general autonomous mind. Conversely, visual bustle is not proof of social depth. Choose the mechanism appropriate to the desired experience.
 
-**Budget for continuity as well as novelty.** A new expansion changes rules that existing guides, habits and expectations may depend on. Current flight, crafting and addon changes demonstrate why source versioning is part of good research and product communication. These are research interpretations, not accepted OpenLegend implementation requirements or proposals to copy protected names and assets.
+**Budget for continuity as well as novelty.** A new expansion changes rules that existing guides, habits and expectations may depend on. Current flight, crafting and addon changes demonstrate why source versioning is part of good research and product communication. These are research interpretations, not accepted Open Legend implementation requirements or proposals to copy protected names and assets.
 
 ## 12. Reading and viewing route
 

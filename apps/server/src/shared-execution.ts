@@ -15,7 +15,7 @@ import {
 import { AttemptRepository, ATTEMPT_SCHEMA } from './attempt-repository.js';
 import { attemptMicroUsd, readAttemptBudget } from './attempt-budget.js';
 import { digest } from './content-digest.js';
-import type { SqlDatabase } from './store.js';
+import type { SqlDatabase } from './sql-database.js';
 
 export class ExecutionRefusal extends Error {
   constructor(

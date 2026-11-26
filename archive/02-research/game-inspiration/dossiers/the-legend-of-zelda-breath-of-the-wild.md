@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full research pass, September 26, 2026.** Scope: the 2017 Wii U/Switch game, its Expansion Pass, and the separately identified Switch 2 Edition. This is not Tears of the Kingdom, Age of Calamity, an emulator/mod feature inventory, or an accepted OpenLegend design. Five independent written review bodies and contrasting direct player accounts were read. The earlier G73 checkpoint's observations, attributed example and evidence limits are retained below. The expansion roster does not designate an earlier dedicated chapter or mechanics owner for this subject; original packet/chapter files are unchanged. Packet-wide preservation remains a separate integration gate.
+**Full research pass, September 26, 2026.** Scope: the 2017 Wii U/Switch game, its Expansion Pass, and the separately identified Switch 2 Edition. This is not Tears of the Kingdom, Age of Calamity, an emulator/mod feature inventory, or an accepted Open Legend design. Five independent written review bodies and contrasting direct player accounts were read. The earlier G73 checkpoint's observations, attributed example and evidence limits are retained below. The expansion roster does not designate an earlier dedicated chapter or mechanics owner for this subject; original packet/chapter files are unchanged. Packet-wide preservation remains a separate integration gate.
 
 ## 1. Identity, promise and session shape
 
@@ -27,7 +27,7 @@ Bond changes control rather than existing as flavor text: feeding/soothing a hor
 This is much lighter than RDR2's horse-care simulation, but it still composes:
 > stealth/stamina to acquire → naming/registration → repeated riding/soothing → improved obedience → possible loss/recovery.
 
-That sequence matters for OpenLegend because a utility entity becomes memorable through **identity + repeated interaction + vulnerability**, even without dialogue or a huge relationship system.
+That sequence matters for Open Legend because a utility entity becomes memorable through **identity + repeated interaction + vulnerability**, even without dialogue or a huge relationship system.
 
 The game's practical environmental vocabulary includes movable objects, cuttable trees, fire, wind, water, electricity and temperature. The visually simplest question—what material is this?—can matter more than an item's damage statistic. This is bounded interaction, not universal real-world simulation. A rock is not automatically a crafting ingredient in an unlimited construction system, and a tree is not automatically attachable to every other object. Nintendo's documented development goal was to connect object reactions to the world and Link, not to implement every conceivable action. [B9](#b9)
 
@@ -87,7 +87,7 @@ These are **constructed rules-based illustrations**, not claims of firsthand pla
 
 **D. Turn a catalogue into an intentional collection route.** Intention: obtain a known subject rather than wander indiscriminately. Conditions: its compendium entry and the upgraded Sensor. Actions: select that subject, follow stronger directional feedback and search the relevant surroundings. Interaction: observation history becomes a reusable information aid. Result: a previous discovery helps with a later goal. Next decision: keep that target or switch to another need. Limitation: the sensor does not select the player's priorities, collect the resource, or guarantee that the intervening terrain is safe. [B10](#b10)
 
-**E. Build attachment through a constrained town quest.** Intention: make the emerging settlement useful. Conditions: Hudson's current stage and sufficient lumber. Actions: find the requested profession/person, invite them and return. Interaction: collection and geographical social knowledge produce a visible place change. Result: a service opens and a character has a new role. Next decision: use the new service or continue the next request. Limitation: bringing any arbitrary skilled NPC is not a supported substitute. OpenLegend should study that authored clarity without falsely labeling it general social simulation. [B16](#b16)
+**E. Build attachment through a constrained town quest.** Intention: make the emerging settlement useful. Conditions: Hudson's current stage and sufficient lumber. Actions: find the requested profession/person, invite them and return. Interaction: collection and geographical social knowledge produce a visible place change. Result: a service opens and a character has a new role. Next decision: use the new service or continue the next request. Limitation: bringing any arbitrary skilled NPC is not a supported substitute. Open Legend should study that authored clarity without falsely labeling it general social simulation. [B16](#b16)
 
 **F. Revisit a once-solved landscape after its reset.** Intention: travel a familiar route with less preparation. Conditions: a Blood Moon has occurred. Actions: scout rather than assume the cleared camp remains empty. Interaction: remembered geography remains useful, but remembered enemy absence has expired. Result: familiarity helps planning without guaranteeing safety. Next decision: repeat the fight, bypass it or seek newly useful resources. Limitation: the reset does not imply that every completed story event has been undone. [B17](#b17)
 
@@ -135,7 +135,7 @@ The disagreement is informative rather than something to average away. Systems t
 
 ## 10. Transferable inspiration and limits
 
-**Consistent affordances with a legible target boundary.** OpenLegend could benefit when a heavy object, weather state or learned action remains meaningful outside one quest. The dependency is reliable feedback about eligible targets and consequences. The alternative is a clearly authored special interaction. The failure mode is suggesting universal possibility while accepting only invisible exceptions.
+**Consistent affordances with a legible target boundary.** Open Legend could benefit when a heavy object, weather state or learned action remains meaningful outside one quest. The dependency is reliable feedback about eligible targets and consequences. The alternative is a clearly authored special interaction. The failure mode is suggesting universal possibility while accepting only invisible exceptions.
 
 **Knowledge as a second progression track.** An old ability can become valuable again through a new context. This avoids equating depth with an ever-longer ability list. It depends on recognizable causal rules, opportunities to test them, and recoverable failures. It should not become a demand that players discover undocumented edge cases to perform ordinary actions.
 
@@ -145,9 +145,9 @@ The disagreement is informative rather than something to average away. Systems t
 
 **Permanent relief after temporary preparation.** A temporary protective meal can make a region approachable; later clothing can remove repeated preparation overhead. The general pattern is to make mastery reduce friction without making the place meaningless. Avoid assuming every need should remain a permanent tax on attention.
 
-**Constrained social projects can still feel consequential.** Tarrey Town makes recruitment visible through people, services and a celebration. For OpenLegend, the interesting question is which of those effects should generalize and which remain authored. A universal migration/economy framework is not justified merely because a fixed quest feels alive.
+**Constrained social projects can still feel consequential.** Tarrey Town makes recruitment visible through people, services and a celebration. For Open Legend, the interesting question is which of those effects should generalize and which remain authored. A universal migration/economy framework is not justified merely because a fixed quest feels alive.
 
-**Use a small systemic prototype to test combinations.** The documented prototype tested whether interactions produced interesting decisions before final visual polish. An OpenLegend experiment could compare the same situation under a few coherent rules and inspect clarity, surprise and failure recovery. It need not reproduce this game's art, copyrighted setting or proprietary engine.
+**Use a small systemic prototype to test combinations.** The documented prototype tested whether interactions produced interesting decisions before final visual polish. An Open Legend experiment could compare the same situation under a few coherent rules and inspect clarity, surprise and failure recovery. It need not reproduce this game's art, copyrighted setting or proprietary engine.
 
 ## 11. Coverage, preservation and study routes
 

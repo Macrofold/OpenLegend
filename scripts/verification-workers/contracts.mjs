@@ -1,5 +1,6 @@
-// Plan and spending boundary: docs/technical/verification-workers.md#runner-input-and-output
+// Plan and spending boundary: docs/projects/verification-workers-tech-design.md#runner-input-and-output
 import { createHash, randomBytes } from 'node:crypto';
+import { validateEnvironment, selectedHardware, campaignHardware } from './hardware.mjs';
 
 export const defaults = Object.freeze({
   region: 'us-east-2',
@@ -71,13 +72,7 @@ export function jobPlan(input) {
     throw new Error('mode must be batch or browser-session.');
   if (!Array.isArray(input.cases) || !input.cases.length || input.cases.length > 16)
     throw new Error('One to sixteen ordered cases are supported.');
-  if (
-    input.environment &&
-    (input.environment.instanceType !== 'm7i.xlarge' ||
-      input.environment.node !== '24.13.0' ||
-      input.environment.pnpm !== '10.33.0')
-  )
-    throw new Error('Requested environment differs from the supported pinned preparation.');
+  validateEnvironment(input.environment);
   if (input.acceptance && !['measurement', 'check'].includes(input.acceptance))
     throw new Error('acceptance must be measurement or check.');
   const names = new Set(),
@@ -164,6 +159,7 @@ export function jobPlan(input) {
           'OPENLEGEND_FIXTURE_DATABASE_PREFIX',
           'OPENLEGEND_JOB_EXECUTION',
           'OPENLEGEND_JOB_DATABASES',
+          'OPENLEGEND_JOB_POSTGRES_OWNERSHIP',
           'OPENLEGEND_JOB_INPUTS',
           'OPENLEGEND_VERIFICATION_MANIFEST',
           'OPENLEGEND_PROFILE_SOURCE_SHA',
@@ -225,6 +221,26 @@ export function relativePath(value) {
     throw new Error('Expected a nonescaping relative path.');
   return value;
 }
+// Exact registered identity is a selection constraint, never a claim or permission.
+export function workerAffinity(value) {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Worker affinity requires a registered worker and instance.');
+  supported(value, ['workerId', 'instanceId']);
+  if (typeof value.workerId !== 'string' || !/^slot-[1-9]\d{0,2}$/.test(value.workerId))
+    throw new Error('Worker affinity must name a registered slot.');
+  integer(Number(value.workerId.slice(5)), 'worker affinity slot', 1, 128);
+  if (
+    typeof value.instanceId !== 'string' ||
+    !/^i-(?:[a-f0-9]{8}|[a-f0-9]{17})$/.test(value.instanceId)
+  )
+    throw new Error('Worker affinity requires an exact EC2 instance ID.');
+  return { workerId: value.workerId, instanceId: value.instanceId };
+}
+export function retainedWorkersRequired(value = false) {
+  if (typeof value !== 'boolean') throw new Error('requireRetainedWorkers must be a boolean.');
+  return value;
+}
 export function campaign(input) {
   supported(input, [
     'taskId',
@@ -234,12 +250,19 @@ export function campaign(input) {
     'lifetime',
     'inputs',
     'jobs',
+    'workerAffinity',
+    'requireRetainedWorkers',
   ]);
   id(input.taskId);
   id(input.cloudAllocationId);
   integer(input.concurrency, 'concurrency', 1, 128);
+  retainedWorkersRequired(input.requireRetainedWorkers);
+  const affinity = workerAffinity(input.workerAffinity);
+  if (affinity && input.concurrency !== 1)
+    throw new Error('Exact worker affinity requires a serial, concurrency-one campaign.');
   const result = {
     ...input,
+    ...(affinity ? { workerAffinity: affinity } : {}),
     lifetime: input.lifetime ?? 'attached',
     deadlineSeconds: input.deadlineSeconds ?? 3600,
   };
@@ -303,6 +326,9 @@ export function campaign(input) {
       for (const mount of item.inputs ?? [])
         if (!bundles.has(mount.bundle)) throw new Error('Input mount has no admitted bundle.');
   }
+  // Physical types are separate campaign batches sharing the same task allocation.
+  // This avoids pretending one scalar-rate settlement can price heterogeneous hosts.
+  campaignHardware(result, { hourlyMicroUsd: 1 });
   if (
     input.jobs.some((job) => job.mode === 'browser-session') &&
     (input.jobs.length !== 1 || input.concurrency !== 1 || result.lifetime !== 'attached')
@@ -337,6 +363,9 @@ export function fence(worker, event, now = Date.now(), cleanup = false) {
     throw new Error('Lease expired or dispatch closed.');
 }
 export const estimate = (plan, config) =>
-  Math.ceil(((plan.deadlineSeconds + 480) / 3600) * config.hourlyMicroUsd) +
+  Math.ceil(
+    ((plan.deadlineSeconds + 480) / 3600) *
+      selectedHardware(plan.environment, config).hourlyMicroUsd,
+  ) +
   config.storageMicroUsd +
   Math.ceil((plan.outputLimitBytes / 1024 ** 3) * 200000);

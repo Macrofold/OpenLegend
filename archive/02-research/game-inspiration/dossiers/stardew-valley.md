@@ -168,7 +168,7 @@ The current-version reread also confirms that **1.6.15 remains the PC baseline**
 
 **Automate the repeated action without confiscating the project.** Watering, gathering, processing and deciding what to make are different responsibilities. An assistant can remove one while preserving meaningful choices in the others.
 
-**Use temporal scarcity carefully.** Recurring seasons make opportunities situated and memorable. Too many simultaneous windows can turn possibility into obligation. Those are design hypotheses for research, not approved OpenLegend tasks or claims that a clock must be removed.
+**Use temporal scarcity carefully.** Recurring seasons make opportunities situated and memorable. Too many simultaneous windows can turn possibility into obligation. Those are design hypotheses for research, not approved Open Legend tasks or claims that a clock must be removed.
 
 Coverage: R01 §1; R02–R03 §§2–5; R04 §§3–8, 11; R05 §9; R06 §§7, 10; R07 §10; R08 §§7–8; R09 §11; R10–R11 §11; R12 §12; R13 here; R14 below. Both earlier owners were read fully and remain **unchanged**. Crop futures, keg/jar comparison, seasons, bundles, observer-specific reactions, gift/recognition criticism, multiplayer time and dated production evidence stay in their original locations. The [official trailer](https://www.youtube.com/watch?v=ot7uXNQskhs) remains an **unwatched viewing route**; no timestamps are invented. This is not completion of the separate packet-wide P01 gate.
 

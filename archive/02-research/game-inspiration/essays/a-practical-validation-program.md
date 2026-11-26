@@ -2,7 +2,7 @@
 
 > Reference-only research ideas, retained from the comparative brief. These are not maintainer tasks, adopted requirements, or instructions to run experiments.
 
-These tests are proposed experiments for OpenLegend, not established industry benchmarks. Start with observed sessions and qualitative failures; add larger samples when the questions and instrumentation stabilize. Do not invent a universal “correct” number of minutes, retention percentage, or generated artifacts.
+These tests are proposed experiments for Open Legend, not established industry benchmarks. Start with observed sessions and qualitative failures; add larger samples when the questions and instrumentation stabilize. Do not invent a universal “correct” number of minutes, retention percentage, or generated artifacts.
 
 ### Test A — Can players find the game inside the simulation?
 

@@ -7,7 +7,6 @@ export interface ActionInputPreferences {
   left: string;
   right: string;
   attackMode: string;
-  create: string;
 }
 export const DEFAULT_ACTION_INPUT: ActionInputPreferences = {
   forward: 'KeyW',
@@ -15,7 +14,6 @@ export const DEFAULT_ACTION_INPUT: ActionInputPreferences = {
   left: 'KeyA',
   right: 'KeyD',
   attackMode: 'KeyT',
-  create: 'KeyW',
 };
 export const ATTACK_HOLD_MS = 150;
 export type MovementKey = 'forward' | 'backward' | 'left' | 'right';
@@ -25,21 +23,13 @@ const fixedShiftKeys = new Set(['KeyA', 'KeyS']);
 
 export function inputPreferenceProblem(preferences: ActionInputPreferences): string | null {
   const directions = movementKeys.map((key) => preferences[key]);
-  if (
-    [...directions, preferences.attackMode, preferences.create].some(
-      (code) => !/^Key[A-Z]$/.test(code),
-    )
-  )
+  if ([...directions, preferences.attackMode].some((code) => !/^Key[A-Z]$/.test(code)))
     return 'Choose a letter key for each control.';
   if (new Set(directions).size !== directions.length)
     return 'Each movement direction needs a different key.';
   if (directions.some((code) => fixedPlainKeys.has(code)))
     return 'That movement key already opens another control. Choose another letter.';
-  if (
-    preferences.attackMode === preferences.create ||
-    fixedShiftKeys.has(preferences.attackMode) ||
-    fixedShiftKeys.has(preferences.create)
-  )
+  if (fixedShiftKeys.has(preferences.attackMode))
     return 'That shifted key is already assigned. Choose another letter.';
   return null;
 }
@@ -47,7 +37,7 @@ export function isActionInputPreferences(value: unknown): value is ActionInputPr
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Record<string, unknown>;
   return (
-    [...movementKeys, 'attackMode', 'create'].every((key) => typeof candidate[key] === 'string') &&
+    [...movementKeys, 'attackMode'].every((key) => typeof candidate[key] === 'string') &&
     inputPreferenceProblem(candidate as unknown as ActionInputPreferences) === null
   );
 }

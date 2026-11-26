@@ -1,3 +1,7 @@
+import { captureActorFrame } from './action-capabilities.js';
+import { temporalReadSourceRevoked } from './temporal-read-context.js';
+import { recordObservationSupport, recordSnapshotSupport } from './experience.js';
+import { attentionCandidates } from './attention.js';
 import {
   constructionPermissionBatch,
   absorbConstructionPermissionBatch,
@@ -5,26 +9,51 @@ import {
   type NativeExecutionPermissions,
 } from './construction-permissions.js';
 import { reconcileCompacts } from './social-compacts.js';
+import {
+  currentBodyObservation,
+  evidenceCutEligible,
+  type ObservationContribution,
+  type CapturedCurrentFacet,
+} from './perception-evidence.js';
+import {
+  acknowledgeAttention,
+  setAttentionFocus,
+  type AttentionPresentation,
+} from './attention.js';
+import { rememberInterpretation, reinforceExperience } from './experience.js';
+import {
+  retainedTemporalReceipt,
+  retainCapturedTemporalSupport,
+  temporalReceiptSource,
+  temporalFacetEligible,
+  type TemporalReceiptLocator,
+  type TemporalReceipt,
+  type TemporalValue,
+} from './temporal-evidence.js';
+import { selectedTemporalPolicy, selectedOccurrenceRules } from './world-composition.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
 import { subjectNarration, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { commitExpression } from './expressions.js';
-import {
-  activityRequestDescriptors,
-  activityRequestWorkModeField,
-  installedActionMeaning,
-} from './activity-hosts.js';
+import { installedActionMeaning } from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
   type ActionTarget,
   type ActionTargetEpisodes,
 } from './action-targets.js';
-import { editKnowledge, knowledgeDocument, type KnowledgeEdit } from './knowledge.js';
 import {
-  assignGivenName,
+  editKnowledge,
+  knowledgeDocument,
+  type KnowledgeEdit,
+  type ObserverSubject,
+} from './knowledge.js';
+import {
+  assignSubjectName,
+  canAddressRememberedSubject,
+  observerIndividual,
   canRememberSubject,
   rememberSubject,
   type GivenNameEdit,
@@ -40,11 +69,11 @@ import {
   type ActionInvocation,
   type ActionFulfillment,
   choiceWorkCurrent,
-  captureActorFrame,
   type ActionChoice,
 } from './action-capabilities.js';
-import { discardSuspended, proposeActionRevision } from './agency.js';
+import { discardSuspended, proposeActionRevision, activityCommandSyntax } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
+import { isSpeechTargetRole, type SpeechTargetRole } from './speech.js';
 import { hasMemory } from './living.js';
 import {
   resolveAttempt,
@@ -58,27 +87,62 @@ import {
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
-import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
+import {
+  appendSnapshot,
+  appendedEventCount,
+  beginCommandBatch,
+  cloneValue,
+  draftWorld,
+} from './draft.js';
 import { executeCommand, prepareNativeChoice } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
+import { resolveSemanticCause } from './semantic-opportunities.js';
+import { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
+export {
+  RESPONSE_LIMITS,
+  RESPONSE_RECEIPT_LIMIT,
+  COMMAND_CHOICE_PREPARATION_ID,
+} from './response-settings.js';
+
+export interface SituationProposalBinding {
+  /** Trusted server-captured native conditions, never supplied by model output. */
+  semanticCauses?: readonly {
+    key: string;
+    qualitativeRevision: string;
+    severity: number;
+    generation: number;
+  }[];
+  privacyRevision: number;
+  attentionReferences: Record<string, string>;
+  retentionReferences: Record<string, TemporalReceiptLocator>;
+  /** Exact already selected cold bodies; the server fences membership after awaits. */
+  receiptDetails?: Record<string, { receipt: TemporalReceipt; values: TemporalValue[] }>;
+  observationReferences?: Record<string, ObservationContribution>;
+  currentReferences?: Record<string, CapturedCurrentFacet>;
+  presented?: readonly AttentionPresentation[];
+}
 
 export interface ResponseOperation {
-  appraise?: AppraisalChange;
-  note?: KnowledgeEdit;
-  name?: GivenNameEdit;
+  observe?: { subjects: string[] } | null;
+  remember?: { sources: string[]; text: string } | null;
+  appraise?: AppraisalChange | null;
+  note?: (Omit<KnowledgeEdit, 'subjectId'> & { subjectId: string | null }) | null;
+  name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
-  talk?: {
+  talk: {
     text: string;
     addresseeEntityId: string | null;
+    /** Server-derived from the selected permitted reference, never model authority. */
+    addresseeRole?: SpeechTargetRole;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
-  };
-  act?: {
+  } | null;
+  act: {
     kind: 'known' | 'expression' | 'proposal' | 'invoke';
     invocation?: ActionInvocation | null;
     /** Proposal-only exact references; see unmetSlots for the admission check. */
@@ -88,10 +152,10 @@ export interface ResponseOperation {
     targetEntityId: string | null;
     description: string | null;
     mode: 'enqueue' | 'replace' | 'interrupt';
-  };
-  think?: { text: string; aboutEntityIds: string[] };
-  goal?: GoalChange;
-  plan?: {
+  } | null;
+  think: { text: string; aboutEntityIds: string[] } | null;
+  goal: GoalChange | null;
+  plan: {
     mode: 'enqueue' | 'replace' | 'interrupt' | 'cancel';
     expectedRevision: number;
     goalId: string | null;
@@ -100,7 +164,7 @@ export interface ResponseOperation {
       itemFromStep: number | null;
       useItemAs: 'equip' | 'eat' | null;
     }[];
-  };
+  } | null;
 }
 export interface ActorResponse {
   operations: ResponseOperation[];
@@ -125,44 +189,46 @@ export interface ResponseReceipt {
   components: Record<string, Outcome>;
   outcome: Outcome;
 }
-export const RESPONSE_LIMITS = { operations: 16, bytes: 40000 } as const;
-
 export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
     !value ||
     typeof value !== 'object' ||
-    Array.isArray(value) ||
     Object.keys(value).join() !== 'operations' ||
     !Array.isArray(value.operations) ||
     value.operations.length > RESPONSE_LIMITS.operations
   )
     return false;
-  try {
-    if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes)
-      return false;
-  } catch {
-    // Native callers also cross this boundary; nonserializable input cannot have a receipt.
-    return false;
-  }
+  if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
   const ids = new Set<string>();
-  const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name', 'appraise'] as const;
+  const fields = [
+    'talk',
+    'act',
+    'think',
+    'goal',
+    'plan',
+    'note',
+    'name',
+    'appraise',
+    'observe',
+    'remember',
+  ] as const;
   for (const op of value.operations) {
     if (
       !op ||
-      typeof op !== 'object' ||
-      Array.isArray(op) ||
       Object.keys(op).some((key) => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
-      Object.keys(op).length !== 3 ||
-      typeof op.localId !== 'string' ||
+      Object.keys(op).length < 7 ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
       ids.has(op.localId) ||
       !Array.isArray(op.requiresAccepted) ||
       op.requiresAccepted.length > 16 ||
-      op.requiresAccepted.some((id) => typeof id !== 'string' || id.length > 24) ||
+      new Set(op.requiresAccepted).size !== op.requiresAccepted.length ||
+      op.requiresAccepted.some((id) => !ids.has(id)) ||
       fields.some(
         (field) =>
-          field in op && (!op[field] || typeof op[field] !== 'object' || Array.isArray(op[field])),
+          (!['note', 'name', 'appraise', 'observe', 'remember'].includes(field) &&
+            !(field in op)) ||
+          (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
       ) ||
       fields.filter((field) => op[field] != null).length !== 1
     )
@@ -178,10 +244,15 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     const strings = (value: unknown) => Array.isArray(value) && value.every(text);
     if (
       op.talk &&
-      (!(
-        record(op.talk, ['text', 'addresseeEntityId', 'volume']) ||
-        record(op.talk, ['text', 'addresseeEntityId', 'volume', 'selfIntroduction'])
-      ) ||
+      (!record(op.talk, [
+        'text',
+        'addresseeEntityId',
+        'volume',
+        ...(op.talk.selfIntroduction !== undefined ? ['selfIntroduction'] : []),
+        ...(op.talk.addresseeRole !== undefined ? ['addresseeRole'] : []),
+      ]) ||
+        (op.talk.addresseeRole !== undefined &&
+          (op.talk.addresseeEntityId === null || !isSpeechTargetRole(op.talk.addresseeRole))) ||
         !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
         !nullableText(op.talk.addresseeEntityId) ||
@@ -267,35 +338,43 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         !Number.isSafeInteger(op.name.expectedRevision))
     )
       return false;
+    if (
+      op.observe &&
+      (!record(op.observe, ['subjects']) ||
+        !strings(op.observe.subjects) ||
+        op.observe.subjects.length > 32 ||
+        new Set(op.observe.subjects).size !== op.observe.subjects.length)
+    )
+      return false;
+    if (
+      op.remember &&
+      (!record(op.remember, ['sources', 'text']) ||
+        !strings(op.remember.sources) ||
+        !op.remember.sources.length ||
+        op.remember.sources.length > 8 ||
+        !text(op.remember.text) ||
+        !op.remember.text.trim() ||
+        op.remember.text.length > 1200)
+    )
+      return false;
     ids.add(op.localId);
   }
   return true;
 }
-
-/** Preflight only: failed dependencies cannot justify paid grounding or effects.
- * Accept either model or native payloads after structural validation established
- * unique operation identities. Keep the original envelope for receipts.
- * docs/technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements
+/** Only the next selected action must be possible now. Later steps may depend on
+ * earlier equipment or typed outputs; their native owner rechecks when they start.
+ * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
  */
-export function responseDependencyFailures(response: {
-  operations: readonly Pick<ResponseOperation, 'localId' | 'requiresAccepted'>[];
-}): ReadonlyMap<string, 'invalid-dependency' | 'dependency-rejected'> {
-  const earlier = new Set<string>();
-  const failures = new Map<string, 'invalid-dependency' | 'dependency-rejected'>();
-  for (const operation of response.operations) {
-    const dependencies = operation.requiresAccepted;
-    if (
-      new Set(dependencies).size !== dependencies.length ||
-      dependencies.some((id) => !earlier.has(id))
-    )
-      failures.set(operation.localId, 'invalid-dependency');
-    else if (dependencies.some((id) => failures.has(id)))
-      failures.set(operation.localId, 'dependency-rejected');
-    earlier.add(operation.localId);
+function admitPlan(...args: Parameters<typeof arrangePlan>): Outcome {
+  const [world, , , commands, mode] = args;
+  const first = commands[0];
+  if (first && !('itemFromStep' in first)) {
+    const prepared = prepareNativeChoice(world, first.actorId, first, mode);
+    const available = 'ok' in prepared ? prepared : prepared.outcome;
+    if (!available.ok) return available;
   }
-  return failures;
+  return arrangePlan(...args);
 }
-export const RESPONSE_RECEIPT_LIMIT = 300;
 
 /** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
 function activityConditions(node: ActivityNode): ActivityPredicate[] {
@@ -371,6 +450,24 @@ export function unmetSlots(
 }
 
 /** One saved transition, independent component outcomes, no generated effects. */
+/** An admitted finite input retains its dated evidence after ordinary expiry.
+ * Explicit correction/forgetting remains authoritative for each selected fact. */
+export function situationReceiptDetailsCurrent(
+  world: WorldState,
+  details: SituationProposalBinding['receiptDetails'],
+): boolean {
+  return Object.values(details ?? {}).every(
+    ({ receipt, values }) =>
+      receipt.at <= world.simTime &&
+      receipt.facets.length === values.length &&
+      !temporalReadSourceRevoked(world, receipt.actorId, receipt.id) &&
+      receipt.sourceIds.every((id) => !temporalReadSourceRevoked(world, receipt.actorId, id)) &&
+      receipt.facets.every((facet, at) =>
+        temporalFacetEligible(world, receipt.actorId, facet, values[at]!),
+      ),
+  );
+}
+
 export function commitActorResponse(
   input: WorldState,
   id: string,
@@ -382,8 +479,11 @@ export function commitActorResponse(
   attemptBindings: AttemptBinding[] = [],
   expectedEncounters?: Record<string, string>,
   evidenceIds: string[] = [],
-  knowledgeReferences: Record<string, string> = {},
+  knowledgeReferences: Record<string, ObserverSubject> = {},
   appraisalBindings?: AppraisalBindings,
+  identityReferences: Record<string, ObserverSubject> = {},
+  entityLeases: Record<string, string> = {},
+  situationBinding?: SituationProposalBinding,
   permissions: NativeExecutionPermissions = {},
   capturedActorFrame?: string,
 ): Transition {
@@ -398,8 +498,9 @@ export function commitActorResponse(
     outcome: outcome(false, 'actor-unavailable', message),
   });
   if (!isSafeRecordId(id) || id.length > 100 || !validResponseEnvelope(response))
-    return reject('Malformed decision envelope, operation identities or aggregate limits.');
+    return reject('Malformed decision envelope, aliases, dependencies or aggregate limits.');
   const digest = canonicalJson({
+    ...(capturedActorFrame !== undefined ? { capturedActorFrame } : {}),
     actorId,
     response,
     actions,
@@ -409,8 +510,37 @@ export function commitActorResponse(
     expectedEncounters,
     evidenceIds,
     knowledgeReferences,
+    identityReferences,
+    entityLeases,
+    ...(situationBinding
+      ? {
+          situationBinding: {
+            privacyRevision: situationBinding.privacyRevision,
+            attentionReferences: situationBinding.attentionReferences,
+            retentionReferences: situationBinding.retentionReferences,
+            observationReferences: Object.fromEntries(
+              Object.entries(situationBinding.observationReferences ?? {}).map(
+                ([key, observation]) => [key, [observation.id, observation.revision]],
+              ),
+            ),
+            currentReferences: Object.fromEntries(
+              Object.entries(situationBinding.currentReferences ?? {}).map(([key, snapshot]) => [
+                key,
+                [
+                  snapshot.confirmation,
+                  snapshot.valueMeasuredFrom,
+                  snapshot.valueMeasuredThrough,
+                  snapshot.valueAcquiredAt,
+                  snapshot.value,
+                ],
+              ]),
+            ),
+            presented: situationBinding.presented,
+            semanticCauses: situationBinding.semanticCauses,
+          },
+        }
+      : {}),
     ...(appraisalBindings ? { appraisalBindings } : {}),
-    ...(capturedActorFrame !== undefined ? { capturedActorFrame } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -448,13 +578,24 @@ export function commitActorResponse(
     return unavailable(
       `${namePhrase(actor, 'definite', { capitalize: true })} cannot respond in their current state.`,
     );
+  if (
+    situationBinding &&
+    (situationBinding.privacyRevision !== (input.experience?.privacyRevisions?.[actorId] ?? 0) ||
+      !situationReceiptDetailsCurrent(input, situationBinding.receiptDetails))
+  )
+    return reject('The supplied observations changed or expired before this response.');
   const permitted = new Set(entityIds);
   const targetEpisodes =
     expectedEncounters &&
     Object.fromEntries(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
-  let world = draftWorld(input);
+  let world = draftWorld(input, { materializeNativeEntities: [actorId] });
+  // Each command keeps its isolated refusal boundary; only this response publishes.
+  // Forks also preserve rollback of a replacement whose later start is refused.
+  // docs/projects/attention-and-scenes-runtime-design.md#51-immutable-publication
+  beginCommandBatch(world);
+  let admittedEvidenceIds = evidenceIds;
   const construction = constructionPermissionBatch(
     input.id,
     permissions.constructionPermissions ?? [],
@@ -490,12 +631,8 @@ export function commitActorResponse(
 
   const command = (part: 'talk' | 'act', value: Command) => {
     const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
-    const transition = executeCommand(world, value, {
-      constructionPermissions: construction.permissions,
-      campAssetPermissions: construction.campAssets,
-    });
-    absorbConstructionPermissionBatch(construction, transition);
-    world = draftWorld(transition.world);
+    let transition = executeCommand(world, value);
+    world = draftWorld(transition.world, { materializeNativeEntities: [actorId] });
     const emitted = new Set(transition.events.map((event) => event.id));
     const appended = appendedEventCount(beforeEvents, transition.world.events);
     appendOnlyCommands &&= appended !== undefined;
@@ -525,136 +662,151 @@ export function commitActorResponse(
     );
     components[localId] = transition.outcome;
   };
-  /** Selection syntax does not change native admission. Known choices, typed
-   * invocations and exact single-command grounding share this owner; finite
-   * multi-command plans retain their separate physical-work contract. */
-  const admitSelected = (
-    selected: Command,
-    mode: 'enqueue' | 'replace' | 'interrupt',
-    continuation: 'offered' | 'probe' | null = null,
-    declaredMode?: string | number | boolean,
-  ) => {
-    // A trusted binder may carry the work choice in the command or its declared
-    // request field. Neither representation can silently override the response.
-    const nativeMode =
-      selected.type === 'compose' ||
-      (selected.type === 'outing' && ['invite', 'accept', 'work'].includes(selected.operation))
-        ? 'mode' in selected
-          ? selected.mode
-          : undefined
-        : undefined;
-    if (
-      (nativeMode !== undefined && nativeMode !== mode) ||
-      (declaredMode !== undefined && declaredMode !== mode)
-    ) {
-      components[localId] = outcome(
-        false,
-        'activity-choices',
-        'The requested activity and action must choose the same handling of current work.',
-      );
-      return;
-    }
-    const direct = [
-      'activity',
-      'compose',
-      'inspect-activities',
-      'teach',
-      'handover',
-      'outing',
-      'transfer-item',
-      'cancel',
-      'resume-work',
-      'recover',
-      'release-shot',
-      'withdraw-attempt',
-      'confirm-attempt',
-    ].includes(selected.type);
-    if (
-      !direct &&
-      (continuation === 'offered' || (continuation === 'probe' && mode === 'enqueue'))
-    ) {
-      // The native owner proves whether this exact operation can happen while
-      // current work continues. A prepared durative action refuses continue;
-      // that does not revoke the explicitly selected outer work transition.
-      const prepared = prepareNativeChoice(
-        world,
-        actorId,
-        selected,
-        'continue',
-        construction.permissions,
-        undefined,
-        construction.campAssets,
-      );
-      const available = 'ok' in prepared ? prepared : prepared.outcome;
-      if (available.ok) {
-        command('act', { ...selected, actorId, id: `${id}:${localId}` });
-        return;
-      }
-      if (continuation === 'offered') {
-        components[localId] = available;
-        return;
-      }
-    }
-    if (direct) {
-      const beforeAction = world,
-        beforeEventCount = events.length;
-      const beforeAppendOnly: boolean = appendOnlyCommands;
-      let start = true;
-      if (selected.type === 'activity' && !selected.resume && mode === 'replace') {
-        command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
-        start = components[localId]?.ok === true;
-      }
-      // Native activity start pauses atomically; replacement refusal must also
-      // preserve old work and any independently accepted speech.
-      if (start)
-        command('act', {
-          ...selected,
-          ...(selected.type === 'activity' && !selected.resume && mode === 'interrupt'
-            ? { interrupt: true }
-            : {}),
-          actorId,
-          id: `${id}:${localId}`,
-        });
-      if (!components[localId]?.ok && selected.type === 'activity') {
-        world = beforeAction;
-        events.length = beforeEventCount;
-        appendOnlyCommands = beforeAppendOnly;
-      }
-      return;
-    }
-    components[localId] = admitPlan(
-      world,
-      entityGet(world.entities, actorId)!.actor!,
-      `${id}:${localId}`,
-      [{ ...selected, actorId, id: `${id}:${localId}` }],
-      mode,
-      entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
-      null,
-    );
-  };
-  let invocationRequests:
-    | Map<string, ReturnType<typeof activityRequestDescriptors>[number]>
-    | undefined;
-  const dependencyFailures = responseDependencyFailures(response);
   for (const op of response.operations) {
     localId = op.localId;
-    const dependencyFailure = dependencyFailures.get(localId);
-    if (dependencyFailure) {
-      components[localId] = outcome(
-        false,
-        dependencyFailure,
-        dependencyFailure === 'invalid-dependency'
-          ? 'A required response operation is missing, repeated or does not precede this one.'
-          : 'An admission dependency was rejected.',
-      );
-      continue;
-    }
     if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
       components[localId] = outcome(
         false,
         'dependency-rejected',
         'An admission dependency was rejected.',
       );
+      continue;
+    }
+    if (op.observe || op.remember) {
+      const binding = situationBinding;
+      if (
+        !binding ||
+        binding.privacyRevision !== (world.experience?.privacyRevisions?.[actorId] ?? 0)
+      ) {
+        components[localId] = outcome(
+          false,
+          'situation-expired',
+          'The supplied observation is no longer available.',
+        );
+        continue;
+      }
+      if (op.observe) {
+        const keys = op.observe.subjects.map((reference) =>
+          getOwn(binding.attentionReferences, reference),
+        );
+        const accepted =
+          keys.every((key): key is string => key !== undefined) &&
+          setAttentionFocus(world, actorId, keys);
+        components[localId] = accepted
+          ? outcome(
+              true,
+              'attention-selected',
+              'Focus preferences updated from the supplied observations; detailed tracking remains limited and can be interrupted.',
+            )
+          : outcome(
+              false,
+              'attention-unavailable',
+              'Those observations are no longer available for attention.',
+            );
+      } else if (op.remember) {
+        const beforeRemember = world;
+        world = draftWorld(world, { materializeNativeEntities: [actorId] });
+        const received: Array<{ receipt: TemporalReceipt; values: TemporalValue[] }> = [];
+        let available = true;
+        // A repeated granted reference selects one source, not another captured receipt.
+        for (const reference of new Set(op.remember.sources)) {
+          const locator = getOwn(binding.retentionReferences, reference);
+          if (locator) {
+            const captured =
+              getOwn(binding.receiptDetails ?? {}, reference) ??
+              retainedTemporalReceipt(world, locator);
+            if (
+              !captured ||
+              !captured.values.length ||
+              locator.actorId !== actorId ||
+              captured.receipt.actorId !== actorId ||
+              locator.physicalLife !== captured.receipt.physicalLife ||
+              locator.epoch !== captured.receipt.epoch ||
+              locator.batchOrder !== captured.receipt.batchOrder ||
+              locator.entryIndex !== captured.receipt.entryIndex
+            ) {
+              available = false;
+              break;
+            }
+            received.push(captured);
+            continue;
+          }
+          const snapshot = getOwn(binding.currentReferences ?? {}, reference);
+          if (snapshot) {
+            if (
+              snapshot.observer.actorId !== actorId ||
+              !evidenceCutEligible(world, {
+                observer: snapshot.observer,
+                at: world.simTime,
+                privacyRevision: binding.privacyRevision,
+                lastIncludedOrder: 0,
+                acquired: [],
+                current: [snapshot],
+              })
+            ) {
+              available = false;
+              break;
+            }
+            const issued = recordSnapshotSupport(world, actorId, snapshot);
+            const captured = issued && retainedTemporalReceipt(world, issued);
+            if (!captured) {
+              available = false;
+              break;
+            }
+            received.push(captured);
+            continue;
+          }
+          const observation = getOwn(binding.observationReferences ?? {}, reference);
+          if (
+            !observation ||
+            !evidenceCutEligible(world, {
+              observer: observation.observer,
+              at: world.simTime,
+              privacyRevision: binding.privacyRevision,
+              lastIncludedOrder: 0,
+              acquired: [observation],
+              current: [],
+            }) ||
+            observation.observer.actorId !== actorId
+          ) {
+            available = false;
+            break;
+          }
+          const issued = recordObservationSupport(world, actorId, observation, {
+            sourceIds: [observation.id],
+            admission: { kind: 'deliberate' },
+          });
+          const captured = issued && retainedTemporalReceipt(world, issued);
+          if (!captured) {
+            available = false;
+            break;
+          }
+          received.push(captured);
+        }
+        const accepted =
+          available &&
+          rememberInterpretation(
+            world,
+            actorId,
+            'remember-' + contentLabel(canonicalJson([id, localId])),
+            op.remember.text,
+            received,
+          );
+        if (!accepted) {
+          world = beforeRemember;
+        }
+        components[localId] = accepted
+          ? outcome(
+              true,
+              'interpretation-remembered',
+              'An interpretation was remembered with its supplied sources.',
+            )
+          : outcome(
+              false,
+              'remember-unavailable',
+              'The supplied sources or memory allowance are unavailable.',
+            );
+      }
       continue;
     }
     if (op.appraise) {
@@ -693,22 +845,6 @@ export function commitActorResponse(
           : [];
     const directTarget =
       op.talk?.addresseeEntityId ?? op.act?.invocation?.targetEntityId ?? op.act?.targetEntityId;
-    const invocation = op.act?.kind === 'invoke' ? op.act.invocation : undefined;
-    const invocationParameters = invocation?.parameters;
-    if (invocationParameters)
-      invocationRequests ??= new Map(
-        activityRequestDescriptors(input, actorId).map((request) => [request.id, request]),
-      );
-    const invocationEntities = invocationParameters
-      ? Object.fromEntries(
-          Object.entries(invocationRequests!.get(invocation!.family)?.fields ?? {}).flatMap(
-            ([field, descriptor]) =>
-              descriptor.type === 'entity' && typeof invocationParameters[field] === 'string'
-                ? [[field, invocationParameters[field] as string]]
-                : [],
-          ),
-        )
-      : {};
     const slotReferences = [
       op.act?.slots?.itemId,
       op.act?.slots?.instrumentId,
@@ -721,7 +857,6 @@ export function commitActorResponse(
     // entity kinds cannot be probed through slot errors.
     if (
       (directTarget && !permitted.has(directTarget)) ||
-      Object.values(invocationEntities).some((ref) => !permitted.has(ref)) ||
       slotReferences.some((ref) => !permitted.has(ref))
     ) {
       components[localId] = outcome(
@@ -751,11 +886,25 @@ export function commitActorResponse(
       );
       continue;
     }
-    if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
-    if (Object.keys(invocationEntities).length)
-      actionCommands.push({ actorId, bindings: invocationEntities });
+    if (directTarget && op.act) actionCommands.push({ actorId, targetId: directTarget });
     if (op.act?.slots?.recipientId)
       actionCommands.push({ actorId, targetId: op.act.slots.recipientId });
+    if (
+      actionCommands.some(
+        (command) =>
+          command.targetId &&
+          entityLeases[command.targetId] !== undefined &&
+          currentBodyObservation(world, actorId, command.targetId)?.id !==
+            entityLeases[command.targetId],
+      )
+    ) {
+      components[localId] = outcome(
+        false,
+        'stale-body',
+        'The observed body is no longer the same current observation.',
+      );
+      continue;
+    }
     if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
       components[localId] = outcome(
         false,
@@ -764,15 +913,21 @@ export function commitActorResponse(
       );
       continue;
     }
-    const subject = op.name?.subjectId ?? op.note?.subjectId;
-    const rememberedSubject = op.note?.subjectId
+    const wireSubject = op.name?.subjectId ?? op.note?.subjectId;
+    const noteReference = op.note?.subjectId
       ? getOwn(knowledgeReferences, op.note.subjectId)
       : undefined;
+    const identityReference = wireSubject ? getOwn(identityReferences, wireSubject) : undefined;
+    const subject: ObserverSubject | null = wireSubject
+      ? (noteReference ?? identityReference ?? { kind: 'entity', entityId: wireSubject })
+      : null;
     if (
-      subject &&
-      !rememberedSubject &&
+      subject?.kind === 'entity' &&
+      !noteReference &&
+      !canAddressRememberedSubject(world, actorId, subject.entityId) &&
       expectedEncounters &&
-      expectedEncounters[subject] !== world.perceptionEpisodes?.[actorId]?.[subject]
+      expectedEncounters[subject.entityId] !==
+        world.perceptionEpisodes?.[actorId]?.[subject.entityId]
     ) {
       components[localId] = outcome(
         false,
@@ -781,32 +936,94 @@ export function commitActorResponse(
       );
       continue;
     }
-    if (op.name) components[localId] = assignGivenName(world, actorId, op.name, entityIds);
+    const permittedSubjects: ObserverSubject[] = [
+      ...entityIds.map((entityId) => ({ kind: 'entity' as const, entityId })),
+      ...Object.values(identityReferences),
+    ];
+    let beforeKnowledge: WorldState | undefined;
+    const previousEvidenceIds = admittedEvidenceIds;
+    if (op.note || op.name) {
+      const knownIndividual = subject && observerIndividual(world, actorId, subject)?.individualId;
+      const received = Object.values(situationBinding?.receiptDetails ?? {}).filter(
+        ({ receipt }) =>
+          subject === null ||
+          (subject?.kind === 'entity' &&
+            (receipt.subject === subject.entityId ||
+              receipt.contextSubjects?.includes(subject.entityId) ||
+              (receipt.subjectIdentity?.kind === 'entity' &&
+                receipt.subjectIdentity.entityId === subject.entityId))) ||
+          (receipt.subjectIdentity?.kind === 'individual' &&
+            receipt.subjectIdentity.individualId ===
+              (subject?.kind === 'individual' ? subject.individualId : knownIndividual)),
+      );
+      if (received.some(({ receipt }) => !retainedTemporalReceipt(world, receipt))) {
+        beforeKnowledge = world;
+        world = draftWorld(world, { materializeNativeEntities: [actorId] });
+        const additions: string[] = [];
+        let available = true;
+        for (const capture of received) {
+          if (retainedTemporalReceipt(world, capture.receipt)) continue;
+          const support = retainCapturedTemporalSupport(
+            world,
+            actorId,
+            capture,
+            selectedTemporalPolicy(world).optional,
+          );
+          if (!support) {
+            available = false;
+            break;
+          }
+          additions.push(JSON.stringify(temporalReceiptSource(support.receipt)));
+        }
+        if (!available) {
+          world = beforeKnowledge;
+          components[localId] = outcome(
+            false,
+            'evidence-unavailable',
+            'The selected evidence could not be retained.',
+          );
+          continue;
+        }
+        admittedEvidenceIds = [...new Set([...admittedEvidenceIds, ...additions])];
+      }
+    }
+    if (op.name && subject)
+      components[localId] = assignSubjectName(
+        world,
+        actorId,
+        { ...op.name, subjectId: subject },
+        permittedSubjects,
+        admittedEvidenceIds,
+      );
     if (op.note) {
-      const subjectId = rememberedSubject ?? op.note.subjectId;
-      const existingDocument = rememberedSubject && knowledgeDocument(world, actorId, subjectId);
-      if (
-        subjectId !== null &&
-        (rememberedSubject ? !existingDocument : !canRememberSubject(world, actorId, subjectId))
-      )
+      const existingDocument = noteReference && knowledgeDocument(world, actorId, subject);
+      const rememberable =
+        subject === null ||
+        (subject.kind === 'entity'
+          ? canRememberSubject(world, actorId, subject.entityId) ||
+            canAddressRememberedSubject(world, actorId, subject.entityId)
+          : !!observerIndividual(world, actorId, subject)?.individualId);
+      if (subject !== null && (noteReference ? !existingDocument : !rememberable))
         components[localId] = outcome(
           false,
           'recognition-unavailable',
           'The subject has no supported identity binding.',
         );
       else {
-        // Editing a remembered document does not identify a new exposure of its subject.
-        // docs/knowledge.md#subject-binding
         components[localId] = editKnowledge(
           world,
           actorId,
-          { ...op.note, subjectId },
-          rememberedSubject ? [rememberedSubject] : entityIds,
-          evidenceIds,
+          { ...op.note, subjectId: subject },
+          noteReference ? [noteReference] : permittedSubjects,
+          admittedEvidenceIds,
         );
-        if (components[localId]!.ok && subjectId !== null && !rememberedSubject)
-          rememberSubject(world, actorId, subjectId);
+        if (components[localId]!.ok && subject?.kind === 'entity' && !noteReference)
+          rememberSubject(world, actorId, subject.entityId);
       }
+    }
+    if (beforeKnowledge && !components[localId]?.ok) {
+      world = beforeKnowledge;
+      admittedEvidenceIds = previousEvidenceIds;
     }
     if (op.talk) {
       const validTarget =
@@ -829,7 +1046,9 @@ export function commitActorResponse(
           text: op.talk.text,
           ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
           volume: op.talk.volume,
-          ...(op.talk.addresseeEntityId === null ? {} : { targetId: op.talk.addresseeEntityId }),
+          ...(op.talk.addresseeEntityId
+            ? { targetId: op.talk.addresseeEntityId, targetRole: op.talk.addresseeRole ?? 'body' }
+            : {}),
         });
     }
     const act = op.act;
@@ -881,11 +1100,31 @@ export function commitActorResponse(
         entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else {
-        const descriptor = invocationRequests?.get(act.invocation!.family);
-        const field = descriptor && activityRequestWorkModeField(descriptor);
-        admitSelected(bound, act.mode, 'probe', field ? invocationParameters?.[field] : undefined);
-      }
+      else if (
+        bound.type === 'outing' &&
+        bound.operation !== 'invite' &&
+        bound.operation !== 'accept' &&
+        bound.operation !== 'work'
+      )
+        command('act', bound);
+      else if (bound.type === 'compose' || bound.type === 'outing') {
+        if (('mode' in bound ? bound.mode : undefined) !== act.mode)
+          components[localId] = outcome(
+            false,
+            'activity-choices',
+            'The requested activity and action must choose the same handling of current work.',
+          );
+        else command('act', bound);
+      } else
+        components[localId] = admitPlan(
+          world,
+          entityGet(world.entities, actorId)!.actor!,
+          `${id}:${localId}`,
+          [bound],
+          act.mode,
+          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
+          null,
+        );
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
       components[localId] = outcome(
         false,
@@ -897,18 +1136,74 @@ export function commitActorResponse(
         selected = choice.invocation;
       if (
         !choiceWorkCurrent(world, actorId, choice) ||
+        (choice.transition !== 'continue' && act.mode !== choice.transition) ||
         (act.mode !== 'enqueue' &&
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (choice.transition !== 'continue' && act.mode !== choice.transition)
-        components[localId] = outcome(
-          false,
-          'action-mode',
-          'The chosen action handles current work differently from the offered choice.',
+      else if (
+        selected &&
+        choice.transition === 'continue' &&
+        isActivityCommand(selected, activityCommandSyntax(world))
+      ) {
+        const prepared = prepareNativeChoice(world, actorId, selected, 'continue');
+        const available = 'ok' in prepared ? prepared : prepared.outcome;
+        if (!available.ok) components[localId] = available;
+        else command('act', { ...selected, actorId, id: `${id}:${localId}` });
+      } else if (
+        selected &&
+        [
+          'activity',
+          'compose',
+          'inspect-activities',
+          'teach',
+          'handover',
+          'outing',
+          'transfer-item',
+          'cancel',
+          'resume-work',
+          'recover',
+          'release-shot',
+          'withdraw-attempt',
+          'confirm-attempt',
+        ].includes(selected.type)
+      ) {
+        const beforeAction = world,
+          beforeEventCount = events.length;
+        const beforeAppendOnly: boolean = appendOnlyCommands;
+        let start = true;
+        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace') {
+          command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
+          start = components[localId]?.ok === true;
+        }
+        // The kernel pauses and starts together, so a refused start leaves work running.
+        if (start)
+          command('act', {
+            ...selected,
+            ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
+              ? { interrupt: true }
+              : {}),
+            actorId,
+            id: `${id}:${localId}`,
+          });
+        // A chosen method may become unavailable during the decision wait. Its
+        // replacement and start form one operation; retain independently accepted
+        // speech, but never commit just the cancellation when the start refuses.
+        if (!components[localId]?.ok && selected.type === 'activity') {
+          world = beforeAction;
+          events.length = beforeEventCount;
+          appendOnlyCommands = beforeAppendOnly;
+        }
+      } else if (selected)
+        components[localId] = admitPlan(
+          world,
+          entityGet(world.entities, actorId)!.actor!,
+          `${id}:${localId}`,
+          [{ ...selected, actorId, id: `${id}:${localId}` }],
+          act.mode,
+          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
+          null,
         );
-      else if (selected)
-        admitSelected(selected, act.mode, choice.transition === 'continue' ? 'offered' : null);
       else
         components[localId] = outcome(
           true,
@@ -920,7 +1215,11 @@ export function commitActorResponse(
     } else if (act?.kind === 'expression') {
       components[localId] =
         !act.verb || (act.targetEntityId && !permitted.has(act.targetEntityId))
-          ? outcome(false, 'invalid-expression', 'The expression target is unavailable.')
+          ? outcome(
+              false,
+              'invalid-expression',
+              selectedOccurrenceRules(world).response.expression.unavailable,
+            )
           : commitExpression(world, events, actorId, act.verb, act.targetEntityId ?? undefined, id);
     } else if (act?.kind === 'proposal') {
       // Server-scoped interpretation chooses existing commands, never effects. Admission
@@ -1052,15 +1351,22 @@ export function commitActorResponse(
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
-        else if (selected.length === 1)
-          admitSelected(
-            {
-              ...selected[0]!,
-              ...(selected[0]!.type === 'compose' ? { mode: act.mode } : {}),
-            },
-            act.mode,
-            'probe',
-          );
+        else if (selected.length === 1 && selected[0]!.type === 'compose')
+          command('act', { ...selected[0]!, mode: act.mode, actorId, id: `${id}:${localId}` });
+        else if (
+          selected.length === 1 &&
+          [
+            'teach',
+            'handover',
+            'outing',
+            'transfer-item',
+            'cancel',
+            'recover',
+            'withdraw-attempt',
+            'confirm-attempt',
+          ].includes(selected[0]!.type)
+        )
+          command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else
           components[localId] = admitPlan(
             world,
@@ -1096,6 +1402,7 @@ export function commitActorResponse(
     }
 
     if (op.think) {
+      const thought = selectedOccurrenceRules(world).response.thought;
       const invalidReferences = op.think.aboutEntityIds.some(
         (target) => !permitted.has(target) || !entityHas(world.entities, target),
       );
@@ -1114,10 +1421,10 @@ export function commitActorResponse(
       else {
         appendMemory(world, actorId, {
           kind: 'episode',
-          source: 'self_thought',
-          summary: subjectNarration(actorId, `thought: ${op.think.text}`),
+          source: thought.source,
+          summary: subjectNarration(actorId, `${thought.summaryPrefix}${op.think.text}`),
           entityIds: op.think.aboutEntityIds,
-          importance: 5,
+          importance: thought.importance,
           responseId: id,
         });
         components[localId] = outcome(true, 'thought', 'Private thought remembered.');
@@ -1250,6 +1557,27 @@ export function commitActorResponse(
               .map(([part, result]) => `${part}: ${result.message}`)
               .join(' ')}`,
           );
+  if (
+    overall.ok &&
+    situationBinding &&
+    situationBinding.privacyRevision === (world.experience?.privacyRevisions?.[actorId] ?? 0)
+  ) {
+    acknowledgeAttention(world, actorId, situationBinding.presented ?? []);
+    for (const cause of situationBinding.semanticCauses ?? []) {
+      const attention = world.perceptionEvidence?.[actorId]?.attention;
+      const latch = attention?.latches[cause.key];
+      const candidate =
+        latch && attentionCandidates(world, actorId, [latch.anchorKey])[latch.anchorKey];
+      if (
+        latch?.active &&
+        latch.generation === cause.generation &&
+        candidate &&
+        cause.qualitativeRevision === candidate.descriptionRevision
+      )
+        resolveSemanticCause(world, actorId, cause.key, cause.qualitativeRevision, cause.severity);
+    }
+    reinforceExperience(world, actorId, admittedEvidenceIds);
+  }
   const receipts = (world.responseReceipts ??= {});
   receipts[id] = { digest, components, outcome: overall };
   // This is only the recent in-state idempotency/debug window. Actor memories,
@@ -1310,7 +1638,7 @@ export function recordPlayerExpression(
       'invalid-expression',
       'The action description did not match its selected target.',
     );
-  const world = draftWorld(input),
+  const world = draftWorld(input, { materializeNativeEntities: [actorId] }),
     events: import('./types.js').WorldEvent[] = [];
   const parts = predicate
     .split('{target}')
@@ -1318,7 +1646,7 @@ export function recordPlayerExpression(
   emit(
     world,
     events,
-    'expression',
+    selectedOccurrenceRules(world).response.expression.eventType,
     subjectNarration(source, parts),
     entityGet(world.entities, actorId),
     targetId,

@@ -8,6 +8,25 @@ import type { Outcome } from './types.js';
 import type { Command, WorldState, Entity, ItemInstance } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
 
+/** World-level command installation reads definitions, never actors or stock.
+ * The same immutable scope is available after native authority transfer. */
+export type ActivityDefinitionScope = Pick<
+  WorldState,
+  | 'moduleManifest'
+  | 'assemblyFamilies'
+  | 'hearthDefinitions'
+  | 'nativeForagingProfiles'
+  | 'gatheringPolicy'
+  | 'foodPreparations'
+  | 'castDefinitions'
+  | 'recipes'
+>;
+
+/** Request wording reads installed definitions only; choices and execution keep
+ * their separate actor/current-world authority. */
+export type ActivityRequestDefinitionScope = ActivityDefinitionScope &
+  Pick<WorldState, 'workBatchPolicy' | 'nativeStrikes' | 'statusEffectPolicy' | 'socialOfferPolicy' | 'itemDefinitions' | 'profile'>;
+
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#predicates-deadlines-and-scheduling */
@@ -44,7 +63,7 @@ export interface ActivityHostDescriptor {
     actions?: Partial<Record<Command['type'], ActivityActionMeaning>>;
   };
   /** Dependencies of the selected supported implementation, separate from possessions. */
-  supportsCommand?: (world: WorldState, command: Command['type']) => boolean;
+  supportsCommand?: (world: ActivityDefinitionScope, command: Command['type']) => boolean;
   /** Meaningful output identity from the exact selected command; no hypothetical lot. */
   outputDefinition?: (world: WorldState, command: Command) => string | undefined;
   evaluateCondition?: (
@@ -54,7 +73,7 @@ export interface ActivityHostDescriptor {
   ) => { value: boolean | undefined; depends: string[]; nextBoundary?: number };
   acceptsTarget?: (world: WorldState, targetId: string) => boolean;
   /** Trusted data projection from this world's installed policy; it grants no executor. */
-  requestDescriptors?: (world: WorldState, actorId?: string) => ActivityRequestDescriptor[];
+  requestDescriptors?: (world: ActivityRequestDefinitionScope, actor?: { world: WorldState; id: string }) => ActivityRequestDescriptor[];
   compileRequest?: (
     world: WorldState,
     actorId: string,
@@ -108,7 +127,10 @@ export interface ActivityActionMeaning {
 export function nativeActionMeaning(command: Command['type']): ActivityActionMeaning | undefined {
   return implementations().meanings.get(command);
 }
-export function installedActionMeaning(world: WorldState, command: Command['type']) {
+export function installedActionMeaning(
+  world: Pick<WorldState, 'moduleManifest'>,
+  command: Command['type'],
+) {
   const selected = selectedImplementations(world);
   const meaning = selected
     ? selected.meanings.get(command)
@@ -124,7 +146,10 @@ export function installedActionMeaning(world: WorldState, command: Command['type
 }
 /** Reusable substrate operations remain available; fictional capabilities require installation.
  * Installation grants no equipment, materials, privacy or platform permission. */
-export function nativeCommandSupported(world: WorldState, command: Command['type']): boolean {
+export function nativeCommandSupported(
+  world: ActivityDefinitionScope,
+  command: Command['type'],
+): boolean {
   if (implementations().commands.has(command)) {
     const host = activityHostForCommand(world, command);
     return !!host && (host.supportsCommand?.(world, command) ?? true);
@@ -144,7 +169,7 @@ export function deadlineSafeActivityCommand(
     : trustedActivityHostForCommand(command);
   return host?.definition.deadlineSafeCommands.includes(command) ?? false;
 }
-export function itemOutputFamilies(world: WorldState, namedPorts = false): string[] {
+export function itemOutputFamilies(world: ActivityDefinitionScope, namedPorts = false): string[] {
   const result = new Set<string>(['pickup']);
   for (const [command, meaning] of installedActionMeanings(world))
     if (namedPorts ? meaning.itemOutputs : meaning.singleItemReceipt) result.add(command);
@@ -294,13 +319,17 @@ export function activityRequestWorkModeField(
 ): string | undefined {
   return Object.entries(request.fields).find(([, field]) => field.type === 'mode')?.[0];
 }
+function hasActorState(world: ActivityRequestDefinitionScope): world is WorldState {
+  return 'entities' in world;
+}
 export function activityHostRequests(
-  world: WorldState,
+  world: ActivityRequestDefinitionScope,
   host: ActivityHostDescriptor,
   actorId?: string,
 ): readonly ActivityRequestDescriptor[] {
+  const actor = actorId && hasActorState(world) ? { world, id: actorId } : undefined;
   return host.requestDescriptors
-    ? host.requestDescriptors(world, actorId)
+    ? host.requestDescriptors(world, actor)
     : (host.definition.requests ?? []);
 }
 export function validateInstalledActivityRequests(world: WorldState): void {
@@ -330,7 +359,7 @@ export function validateInstalledActivityRequests(world: WorldState): void {
     }
 }
 export function activityRequestDescriptors(
-  world: WorldState,
+  world: ActivityRequestDefinitionScope,
   actorId?: string,
 ): ActivityRequestDescriptor[] {
   return selectedDescriptors(world)
@@ -565,7 +594,9 @@ export function trustedActivityHostForCommand(command: Command['type']) {
   return implementations().commands.get(command);
 }
 const selectedHosts = new WeakMap<readonly DefinitionPin[], ActivityImplementations>();
-function selectedImplementations(world: WorldState): ActivityImplementations | undefined {
+function selectedImplementations(
+  world: Pick<WorldState, 'moduleManifest'>,
+): ActivityImplementations | undefined {
   const pins = world.moduleManifest.activityHosts;
   const cached = selectedHosts.get(pins);
   if (cached) return cached;
@@ -581,7 +612,9 @@ function selectedImplementations(world: WorldState): ActivityImplementations | u
   selectedHosts.set(pins, result);
   return result;
 }
-function selectedDescriptors(world: WorldState): readonly ActivityHostDescriptor[] {
+function selectedDescriptors(
+  world: Pick<WorldState, 'moduleManifest'>,
+): readonly ActivityHostDescriptor[] {
   return (
     selectedImplementations(world)?.hosts ??
     world.moduleManifest.activityHosts.flatMap((pin) => {
@@ -634,7 +667,7 @@ export function activityCommandSupported(world: WorldState, command: Command['ty
   return !!activityHostForCommand(world, command);
 }
 export function activityHostForCommand(
-  world: WorldState,
+  world: Pick<WorldState, 'moduleManifest'>,
   command: Command['type'],
 ): ActivityHostDescriptor | undefined {
   const selected = selectedImplementations(world);
@@ -646,7 +679,7 @@ export function activityHostForCommand(
 }
 
 export function installedActionMeanings(
-  world: WorldState,
+  world: ActivityDefinitionScope,
 ): [Command['type'], ActivityActionMeaning][] {
   const selected =
     selectedImplementations(world) ?? describeImplementations(selectedDescriptors(world));

@@ -53,6 +53,8 @@ behind the loading bar, while required failures offer an explicit scene retry.
 This closes the temporary-artwork flash reported in the current Main; it does not
 change the wider delivery or hosted acceptance scopes above.
 
+- [x] Reconcile the configured development catalog for the exact release in [the current development lock](../../assets/locks/development.json), then demonstrate ordinary Main initialization, persistence and reopening. Existing current-authority recovery and exact-source publication install revision `sha256-b47b5a09e7cecb8f53d7be1c2036cd9efa3db1282c9842e95031c9ffa66546e1`; the format 29 Main reopens with all 163 authored content entries. No fabricated catalog, substitute artwork or new grant is used. Production selection is unchanged. [Evidence](../verification/attention-and-memory-core.md#shared-value-completion--october-28-2026).
+
 ## AS05 — Inventory, preservation and repository migration
 
 **Owners:** tooling, art/doc maintainers. **Depends on:** AS01–AS04 and the AS06 preservation/restore gate before removal.

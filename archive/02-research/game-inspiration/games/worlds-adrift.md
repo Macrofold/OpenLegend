@@ -4,6 +4,6 @@
 
 **Interpretation.** The dangerous pattern is a feedback loop: operating complexity slows improvement; slow improvement weakens growth; weak growth constrains resources; limited resources make technical debt harder to resolve. A real but small community can have meaningful experiences without sustaining the operating model.
 
-**OpenLegend implication.** Keep the smallest viable authority and hosting boundary for as long as it serves the game. A single-player or small-group world should deliver value without needing MMO-level concurrency. Qualify the actual cost of meaningful interactions, including generation and history, rather than extrapolating from cheap isolated calls.
+**Open Legend implication.** Keep the smallest viable authority and hosting boundary for as long as it serves the game. A single-player or small-group world should deliver value without needing MMO-level concurrency. Qualify the actual cost of meaningful interactions, including generation and history, rather than extrapolating from cheap isolated calls.
 
-**Continuity nuance.** The lesson about wipes applies to players who have invested in the live product. It does not invalidate OpenLegend’s current development policy of rejecting incompatible development saves. Before inviting durable public investment, make the intended persistence/compatibility promise explicit and honor it.
+**Continuity nuance.** The lesson about wipes applies to players who have invested in the live product. It does not invalidate Open Legend’s current development policy of rejecting incompatible development saves. Before inviting durable public investment, make the intended persistence/compatibility promise explicit and honor it.

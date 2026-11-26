@@ -120,7 +120,7 @@ Public material inspected here does not establish audited title profit, a repres
 
 The strongest reference patterns are **an action as an item**, **an upgrade that changes a rule**, **currency with an executable use**, and **a build that creates a new practical approach**. The most useful counterexamples are equally concrete: an immunity can break survival, an elaborate helper can become unavailable for the crucial encounter, and a new endgame interface can make a familiar repeated action slower.
 
-For OpenLegend, a reusable invention should expose requirements, effects, incompatibilities and what its user gives up. A helper's local failure need not destroy all past investment. An authored person can connect a practical request with a new capability. None of these lessons requires the same periodic resets, immense item catalog or dependence on external build research.
+For Open Legend, a reusable invention should expose requirements, effects, incompatibilities and what its user gives up. A helper's local failure need not destroy all past investment. An authored person can connect a practical request with a new capability. None of these lessons requires the same periodic resets, immense item catalog or dependence on external build research.
 
 ## 12. Coverage, preservation and viewing routes
 

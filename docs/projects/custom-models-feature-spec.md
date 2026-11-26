@@ -6,7 +6,7 @@
 
 ## 1. Purpose and selected outcome
 
-OpenLegend can use an operator-selected Hugging Face model for native character judgments and ordinary production NPC generation. Macrofold hosts the model or connects an existing compatible endpoint; the game uses it through its existing AI boundary. A deployment can serve the game continuously, recover from a model-server restart automatically, and support a deliberate model update without creating a new experiment or changing game rules.
+Open Legend can use an operator-selected Hugging Face model for native character judgments and ordinary production NPC generation. Macrofold hosts the model or connects an existing compatible endpoint; the game uses it through its existing AI boundary. A deployment can serve the game continuously, recover from a model-server restart automatically, and support a deliberate model update without creating a new experiment or changing game rules.
 
 Performance, functional model choice and reusable provider integration are the primary goals. Experimentation is an optional consumer of the same capability. A production request needs no study manifest, experiment ID, frozen hardware, qualification certificate or human approval after an ordinary restart. Comparative studies do not determine the shape or lifetime of the production service.
 
@@ -26,7 +26,7 @@ The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macro
 
 The operator supplies a Hugging Face repository or URL to Macrofold, selects a supported runtime and affordable hosting configuration, then starts the deployment under its standing spending and capacity policy. Managed RunPod load-balanced Serverless uses the native Kev runtime for judgments and vLLM for chat. An existing authenticated SystemOne decision or OpenAI-compatible chat endpoint can also be registered, including a locally hosted runtime that the chosen Macrofold installation can actually reach.
 
-Macrofold maintains desired running/stopped state and readiness. Warm production capacity avoids downloading or starting a model during each character response. Provider recovery stays inside the approved service configuration and spending policy. Stopping OpenLegend does not destroy a shared host; stopping a deployment explicitly in Macrofold does not automatically restart it on the next NPC request.
+Macrofold maintains desired running/stopped state and readiness. Warm production capacity avoids downloading or starting a model during each character response. Provider recovery stays inside the approved service configuration and spending policy. Stopping Open Legend does not destroy a shared host; stopping a deployment explicitly in Macrofold does not automatically restart it on the next NPC request.
 
 The operator grants the game principal read/use access in the trusted Macrofold workspace and configures its judgment and NPC generation targets independently. A separate deployment-only application credential can leave the existing backend credential in place for other Macrofold features. Embeddings, reflection and full-agent execution keep their existing routes. No production model default changes merely because this design or its implementation is merged.
 
@@ -52,7 +52,7 @@ A normal target selects a deployment by stable ID. Macrofold resolves its curren
 
 An optional revision pin selects one exact model/runtime configuration for operational rollback, a controlled rollout or a comparison. It does not pin a process, GPU instance or hosting authorization period. The requested pin never falls back to a different revision. Macrofold determines whether that revision is currently served; a stopped or unavailable revision returns an explicit outcome.
 
-OpenLegend configuration changes follow its existing controlled-restart pattern; deployment-side recovery and updates do not require restarting OpenLegend. Past dialogue, actions and memories retain the outcomes actually accepted at the time. Restoring a world does not replay model calls, regain revoked credentials or rewind bills.
+Open Legend configuration changes follow its existing controlled-restart pattern; deployment-side recovery and updates do not require restarting Open Legend. Past dialogue, actions and memories retain the outcomes actually accepted at the time. Restoring a world does not replay model calls, regain revoked credentials or rewind bills.
 
 ### J5 — Compare models when useful
 

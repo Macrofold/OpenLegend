@@ -1,3 +1,4 @@
+import gateCopy from './worlds/base/gate-use-copy.json' with { type: 'json' };
 import { physicalIntersections, solidOverlap } from '@open-legend/spatial';
 import type { Action, Outcome, WorldState } from './types.js';
 import type { GateUseIntent, GateWork } from './boundary-types.js';
@@ -205,8 +206,7 @@ export function gateMovementProblem(
   )
     return outcome(
       false,
-      'gate-blocked',
-      'The gate and its hanging cords need their complete movement space clear.',
+      gateCopy.blocked.code, gateCopy.blocked.message,
     );
 }
 
@@ -226,11 +226,10 @@ export function prepareGateUse(
   if (!actor?.actor?.alive || !canHandleItems(world, actor) || !details)
     return outcome(
       false,
-      'gate-unavailable',
-      'Choose a current supported gate and a person able to handle it.',
+      gateCopy.unavailable.code, gateCopy.unavailable.message,
     );
   if (!invocationId && !seesEntity(world, actor, details.root))
-    return outcome(false, 'not-visible', 'Move close enough to perceive the actual structure.');
+    return outcome(false, gateCopy.notVisible.code, gateCopy.notVisible.message,);
   const grant = gateUsePermission(
     world,
     intent.assemblyId,
@@ -242,8 +241,7 @@ export function prepareGateUse(
   if (!grant)
     return outcome(
       false,
-      'gate-permission',
-      'There is no current public-use permission for this exact gate and operation.',
+      gateCopy.permission.code, gateCopy.permission.message,
     );
   if (!work && !invocationId) {
     const replacement = prospectiveWork(world, actorId, 'replace');
@@ -253,12 +251,12 @@ export function prepareGateUse(
   }
   const edit = activeAssemblyEdit(world, details.root, actorId, work);
   if (edit && (edit !== invocationId || details.component.activeEdit?.actorId !== actorId))
-    return outcome(false, 'competing-edit', 'Another operation is in progress on this structure.');
+    return outcome(false, gateCopy.competing.code, gateCopy.competing.message,);
   if (
     details.gate.position === 'open' &&
     (intent.operation === 'bar' || intent.operation === 'unbar')
   )
-    return outcome(false, 'gate-open', 'Close the gate before using its inside bar.');
+    return outcome(false, gateCopy.open.code, gateCopy.open.message,);
   if (checkMovement && !gateUseUnchanged(world, intent)) {
     const movement = gateMovementProblem(world, intent, invocationId ? undefined : actorId);
     if (movement) return movement;
@@ -266,7 +264,7 @@ export function prepareGateUse(
   const candidates = gateWorkCandidates(world, actorId, intent),
     approach = findPhysicalWorkApproach(world, actor, candidates, world.itemHandling.reach);
   if (!approach)
-    return outcome(false, 'gate-access', 'No clear supported route reaches the selected handle.');
+    return outcome(false, gateCopy.access.code, gateCopy.access.message,);
   // A remote intention does not reveal an occluded inside bar. The person can
   // discover the obstruction by actually reaching a handle, or by seeing it.
   if (
@@ -292,7 +290,7 @@ export function prepareGateUse(
         worldPosition(actor),
       ))
   )
-    return outcome(false, 'gate-barred', 'The closed gate must be unbarred from inside first.');
+    return outcome(false, gateCopy.barred.code, gateCopy.barred.message,);
   const side = candidates.find((candidate) => candidate === approach.candidate)!.side;
   return {
     details,
@@ -334,8 +332,7 @@ export function gateWorkProblem(
   )
     return outcome(
       false,
-      'gate-changed',
-      'The gate or its current permission changed during preparation.',
+      gateCopy.changed.code, gateCopy.changed.message,
     );
   const actor = entityGet(world.entities, actorId)!,
     destination = action.destination,
@@ -389,8 +386,7 @@ export function prepareGateAction(
   )
     return outcome(
       true,
-      'gate-unchanged',
-      'The gate is already in the requested state; no operation was needed.',
+      gateCopy.unchanged.code, gateCopy.unchanged.message,
     );
   return {
     id,

@@ -1,8 +1,10 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Module A design is complete and reviewed; PP01–PP07 implementation and gameplay qualification have not started. | 2026-10-25   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported reception is installed; further batch/lifetime design is complete and operating qualification remains open. | 2026-11-04   |
+
+Architecture applied to shared reception **2026-10-31 22:44 UTC**; the temporal/familiarity foundation used it **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Purpose and selected scope
 
@@ -18,9 +20,34 @@ This completes a scoped evidence and recognition design, not the broader [ND16 h
 
 The source baseline is the exact contracts-branch tip, `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. The technical design records the relevant domain and service owners and the limits of source inspection. Existing [perception](../../packages/domain/src/perception.ts), [event observation](../../packages/domain/src/event-observation.ts), [experience](../../packages/domain/src/experience.ts) and [base-world knowledge](../../packages/domain/src/worlds/base/knowledge.ts) provide real foundations: scoped observations, personal records, exposure-based associations, authored acquaintances and observer-specific names. Speech already has listener-specific reception, and player views have observer-dependent disclosure.
 
-Those foundations do not deliver this full design. Persistent learned voice/face familiarity, observer-local learned individuals without a canonical binding, independently fresh fact projections, evidence accumulation across compatible cues and the complete retention/consumer path remain implementation work. The inspected baseline has neither the selected shared visual/recognition Perception attribute nor a physical voice-signature recognition subsystem. Their selected laws belong to [base-world recognition policy](../worlds/base/knowledge.md#identity-and-recognition), not an implicit engine-wide capability.
+The existing-channel implementation now adds observer-local individuals, voice familiarity under the selected Perception rule, exact received evidence, independently current details and faithful retained/cold/summary meaning. Native responses, NPC preparation and player publication consume these permitted records. [Implementation evidence](../verification/personal-perception-foundation.md) records supported-channel acquisition, correction, forgetting and restoration. Future visual/acoustic producers, attention/combat integration and full PP07/SAI-A acceptance remain open.
 
-Everything below is the **selected design target**, including its acceptance scenarios. No runtime change, executed gameplay test, measured performance result or demonstrated player enjoyment is claimed.
+The behavior and acceptance below remain the selected complete target. Scoped implementation evidence does not establish future-channel delivery, live-model quality, population capacity or player enjoyment.
+
+**Shared temporal retention is implemented for supported channels.** The [attention and memory design](attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries) adds shared immutable source fragments and exact observer receipt references through these existing owners. Ordinary detailed attention automatically retains changes to supported received facets/events, rather than a recorder with a list of activities. Common values can be shared; different heard fragments, precision, frames and uncertainty remain personal. Current broad perception and current motion support remain available without attention, but there is no separate background-history sampler. Beginning attention captures the actual current receipt; earlier chronology is available only if that actor independently retained it. Another observer's retained source never grants retrospective witnessing.
+
+The selected [subject-wide familiarity law](../worlds/base/perception-recognition.md#shared-subject-familiarity-target) is implemented for supported contacts. It replaces modality-specific familiarity-credit accumulation while leaving physically available modality features and supported matching necessary. Future discriminating visual-feature producers remain open. Familiarity can influence optional attention only through its world policy; it grants no new sensory evidence, source identity or unseen location.
+
+## Shared reception and change
+
+**Supported-channel PP08 conversion is installed; operating acceptance remains open.** Sight, hearing, contact, event and received-feature adapters use the [shared runtime contract](perspective-perception-runtime-design.md) through the existing current/evidence, attention and personal-history owners. The proposed [received-batch and lifetime design](bookkeeping-simplification-batch-design.md) completes the further structural reduction of repeated recording and storage work; [BK20–BK23](../maintainers/production-data.md#received-batches-and-lifetime) owns its unimplemented conversion. It preserves the existing senses, attention allocation, sampling defaults, personal boundaries and retention allowances; design completion claims no performance improvement.
+
+Different senses still determine what reaches someone: a wall can block sight and muffle speech while allowing a felt vibration under a separately installed physical law. The reusable part starts **after reception**. One common procedure handles received state, changes, availability, source timing, recording admission and correction. Adding a supported channel must not require writing another history or forgetting system.
+
+- **Received state** describes information currently supported by a channel: a seen position, felt contact or supported continuing signal. Each detail can have a different measurement time and uncertainty. A fresh heard region does not overwrite an older precise sighting or refresh its equipment detail.
+- **Received occurrences** describe something that happened: actual words, an impact or an observed outcome. They keep both event and reception time. Speech does not need a fabricated continuing track or a later loss event.
+- **Acquisition and change** mean new received information, not compulsory lasting memories. A repeated successful availability check need not duplicate every fact. A new measurement of an unchanged value still has its own honest measurement time.
+- **Loss and uncertainty** stop or qualify current support for the affected channel/details. They do not erase retained experience, imply physical disappearance or automatically generate a departure story. Skipping or delaying a check is not proof of absence.
+- **Attention** joins explicitly associated channel tracks into one detailed subject while keeping anonymous tracks distinct. It selects richer checking and ordered recent recording through the existing policy. It is automatic or explicitly focused, not a prerequisite follow action. The base world’s default ten detailed subjects do not cap broad awareness, independent surroundings or all cognition context. Changing focus without a new observation retains an existing baseline with its old times; it does not sense again.
+- **Memory** retains useful admitted experience and needed support; trivial detail may fade. Selection, loss, reconnect and panel reads do not themselves create autobiography. No universal lifetime diary or model call per change is required.
+
+Movement uses this same rule: retain the positions actually received while attended, in order, with their gaps and precision. No special approach/work/eat episode classifier guesses intent or discards intermediate turns. An actor can call an observed room a kitchen from its contents and acquired understanding; a label or introduction is not universally required. Neither an internal room ID nor unseen geometry supplies that knowledge.
+
+Unknown voices, anonymous bodies and signals without a person or a point remain usable. Joining their accounts requires supported correspondence, not equality of hidden source IDs. Memoryless creatures can consume native cues without acquiring human language, names or autobiography. Other mental information—goals, commitments, beliefs, known personal condition and recalled experience—keeps its existing authority; the context compiler combines permitted contributions without treating them all as sensory truth.
+
+**Playable acceptance:** follow an attended route with meaningful intermediate observations; hear an unidentified warning and decide to investigate; compare two incomplete witness accounts; act on a useful property of an unfamiliar object; and return to a last-known place without hidden live tracking. The daughter/cliff/pursuers case must combine broad received bodies, selected detail and independently acquired feature context, without a daughter-specific handler or an enemy being invisible because ten slots are occupied. Native reactions use acquired information before optional AI, whose interpretation may be delayed or mistaken.
+
+The first conversion covers actual existing sight, contact, hearing/speech, event and received-feature adapters plus their player, NPC, native, memory and cold readers. A controlled nonvisual channel using existing value families proves the extension seam; it does not deliver smell, vibration, new acoustic propagation, remote communication or full vision. Those physical/world features retain their own design and acceptance. No new AI cadence, database, scheduler or general mental-state store is selected.
 
 ## What makes this worth playing
 
@@ -91,6 +118,10 @@ Current knowledge is a set of independently supported facts, not a periodically 
 | Still later: Ada is seen clearly without a spear.                 | A new visual equipment observation can replace the current equipment view. The older spear sighting remains an accurate historical account.                          | Where the spear went during the unseen interval.                                                     |
 
 The practical account can therefore be: “Ada was last seen by the gate carrying a spear. I heard Ada recently from beyond that wall, but I do not know exactly where she is or what she is doing now.” Each clause comes from distinct structured support. If the voice was only a candidate match, the account must say so.
+
+A continuously perceived body remains the same physical target when its appearance or public condition changes. Its old meaningful detail remains historical and the new detail has its own support interval; this does not reset recognition or silently refresh unrelated facts. Moving positions and passive numeric changes retain the latest supported sample; exact discrete outcomes keep their own event records.
+
+That latest-sample behavior describes the current foundation, not a complete route archive. Under the selected temporal target, attended or independently required received changes also retain their ordered source references at the actual sensory resolution. Unsupported intervals remain gaps; neither shared source history nor two endpoints establish an unseen route. Later retention may preserve a useful less precise account or expire optional detail through the [recording owner](attention-and-scenes-tech-design.md#56-one-recording-boundary-and-lasting-retention).
 
 Intermittent visibility preserves the same distinction. A brief occlusion may preserve an acquisition episode or a learned association, while all unsupported live details stop immediately. A later glimpse grants only the newly available facets. It cannot fill the gap with an inferred hidden path. Historical location or bearing may be transformed for a display using its recorded frame, but must remain anchored to that old observation, never the source's unseen movement.
 
@@ -178,7 +209,7 @@ Required sensory work that cannot finish on time remains incomplete under the sh
 
 ## Staged capability and acceptance
 
-The [PP tracker](../maintainers/perspective-perception.md) owns task bodies, dependencies and completion evidence. Design completion belongs to PP00. PP01–PP07 remain implementation and qualification work; a completed diagram or example cannot satisfy their runtime exits.
+The [PP tracker](../maintainers/perspective-perception.md) owns task bodies, dependencies and completion evidence. Design completion belongs to PP00. PP08 owns the shared-reception conversion alongside existing PP01–PP07 integration and qualification; a completed diagram or example cannot satisfy their runtime exits.
 
 | Stage | Capability made reviewable                                | Required acceptance focus                                                                                                                                                              |
 | ----- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -190,6 +221,7 @@ The [PP tracker](../maintainers/perspective-perception.md) owns task bodies, dep
 | PP05  | Shared evidence for native animals, cognition and players | The same permission boundary serves all applicable consumers; no hidden-source path or mandatory AI-per-cue dependency appears.                                                        |
 | PP06  | Body life, restoration and current-format validation      | Death/replacement, control changes, save/reopen and stale in-flight work preserve correct scope and once-only acquisition.                                                             |
 | PP07  | Whole-path qualification and documentation completion     | End-to-end journeys, privacy surfaces, required bounds and overload behavior have evidence; ordinary use is practically worthwhile and remaining failures are honestly recorded.       |
+| PP08  | Common receiving procedure across supported channels      | Actual sight/contact/hearing and event paths share mutation, recording, correction and cold readers; grouped work and extension/lifecycle acceptance pass.                             |
 
 The complete technical acceptance matrix covers combinations rather than only a happy path: good/poor signal, familiar/unfamiliar/ambiguous identity, known/unknown names, current/historical facts, direct/report/inferred support, memoryful/memoryless consumers, interrupted exposure, correction, replacement and restoration. Implementation should reuse those scenario IDs as evidence, not create competing acceptance definitions.
 
@@ -198,6 +230,8 @@ Later gameplay qualification must include uncoached ordinary choices: recognize 
 ## Repertoire scope
 
 The first playable target is ordinary personal continuity and usable clues. The [relationships catalogue](../repertoires/relationships.md) supplies returning acquaintances and practical social repair; [languages and knowledge](../repertoires/languages-knowledge.md) supplies clarification and partial witnesses; [adventure and discovery](../repertoires/adventure-discovery.md) supplies useful searches and rescues. Recognition also supports work, comfort, hospitality, performance and comedy. These catalogues own their situations; the evidence contract lets them share mechanics without making every interaction an investigation.
+
+The framework also supports [MEC-001](../repertoires/mechanics.md) (inventive use of actually noticed properties), [PB-002](../repertoires/psychology-behavior.md) (a useful but incomplete cue amid work), and [OBS/NAV](../repertoires/actions.md) (investigation and returning to a last-known place). Craft, ecology, care, social play, institutions, arts, technology and unusual realities can contribute their own received value families without receiving a new memory subsystem each. Keep these opportunities in ordinary play: coordinating a task through sound, comparing fallible witnesses and discovering an unexpected useful property should be as viable as threat detection. Catalogue priorities and unselected physical/world capabilities remain unchanged.
 
 Other senses, recording media, illusions and shared memories remain separately selected world capabilities. Their producers must preserve the original experiencer, source, time and permitted association when using this contract. Comprehensive detective interfaces, full disguise systems, supernatural memory transfer and city institutions are extension cases, not prerequisites for ordinary perception.
 
@@ -213,9 +247,9 @@ These are concrete implementation dependencies, not invitations to reopen settle
 
 ## Maintained records
 
-- Implementation, dependencies and unsatisfied acceptance: [Perspective perception tasks, PP00–PP07](../maintainers/perspective-perception.md).
+- Implementation, dependencies and unsatisfied acceptance: [Perspective perception tasks, PP00–PP08](../maintainers/perspective-perception.md).
 - Limits, behavioral bounds and current delivery evidence: [Perspective perception inventory](../limits/perspective-perception.md), reusing the existing memory, cognition and native-work owners it links.
-- Mechanisms, data shapes, algorithms and acceptance matrices: [Technical design](perspective-perception-tech-design.md).
+- Mechanisms, data shapes, algorithms and acceptance matrices: [Technical design](perspective-perception-tech-design.md), [shared reception runtime](perspective-perception-runtime-design.md).
 - Shared authority: [Stealth and awareness contracts](stealth-awareness-tech-design.md#shared-contracts) and [shared feature specification](stealth-awareness-feature-spec.md).
 - Persistent semantics: [Memory architecture](../memory-architecture.md), [events and reactions](../events-perception-and-reactions.md), [perceived events](../perceived-world-events.md), [identity and references](../identity-and-references.md), [hearing and speech](../hearing-and-speech.md), and [base-world knowledge](../worlds/base/knowledge.md).
 - Related social behavior: [Speech and social perception](speech-and-social-perception-feature-spec.md) and its [technical design](speech-and-social-perception-tech-design.md).

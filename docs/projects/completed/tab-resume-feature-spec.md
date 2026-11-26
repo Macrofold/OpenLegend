@@ -6,7 +6,7 @@
 
 ## Purpose and approved behavior
 
-A sole game tab enters automatically, including reload and return from another application. Leaving still pauses browser work and begins the world's current character-departure process. Only another open tab holding the last selected play requires a blocking dialog. Its exact text is **Game Paused**, **OpenLegend is open in another tab.**, **Resume Here**, and **Log Out**. Resume Here deliberately transfers play; focus alone cannot displace another open tab.
+A sole game tab enters automatically, including reload and return from another application. Leaving still pauses browser work and begins the world's current character-departure process. Only another open tab holding the last selected play requires a blocking dialog. Its exact text is **Game Paused**, **Open Legend is open in another tab.**, **Resume Here**, and **Log Out**. Resume Here deliberately transfers play; focus alone cannot displace another open tab.
 
 Ordinary focus loss retains the world and open panels beneath a slight tint over the entire game, with small **Game is paused.** text. This preserves the visible place the player left while input remains suspended. Returning to the sole tab remains automatic; genuine connection or return failures remain readable and retryable. [The current presentation](../../architecture.md#account-authority-and-participation) retains the existing departure and competing-tab behavior.
 

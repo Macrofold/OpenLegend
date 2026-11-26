@@ -1,6 +1,6 @@
 # Attention, ongoing agency, and structured scenes
 
-**Status: accepted direction with proposed cognitive and sensory extensions.** [Memory](../memory-architecture.md), [agency](../agent-agency.md), [perception/reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), and [conversation](../narration-and-conversations.md) remain the semantic owners of their runtime behavior. This page defines the cross-cutting product contract; it does not claim existing evidence may already be discarded or regrouped arbitrarily.
+**Status: accepted direction with a researched core attention recommendation, updated October 25, 2026; runtime implementation remains open.** [Memory](../memory-architecture.md), [agency](../agent-agency.md), [perception/reactions](../events-perception-and-reactions.md), [hearing](../hearing-and-speech.md), and [conversation](../narration-and-conversations.md) remain the semantic owners of their runtime behavior. This page defines the cross-cutting product contract; it does not claim existing evidence may already be discarded or regrouped arbitrarily.
 
 **Product proposal expanded October 6, 2026:** the [detailed attention, crowds and scenes specification](../projects/attention-and-scenes-feature-spec.md) supplies initial scope and DG18's worthwhile gathering, player/NPC journeys, research, economic boundaries and acceptance. The [base-world profile](../worlds/base/social-gatherings.md) owns authored situations and qualification inputs. Ordinary attended interaction retains current exact speech; prospective gist/aggregate activity and separately optional timed speech require their own delivery. These recommendations do not change current hearing or close PS04/PS-D02.
 
@@ -10,7 +10,9 @@
 
 Separate a world occurrence, evidence a character can acquire, what it distinguishes, what it attends to, and whether a new decision is needed. None is synonymous with a paid model call or a permanent autobiographical record.
 
-The preferred flow is world activity, sensory grouping and distinguishable sources, limited stable attention, permitted individual/aggregate experience, and bounded reaction opportunities. Scope comes before relevance. Do not let importance, a high model tier, or an urgent campaign bypass privacy or reveal facts the character could not know.
+Every physically delivered fact first enters the existing acquired-information owner, with its actual observer, source revision, time and permitted meaning. Optional attention selects among that received information before expensive descriptions or model preparation; it neither changes sensory delivery nor creates factual permission. Personal recording is a separate admission decision shared by all producers. Scope comes before relevance. Do not let importance, a high model tier, or an urgent campaign bypass privacy or reveal facts the character could not know.
+
+The broader sensory-grouping target remains separate: a supported sensory producer may deliver a genuine aggregate, but attention cannot turn complete hidden details into one apparently cheap crowd description or invent an aggregate family.
 
 Native continuation and protection can use supported deterministic policies. Existing action selection can still have provider costs even when no generative model is used. Budget complete workflows rather than counting only visible dialogue. Neither a cheap classifier nor a larger language model is an authority over world effects.
 
@@ -20,7 +22,13 @@ A crowd can remain physically present without becoming hundreds of independent c
 
 Do not implement this as generating detailed context for every object, paying to rank it all, and then retaining a small prefix. Group and reject unnecessary work before expensive per-character processing. Shared spatial groups and sensory fields may help, but a shared source descriptor is not a shared personal interpretation.
 
-The attention policy can consider distinguishability, distance, novelty, goals, current focus, permitted recognition, and observable salience. There is no accepted universal top-X count. An approximate crowd estimate should not turn into an exact census or a roster of hidden enemies. No actor gains knowledge of a private alliance merely because server-side grouping knows its members.
+The proposed core combines a broad received scene with limited detailed subjects. Additional bodies and static surroundings remain represented, sometimes coarsely; a detail limit is not a visibility cap. The [world attention profile](../worlds/base/attention.md) owns Focus, overrides, fair discovery and provisional work/retention allowances. Spatial grouping represents received location and uncertainty, never hidden allegiance, motive or a universal cognitive law. Select before description expansion, paid ranking and history hydration.
+
+### Core discovery and consideration
+
+Reserve opportunities for oldest eligible descriptions as well as current work and measurable change. A region's count does not acknowledge its hidden members. Track descriptive revisions separately from motion/change watermarks, and acknowledge only captured information actually supplied to cognition. Ordinary resampling creates no new novelty; failed work gets no automatic paid retry. The same existing cognition turn can make a personal connection, change attention, remember something or do nothing. Mike selected a few-real-second target under admitted load with possible misses, not guaranteed arbitrary relevance at unlimited density.
+
+Ordinary attention automatically retains supported received temporal changes through shared source fragments and exact personal receipts; no follow/watch action is required. Broad current surroundings remain available without a separate background-history sampler. One shared familiarity score can favor known subjects; bounded native relation cues and genuinely justified thought replace recurring motion-driven AI opportunities. Selective lasting impressions may survive after recent exact detail fades. Trivial sequences can disappear. The [technical design](../projects/attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) owns mechanisms and lifecycle; [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns delivery, including the new received-geometry prerequisite for terrain-dependent cases. Physical investigation/gaze and broader semantic crowds retain their separate scope.
 
 ### Stable focus and interruptions
 
@@ -29,6 +37,10 @@ Retain focus long enough to make conversation intelligible. Nearly equal ranking
 Urgent effects use supported interruption paths. Being hit is evidence; an unseen attacker deciding to attack is not. Detectable danger can displace optional attention without requiring omniscient preclassification. Attention capacity does not limit physical authority: an unnoticed arrow still hits, a neglected fire still spreads under its rules, and an unconsidered body still blocks a route.
 
 Focus may change what is learned prospectively. Historical partial or unintelligible speech remains partial or unintelligible after attention shifts. Current sensory permission is not a retrospective transcript grant.
+
+### Recording remains separate
+
+Receiving, considering and recording information are distinct. Required bodily evidence, actual personal results, understood speech, obligations and correction retain their existing guarantees independently of optional attention. Routine unchanged surroundings need not create repeated autobiographical entries; attention does not erase an existing account or refresh its detail. All producers must use the shared personal-experience admission, including routine-event finalization, whose bypass remains an implementation defect. This does not reinstate the rejected [busy-worker observation-loss experiment](../worlds/base/attention.md).
 
 ## 3. Acoustic grouping
 

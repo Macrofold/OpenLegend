@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
-  GameView,
   RecipeView,
   WorldAgentSessionSummary,
   WorldAgentSessionCursor,
@@ -12,6 +11,7 @@ import { Inventions } from './inventions';
 import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
+import type { PlayerAiUsage } from '../player-ai-usage';
 import './creator-workspaces.css';
 import './world-agent-layout.css';
 import { authoringKey } from './world-agent-identity';
@@ -23,9 +23,10 @@ type Props = {
   accessScope: string;
   requestScope: string;
   inspectionScope: string;
-  budget: GameView['ai']['budget'];
+  allowanceLimitUsd: number;
+  usage: PlayerAiUsage;
   actorId: string;
-  godMode?: boolean;
+  enabled?: boolean;
   saveTimeline?: string;
   inventionSeed: { id: string; text: string } | null;
   recoveryRequest?: string | null;
@@ -57,6 +58,7 @@ function conversationDate(timestamp: number): string {
 /** Ordinary invention and owner editing have separate entrances and retained state.
  * A presentation mode never grants the authority checked by the native handlers. */
 export function WorldAgent(props: Props) {
+  if (props.mode !== 'invent' && !props.enabled) return null;
   return (
     <WorldAgentPanel
       key={authoringKey(
@@ -78,9 +80,9 @@ function WorldAgentPanel(props: Props) {
     accessScope,
     requestScope,
     inspectionScope,
-    budget,
+    allowanceLimitUsd,
+    usage,
     actorId,
-    godMode,
     saveTimeline,
     inventionSeed,
     visible,
@@ -141,7 +143,7 @@ function WorldAgentPanel(props: Props) {
     if (mode === 'author') writeLocal(selectionKey, active);
   }, [selectionKey, active, mode]);
   async function list(next?: WorldAgentSessionCursor) {
-    if (mode !== 'author' || !godMode || !connected || listing.current) return;
+    if (mode !== 'author' || !connected || listing.current) return;
     listing.current = true;
     setBusy(true);
     try {
@@ -172,7 +174,7 @@ function WorldAgentPanel(props: Props) {
   }
   useEffect(() => {
     if (visible) void list();
-  }, [visible, connected, godMode, mode]);
+  }, [visible, connected, mode]);
   function create(purpose?: 'invention' | 'creation', native = false) {
     const id = crypto.randomUUID();
     setActive(id);
@@ -252,6 +254,7 @@ function WorldAgentPanel(props: Props) {
     return (
       <div className="ol-creator-workspace ol-creator-invent">
         <Inventions
+          canAuthor={!!props.enabled}
           worldId={worldId}
           accessScope={accessScope}
           requestScope={requestScope}
@@ -262,17 +265,23 @@ function WorldAgentPanel(props: Props) {
           browseRecipe={browseRecipe}
           connected={connected}
           allowance={
-            <UsageRemaining
-              limit={budget.limitUsd}
-              spent={budget.accounts?.[actorId]?.spentUsd ?? 0}
-              reserved={budget.accounts?.[actorId]?.reservedUsd ?? 0}
-              available={connected && !!budget.accounts}
-            />
+            <div>
+              <UsageRemaining
+                limit={allowanceLimitUsd}
+                spent={usage.value?.budget.accounts[actorId]?.spentUsd ?? 0}
+                reserved={usage.value?.budget.accounts[actorId]?.reservedUsd ?? 0}
+                available={connected && !!usage.value}
+              />
+              {usage.unavailable && (
+                <Button size="sm" onPress={usage.retry}>
+                  Reload allowance
+                </Button>
+              )}
+            </div>
           }
         />
       </div>
     );
-  if (!godMode) return <p>God mode is required to open these tools.</p>;
   if (mode === 'inspect')
     return (
       <div className="ol-creator-workspace">

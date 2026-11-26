@@ -1,10 +1,6 @@
 // One bounded HTTP owner for scoped execution controls; never a model transport or receipt ledger.
 import { createNetworkOwner, requestText } from '@open-legend/network';
-import {
-  executionUrl,
-  executionCapability,
-  SHARED_EXECUTION_CONTROL_BYTES,
-} from '../../packages/ai/src/shared-execution.ts';
+import { executionUrl, executionCapability, SHARED_EXECUTION_CONTROL_BYTES } from '@open-legend/ai';
 const owner = createNetworkOwner({ role: 'verification-execution-control', capacity: 8 });
 export async function executionRequest(url, token, path, body, timeoutMs = 15000) {
   executionUrl(url);

@@ -1,5 +1,7 @@
 # Cognition Lab runtime and execution verification
 
+The measurements below use the earlier TypeScript host. The [signed Rust HTTP profile](../../scripts/performance/cognition-lab.mjs) runs on a disposable standard worker. Compare the same released world, inventory and history on both sides of an isolated change.
+
 This record covers shared native runtime composition, execution controls, captured calls and action browsing on October 25, 2026 (UTC). It uses implementation base `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086` plus the Cognition Lab changes. [Retained storage](cognition-lab-storage.md) and [complete native HTTP runtime measurements](cognition-lab-runtime.md) have separate evidence owners.
 
 ## Native fixtures and limits
@@ -58,7 +60,7 @@ The lab holds its own simulation at the native decision-processing boundary thro
 
 ## Native action catalogue measurement
 
-The [reusable runner](../../scripts/performance/cognition-lab-actions.ts) calls the actual creator action catalogue, native preview owner and complete JSON consumer. The measured fixture uses `stockedCamp`, 30/300/1,000 additional separately identified carried berry lots, a 50-result first page and a query for the final lot's exact ID. No HTTP, browser or provider is involved. Two samples per case include the disposable diagnostic and validation of the reusable runner; there is no forced garbage collection or operating-system cache control. Both use Node `v22.23.2`. Host load averages at completion were `26.94 / 18.56 / 17.62` and `10.21 / 19.32 / 21.13`; this is a small reproduction range, not a controlled before/after comparison. The final report records source commit `36849a67f3226d73def31014b1d08e4c48424640` plus working changes and catalogue source SHA-256 `f22b70a5b5539691d333308bd61de053ee81efc39cd52308f6d2323d9e3fa234`.
+The [reusable runner](https://github.com/Macrofold/OpenLegend/blob/c962980424b2eacf9d58078139aab0e7ea02ed20/scripts/performance/cognition-lab-actions.ts) calls the actual creator action catalogue, native preview owner and complete JSON consumer. The measured fixture uses `stockedCamp`, 30/300/1,000 additional separately identified carried berry lots, a 50-result first page and a query for the final lot's exact ID. No HTTP, browser or provider is involved. Two samples per case include the disposable diagnostic and validation of the reusable runner; there is no forced garbage collection or operating-system cache control. Both use Node `v22.23.2`. Host load averages at completion were `26.94 / 18.56 / 17.62` and `10.21 / 19.32 / 21.13`; this is a small reproduction range, not a controlled before/after comparison. The final report records source commit `36849a67f3226d73def31014b1d08e4c48424640` plus working changes and catalogue source SHA-256 `f22b70a5b5539691d333308bd61de053ee81efc39cd52308f6d2323d9e3fa234`.
 
 | Additional lots | Native choices |   First page ms | First-page previews |       Search ms | Search previews |   Full catalogue ms |
 | --------------: | -------------: | --------------: | ------------------: | --------------: | --------------: | ------------------: |

@@ -1,0 +1,807 @@
+//! The listener, accepted clock and ordinary writer share one installed world.
+//! Stopping ingress leaves the final accepted prefix with its save owner.
+
+use crate::{
+    access_http,
+    authority::Authority,
+    boot::{CurrentServer, StartupStorage},
+    game_clock::GameClock,
+};
+use crate::{live_save::LiveSaves, oidc::Oidc};
+use axum::{
+    Router,
+    extract::Request,
+    http::{HeaderValue, header},
+    middleware::{self, Next},
+    response::Response,
+};
+use std::{
+    error::Error,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
+use tokio::{net::TcpListener, sync::watch};
+use tokio_postgres::Config as DatabaseConfig;
+use tower_http::services::{ServeDir, ServeFile};
+
+type LaunchError = Box<dyn Error + Send + Sync>;
+
+mod account_retention;
+pub(crate) mod checkpoint_load;
+mod creation;
+use checkpoint_load::{LoadInbox, LoadRequest};
+
+struct JournalLaunch {
+    authority: Arc<Authority>,
+    model: Option<crate::narrator::NarratorModel>,
+    world: String,
+    batch_ms: u64,
+}
+
+#[derive(Clone)]
+pub(crate) struct ListenerSettings {
+    local: bool,
+    host: String,
+    port: u16,
+    loopback_http: bool,
+    public_origin: String,
+    mcp: Option<Arc<crate::mcp_http::Configuration>>,
+}
+
+impl ListenerSettings {
+    fn read() -> Result<Self, LaunchError> {
+        let mode = setting("OPEN_LEGEND_AUTH_MODE", "local")?;
+        if !matches!(mode.as_str(), "local" | "oidc") {
+            return Err("Unsupported OPEN_LEGEND_AUTH_MODE".into());
+        }
+        let local = mode == "local";
+        let host = setting("OPEN_LEGEND_HOST", "127.0.0.1")?;
+        let port = setting("PORT", "3210")?.parse()?;
+        let loopback_http = setting("OPEN_LEGEND_OIDC_LOOPBACK_HTTP", "false")? == "true";
+        let public_origin = setting("OPEN_LEGEND_PUBLIC_ORIGIN", "")?;
+        if (local || public_origin.starts_with("http:"))
+            && !matches!(host.as_str(), "127.0.0.1" | "::1" | "localhost")
+        {
+            return Err("Local HTTP authentication requires a loopback bind address".into());
+        }
+        Ok(Self {
+            local,
+            host,
+            port,
+            loopback_http,
+            public_origin,
+            mcp: crate::mcp_http::Configuration::read()?.map(Arc::new),
+        })
+    }
+}
+
+pub(crate) struct PreparedGame {
+    routes: Router,
+    game: Arc<CurrentServer>,
+    clock: Arc<GameClock>,
+    saves: Arc<LiveSaves>,
+    decisions: Arc<crate::npc::Director>,
+    schedule: Arc<crate::npc::schedule::ScheduleInbox>,
+    checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    loads: Arc<LoadInbox>,
+    journal: JournalLaunch,
+    embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
+    end_http: watch::Sender<bool>,
+    requests_released: watch::Receiver<()>,
+    lab: Option<crate::lab::Supervisor>,
+}
+
+pub async fn serve(release: &Path, database: DatabaseConfig) -> Result<(), LaunchError> {
+    #[cfg(feature = "profile-campaign")]
+    let _profile = crate::profile::start_from_operator();
+    let settings = ListenerSettings::read()?;
+    let listen = TcpListener::bind((settings.host.as_str(), settings.port)).await?;
+    let bound = listen.local_addr()?;
+    let browser = release.join("browser");
+    if !tokio::fs::metadata(browser.join("index.html"))
+        .await?
+        .is_file()
+    {
+        return Err("The operator release has no browser build".into());
+    }
+    match setting("OPEN_LEGEND_STARTUP_MODE", "ordinary")?.as_str() {
+        "ordinary" => (),
+        "awaiting-creation" => {
+            return creation::serve(release, browser, database, listen, settings).await;
+        }
+        _ => return Err("Unsupported OPEN_LEGEND_STARTUP_MODE".into()),
+    }
+    let startup = Arc::new(StartupStorage::open(release, database, 1, false).await?);
+    let game =
+        CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup).await?;
+    let loads = Arc::new(LoadInbox::default());
+    let game = PreparedGame::open(
+        Arc::new(game),
+        browser.clone(),
+        &settings,
+        bound.port(),
+        loads,
+        true,
+        None,
+    )
+    .await?;
+    println!("OpenLegend listening on {bound}");
+    serve_with_recovery(game, listen, None, release, browser, &settings, startup).await
+}
+
+async fn serve_with_recovery(
+    game: PreparedGame,
+    listen: TcpListener,
+    extra: Option<Router>,
+    release: &Path,
+    browser: PathBuf,
+    settings: &ListenerSettings,
+    startup: Arc<StartupStorage>,
+) -> Result<(), LaunchError> {
+    let port = listen.local_addr()?.port();
+    let directory = PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?).join("saves");
+    let socket = listen.into_std()?;
+    let custody = game.game.host.budget().clone();
+    let loads = game.loads.clone();
+    let installed_release = game
+        .game
+        .installed_assets()
+        .ok_or("The listener has no installed artwork index")?
+        .release()
+        .clone();
+    let result = async {
+        let mut game = game;
+        loop {
+            let listener = TcpListener::from_std(socket.try_clone()?)?;
+            let Some(request) = game
+                .drive(Ingress::Network(listener, extra.clone()))
+                .await?
+            else {
+                return Ok(());
+            };
+            report_native_memory("OpenLegend checkpoint handoff memory", &custody);
+            let outcome = startup
+                .recover_live_checkpoint(
+                    release,
+                    &directory,
+                    &request,
+                    &installed_release,
+                )
+                .await;
+            let refused = match outcome {
+                Ok(()) => false,
+                Err(crate::store::CommitError::RolledBack(error)) => {
+                    eprintln!("Live checkpoint load refused: {error}");
+                    true
+                }
+                Err(error) => return Err(error.into()),
+            };
+            let current =
+                CurrentServer::from_storage(release, Some(&release.join("navigation")), &startup)
+                    .await?;
+            game = PreparedGame::open(
+                Arc::new(current),
+                browser.clone(),
+                settings,
+                port,
+                loads.clone(),
+                false,
+                None,
+            )
+            .await?;
+            loads
+                .finish(request, refused)
+                .map_err(|_| "Cannot settle the checkpoint request")?;
+        }
+    }
+    .await;
+    // The socket, operational Store and pending outcomes outlive an individual
+    // world during Load. Release them before reporting a complete shutdown.
+    drop((socket, extra, startup, loads));
+    report_native_memory("OpenLegend native memory", &custody);
+    result
+}
+
+fn report_native_memory(label: &str, custody: &openlegend_simulation::host::ByteBudget) {
+    println!(
+        "{label} {}",
+        serde_json::json!({
+            "transientBytes": custody.used(),
+            "transientPeakBytes": custody.peak(),
+            "residentBytes": custody.resident().used(),
+            "residentPeakBytes": custody.resident().peak(),
+            "pendingSaveBytes": custody.pending_save_used(),
+            "pendingSavePeakBytes": custody.pending_save_peak(),
+        })
+    );
+}
+
+impl PreparedGame {
+    pub(crate) async fn open(
+        game: Arc<CurrentServer>,
+        browser: PathBuf,
+        settings: &ListenerSettings,
+        port: u16,
+        loads: Arc<LoadInbox>,
+        configured_startup: bool,
+        lab_parent: Option<&crate::lab::Parent>,
+    ) -> Result<Self, LaunchError> {
+        let local = settings.local;
+        let custody = game.host.budget().clone();
+        let duration = setting("OPEN_LEGEND_SESSION_HOURS", "8")?.parse::<f64>()?;
+        let players = setting("OPEN_LEGEND_PLAYER_CAPACITY", "100")?.parse::<i64>()?;
+        if !(0.1..=24.0).contains(&duration) {
+            return Err("OPEN_LEGEND_SESSION_HOURS must be between 0.1 and 24".into());
+        }
+        let world_id = game
+            .world
+            .capture(|world| Ok(world.world_id()?.to_owned()))
+            .await?;
+        let (authority, identity) = Authority::for_world(
+            game.store.clone(),
+            world_id.clone(),
+            Duration::from_secs_f64(duration * 3600.0),
+            4096_i64.max(16 * players),
+            local,
+            custody.clone(),
+        )
+        .await?;
+        let authority = Arc::new(authority.for_lab(lab_parent.is_some()));
+        let presence = Arc::new(crate::presence::Presence::new(
+            authority.clone(),
+            usize::try_from(6 * players)?,
+            custody.clone(),
+        )?);
+        let inputs = Arc::new(crate::world_input::WorldInputs::new(
+            authority.clone(),
+            custody.clone(),
+            usize::try_from(6 * players)?,
+            usize::try_from(4 * players)?,
+        )?);
+        let grace = setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()?;
+        if !(1.0..=60.0).contains(&grace) {
+            return Err("OPEN_LEGEND_EXIT_GRACE_SECONDS must be between 1 and 60".into());
+        }
+        let limit_usd = match lab_parent {
+            Some(_) => budget_limit("OPEN_LEGEND_LAB_BUDGET_USD", "0")?,
+            None => ai_budget_limit()?,
+        };
+        let data = match lab_parent {
+            Some(parent) => parent.data.clone(),
+            None => PathBuf::from(setting("OPEN_LEGEND_DATA_DIR", ".data")?),
+        };
+        let macrofold = !setting("MACROFOLD_API_KEY", "")?.is_empty();
+        let jev = !setting("TYPESAFE_API_KEY", &setting("JEV_API_KEY", "")?)?.is_empty();
+        let language = !setting("OPENAI_API_KEY", "")?.is_empty();
+        let display = crate::store::AiDisplay {
+            jev_configured: macrofold || jev,
+            llm_configured: macrofold || language,
+            limit_usd,
+        };
+        let schedule = Arc::new(crate::npc::schedule::ScheduleInbox::new(
+            game.cognition.clone(),
+            custody.clone(),
+            display.jev_configured && limit_usd > 0.0,
+        ));
+        let saves = LiveSaves::new(
+            game.world.clone(),
+            game.store.clone(),
+            custody.clone(),
+            game.language().cloned(),
+        )?;
+        let saves = Arc::new(saves.with_schedule(schedule.clone()));
+        let checkpoints = Arc::new(crate::store::checkpoint::CheckpointSchedule::new(
+            game.store.clone(),
+            saves.clone(),
+            world_id.clone(),
+            data.join("saves"),
+        ));
+        let timeline = identity.timeline.clone();
+        let identity = Arc::new(tokio::sync::Mutex::new(identity));
+        let clock = Arc::new(
+            GameClock::new(
+                game.clone(),
+                saves.clone(),
+                checkpoints.clone(),
+                game.view_policy().base_ratio(),
+                identity.clone(),
+            )
+            .with_inputs(
+                presence.clone(),
+                inputs.clone(),
+                Duration::from_secs_f64(grace),
+            ),
+        );
+        let god_mode = lab_parent.is_some() || setting("OPEN_LEGEND_GOD_MODE", "false")? == "true";
+        let capture_direct_stages =
+            god_mode && setting("OPEN_LEGEND_CAPTURE_INTELLIGENCE", "false")? == "true";
+        let decisions = Arc::new(if let Some(parent) = lab_parent {
+            crate::npc::Director::new_for_lab(
+                game.clone(),
+                saves.clone(),
+                authority.clone(),
+                limit_usd,
+                &parent.director,
+                &parent.namespace,
+            )?
+        } else {
+            crate::npc::Director::new(
+                game.clone(),
+                saves.clone(),
+                authority.clone(),
+                limit_usd,
+                capture_direct_stages,
+            )?
+        });
+        if let Some(controls) = decisions.lab_controls_shared() {
+            decisions.load_lab_settings().await?;
+            clock.set_lab_controls(Arc::downgrade(&controls));
+        }
+        let embedding = decisions.embedding_model();
+        let batch_ms = setting("NARRATION_BATCH_MS", "750")?.parse::<u64>()?;
+        if batch_ms > 10_000 {
+            return Err("NARRATION_BATCH_MS must be between 0 and 10000".into());
+        }
+        let journal = JournalLaunch {
+            authority: authority.clone(),
+            model: decisions.narrator_model(limit_usd)?,
+            world: world_id.clone(),
+            batch_ms,
+        };
+        let (end_http, http_stop) = watch::channel(false);
+        let (request_owner, requests_released) = watch::channel(());
+        let definitions = Arc::new(crate::mcp_http::DefinitionReads::new(
+            game.world.clone(),
+            &world_id,
+            &timeline,
+            custody.clone(),
+            game.language().cloned(),
+            http_stop.clone(),
+        ));
+        let mcp = settings
+            .mcp
+            .as_ref()
+            .filter(|_| lab_parent.is_none())
+            .map(|settings| {
+                crate::mcp_http::router(
+                    settings.clone(),
+                    &world_id,
+                    definitions.clone(),
+                    custody.clone(),
+                    http_stop.clone(),
+                    request_owner.clone(),
+                )
+            });
+        let references = Arc::new(
+            crate::player_references::ReferenceIssuer::new()
+                .map_err(|_| "Could not establish per-process player reference keys")?,
+        );
+        let requests = crate::player_http::router(
+            authority.clone(),
+            identity,
+            game.clone(),
+            saves.clone(),
+            presence.clone(),
+            inputs,
+            clock.clone(),
+            decisions.clone(),
+            world_id,
+            usize::try_from(4 * players)?,
+            Duration::from_secs_f64(grace),
+            usize::try_from(3 * players)?,
+            display,
+            god_mode,
+            http_stop.clone(),
+            request_owner.clone(),
+            checkpoints.clone(),
+            loads.clone(),
+            definitions,
+            references.clone(),
+        );
+        let mut configured = None;
+        let (routes, supervisor) = if let Some(parent) = lab_parent {
+            let ordinary = requests.clone();
+            let routes = requests.merge(access_http::session_router(authority.clone()));
+            let context = Arc::new(crate::lab::LabRuntime {
+                setup: (parent.host.clone(),parent.startup.clone()),
+                checkpoints: checkpoints.clone(),
+                saves:saves.clone(),
+                clock: clock.clone(),
+                grace: Duration::from_secs_f64(grace),
+                game: game.clone(),
+                decisions: decisions.clone(),
+                authority,
+                references,
+                presence,
+                imported: parent.imported.clone(),
+                ordinary,
+            });
+            (crate::lab::make_routes(routes, context).await?, None)
+        } else {
+            let supervisor = crate::lab::Supervisor::new(
+                browser
+                    .parent()
+                    .ok_or("Missing release directory")?
+                    .to_owned(),
+                data.clone(),
+                settings.clone(),
+                port,
+                authority.clone(),
+                game.clone(),
+                saves.clone(),
+                decisions.clone(),
+                http_stop.clone(),
+            );
+            let game_routes = Router::new()
+                .route_service("/", ServeFile::new(browser.join("index.html")))
+                .route_service("/cognition", ServeFile::new(browser.join("index.html")))
+                .fallback_service(ServeDir::new(browser).append_index_html_on_directories(false))
+                .layer(middleware::from_fn(build_cache))
+                .merge(requests);
+            let game_routes = match game.installed_assets() {
+                Some(assets) => game_routes.merge(crate::player_http::assets::router(
+                    assets.clone(),
+                    authority.clone(),
+                    game.store.clone(),
+                    custody.clone(),
+                    http_stop,
+                )),
+                None => game_routes,
+            };
+            let game_routes = game_routes.nest("/api/cognition-lab", supervisor.router());
+            let routes = if local {
+                access_http::local_router(authority, port, game_routes, Some(presence.clone()))
+            } else {
+                let secret = setting("OPEN_LEGEND_OIDC_CLIENT_SECRET", "")?;
+                let oidc = Oidc::new(
+                    settings.public_origin.clone(),
+                    setting("OPEN_LEGEND_OIDC_ISSUER", "")?,
+                    setting("OPEN_LEGEND_OIDC_CLIENT_ID", "")?,
+                    (!secret.is_empty()).then_some(secret),
+                    settings.loopback_http,
+                    custody.clone(),
+                )?;
+                if configured_startup {
+                    configured = crate::authority::bootstrap::ConfiguredAccounts::prepare(
+                        &game.store,
+                        game.world_id(),
+                        oidc.issuer(),
+                        &custody,
+                    )
+                    .await?;
+                }
+                access_http::oidc_router(
+                    authority,
+                    oidc,
+                    game_routes,
+                    Some(access_http::Enrollment {
+                        game: game.clone(),
+                        saves: saves.clone(),
+                        _request_owner: request_owner,
+                    }),
+                    Some(presence.clone()),
+                )
+            };
+            (
+                routes.merge(mcp.unwrap_or_else(crate::mcp_http::disabled)),
+                Some(supervisor),
+            )
+        };
+        clock.initialize(configured).await?;
+        if lab_parent.is_some() {
+            clock.hold_opened_lab().await?;
+        }
+        clock.maintenance().initialize(&clock).await?;
+        Ok(Self {
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            loads,
+            journal,
+            embedding,
+            end_http,
+            requests_released,
+            lab: supervisor,
+            game,
+        })
+    }
+
+    pub(crate) async fn drive(self, ingress: Ingress) -> Result<Option<LoadRequest>, LaunchError> {
+        let Self {
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            loads,
+            journal,
+            embedding,
+            end_http,
+            mut requests_released,
+            lab,
+            game,
+        } = self;
+        let run = run(
+            ingress,
+            routes,
+            clock,
+            saves,
+            decisions,
+            schedule,
+            checkpoints,
+            loads,
+            journal,
+            embedding,
+            end_http,
+            game.clone(),
+        )
+        .await;
+        // Axum can report a finished connection before Hyper drops its
+        // service and response body. Wait for every router that owns the world.
+        if let Some(lab) = lab {
+            lab.drain().await?;
+        }
+        let _ = requests_released.changed().await;
+        game.world.drain_operations().await;
+        let game = Arc::try_unwrap(game).map_err(|_| "The listener left a running world owner")?;
+        if matches!(run, Ok(Some(_))) {
+            // The host and its one Store remain with the listener supervisor.
+            game.world.stop().await?;
+            drop(game);
+        } else {
+            game.close().await?;
+        }
+        run
+    }
+}
+
+pub(crate) enum Ingress {
+    Network(TcpListener, Option<Router>),
+    Lab(
+        watch::Sender<crate::lab::Availability>,
+        watch::Receiver<bool>,
+    ),
+}
+
+async fn run(
+    ingress: Ingress,
+    routes: Router,
+    clock: Arc<GameClock>,
+    saves: Arc<LiveSaves>,
+    decisions: Arc<crate::npc::Director>,
+    schedule: Arc<crate::npc::schedule::ScheduleInbox>,
+    checkpoints: Arc<crate::store::checkpoint::CheckpointSchedule>,
+    loads: Arc<LoadInbox>,
+    journal: JournalLaunch,
+    embedding: Option<Arc<crate::npc::semantic_index::EmbeddingModel>>,
+    end_http: watch::Sender<bool>,
+    game: Arc<CurrentServer>,
+) -> Result<Option<LoadRequest>, LaunchError> {
+    let http_stop = end_http.subscribe();
+    let scheduler = tokio::spawn(
+        decisions
+            .clone()
+            .run_schedule(schedule.clone(), end_http.subscribe()),
+    );
+    let maintenance = tokio::spawn(
+        decisions
+            .clone()
+            .run_maintenance(schedule, end_http.subscribe()),
+    );
+    let semantic = tokio::spawn(crate::npc::semantic_index::run(
+        game.clone(),
+        decisions.provider_dispatch(),
+        embedding,
+        saves.semantic_waker(),
+        end_http.subscribe(),
+    ));
+    let recovery_authority = journal.authority.clone();
+    let narration = tokio::spawn(crate::narrator::run(
+        game.clone(),
+        saves.clone(),
+        decisions.provider_dispatch(),
+        journal.authority,
+        journal.model,
+        journal.world,
+        journal.batch_ms,
+        saves.story_waker(),
+        end_http.subscribe(),
+    ));
+    let checkpoint_stop = end_http.subscribe();
+    let checkpoint_work = checkpoints.run(checkpoint_stop);
+    let (end_clock, clock_stop) = watch::channel(false);
+    let (end_saves, save_stop) = watch::channel(false);
+    let (end_lexical, lexical_stop) = watch::channel(false);
+    let account_retention = tokio::spawn(account_retention::run(
+        game.clone(),
+        saves.clone(),
+        end_http.subscribe(),
+    ));
+    let lexical = tokio::spawn(crate::lexical_maintenance::run(
+        game,
+        saves.lexical_waker(),
+        lexical_stop,
+    ));
+    let http = async move {
+        match ingress {
+            Ingress::Network(listen, extra) => {
+                let routes = match extra {
+                    Some(extra) => routes.merge(extra),
+                    None => routes,
+                };
+                axum::serve(crate::socket::Listener(listen), routes)
+                    .with_graceful_shutdown(stopped(http_stop))
+                    .await
+            }
+            Ingress::Lab(publish, parent_stop) => {
+                publish.send_replace(crate::lab::Availability::Ready(routes));
+                tokio::select! { _ = stopped(parent_stop) => {}, _ = stopped(http_stop) => {} }
+                publish.send_replace(crate::lab::Availability::Opening);
+                Ok(())
+            }
+        }
+    };
+    let clock_work = clock.run(clock_stop);
+    let operator_clock = clock.clone();
+    let operator_stop = end_http.subscribe();
+    let operator_maintenance = tokio::spawn(async move {
+        operator_clock
+            .maintenance()
+            .run(&operator_clock, operator_stop)
+            .await;
+    });
+    let save_work = saves.run(save_stop);
+    let loading = async {
+        loop {
+            let request = loads
+                .next()
+                .await
+                .map_err(|_| "Cannot admit a checkpoint request")?;
+            match clock
+                .pause_for_recovery(recovery_authority.clone(), request.authorized.clone())
+                .await
+            {
+                Ok(()) => return Ok::<_, LaunchError>(Some(request)),
+                Err(error) => {
+                    eprintln!("Could not pause for checkpoint load: {error}");
+                    loads
+                        .finish(request, true)
+                        .map_err(|_| "Cannot settle the checkpoint request")?;
+                }
+            }
+        }
+    };
+    tokio::pin!(http, clock_work, save_work, checkpoint_work, loading);
+    let mut http_result = None;
+    let mut clock_result = None;
+    let mut save_result = None;
+    let mut decision_result = None;
+    let mut checkpoints_stopped = false;
+    let signal = tokio::select! {
+        result = &mut http => { http_result = Some(result); Ok(None) }
+        result = &mut clock_work => { clock_result = Some(result); Ok(None) }
+        result = &mut save_work => { save_result = Some(result); Ok(None) }
+        _ = &mut checkpoint_work => { checkpoints_stopped = true; Ok(None) }
+        result = shutdown_signal() => result.map(|_| None).map_err(Into::into),
+        request = &mut loading => request,
+    };
+    let _ = end_http.send(true);
+    let _ = end_clock.send(true);
+    let _ = end_lexical.send(true);
+    let stop_decisions = async move {
+        // Let the scheduler acknowledge its in-flight PostgreSQL write and
+        // register the corresponding task before draining decision owners.
+        let (scheduled, maintained, narrated, indexed, operator, retired) = tokio::join!(
+            scheduler,
+            maintenance,
+            narration,
+            semantic,
+            operator_maintenance,
+            account_retention,
+        );
+        let settled = decisions.stop().await;
+        scheduled?;
+        maintained?;
+        narrated??;
+        indexed?;
+        operator?;
+        retired??;
+        settled?;
+        Ok::<_, LaunchError>(())
+    };
+    tokio::pin!(stop_decisions);
+    // Let pending accepted commands finish while their writer still runs.
+    while http_result.is_none()
+        || clock_result.is_none()
+        || decision_result.is_none()
+        || !checkpoints_stopped
+    {
+        tokio::select! {
+            result = &mut http, if http_result.is_none() => {
+                http_result = Some(result);
+            }
+            result = &mut clock_work, if clock_result.is_none() => {
+                clock_result = Some(result);
+            }
+            result = &mut save_work, if save_result.is_none() => {
+                save_result = Some(result);
+            }
+            result = &mut stop_decisions, if decision_result.is_none() => {
+                decision_result = Some(result);
+            }
+            _ = &mut checkpoint_work, if !checkpoints_stopped => {
+                checkpoints_stopped = true;
+            }
+        }
+    }
+    let _ = end_saves.send(true);
+    if save_result.is_none() {
+        save_result = Some(save_work.await);
+    }
+    lexical.await?;
+    let load = signal?;
+    decision_result.expect("joined decision owner")?;
+    save_result.expect("joined save owner")?;
+    clock_result.ok_or("The save owner stopped before the clock")??;
+    http_result.ok_or("The save owner stopped before ingress")??;
+    Ok(load)
+}
+
+pub(crate) async fn stopped(mut receiver: watch::Receiver<bool>) {
+    while !*receiver.borrow() && receiver.changed().await.is_ok() {}
+}
+
+async fn shutdown_signal() -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        let mut terminate =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+        tokio::select! {
+            result = tokio::signal::ctrl_c() => result,
+            _ = terminate.recv() => Ok(()),
+        }
+    }
+    #[cfg(not(unix))]
+    tokio::signal::ctrl_c().await
+}
+
+async fn build_cache(request: Request, next: Next) -> Response {
+    let is_html = matches!(request.uri().path(), "/" | "/cognition")
+        || request.uri().path().ends_with(".html");
+    let mut response = next.run(request).await;
+    if response.status().is_success() {
+        response.headers_mut().insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static(if is_html {
+                "no-cache"
+            } else {
+                "public, max-age=3600"
+            }),
+        );
+    }
+    response
+}
+
+fn ai_budget_limit() -> Result<f64, LaunchError> {
+    budget_limit("AI_BUDGET_USD", "50")
+}
+
+fn budget_limit(name: &str, default: &str) -> Result<f64, LaunchError> {
+    let limit = setting(name, default)?.parse::<f64>()?;
+    if !(0.0..=100.0).contains(&limit) {
+        return Err(format!("{name} must be between 0 and 100").into());
+    }
+    Ok(limit)
+}
+
+fn setting(name: &str, default: &str) -> Result<String, std::env::VarError> {
+    match std::env::var(name) {
+        Err(std::env::VarError::NotPresent) => Ok(default.to_owned()),
+        value => value,
+    }
+}

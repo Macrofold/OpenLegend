@@ -5,7 +5,7 @@ import {
   subscribeEvents,
 } from '@open-legend/network';
 import type { EventFrame, Subscription, ConsumptionContext } from '@open-legend/network';
-import { browserRequestPolicy } from './network-policies';
+import { browserRequestPolicy, runtimeApiPath, STEERING_STOP } from './network-policies';
 
 // Stable document owners count abandoned underlying work as well as visible waits.
 const reads = createNetworkOwner({ role: 'browser-api-reads', capacity: 16 });
@@ -87,8 +87,10 @@ export function browserRequest(
 ): Promise<BrowserReply> {
   const method = init.method === 'POST' ? 'POST' : 'GET';
   const policy = browserRequestPolicy(method, path, body);
+  // Withdrawing steering must reach control while the presence owner is
+  // still waiting for the earlier input response.
   const owner =
-    policy.semantic === 'presence'
+    policy.semantic === 'presence' && policy.discriminator !== STEERING_STOP
       ? presence
       : policy.semantic === 'read' || policy.semantic === 'preparation'
         ? reads
@@ -115,25 +117,56 @@ export function browserRequest(
         id = ++observationId;
         observe('started');
       }
-      const result = await requestText(operation, {
-        url: path,
+      const request = {
+        url: runtimeApiPath(path),
         init: { ...init, method, headers: { ...init.headers, ...preparedHeaders } },
-        bodyPolicy: { kind: 'complete-projection', owner: 'browser-api' },
-      });
-      operation.throwIfStopped();
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(result.text);
-      } catch {
-        /* Status remains usable without JSON. */
-      }
-      operation.throwIfStopped();
-      observe('completed', result.status, parsed);
-      return {
-        status: result.status,
-        ok: result.status >= 200 && result.status < 300,
-        body: parsed,
+        bodyPolicy: { kind: 'complete-projection', owner: 'browser-api' } as const,
       };
+      for (;;) {
+        const result = await requestText(operation, request);
+        operation.throwIfStopped();
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(result.text);
+        } catch {
+          /* Status remains usable without JSON. */
+        }
+        operation.throwIfStopped();
+        // Control replacement can briefly leave the accepted view unavailable.
+        // Retry only this fully consumed read, inside its original 15s budget;
+        // retrying entry itself could repeat the intervening control write.
+        if (
+          method === 'GET' &&
+          policy.pathname === '/api/state' &&
+          result.status === 503 &&
+          parsed &&
+          typeof parsed === 'object' &&
+          'code' in parsed &&
+          parsed.code === 'busy'
+        ) {
+          await operation.wait(
+            'admission',
+            (signal) =>
+              new Promise<void>((resolve) => {
+                const finish = () => {
+                  clearTimeout(timer);
+                  signal.removeEventListener('abort', finish);
+                  resolve();
+                };
+                const timer = setTimeout(finish, 1000);
+                signal.addEventListener('abort', finish, { once: true });
+                if (signal.aborted) finish();
+              }),
+          );
+          continue;
+        }
+        observe('completed', result.status, parsed);
+        return {
+          status: result.status,
+          ok: result.status >= 200 && result.status < 300,
+          body: parsed,
+        };
+      }
     })
     .catch((error: unknown) => {
       observe('failed');
@@ -170,7 +203,7 @@ export function browserSubscription(
     subscriptions,
     {
       mode: 'subscription',
-      url,
+      url: runtimeApiPath(url),
       signal,
       init: { credentials: 'same-origin', cache: 'no-store' },
       connectTimeoutMs: 15_000,

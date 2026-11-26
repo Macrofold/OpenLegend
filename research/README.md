@@ -1,14 +1,28 @@
 # Research
 
-| Research status           | Progress                                                                                                                                                                     | Last updated |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Maintained research index | Links engine/platform research, the Godot community/AI review, and the current Unreal/Unity subsystem study; the browser-first milestone remains the selected next delivery. | 2026-10-24   |
+Maintained research index, updated November 17, 2026 (UTC). This index links server economics, engine/platform studies and persistent MMORPG foundation research; the browser-first milestone remains the selected next delivery.
+
+## Server economics
+
+[Server costs and player demand](financials/server_costs.md) is the maintained owner of subscriber/concurrency research, relevant Open Legend performance evidence, capacity assumptions and conditional hosting-cost scenarios. It distinguishes compute per subscriber-month from continuous-player cost, and ideal elastic fleets from fleets retained at peak size. Its calculations do not establish production capacity or authorize deployment.
+
+## Persistent MMORPG engine foundations
+
+The [MMORPG foundation collection](mmorpg-engine-foundations/README.md) studies the engine assumptions that would be costly to retrofit for independent persistent worlds with 1,000–5,000 concurrent players as a research ambition. It covers current native-design coverage, physical crowds and interaction graphs, partial residency, bounded scheduling and delivery, coordinate/identity contracts, seed copies, mature storage, cloud boundaries and capacity qualification.
+
+The [focused needs-design briefs](../docs/maintainers/decisions/mmorpg-engine-foundations.md) identify minimal NOW/SOON seams, existing delivery owners, required evidence and deferred machinery. The research does not establish that capacity, approve gameplay approximations, replace the native adoption gates or authorize runtime/cloud work.
+
+## Foundations for persistent MMORPG scale
+
+The [MMORPG foundations collection](mmorpg-foundations/README.md) investigates which engine contracts should be established now or soon to avoid expensive rework as Open Legend grows into a simulation-heavy persistent world. It covers independent seed copies, large coordinates, sparse physical residency, dependency and work bounds, autonomous-world service, disclosure-safe delivery, long-lived data, recovery and complete-path qualification. Its evidence cutoff is **2026-11-09**.
+
+Start with the [baseline and existing coverage](mmorpg-foundations/01-baseline-and-existing-coverage.md), then the [sequencing and qualification guide](mmorpg-foundations/08-sequencing-and-qualification.md). The [focused needs-design register](../docs/maintainers/mmorpg-scalability-needs-design.md) routes six preparation areas into existing owners without duplicating NSC/BK/PF/PS/NET/PD implementation queues. The [native-core design and staged experiments](../docs/maintainers/native-simulation-core.md) remain authoritative for that work. Research recommendations do not claim implementation, measured capacity, a changed release target or infrastructure adoption.
 
 ## Current Unreal and Unity runtime mechanisms
 
 The [Unreal/Unity runtime research collection](unity-unreal-runtime/README.md) studies current engine systems across simulation, perception, AI, navigation, physics, data/concurrency, world scale, networking/persistence, rendering/animation/audio, content/tools/UI/platforms, profiling, gameplay frameworks, environmental systems, code execution, and recent primary research. Its evidence cutoff is **2026-10-23**.
 
-Start with its [OpenLegend context and coverage map](unity-unreal-runtime/00-openlegend-context-and-coverage.md) and [version/provenance baseline](unity-unreal-runtime/01-evidence-and-version-baseline.md). The collection explains mechanisms and limitations with per-chapter source registers. It does not select OpenLegend designs, change the engine/platform decision, or authorize implementation or benchmarks.
+Start with its [Open Legend context and coverage map](unity-unreal-runtime/00-openlegend-context-and-coverage.md) and [version/provenance baseline](unity-unreal-runtime/01-evidence-and-version-baseline.md). The collection explains mechanisms and limitations with per-chapter source registers. It does not select Open Legend designs, change the engine/platform decision, or authorize implementation or benchmarks.
 
 For positive opportunities and detailed integration, use [the engine-research application guide](../docs/engine-research-guide.md). It connects mechanisms to the selected gameplay ambitions, current feature/technical owners and specific remaining design questions.
 

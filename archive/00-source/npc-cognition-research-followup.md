@@ -12,11 +12,11 @@ Explain the mechanisms from source code where available: native execution versus
 
 Compare more than Kevin's stack. Distinguish actual community use, maintainer recommendations, model-card claims and measured suitability. Treat unnecessary refusals and quiet sanitization of permitted fiction as important model-selection concerns without confusing them with authentic character disagreement or changing the accepted service boundary.
 
-Connect the findings to OpenLegend's survival-adventure, invention and independent-character goals. Consider cooperation, conflict, discovery, expression and remembered consequences alongside reliability and cost. Preserve useful conclusions in the archive and route unresolved design/test preparation to existing owners; do not duplicate a roadmap or turn each promising technique into a requirement.
+Connect the findings to Open Legend's survival-adventure, invention and independent-character goals. Consider cooperation, conflict, discovery, expression and remembered consequences alongside reliability and cost. Preserve useful conclusions in the archive and route unresolved design/test preparation to existing owners; do not duplicate a roadmap or turn each promising technique into a requirement.
 
 ## Additional demonstration references
 
-The [pinned m8 README](https://github.com/chasmlol/m8/blob/b009e12decd4dc2145accaafc30788e7c8588ff7/README.md) also describes an operator console, prompt/call inspection and nearby/radio voice settings. These are references for authorized authoring, diagnosis and situated communication—not evidence of independent belief formation, permission for ordinary players to rewrite personas, or a selected OpenLegend radio mechanic. Private diagnostic information must retain its access restrictions.
+The [pinned m8 README](https://github.com/chasmlol/m8/blob/b009e12decd4dc2145accaafc30788e7c8588ff7/README.md) also describes an operator console, prompt/call inspection and nearby/radio voice settings. These are references for authorized authoring, diagnosis and situated communication—not evidence of independent belief formation, permission for ordinary players to rewrite personas, or a selected Open Legend radio mechanic. Private diagnostic information must retain its access restrictions.
 
 ## Deliverables
 

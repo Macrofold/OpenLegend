@@ -12,8 +12,17 @@ export * from './appearance-state.js';
 export * from './appearance.js';
 export * from './expression-definitions.js';
 export * from './expressions.js';
+export * from './result-evidence.js';
+export {
+  allocatedIdentityBetween,
+  releaseIdentityAllocationProof,
+  preserveIdentityHighWater,
+} from './identity-allocation.js';
+export * from './observed-animation.js';
+export { inheritUnchangedExposure } from './encounter-cache.js';
 export * from './entity-collection.js';
 export * from './ordered-record.js';
+export { immutableDataSnapshot } from './records.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
 export { itemIllustration, type ItemArt } from './presentation-art.js';
@@ -23,14 +32,20 @@ export type {
   EventPresentationPolicy,
 } from './event-presentation.js';
 export * from './social-policy.js';
-export * from './social-perception.js';
 export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
 export * from './types.js';
+export { headingFrame } from '@open-legend/spatial';
+export * from './perception-evidence.js';
+export { validateEvidenceSource } from './perception-values.js';
+export * from './received-values.js';
+export * from './perception-support.js';
 export * from './worlds/base/initial-opening.js';
 export * from './worlds/base/opening-readiness.js';
 export * from './worlds/base/starting-worlds.js';
 export { BASE_SOCIAL_POLICY } from './worlds/base/social.js';
+export { default as BASE_ATTENTION_FOCUS_COPY } from './worlds/base/attention-focus-copy.json' with { type: 'json' };
+export { default as BASE_ITEM_MOVE_COPY } from './worlds/base/item-move-copy.json' with { type: 'json' };
 export { baseWorldInitialConstructionSeeds } from './worlds/base/world.js';
 export * from './recipe-records.js';
 export * from './food-preparation.js';
@@ -50,6 +65,8 @@ export { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
+  activeStimuliFromRead,
+  type StimulusRead,
   stimulusSalience,
   type ActiveStimulus,
   type StimulusPolicy,
@@ -57,6 +74,7 @@ export {
 export { STIMULUS_POLICY } from './worlds/base/senses.js';
 export {
   DOMAIN_COUNTERS,
+  countDomainWork,
   domainCountersEnabled,
   observeDomainCounters,
   type DomainCounter,
@@ -95,6 +113,7 @@ export {
   visionRadius,
   visionFieldOfView,
   contactViews,
+  contactViewsFromContacts,
   bodiesTouch,
   DEFAULT_SENSES,
   COARSE_TOUCH,
@@ -133,6 +152,7 @@ export {
   type PreparedNativeChoice,
   advanceWorld,
   projectWorldHistory,
+  preserveReceivedValuePreparation,
   navigationBlocked,
   navigationPending,
   observeActor,
@@ -140,6 +160,7 @@ export {
   queryMemories,
   remember,
   inventoryFor,
+  recentLearnedRecipeIds,
   quantityOf,
   SIMULATION_RULES,
 } from './kernel.js';
@@ -164,6 +185,8 @@ export * from './mind.js';
 
 export * from './experience.js';
 export * from './history-authoring.js';
+export * from './experience-manifest.js';
+export * from './known-place-evidence.js';
 export * from './experience-sources.js';
 export * from './status-effects.js';
 export * from './status-condition-references.js';
@@ -177,7 +200,10 @@ export {
   updateWorld,
   appendedEventCount,
   appendedRecordCount,
+  recordAppendBase,
+  appendSnapshot,
   freezeWorld,
+  beginCommandBatch,
   entityChangesBetween,
   recordMapChangesBetween,
 } from './draft.js';
@@ -215,7 +241,6 @@ export { gatheringDescription } from './worlds/base/actions.js';
 export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
-export { headingFrame } from './follow.js';
 export * from './spatial-mutations.js';
 
 export {
@@ -223,6 +248,7 @@ export {
   availableStrikes,
   describeAttack,
   validMelee,
+  supportsStrikeBody,
   type StrikeDefinition,
   type MeleeProfile,
 } from './strikes.js';
@@ -231,7 +257,12 @@ export { canonicalJson, isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
-export { BASE_HUNTING, huntingDescription, observedBodyHealth } from './worlds/base/hunting.js';
+export {
+  BASE_HUNTING,
+  huntingDescription,
+  observedBodyHealth,
+  formatObservedBodyHealth,
+} from './worlds/base/hunting.js';
 export * from './handover.js';
 export { BASE_HANDOVER } from './worlds/base/handover.js';
 export {
@@ -245,6 +276,10 @@ export {
 } from './worlds/base/fire.js';
 export {
   personalText,
+  nativeText,
+  validateNativeText,
+  type NativeText,
+  type CapturedNarration,
   person,
   presentVerb,
   subjectNarration,
@@ -252,13 +287,14 @@ export {
   renderNarrationParts,
   type NarrationPerspective,
   narrationTemplate,
+  narrationTemplateFromRead,
   validateNarration,
   type Narration,
   type NarrationPart,
 } from './narration.js';
 
 export * from './participation.js';
-export { isSafeRecordId, isImmutableData } from './records.js';
+export { isSafeRecordId, isImmutableData, sealImmutableRecord, jsonText } from './records.js';
 export { BASE_PARTICIPATION_POLICY } from './worlds/base/participation.js';
 
 export {
@@ -291,11 +327,20 @@ export {
   guardWorkLabel,
   guardChoiceLabel,
   BASE_GUARD_TEXT,
+  BASE_GUARD_CHOICE_COPY,
+  BASE_EQUIPMENT_COPY,
   equipmentChangeDescription,
 } from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
-export { worldRootEntities } from './entity-index.js';
+export {
+  nativeEntityGroups,
+  npcMemoryActorIds,
+  pendingNavigationEntityIds,
+  worldRootEntities,
+  worldRootEntityIds,
+  worldRootCount,
+} from './entity-index.js';
 export * from './work-budget.js';
 export * from './queries.js';
 export { initializeNativeWork, installedWorkAllocation } from './native-work.js';
@@ -304,7 +349,12 @@ export * from './appraisals.js';
 export { markPartialAppraisals, completeAppraisalHistory } from './appraisal-residency.js';
 export { BASE_APPRAISAL_POLICY, appraiseEvent } from './worlds/base/appraisals.js';
 
-export { MAX_CONTAINMENT_DEPTH, ITEM_COUNT_PIN } from './objects.js';
+export {
+  MAX_CONTAINMENT_DEPTH,
+  ITEM_COUNT_PIN,
+  OWNED_ITEM_SHORTCUT_LIMIT,
+  OWNED_ITEM_VIEW_LIMIT,
+} from './objects.js';
 export type { ObjectLineage, ObjectRetirement } from './objects.js';
 export * from './contribution-residency.js';
 
@@ -324,6 +374,7 @@ export {
   soundOrigin,
   hearingReferenceRadius,
   perceptionGuide,
+  perceptionGuideFrom,
 } from './perception.js';
 export * from './speech.js';
 export * from './sound.js';
@@ -338,7 +389,7 @@ export { availableItemQuantity } from './resource-claims.js';
 export * from './body-policy.js';
 export { baseCognitionPolicy } from './worlds/base/cognition.js';
 
-export { basePlaytestMilestones } from './worlds/base/playtest.js';
+export { BASE_PLAYTEST_MILESTONES, basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
 export { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
@@ -379,6 +430,7 @@ export * from './hearths.js';
 export * from './work-batches.js';
 export * from './assemblies.js';
 export * from './assembly-geometry.js';
+export * from './assembly-presentation.js';
 export { BASE_CANOPY_SCENE } from './worlds/base/canopies.js';
 
 export * from './material-exposure.js';
@@ -406,6 +458,98 @@ export type {
   PreparedResponseOption,
 } from './prepared-responses.js';
 
+export * from './worlds/base/recognition.js';
+
+export { normalSpeedSeconds } from './simulation-time.js';
+// Recording admission stays within domain semantic owners. External callers
+// consume selected evidence and cannot append or label arbitrary history required.
+export {
+  temporalReceiptId,
+  temporalFacetValueReferences,
+  splitTemporalValue,
+  materializeTemporalValue,
+  temporalReceiptForRead,
+  temporalValueLogicalBytes,
+  temporalReceiptLogicalBytes,
+  temporalPageLogicalBytes,
+  temporalSupportLogicalBytes,
+  receivedTemporalFragment,
+  temporalActorHistory,
+  beginTemporalReceiptEpoch,
+  temporalReceiptChangeCount,
+  temporalSpatialContextValue,
+  advanceTemporalRecent,
+  receivedDirectoryContains,
+  restoreReceivedRecentDirectory,
+  installTemporalChargeDirectories,
+  buildReceivedRecentDirectory,
+  eligibleReceivedChargeDirectories,
+  receivedRecentDirectories,
+  captureTemporalReceiptPrefix,
+  temporalReceiptWithinPrefix,
+  selectTemporalHistory,
+  temporalRecentAt,
+  selectCapturedTemporalHistory,
+  invalidateTemporalEvidence,
+  invalidateTemporalFacets,
+  temporalSourceIds,
+  temporalReceiptAliases,
+  temporalValueDependencyAliases,
+  temporalAvailability,
+  temporalFieldAvailability,
+  groupedTemporalAvailability,
+  temporalReceiptAccountAliases,
+  temporalAccountAliasClosure,
+  selectTemporalReceiptFacets,
+  temporalSupportAliases,
+  temporalValueIndividualId,
+  temporalReceiptIndividualIds,
+  temporalReceiptForSource,
+  hasRetainedTemporalSource,
+  temporalFacetEligible,
+  markTemporalSupportDirty,
+  settleTemporalSupportCleanup,
+  maintainRecognitionKnowledge,
+  retainedTemporalReceipt,
+  temporalReceiptSource,
+  isTemporalReceiptSource,
+  temporalReceiptLocatorFromSource,
+  parseTemporalReceiptId,
+  retainTemporalObservationSupport,
+  retainTemporalSupport,
+  retainTemporalCurrentSupport,
+  closeTemporalCurrentGroup,
+  captureTemporalGeometry,
+  closeTemporalGeometry,
+  type TemporalGeometryFeature,
+  releaseTemporalSupport,
+  setTemporalSupportRequired,
+  retainedTemporalSupport,
+  type TemporalReceiptLocator,
+  type TemporalValueReference,
+  type TemporalValue,
+  type TemporalFragment,
+  type TemporalReception,
+  type TemporalFacetReference,
+  type TemporalReceipt,
+  type TemporalPage,
+  type TemporalActorHistory,
+  type TemporalSupportCapsule,
+  type TemporalEvidenceState,
+  type TemporalRetentionPolicy,
+  type TemporalHistorySelection,
+  type TemporalHistoryQuery,
+  type TemporalReceiptPrefix,
+} from './temporal-evidence.js';
+export * from './temporal-frames.js';
+export * from './temporal-read-context.js';
+export * from './remembered-impressions.js';
+export * from './attention.js';
+export * from './semantic-opportunities.js';
+export * from './received-scene.js';
+export * from './received-geometry.js';
+
+export * from './received-history-scene.js';
 export { tracksMaterialOrigins } from './material-inventory.js';
 
 export * from './meals.js';
@@ -454,3 +598,34 @@ export {
 } from './native-value-holds.js';
 
 export { BASE_COGNITION_LAB_ACTION_TYPES } from './worlds/base/cognition-lab-protocol.js';
+
+export { DerivedOwnerIndex } from './derived-owner-index.js';
+export {
+  objectIndexGet,
+  objectIndexSet,
+  objectIndexEntries,
+  objectIndexEntriesAtLeast,
+  objectIndexEntriesAfter,
+  type ObjectIndexNode,
+} from './object-index.js';
+
+export { nativeThinkingTimeChanges } from './thinking-inputs.js';
+
+export { boundActionItemIds } from './action-item-references.js';
+
+export { selectReceivedReceiptMembers } from './temporal-frames.js';
+
+export { jsonByteLength } from './records.js';
+
+export * from './received-batches.js';
+
+export { receivedBatchStorageBytes } from './temporal-frames.js';
+
+export { hasTemporalRecentIndividual } from './temporal-evidence.js';
+
+export { retainCapturedTemporalSupport } from './temporal-evidence.js';
+export {
+  decisionOfferDescription,
+  BASE_FOLLOW_MENU,
+  type DecisionOfferDescription,
+} from './worlds/base/decision-offers.js';

@@ -909,8 +909,10 @@ function OwnedMapWorkspace({
                       const focused = document.activeElement;
                       void commit('/api/knowledge', {
                         actorId: view.player.id,
-                        subjectId: selected.id,
-                        subjectKind: selection?.kind === 'place' ? 'place' : 'map-marker',
+                        subjectId:
+                          selection?.kind === 'place'
+                            ? { kind: 'place', placeId: selected.id }
+                            : { kind: 'map-marker', markerId: selected.id },
                         expectedRevision: activeNote?.revision ?? 0,
                         text: note,
                         ...(selection?.kind === 'place'

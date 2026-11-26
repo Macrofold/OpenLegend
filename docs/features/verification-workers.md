@@ -1,6 +1,8 @@
 # Reusable verification workers — feature specification
 
-Last synchronized with implementation: `2026-10-31T20:42:27Z`.
+Two-worker foundation qualified at `2026-10-31T20:42:27Z`.
+
+The [Rust project specification](../projects/verification-workers-feature-spec.md) gives the current stand-alone game, build reuse and browser qualification. The campaign and paid-execution behavior below applies to both implementations.
 
 ## Purpose and scope
 

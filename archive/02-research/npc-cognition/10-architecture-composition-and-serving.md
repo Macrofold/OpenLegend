@@ -8,7 +8,7 @@ The most promising starting point is an actor-permitted native-world interface, 
 
 This is a recommendation to improve and qualify existing owners, not create another nervous-system service. [Current cognition work](../../../docs/maintainers/cognition-redesign.md), [agency](../../../docs/maintainers/agent-agency.md), [perception](../../../docs/maintainers/events-perception-and-reactions.md), [combat](../../../docs/maintainers/combat-and-threat-responses.md) and [intelligent simulation](../../../docs/maintainers/intelligent-simulation.md) already divide these responsibilities. Their recorded implementation and acceptance states remain unchanged.
 
-A hypothetical resident who has chosen to walk to a visible object should not reconsider every footstep. A new blocked route, completed purpose, relevant interruption or changed relationship may warrant a new choice. That distinction must come from the existing activity and event contracts, not a fixed model timer. Kevin demonstrates the advantage of native motor execution; he does not establish that an NPC should receive unlimited permission to keep attacking. The selected OpenLegend combat choice currently grants one strike. Extending that permission is a product decision, not a performance fix.
+A hypothetical resident who has chosen to walk to a visible object should not reconsider every footstep. A new blocked route, completed purpose, relevant interruption or changed relationship may warrant a new choice. That distinction must come from the existing activity and event contracts, not a fixed model timer. Kevin demonstrates the advantage of native motor execution; he does not establish that an NPC should receive unlimited permission to keep attacking. The selected Open Legend combat choice currently grants one strike. Extending that permission is a product decision, not a performance fix.
 
 ## 2. Architecture alternatives worth comparing
 
@@ -48,7 +48,7 @@ The proposed research trace should answer: what happened, what this person could
 
 Use accepted identity and the complete required actor-permitted context. Optional retrieval can improve relevance, but prompt shortening must not remove the exact constraint being tested. Background reflection should not block immediate protection, speech or continued work, and prose should not invent the other person's consent or response.
 
-For visual reference resolution, compare native permitted candidates first. Marking candidate objects or places can bind a model's selection to known positions without granting it hidden identity or free coordinate authority. A screenshot is a captured observation with a viewpoint and time, not omniscient world state. Kevin's use of the player's camera is a property of that mod, not an appropriate default for every OpenLegend resident.
+For visual reference resolution, compare native permitted candidates first. Marking candidate objects or places can bind a model's selection to known positions without granting it hidden identity or free coordinate authority. A screenshot is a captured observation with a viewpoint and time, not omniscient world state. Kevin's use of the player's camera is a property of that mod, not an appropriate default for every Open Legend resident.
 
 ## 5. Personality, memory and orchestration
 
@@ -72,7 +72,7 @@ The [voice dossier](05-realtime-voice-and-serving.md) owns the cascaded stack, e
 
 These are documented capabilities, not independently measured latency or current OpenRouter speech endpoints. Their own model cards and runtime dependencies must be reviewed before use. A model with speech output is not necessarily capable of the same interruption behavior in every serving system.
 
-OpenLegend's accepted growing-text design fixes an audience and retains accepted text, while semantic readers consume terminal speech. It does not implement physical speaking duration. The optional microphone proposal currently creates an editable unsent draft. Direct voice-to-action, audio-first publication and interpreting partial utterances therefore need explicit design choices through [hearing/speech](../../../docs/maintainers/hearing-and-speech.md) and [shared text streaming](../../../docs/maintainers/npc-speech-streaming.md).
+Open Legend's accepted growing-text design fixes an audience and retains accepted text, while semantic readers consume terminal speech. It does not implement physical speaking duration. The optional microphone proposal currently creates an editable unsent draft. Direct voice-to-action, audio-first publication and interpreting partial utterances therefore need explicit design choices through [hearing/speech](../../../docs/maintainers/hearing-and-speech.md) and [shared text streaming](../../../docs/maintainers/npc-speech-streaming.md).
 
 An exploratory audio system must distinguish generated text, permitted published text, synthesized audio, audio actually played and what each listener could hear. Do not retrospectively treat an unplayed ending as witnessed dialogue. Voice emotion must not covertly add words or real-player pressure absent from the accepted passage. Compare text-only episodes first so delivery quality does not mask cognitive defects.
 

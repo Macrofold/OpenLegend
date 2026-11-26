@@ -4,7 +4,7 @@
 
 ## 1. The boundary
 
-There is one OpenLegend application tool service, not one service per harness. It routes typed operations to existing definition, draft, graph, validation, asset, job, budget and native-action owners. It may consist of several ordinary modules in `apps/server`; logical separation is not a microservice requirement. MCP and local HTTP are thin adapters. No tool implements a second world writer, permission system, wallet or mutable graph registry.
+There is one Open Legend application tool service, not one service per harness. It routes typed operations to existing definition, draft, graph, validation, asset, job, budget and native-action owners. It may consist of several ordinary modules in `apps/server`; logical separation is not a microservice requirement. MCP and local HTTP are thin adapters. No tool implements a second world writer, permission system, wallet or mutable graph registry.
 
 The World Agent is an out-of-world assistant. It has the full **authorized world-level** inspection scope needed to investigate mechanics, dependencies, effects, materials, history, affected instances and relevant NPC state. Do not bind that scope to the current character's knowledge, sight, health or proximity. Drafting can continue while the character is dead or the world is paused when the caller's administrative scope permits it; ordinary embodied actions retain their own prerequisites.
 

@@ -433,6 +433,40 @@ change refuses. Owned databases `9f258c8a8418455fbca444dbb8e8292c` and
 pass. Contrasting profiles, wider daily/cue/geometry boundaries, full Main exposure
 cost and combined lifecycle qualification remain open. No provider calls occur.
 
+### Stand-alone weather clock and player state — November 22, 2026
+
+The Rust clock and player state use the same installed daily rule and saved
+finite cue. In the local signed-in caller, Source started its authored shower
+through `/api/god/construction-shower`. Retrying returned the original receipt.
+The two players kept their distinct weather views when the stopped world opened
+in Rust at the same paused time. After Resume, the player outside the cue walked
+while their view still showed Dry weather. The state stream sent a Rain update
+after 16:00, and PostgreSQL saved the new position. At 18:00 the outside
+player saw Dry weather while the inside player stayed in Rain until the finite
+cue expired. The original cue and receipt stayed exact and no weather history
+rows were added. With no selected daily rule both hosts omitted the weather field
+while the cue was active. A wrong saved family pin refused startup before the
+listener opened and left the original receipt intact.
+
+Evidence at `~/.codex/verification/OpenLegend/native-runtime-foundations/nsc04-rust-weather-20261122`
+includes the disposable Source inputs, Rust tree `14c9edcc3a53`, executable SHA-256
+`894347171e30`, release definition manifest `24071664d633`, and results
+`start-r5-sse`, `end-r1`, `omitted-r1` and `bad-cue-r2`. All nine disposable
+PostgreSQL databases were removed, and successful Rust shutdowns released all
+tracked allocation. Locked game-server build, TypeScript types, formatting and
+network boundaries passed. This is local correctness evidence for clock and view
+continuation with Main's exact rain definition in a small scene.
+
+### Material exposure and open Inventory in Rust — November 22, 2026
+
+The signed-in player carried prepared fiber directly and in an authored open woven basket. In separate current-format scenes, Source and Rust both walked into an actual finite shower, reached x16.7, and saved both lots wetting. Both lots dried at the installed rate after the shower expired. Another account could not read the basket. A second pair walked during Main's authored daily rain and saved through the 18:00 drying boundary. Each sample matched the installed rates at its own saved game time. The no-cover geometry also matched Source exactly on 2,003 motion and overlap inputs and 24,723 rain-fraction samples.
+
+Chromium kept the same fiber selected while the stationary player's Inventory stayed open through each daily edge. Both hosts refreshed the visible process with an ordinary inventory response. In a separate Rust case, a player dropped fiber into a visible pile and inspected it. Only that player received the pile's detail updates. The earlier Rust build refused inventory reads during sleep but still exposed changes to the hidden pile through the state stream. The final build stopped publishing that pile's updates when sight was lost. Waking and inspecting the same pile showed the original fiber drying. Walking away and coming back also required fresh inspection.
+
+The accepted-cut stamp for each inventory root follows the same undo journal as the material write. It changes for a visible condition or wetting/drying change, leaving custody and action bindings independent. Ordinary dry intervals visit only wet stock. Material selection retains the world-authored dimensions, rates and wording. All these scenes have uncovered stock. Rust's [cutover scope](../../../projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope) defers assembly work, and its current installer refuses installed assembly panels. These checks do not qualify covered drying or the full Main performance case in SH12.
+
+The locked build used tree `65cc5b551c51…` and executable `26d85caf07175…`. TypeScript, affected formatting and network checks passed. Local archive `nsc04-rust-material-exposure-20261122`, manifest `b5ba2f7ef2a9…`, contains the raw gameplay, geometry and before-repair privacy cases. `nsc04-material-inventory-caller-20261122`, manifest `f8d364c1de35…`, contains both Chrome runs per host and the reviewed browser build. All named disposable databases were removed. Successful Rust listeners exited with zero tracked reservations. No local speed comparison or paid provider requests were made.
+
 ### Open basket runtime and known manufacture
 
 `open-basket-native-current` passes native family compilation with an exact installed

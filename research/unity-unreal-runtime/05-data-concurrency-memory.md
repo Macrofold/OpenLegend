@@ -1,12 +1,12 @@
 # 05 — Data layout, concurrency, and memory
 
-Research reviewed on **2026-10-23**. This chapter explains mechanisms in Unreal Engine 5.8 and Unity 6.6; it does not propose an OpenLegend implementation. Current patch and evidence rules are recorded in [01 — Versions and evidence](01-evidence-and-version-baseline.md). The verified editor patches are Unreal **5.8.4** and Unity **6000.6.7f1**. Package documentation can describe a release family without proving the package versions resolved by every later editor patch.
+Research reviewed on **2026-10-23**. This chapter explains mechanisms in Unreal Engine 5.8 and Unity 6.6; it does not propose an Open Legend implementation. Current patch and evidence rules are recorded in [01 — Versions and evidence](01-evidence-and-version-baseline.md). The verified editor patches are Unreal **5.8.4** and Unity **6000.6.7f1**. Package documentation can describe a release family without proving the package versions resolved by every later editor patch.
 
 ## What the two engines separate
 
 Updating many similar objects efficiently involves several independent decisions: which objects need work, how their data is stored, which calculations may run together, when a result becomes visible, and who releases the memory. An entity component system addresses some of these questions; it does not supply the world's rules, a database transaction, permission checks, or deterministic ordering of every effect.
 
-Unreal's Mass and Unity's Entities both organize homogeneous data into batches. They coexist with their engines' object-oriented facilities. The relevant comparison is therefore between concrete data and execution paths, rather than a claim that one entire engine is an entity component system. In OpenLegend's context, a calculation over positions, a character's private recollection, and a committed change to the world are different consumers even if all three mention the same character. Their shared identity does not make their memory layout, access rights, or lifecycle identical. This paragraph is comparative analysis, not a proposed design.
+Unreal's Mass and Unity's Entities both organize homogeneous data into batches. They coexist with their engines' object-oriented facilities. The relevant comparison is therefore between concrete data and execution paths, rather than a claim that one entire engine is an entity component system. In Open Legend's context, a calculation over positions, a character's private recollection, and a committed change to the world are different consumers even if all three mention the same character. Their shared identity does not make their memory layout, access rights, or lifecycle identical. This paragraph is comparative analysis, not a proposed design.
 
 ### Version ledger for the runtime packages studied
 
@@ -127,7 +127,7 @@ Unity 6.6's Web documentation explicitly supports **native C/C++ multithreading 
 
 Burst jobs use native worker execution when that Web capability is enabled. Jobs lacking Burst compilation run on the main thread; disabling native multithreading also brings execution back to the main thread. The documented minimum Burst version for this Web path is 1.8.26, while the 6.6.0 release matrix records Burst 2.0.0. These are a minimum requirement and a package baseline, respectively. [Burst multithreading on Web](https://docs.unity3d.com/6000.6/Documentation/Manual/web-multithreading-burst.html).
 
-This corrects a potentially misleading blanket statement that Unity Web is single-threaded. The supported subset matters, as does the distinction between asynchronous work and CPU parallelism. It does not establish that an OpenLegend browser client can assume Unity's native job scheduler, data model, or allocation behavior.
+This corrects a potentially misleading blanket statement that Unity Web is single-threaded. The supported subset matters, as does the distinction between asynchronous work and CPU parallelism. It does not establish that an Open Legend browser client can assume Unity's native job scheduler, data model, or allocation behavior.
 
 ## Provenance and reading register
 

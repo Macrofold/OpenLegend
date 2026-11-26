@@ -5,6 +5,7 @@ import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
+import type { PlayerProfileRead } from '../player-profile';
 import icons from '../design-system/icons/catalog';
 import { artworkCredits } from '../study-assets';
 import { THEMES } from '../design-system/themes';
@@ -21,10 +22,12 @@ import './settings.css';
 
 export type SettingsView = Pick<
   GameView,
-  'worldId' | 'saveTimeline' | 'godMode' | 'profile' | 'inventionPolicy'
+  'worldId' | 'saveTimeline' | 'godMode' | 'inventionPolicy'
 >;
 export const Settings = memo(function Settings({
   view,
+  canUseWorldAgent,
+  profile,
   section,
   setSection,
   theme,
@@ -54,6 +57,8 @@ export const Settings = memo(function Settings({
   cameraControls,
 }: {
   view: SettingsView;
+  canUseWorldAgent: boolean;
+  profile: PlayerProfileRead;
   section: string;
   setSection(value: string): void;
   theme: string;
@@ -84,6 +89,7 @@ export const Settings = memo(function Settings({
 }) {
   const [inputProblem, setInputProblem] = useState('');
   const showPanelLoading = useLoadingStatus(characterPanelLoading, 'Character-panel style');
+  const canEditInventionPolicy = view.godMode && canUseWorldAgent;
   function inputChange(key: keyof ActionInputPreferences, value: string) {
     const next = { ...actionInput, [key]: value };
     const problem = inputPreferenceProblem(next);
@@ -93,7 +99,7 @@ export const Settings = memo(function Settings({
   return (
     <Tabs
       className="ol-settings"
-      selectedKey={section === 'policy' && !view.godMode ? 'reading' : section}
+      selectedKey={section === 'policy' && !canEditInventionPolicy ? 'reading' : section}
       onSelectionChange={(key) => setSection(String(key))}
     >
       <Button
@@ -113,7 +119,7 @@ export const Settings = memo(function Settings({
         <Tab id="controls" className="ol-navigation-tab">
           <span>Controls & help</span>
         </Tab>
-        {view.godMode && (
+        {canEditInventionPolicy && (
           <Tab id="policy" className="ol-navigation-tab">
             <span>World permissions</span>
           </Tab>
@@ -231,7 +237,7 @@ export const Settings = memo(function Settings({
       <TabPanel id="graphics" shouldForceMount className="ol-settings-page">
         {cameraControls && <Section title="Camera controls">{cameraControls}</Section>}
         <WorldVisualSettings
-          view={view}
+          profile={profile}
           shadowQuality={shadowQuality}
           setShadowQuality={setShadowQuality}
         />
@@ -265,7 +271,6 @@ export const Settings = memo(function Settings({
               ['left', 'Left'],
               ['right', 'Right'],
               ['attackMode', 'Toggle attack mode (Shift + key)'],
-              ['create', 'Create (Shift + key)'],
             ] as const
           ).map(([key, label]) => (
             <label key={key}>
@@ -327,19 +332,20 @@ export const Settings = memo(function Settings({
         <Section title="Keyboard shortcuts">
           <dl className="ol-shortcut-list">
             {[
-              ['I', 'Inventory'],
-              ['C', 'Craft'],
-              ['K', 'Character'],
-              ['J', 'Events'],
+              ['C or I', 'Character, including inventory'],
+              ['K', 'Crafting'],
+              ['J', 'Journal'],
+              ['M', 'Map'],
+              ['B', 'Build'],
               ['Shift + S', 'Speak'],
               ['Shift + A', 'Act'],
               ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
               ['W / A / S / D', 'Move (default bindings)'],
               ['Shift + T', 'Toggle attack mode (default binding)'],
-              ['Shift + W', 'Create (default binding)'],
+              ['1–9, 0', 'Choose a hotbar slot'],
               ['P', 'Pause or resume the world'],
-              ['Shift + ] / [', 'Faster / slower world time'],
+              ['Shift + ] / Shift + [', 'Faster / slower world time in God mode'],
               ['Escape', 'Cancel the current choice first; otherwise open or close Game'],
             ].map(([key, purpose]) => (
               <div key={key}>
@@ -349,8 +355,8 @@ export const Settings = memo(function Settings({
             ))}
           </dl>
           <p className="ol-caption">
-            Typing and choosing text with an input method take priority over game shortcuts. Enter
-            sends the text you are writing; Shift + Enter adds a new line.
+            While writing a message, Enter sends it and Shift + Enter adds a new line. Composing
+            text takes priority over game shortcuts.
           </p>
         </Section>
         <Section title="Leaving and returning">
@@ -420,7 +426,7 @@ export const Settings = memo(function Settings({
           </details>
         </Section>
       </TabPanel>
-      {view.godMode && (
+      {canEditInventionPolicy && (
         <TabPanel id="policy" shouldForceMount className="ol-settings-page">
           <InventionSettings view={view} />
         </TabPanel>

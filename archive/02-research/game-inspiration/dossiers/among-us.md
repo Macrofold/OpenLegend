@@ -148,7 +148,7 @@ Classic supplies a small social premise—crew work amid hidden betrayal—rathe
 
 **Interpretation:** a convincing accusation, a mistaken ejection or a successful rescue from a sabotage becomes the story because people participated in the causal chain. A narrator announcing that a betrayal occurred would not reproduce the choices that gave it meaning. The role's secret, the evidence and the listeners' judgment are all necessary parts.
 
-The developer interview also values fans redrawing the simple characters in different styles. [AU26](#au26) That is evidence of expressive reuse, not permission to copy the game's distinctive designs into OpenLegend. Community fiction can be richer than the game's literal backstory without proving that its simulation generated all of that fiction.
+The developer interview also values fans redrawing the simple characters in different styles. [AU26](#au26) That is evidence of expressive reuse, not permission to copy the game's distinctive designs into Open Legend. Community fiction can be richer than the game's literal backstory without proving that its simulation generated all of that fiction.
 
 ## 11. Production: a small prototype acquired large obligations
 
@@ -214,7 +214,7 @@ This full pass does not infer private sales attribution, verified age profiles, 
 
 **Lasting expression need not mean lasting power.** A cosmetic collection persists while rounds reset. [AU13](#au13) **Interpretation:** continuity can attach to identity, memories or shared rituals rather than accumulating an advantage that makes new participation unattractive.
 
-For OpenLegend, the strongest transferable principle is a **small understandable predicament plus genuinely different evidence and responsibilities**. The strongest caution is that a funny short-round betrayal is not automatically acceptable in a world containing weeks of personal construction. Consent, recovery and the player's expected role must match the loss policy. Human social improvisation is also not evidence that an autonomous character system already exists.
+For Open Legend, the strongest transferable principle is a **small understandable predicament plus genuinely different evidence and responsibilities**. The strongest caution is that a funny short-round betrayal is not automatically acceptable in a world containing weeks of personal construction. Consent, recovery and the player's expected role must match the loss policy. Human social improvisation is also not evidence that an autonomous character system already exists.
 
 ## 15. Reading routes, completion and preservation
 

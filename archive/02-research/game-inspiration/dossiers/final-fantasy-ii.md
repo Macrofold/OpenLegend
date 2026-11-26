@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full-category research pass: September 26, 2026.** This completes the earlier G79 checkpoint and preserves its six-review comparison and dated player/patch evidence. The subject is the **1988 Final Fantasy II**, not Final Fantasy IV's original North American SNES title and not Final Fantasy Legend II. Research hypotheses are not accepted OpenLegend designs. Story and companion spoilers follow. No firsthand play, full-video viewing or proprietary implementation inspection is claimed.
+**Full-category research pass: September 26, 2026.** This completes the earlier G79 checkpoint and preserves its six-review comparison and dated player/patch evidence. The subject is the **1988 Final Fantasy II**, not Final Fantasy IV's original North American SNES title and not Final Fantasy Legend II. Research hypotheses are not accepted Open Legend designs. Story and companion spoilers follow. No firsthand play, full-video viewing or proprietary implementation inspection is claimed.
 
 ## 1. Identity, editions and the central promise — R01
 

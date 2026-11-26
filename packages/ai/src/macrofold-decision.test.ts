@@ -557,6 +557,16 @@ describe('standalone Macrofold native decisions', () => {
     },
   );
 
+  it('keeps an unconfirmed inference admission uncertain without retry', async () => {
+    const f = fixture({ admitStatus: 503, admitCode: 'inference_admission_unknown' });
+    const result = await client(f.fetcher).judge(request);
+    expect(result).toMatchObject({
+      outcome: 'uncertain',
+      receipt: { dispatched: true, completionUncertain: true, httpStatus: 503 },
+    });
+    expect(f.fetcher).toHaveBeenCalledOnce();
+  });
+
   it('does not repeat admission when the accepted-Run journal callback fails', async () => {
     const f = fixture();
     const result = await client(f.fetcher).judge({
@@ -849,6 +859,29 @@ describe('standalone Macrofold schema generation', () => {
       '/v1/runs/run-fixture',
       '/v1/runs/run-fixture/result',
     ]);
+  });
+
+  it('preserves caller schema field order through the actual Macrofold request envelope', async () => {
+    const schema = {
+      type: 'object',
+      properties: {
+        queries: { type: 'null' },
+        operations: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['queries', 'operations'],
+      additionalProperties: false,
+    };
+    const f = fixture({ value: generationRaw('{"queries":null,"operations":[]}') });
+    const result = await generationClient(f.fetcher).generate({ ...generationRequest, schema });
+    expect(result.outcome).toBe('value');
+    const body = f.bodies[0] as {
+      input: { response_format: { json_schema: { schema: { properties: object } } } };
+    };
+    expect(Object.keys(body.input.response_format.json_schema.schema.properties)).toEqual([
+      'queries',
+      'operations',
+    ]);
+    expect(f.paths.filter((path) => path === '/v1/inferences')).toHaveLength(1);
   });
 
   it('submits native OpenRouter chat and retains provider-reported cost separately', async () => {
