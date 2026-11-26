@@ -8,11 +8,17 @@ use crate::records::SqlCell;
 use crate::values::{is_safe_record_id, is_safe_record_text};
 use indexmap::IndexMap;
 
-#[path = "outings/travel.rs"]
-mod travel;
+#[path = "outings/combat_help.rs"]
+mod combat_help;
 #[path = "outings/cooperation.rs"]
 mod cooperation;
-pub(crate) use cooperation::{CooperationPolicy,visit_agreements};
+#[path = "outings/travel.rs"]
+mod travel;
+pub(crate) use combat_help::{HELP_PURPOSE, HELP_RISK, combat_current, combat_proposal, help_goal};
+pub(crate) use cooperation::{CooperationPolicy, visit_agreements, visit_receipts};
+#[path = "outings/joint_terms.rs"]
+mod joint_terms;
+pub(crate) use joint_terms::{terms as cooperation_terms, terms_current};
 #[path = "outings/personal_terms.rs"]
 mod personal_terms;
 pub(crate) use personal_terms::{MovementTerms, MovementTermsKind, MovementTermsStatus};
@@ -26,8 +32,7 @@ mod travel_work;
 pub use travel::TravelOperation;
 pub(crate) use travel::{
     TravelActivityRules, TravelCompanyLabels, TravelDestination, TravelInput, TravelInputError,
-    TravelMessages, TravelParticipantCapability, TravelRules, TravelTemplates,
-    travel_command_type,
+    TravelMessages, TravelParticipantCapability, TravelRules, TravelTemplates, travel_command_type,
 };
 pub(crate) use travel_accept::{
     TravelAcceptAnswer, TravelAcceptCursor, TravelAcceptStep, TravelAcceptance,

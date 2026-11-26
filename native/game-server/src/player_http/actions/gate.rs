@@ -1,7 +1,9 @@
 //! Project actions for a boundary in the player's current observations.
 use super::*;
 use openlegend_simulation::{
-    assembly::gate::GateIntent, reception::SensoryFacet, worlds::base_observed::ObservedAssembly,
+    assembly::gate::GateIntent,
+    reception::SensoryFacet,
+    worlds::base_observed::{BoundaryRole, ObservedAssembly},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -49,7 +51,10 @@ pub(super) fn render(
                     selected,
                     body.source_id,
                     *revision,
-                    parts.len(),
+                    parts
+                        .iter()
+                        .filter(|part| part.role == BoundaryRole::Gate)
+                        .count(),
                     controlling,
                     budget,
                 ));
@@ -64,6 +69,14 @@ pub(super) fn render(
     response.transpose()
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct Command {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    gate_choice: String,
+}
+
 fn choices(
     session: &NativeWorldSession,
     scope: &crate::authority::RequestScope,
@@ -71,40 +84,18 @@ fn choices(
     selected: &str,
     root: &str,
     revision: u64,
-    parts: usize,
+    gates: usize,
     controlling: bool,
     budget: &ByteBudget,
 ) -> Result<Bytes, RuntimeError> {
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Command {
-        #[serde(rename = "type")]
-        kind: &'static str,
-        gate_choice: String,
-    }
-    #[derive(Serialize)]
-    struct Intent {
-        kind: &'static str,
-        command: Command,
-    }
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Choice {
-        id: String,
-        label: String,
-        description: String,
-        category: &'static str,
-        target_id: String,
-        enabled: bool,
-        reason: Option<&'static str>,
-        intent: Intent,
-    }
     const CATEGORY: &str = "Construction";
     let key = scope.key().map_err(RuntimeError::application_refused)?;
     let reason = preparation::action_blocker(controlling, session.clock()?.paused);
-    let per_choice = size_of::<Choice>() + 3 * crate::player_references::PRIVATE_CURSOR_BYTES;
-    let _workspace = budget.reserve(parts.checked_mul(3 * per_choice).ok_or(CapacityError)?)?;
-    let mut options = Vec::new();
+    let count = gates.checked_mul(3).ok_or(CapacityError)?;
+    let bytes = count
+        .checked_mul(3 * crate::player_references::PRIVATE_CURSOR_BYTES)
+        .ok_or(CapacityError)?;
+    let mut batch = resources::Batch::prepare(CATEGORY, count, bytes, budget)?;
     session.with_gate_offers(
         &scope.account_id,
         &scope.actor_id,
@@ -119,17 +110,21 @@ fn choices(
             let token = issuer
                 .seal_gate_choice(&selection)
                 .ok_or_else(|| RuntimeError::application_refused("gate reference unavailable"))?;
-            let id = format!("gate-{revision}-{}", options.len());
-            options.push(Choice {
+            let id = format!("gate-{revision}-{}", batch.choices.len());
+            let label = JsText::from(offer.label);
+            batch.choices.push(resources::Choice {
                 id,
-                label: offer.label.into(),
-                description: offer.label.into(),
-                category: CATEGORY,
+                label: label.clone(),
+                description: label.clone(),
+                category: CATEGORY.into(),
+                keywords: [label, CATEGORY.into()],
                 target_id: selected.into(),
+                item_id: None,
+                pickup_limit: None,
                 enabled: reason.is_none(),
-                reason,
-                intent: Intent {
-                    kind: "command",
+                reason: reason.map(JsText::from),
+                facts: None,
+                intent: resources::Intent::Gate {
                     command: Command {
                         kind: "operate-gate",
                         gate_choice: token,
@@ -139,10 +134,5 @@ fn choices(
             Ok(())
         },
     )?;
-    resource_menu(
-        session.accepted_progress()?.sequence,
-        &options,
-        CATEGORY,
-        budget,
-    )
+    batch.render(session.accepted_progress()?.sequence, budget)
 }

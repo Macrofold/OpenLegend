@@ -1106,3 +1106,7 @@ pub(crate) fn encode_actor_self(
     reservation.resize(encoded.capacity())?;
     Ok((encoded, reservation))
 }
+
+pub(crate) use npc_candidates::LotStamp;
+
+pub use crate::worlds::base_request_forms::fields::FormValue;

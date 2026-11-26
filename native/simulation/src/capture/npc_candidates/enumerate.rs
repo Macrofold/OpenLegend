@@ -280,6 +280,7 @@ impl NpcCandidateCursor {
             Enumerate::Continue => {
                 self.stage = Enumerate::Follow(0, 0);
                 self.offer_public_appeals(core.state, actor_entity, preparation_id)?;
+                self.offer_outing_replies(core.state, &actor_entity.id, preparation_id)?;
                 let received = self.offer_gift_replies(core, actor_entity)?;
                 let plan_pending = actor.agency.plan.as_ref().is_some_and(|plan| {
                     plan.status == crate::plans::PlanStatus::Active

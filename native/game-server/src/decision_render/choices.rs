@@ -70,7 +70,7 @@ impl DecisionPolicy {
         }
         if matches!(
             offer.meaning,
-            Meaning::Handover { .. } | Meaning::PublicAppeal
+            Meaning::Handover { .. } | Meaning::PublicAppeal | Meaning::OutingReply
         ) {
             return Ok(JsText::default());
         }
@@ -95,7 +95,7 @@ impl DecisionPolicy {
             Meaning::Learned { .. } => return Err(WorldError::ProviderKind),
             Meaning::Activities => text(&words["activities"])?.to_owned(),
             Meaning::Inspection => text(&words["inspection"])?.to_owned(),
-            Meaning::PublicAppeal => return Err(WorldError::ProviderKind),
+            Meaning::PublicAppeal | Meaning::OutingReply => return Err(WorldError::ProviderKind),
             Meaning::ActivityPage { page } => {
                 openlegend_simulation::activity::inspection_next_label(page)
                     .ok_or(WorldError::ProviderKind)?

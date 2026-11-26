@@ -16,6 +16,7 @@ use crate::{
 #[derive(Clone, Copy)]
 enum Notice {
     Arrived,
+    AmendmentExpired,
     Company(bool),
     Ended(TravelNoticeCause),
 }
@@ -103,6 +104,165 @@ impl SettleTravel {
         record: &OutingRecord,
         budget: &ByteBudget,
     ) -> Result<Inspection, ExecutionError> {
+        if record.kind() == OutingKind::CombatHelp {
+            let body = record.body();
+            let combat = body.get("combat").ok_or(ExecutionError::Invariant)?;
+            let pending = record.status() == OutingStatus::Pending;
+            if pending
+                && record
+                    .deadline()
+                    .is_some_and(|at| at <= core.state.physical.header.sim_time)
+            {
+                return Ok(Inspection::end(TravelNoticeCause::Expired));
+            }
+            let pair = record.participants();
+            for actor in pair {
+                let current = core.state.physical.entities.get(actor);
+                if !travel_able(core, actor)?
+                    || current.and_then(|e| e.physical_life())
+                        != combat
+                            .get("lives")
+                            .and_then(|v| v.get(actor))
+                            .and_then(SqlCell::as_u64)
+                    || current
+                        .and_then(|e| e.actor.as_ref())
+                        .map(|b| b.plan_generation)
+                        != body
+                            .get("work")
+                            .and_then(|w| w.get(actor))
+                            .and_then(SqlCell::as_u64)
+                {
+                    return Ok(Inspection::end(TravelNoticeCause::Unavailable));
+                }
+            }
+            let valid = crate::worlds::base_outings::combat_current(
+                core.state,
+                pair,
+                travel::text(combat, "opponentId")?,
+                combat
+                    .get("opponentLife")
+                    .and_then(SqlCell::as_u64)
+                    .ok_or(ExecutionError::Invariant)?,
+                combat.get("humanProposed").and_then(SqlCell::as_bool) == Some(true),
+                false,
+            )?;
+            if !valid {
+                return Ok(Inspection::end(TravelNoticeCause::Unavailable));
+            }
+            return Ok(Inspection::default());
+        }
+        if record.kind() == OutingKind::Cooperate {
+            let now = core.state.physical.header.sim_time;
+            let body = record.body();
+            let pending = record.status() == OutingStatus::Pending;
+            let end = body
+                .get(if pending { "expiresAt" } else { "endAt" })
+                .and_then(SqlCell::as_f64);
+            if end.is_some_and(|at| at <= now) {
+                return Ok(Inspection::end(TravelNoticeCause::Expired));
+            }
+            if !crate::worlds::base_outings::terms_current(core.state, body, budget)? {
+                return Ok(Inspection::end(TravelNoticeCause::Unavailable));
+            }
+            for person in record.participants() {
+                let life = body
+                    .get("lives")
+                    .and_then(|v| v.get(person))
+                    .and_then(SqlCell::as_u64);
+                if !travel_able(core, person)?
+                    || core
+                        .state
+                        .physical
+                        .entities
+                        .get(person)
+                        .and_then(|e| e.physical_life())
+                        != life
+                {
+                    return Ok(Inspection::end(TravelNoticeCause::Unavailable));
+                }
+            }
+            let mut result = Inspection::default();
+            if pending {
+                return Ok(result);
+            }
+            result.amendment_expired = body
+                .get("pendingAmendment")
+                .and_then(|v| v.get("expiresAt"))
+                .and_then(SqlCell::as_f64)
+                .is_some_and(|at| at <= now);
+            let terms = body.get("terms").ok_or(ExecutionError::Invariant)?;
+            match terms.get("purpose").and_then(SqlCell::as_str) {
+                Some("guide") => {
+                    let destination = terms
+                        .get("destination")
+                        .and_then(|d| d.get("point"))
+                        .ok_or(ExecutionError::Invariant)?;
+                    let coord = |key| {
+                        destination
+                            .get(key)
+                            .and_then(SqlCell::as_f64)
+                            .ok_or(ExecutionError::Invariant)
+                    };
+                    let at = crate::state::Point {
+                        x: coord("x")?,
+                        y: coord("y")?,
+                        z: coord("z")?,
+                    };
+                    let surface = travel::text(destination, "surfaceId")?;
+                    let tolerance = core
+                        .state
+                        .installed
+                        .retained
+                        .social_offer_read
+                        .as_ref()
+                        .and_then(|p| p.cooperation.as_ref())
+                        .ok_or(ExecutionError::Invariant)?
+                        .arrival_metres;
+                    let earlier = body
+                        .get("arrived")
+                        .and_then(SqlCell::as_array)
+                        .ok_or(ExecutionError::Invariant)?;
+                    for (i, person) in record.participants().into_iter().enumerate() {
+                        result.arrival[i] = !earlier.iter().any(|who| who.as_str() == Some(person))
+                            && core
+                                .state
+                                .physical
+                                .entities
+                                .get(person)
+                                .and_then(|e| e.supported_position())
+                                .is_some_and(|point| {
+                                    point.surface_id == surface
+                                        && crate::spatial::distance(point.point(), at) <= tolerance
+                                });
+                    }
+                    if earlier.len() + result.arrival.iter().filter(|v| **v).count() == 2 {
+                        result.end = Some(TravelNoticeCause::Finished);
+                    }
+                }
+                Some("help") => {
+                    let task = terms.get("task").ok_or(ExecutionError::Invariant)?;
+                    let complete = match task.get("kind").and_then(SqlCell::as_str) {
+                        Some("prepare") => body
+                            .get("prepared")
+                            .and_then(SqlCell::as_u64)
+                            .zip(task.get("quantity").and_then(SqlCell::as_u64))
+                            .is_some_and(|(made, want)| made >= want),
+                        Some("carry") => {
+                            body.get("carried")
+                                .and_then(|v| v.get("placed"))
+                                .and_then(SqlCell::as_bool)
+                                == Some(true)
+                        }
+                        _ => false,
+                    };
+                    if complete {
+                        result.end = Some(TravelNoticeCause::Finished);
+                    }
+                }
+                _ => {}
+            }
+            return Ok(result);
+        }
         if record.kind() != OutingKind::Travel {
             return Err(ExecutionError::UnsupportedFamily);
         }
@@ -184,6 +344,7 @@ impl SettleTravel {
         };
         let next = Self::inspect(core, record, budget)?;
         if next.end.is_none()
+            && !next.amendment_expired
             && !next.arrival.iter().any(|v| *v)
             && !next.company.iter().any(Option::is_some)
         {
@@ -201,6 +362,31 @@ impl SettleTravel {
             return Err(ExecutionError::Invariant);
         };
         let mut at = 0;
+        if next.amendment_expired && next.end.is_none() {
+            values.shift_remove("pendingAmendment");
+            let revision = record
+                .revision()
+                .checked_add(1)
+                .filter(|v| *v <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Capacity)?;
+            values.insert("revision".into(), SqlCell::Number(revision.into()));
+            for (i, person) in record.participants().into_iter().enumerate() {
+                let mut held = false;
+                crate::worlds::base_outings::visit_receipts(
+                    core.state,
+                    person,
+                    budget,
+                    |receipt, _, _| {
+                        held |= receipt.id == *id && receipt.revision == record.revision();
+                        Ok(())
+                    },
+                )?;
+                if held {
+                    self.notices[at] = Some((i, Notice::AmendmentExpired));
+                    at += 1;
+                }
+            }
+        }
         for (index, actor) in record.participants().into_iter().enumerate() {
             if next.arrival[index] {
                 let Some(SqlCell::Array(arrived)) = values.get_mut("arrived") else {
@@ -222,8 +408,21 @@ impl SettleTravel {
         let mut permission = [false; 2];
         if next.end.is_some() {
             for (index, actor) in record.participants().into_iter().enumerate() {
-                permission[index] =
-                    crate::outings::view::knows_current(core.state, actor, id, budget)?;
+                permission[index] = if record.kind() == OutingKind::Cooperate {
+                    let mut held = false;
+                    crate::worlds::base_outings::visit_receipts(
+                        core.state,
+                        actor,
+                        budget,
+                        |receipt, _, _| {
+                            held |= receipt.id == *id && receipt.revision == record.revision();
+                            Ok(())
+                        },
+                    )?;
+                    held
+                } else {
+                    crate::outings::view::knows_current(core.state, actor, id, budget)?
+                };
             }
         }
         self.current = Some((body, custody));
@@ -267,9 +466,14 @@ impl SettleTravel {
         permission: [bool; 2],
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        let body = &self.current.as_ref().ok_or(ExecutionError::Invariant)?.0;
+        let body = &mut self.current.as_mut().ok_or(ExecutionError::Invariant)?.0;
+        if body.get("kind").and_then(SqlCell::as_str) == Some("combat-help") {
+            crate::worlds::base_outings::help_goal(core, body, false, budget)?;
+        }
         core.remove_outing(travel::text(body, "id")?)?;
-        travel::stop_owned_travel(core, body, cause, permission, budget)?;
+        if body.get("kind").and_then(SqlCell::as_str) == Some("travel") {
+            travel::stop_owned_travel(core, body, cause, permission, budget)?;
+        }
         let mut available = self.notices.iter_mut().filter(|entry| entry.is_none());
         for (index, allowed) in permission.into_iter().enumerate() {
             if allowed {
@@ -360,6 +564,90 @@ impl SettleTravel {
                 )?;
                 let ordinary = core.state.installed.ordinary_actions.value();
                 let rules = &ordinary.travel;
+                if trip.get("kind").and_then(SqlCell::as_str) == Some("combat-help") {
+                    let Notice::Ended(cause) = kind else {
+                        return Err(ExecutionError::Invariant);
+                    };
+                    let binding = GeometryBinding::new(
+                        self.key,
+                        core.state.geometry_revision(),
+                        core.journal.next_provider_serial()?,
+                    );
+                    let reason = if matches!(cause, TravelNoticeCause::Expired) {
+                        "expired"
+                    } else {
+                        "unavailable"
+                    };
+                    self.notice = TravelNoticePreparation::joint(
+                        core,
+                        trip,
+                        actor,
+                        &JsText::from(crate::worlds::base_outings::HELP_RISK),
+                        Some(reason),
+                        binding,
+                        budget,
+                    )?
+                    .map(|notice| (index, notice));
+                    if self.notice.is_some() {
+                        return Ok(TravelStep::Terms);
+                    }
+                    continue;
+                }
+                if trip.get("kind").and_then(SqlCell::as_str) == Some("cooperate") {
+                    let policy = core
+                        .state
+                        .installed
+                        .retained
+                        .social_offer_read
+                        .as_ref()
+                        .and_then(|p| p.cooperation.as_ref())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let (words, cause) = match kind {
+                        Notice::Arrived => {
+                            let place = trip
+                                .get("terms")
+                                .and_then(|t| t.get("destination"))
+                                .and_then(|d| d.get("label"))
+                                .and_then(SqlCell::as_text)
+                                .ok_or(ExecutionError::Invariant)?;
+                            (
+                                ordinary
+                                    .plan
+                                    .text(&rules.templates.arrived, &[("place", place.into())]),
+                                None,
+                            )
+                        }
+                        Notice::AmendmentExpired => (policy.description.clone(), None),
+                        Notice::Ended(reason) => (
+                            policy.description.clone(),
+                            Some(match reason {
+                                TravelNoticeCause::Expired
+                                    if trip.get("status").and_then(SqlCell::as_str)
+                                        == Some("pending") =>
+                                {
+                                    "expired-unanswered"
+                                }
+                                TravelNoticeCause::Expired => "deadline-reached",
+                                TravelNoticeCause::Finished => "task-completed",
+                                _ => "unavailable",
+                            }),
+                        ),
+                        Notice::Company(_) => return Err(ExecutionError::Invariant),
+                    };
+                    let binding = GeometryBinding::new(
+                        self.key,
+                        core.state.geometry_revision(),
+                        core.journal.next_provider_serial()?,
+                    );
+                    self.notice = TravelNoticePreparation::joint(
+                        core, trip, actor, &words, cause, binding, budget,
+                    )?
+                    .map(|notice| (index, notice));
+                    if self.notice.is_some() {
+                        return Ok(TravelStep::Terms);
+                    }
+                    continue;
+                }
                 let destination = trip
                     .get("destination")
                     .and_then(|body| body.get("label"))
@@ -372,6 +660,7 @@ impl SettleTravel {
                         .text(template, &[("place", TextRef::from(destination))])
                 };
                 let (words, ending) = match kind {
+                    Notice::AmendmentExpired => return Err(ExecutionError::Invariant),
                     Notice::Arrived => (proper(&rules.templates.arrived), None),
                     Notice::Company(seen) => (
                         JsText::from(if seen {
@@ -420,6 +709,7 @@ impl SettleTravel {
 
 #[derive(Default)]
 struct Inspection {
+    amendment_expired: bool,
     arrival: [bool; 2],
     company: [Option<bool>; 2],
     end: Option<TravelNoticeCause>,

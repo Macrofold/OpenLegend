@@ -22,7 +22,7 @@ pub use outings_input::{PlayerTravelDestination, PlayerTravelIntent};
 pub(crate) mod invocation;
 mod preparation;
 pub(crate) use invocation::{
-    BoundInvocation, InvocationCursor, InvocationStep, movement_destination,
+    BoundInvocation, InvocationCursor, InvocationStep, SelectedInvocation, movement_destination,
 };
 pub(crate) use preparation::{
     CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep, InvocationLimits,

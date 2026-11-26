@@ -39,6 +39,8 @@ pub struct RuntimeNpcStageWitness {
     actor_id: String,
     physical_life: u64,
     through_time: f64,
+    form_sources: Vec<crate::worlds::base_request_forms::fields::FormSource>,
+    lots: indexmap::IndexMap<String, crate::capture::LotStamp>,
     privacy_revision: u64,
     knowledge_revision: u64,
     mind_revision: u64,
@@ -98,15 +100,24 @@ impl RuntimeNpcResponseTicket {
         {
             return Ok(None);
         }
-        let storage = budget.reserve(
+        let (form_sources, form_custody) =
+            crate::worlds::base_request_forms::fields::FormSource::capture(
+                &self.bindings.form_values,
+                budget,
+            )
+            .map_err(failure)?;
+        let mut storage = budget.reserve(
             heap_sum([
                 size_of::<RuntimeNpcStageWitness>(),
                 owner.world_id.len(),
                 owner.generation.len(),
                 owner.actor_id.len(),
+                crate::host::retained_size::HeapBytes::heap_bytes(&self.bindings.lots)
+                    .ok_or(CapacityError)?,
             ])
             .ok_or(CapacityError)?,
         )?;
+        storage.merge(form_custody)?;
         Ok(Some((
             RuntimeNpcStageWitness {
                 world_id: owner.world_id.clone(),
@@ -114,6 +125,8 @@ impl RuntimeNpcResponseTicket {
                 actor_id: owner.actor_id.clone(),
                 physical_life: owner.physical_life,
                 through_time: owner.at,
+                lots: self.bindings.lots.clone(),
+                form_sources,
                 privacy_revision: owner.privacy_revision,
                 knowledge_revision: current.knowledge_revision,
                 mind_revision: current.mind_revision,
@@ -149,6 +162,19 @@ impl NativeWorldSession {
         });
         if !body_current {
             return Ok(Err("native-stage-actor-life"));
+        }
+        for value in &witness.form_sources {
+            if !value
+                .current(state, actor_id, &self.budget)
+                .map_err(failure)?
+            {
+                return Ok(Err("native-stage-form-source"));
+            }
+        }
+        for (id, stamp) in &witness.lots {
+            if !stamp.current(state, actor_id, id).map_err(failure)? {
+                return Ok(Err("native-stage-possession-changed"));
+            }
         }
         let privacy = state
             .experience

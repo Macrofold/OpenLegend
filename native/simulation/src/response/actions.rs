@@ -194,11 +194,23 @@ pub(super) fn target_gate(
         )?));
     }
     if let Some(slots) = slots {
-        // Full actor-only installation and all selected writers prohibit live
-        // item entities. An offered actor cannot become an item/tool by naming it.
-        if ["itemId", "instrumentId"]
-            .iter()
-            .any(|k| truthy(slots.get(k)))
+        let invalid_tool = ["itemId", "instrumentId"].iter().any(|&role| {
+            slots
+                .get(role)
+                .filter(|value| truthy(Some(value)))
+                .is_some_and(|value| {
+                    !value.as_str().is_some_and(|id| {
+                        (role == "instrumentId" && id == actor)
+                            || core
+                                .state
+                                .physical
+                                .entities
+                                .get(id)
+                                .is_some_and(|entity| entity.item.is_some())
+                    })
+                })
+        });
+        if invalid_tool
             || slots
                 .get("recipientId")
                 .filter(|v| truthy(Some(v)))
@@ -277,6 +289,103 @@ pub(super) fn target_gate(
                     .and_then(SqlCell::as_str),
             )
     };
+    let invocation = op.data.get("invocation");
+    let installed = &core
+        .state
+        .installed
+        .occurrence_rules
+        .value()
+        .response
+        .offers
+        .installed_requests;
+    let form = invocation
+        .and_then(|i| i.get("family"))
+        .and_then(SqlCell::as_str)
+        .and_then(|id| installed.iter().find(|r| r.id == id));
+    let parameters = invocation
+        .and_then(|i| i.get("parameters"))
+        .and_then(SqlCell::as_object);
+    let personal_place = |field: &str, id: &str| {
+        form.zip(parameters).is_some_and(|(form, fields)| {
+            input
+                .form_values
+                .iter()
+                .any(|v| v.kind == "place" && v.permits(&form.id, field, id, fields))
+        })
+    };
+    if let Some((form, fields)) = form.zip(parameters) {
+        for (key, value) in fields {
+            if !crate::worlds::base_request_forms::fields::sourced(form, key) {
+                continue;
+            }
+            if let Some(id) = value.as_str() {
+                if form
+                    .fields
+                    .get(key)
+                    .is_some_and(|f| crate::worlds::base_request_forms::is_remembered_place(key, f))
+                    && input.entity_ids.iter().any(|entity| entity == id)
+                {
+                    continue;
+                }
+                let issued = input
+                    .form_values
+                    .iter()
+                    .find(|v| v.permits(&form.id, key, id, fields));
+                if !issued
+                    .map(|v| v.current(core.state, actor, budget))
+                    .transpose()?
+                    .unwrap_or(false)
+                {
+                    return Ok(Some(ComponentResult::prepare(
+                        false,
+                        "stale-selection",
+                        "This selection is no longer available.".into(),
+                        budget,
+                    )?));
+                }
+            }
+        }
+    }
+    let roles = || {
+        form.into_iter()
+            .flat_map(|f| f.fields.iter())
+            .filter(|(_, f)| f.kind == crate::worlds::base_decision_offers::FieldKind::Entity)
+            .filter_map(|(key, _)| {
+                invocation?
+                    .get("parameters")?
+                    .get(key)?
+                    .as_str()
+                    .filter(|id| !personal_place(key, id))
+            })
+    };
+    let items = || {
+        invocation
+            .and_then(|i| i.get("itemId"))
+            .and_then(SqlCell::as_str)
+            .into_iter()
+            .chain(
+                ["itemId", "instrumentId"]
+                    .into_iter()
+                    .filter_map(|key| slots?.get(key)?.as_str()),
+            )
+    };
+    for id in roles().chain(items()) {
+        if !input.entity_ids.iter().any(|permitted| permitted == id)
+            || input
+                .lots
+                .get(id)
+                .map(|stamp| stamp.current(core.state, actor, id))
+                .transpose()?
+                .is_some_and(|current| !current)
+        {
+            return Ok(Some(ComponentResult::prepare(
+                false,
+                "stale-selection",
+                "This selection is no longer available.".into(),
+                budget,
+            )?));
+        }
+    }
     let law = core.state.installed.account_law();
     let scope = crate::reception::CurrentBodyReadScope::prepare(
         &core.state.reception,
@@ -286,7 +395,7 @@ pub(super) fn target_gate(
         &law,
         actor,
     )?;
-    for target in targets() {
+    for target in targets().chain(roles()) {
         if let Some(lease) = input.entity_leases.get(target) {
             let current = scope
                 .as_ref()
@@ -349,6 +458,66 @@ fn plan(
         watch: None,
     }))
 }
+/// A single bound request either commits through its native immediate owner or
+/// enters the shared work queue. Only the latter can change current work.
+pub(super) fn selected(
+    core: &CoreMutation<'_>,
+    command: NativeCommand,
+    mode: PlanMode,
+    declared: Option<&str>,
+    budget: &ByteBudget,
+) -> Result<ActionIntent, ExecutionError> {
+    let mode_name = match mode {
+        PlanMode::Enqueue => "enqueue",
+        PlanMode::Replace => "replace",
+        PlanMode::Interrupt => "interrupt",
+    };
+    let internal = match &command {
+        NativeCommand::Outing { parameters, .. } => {
+            parameters.value().get("mode").and_then(SqlCell::as_str)
+        }
+        _ => None,
+    };
+    if declared.into_iter().chain(internal).any(|v| v != mode_name) {
+        return result(
+            false,
+            "activity-choices",
+            "The requested activity and action must choose the same handling of current work.",
+            budget,
+        );
+    }
+    if matches!(
+        command,
+        NativeCommand::Teach { .. }
+            | NativeCommand::Handover { .. }
+            | NativeCommand::Outing { .. }
+            | NativeCommand::TransferItem { .. }
+            | NativeCommand::Cancel { .. }
+            | NativeCommand::WithdrawAttempt { .. }
+            | NativeCommand::InspectActivities { .. }
+            | NativeCommand::Ranged {
+                intent: crate::commands::RangedIntent::Release { .. },
+                ..
+            }
+    ) || matches!(mode, PlanMode::Enqueue)
+        && matches!(
+            command,
+            NativeCommand::InspectInventory { .. }
+                | NativeCommand::Drop { .. }
+                | NativeCommand::Equipment { .. }
+                | NativeCommand::Eat { .. }
+                | NativeCommand::TransferStock { .. }
+                | NativeCommand::Coaching { .. }
+                | NativeCommand::LearnRecord { .. }
+        )
+    {
+        return Ok(ActionIntent::Command(command));
+    }
+    let actor = command.envelope().actor_id.clone();
+    let id = command.envelope().id.clone();
+    plan(core, &actor, &id, vec![command], mode, None, None)
+}
+
 fn supported(
     raw: &SqlCell,
     actor: &str,
@@ -473,7 +642,9 @@ pub(super) fn prepare(
     let invalid = (kind != "invoke" && truthy(data.get("invocation")))
         || (kind != "proposal" && truthy(data.get("slots")))
         || (truthy(data.get("rememberedPlaceId"))
-            && (kind != "proposal" || truthy(data.get("targetEntityId")) || truthy(data.get("slots"))))
+            && (kind != "proposal"
+                || truthy(data.get("targetEntityId"))
+                || truthy(data.get("slots"))))
         || match kind {
             "invoke" => {
                 !truthy(data.get("invocation"))
@@ -573,9 +744,14 @@ pub(super) fn prepare(
                 let Some(method) = choice.source.current(core.state, actor, budget)? else {
                     return result(false, copy.code, copy.message, budget);
                 };
-                let bindings = choice.selected.as_ref().unwrap_or_else(|| method.bindings());
+                let bindings = choice
+                    .selected
+                    .as_ref()
+                    .unwrap_or_else(|| method.bindings());
                 let (execution, mut funding) =
-                    crate::plans::ActivityExecution::initial_learned_sequence(&method, bindings, budget)?;
+                    crate::plans::ActivityExecution::initial_learned_sequence(
+                        &method, bindings, budget,
+                    )?;
                 funding.resize(
                     funding
                         .bytes()
@@ -597,16 +773,7 @@ pub(super) fn prepare(
                     Ok(command) => command,
                     Err(result) => return Ok(result),
                 };
-                if matches!(
-                    selected,
-                    NativeCommand::Cancel { .. }
-                        | NativeCommand::WithdrawAttempt { .. }
-                        | NativeCommand::InspectActivities { .. }
-                ) {
-                    Ok(ActionIntent::Command(selected))
-                } else {
-                    plan(core, actor, &id, vec![selected], mode, None, None)
-                }
+                self::selected(core, selected, mode, None, budget)
             } else {
                 let mut message: JsText = if let Some(purpose) = &choice.purpose {
                     let mut text: JsText = "Selected purpose: ".into();
@@ -726,7 +893,9 @@ pub(super) fn prepare(
                 )));
             };
             if let Some(place) = op.text("rememberedPlaceId").and_then(JsText::as_unicode)
-                && bindings.remembered_move_current(core.state, place, description).is_none()
+                && bindings
+                    .remembered_move_current(core.state, place, description)
+                    .is_none()
             {
                 return result(
                     false,
@@ -837,8 +1006,8 @@ pub(super) fn prepare(
                     )?));
                 }
             }
-            if commands.len() == 1 && matches!(&commands[0], NativeCommand::Cancel { .. }) {
-                Ok(ActionIntent::Command(commands.remove(0)))
+            if commands.len() == 1 {
+                self::selected(core, commands.remove(0), mode, None, budget)
             } else {
                 plan(core, actor, &id, commands, mode, None, None)
             }

@@ -90,13 +90,18 @@ impl OutingState {
                     _ => InstallError::CurrentFormat,
                 },
             )?;
+            let supported = match record.kind() {
+                OutingKind::Travel => installed.travel,
+                OutingKind::Cooperate => installed
+                    .retained
+                    .social_offer_read
+                    .as_ref()
+                    .and_then(|p| p.cooperation.as_ref())
+                    .is_some(),
+                OutingKind::CombatHelp => installed.travel,
+            };
             if record.id() != row.slot
-                || record.kind() != OutingKind::Travel
-                || !matches!(
-                    record.status(),
-                    OutingStatus::Pending | OutingStatus::Traveling
-                )
-                || !installed.travel
+                || !supported
                 || installed.retained.social_offer_read.is_none()
             {
                 return Err(InstallError::UnsupportedFamily("outings"));
@@ -106,15 +111,15 @@ impl OutingState {
                 .index
                 .by_pair(proposer, recipient, budget)
                 .map_err(|_| InstallError::Capacity)?
-                .next()
-                .is_some();
+                .any(|id| {
+                    records
+                        .get(id)
+                        .is_some_and(|other: &OutingRecord| other.kind() == record.kind())
+                });
             if existing {
                 return Err(InstallError::CurrentFormat);
             }
             for id in [proposer, recipient] {
-                if !travel::has_player_control(physical, id) {
-                    return Err(InstallError::UnsupportedFamily("outings"));
-                }
                 let actor = physical
                     .entities
                     .get(id)

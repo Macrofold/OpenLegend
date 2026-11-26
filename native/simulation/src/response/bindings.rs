@@ -11,8 +11,8 @@ use crate::simulation::{AcceptedActorRead, SimulationState};
 use crate::text::JsText;
 use serde::ser::SerializeStruct;
 mod appraisals;
-pub use appraisals::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal};
 pub(crate) use appraisals::PreparedResponseAppraisals;
+pub use appraisals::{AppraisalSelection, AppraisalSourceAlias, PersonalOrdinal};
 mod native;
 pub use native::ResponseConsumer;
 pub(crate) use native::{ResponseNativeGuard, ResponseValidityRoute};
@@ -232,6 +232,8 @@ pub(crate) struct ResponseBindingInput {
     pub knowledge_references: IndexMap<String, ObserverSubject>,
     pub identity_references: IndexMap<String, ObserverSubject>,
     pub entity_leases: IndexMap<String, String>,
+    pub form_values: Vec<crate::capture::FormValue>,
+    pub lots: IndexMap<String, crate::capture::LotStamp>,
     pub situation: Option<ResponseSituation>,
     pub appraisal_bindings: Option<AppraisalBindings>,
 }
@@ -279,7 +281,12 @@ impl ResponseBindings {
         selected: &str,
         request: &JsText,
     ) -> Option<&crate::state::RememberedPlace> {
-        self.input.native.as_ref()?.remembered_places.as_ref()?.get(selected, request)
+        self.input
+            .native
+            .as_ref()?
+            .remembered_places
+            .as_ref()?
+            .get(selected, request)
     }
     pub(super) fn remembered_move_current(
         &self,
@@ -288,7 +295,12 @@ impl ResponseBindings {
         request: &JsText,
     ) -> Option<&crate::state::RememberedPlace> {
         let place = self.remembered_move(selected, request)?;
-        let actor = state.physical.entities.get(self.actor_id())?.actor.as_ref()?;
+        let actor = state
+            .physical
+            .entities
+            .get(self.actor_id())?
+            .actor
+            .as_ref()?;
         crate::runtime::RememberedPlaces::entry_current(actor, place).then_some(place)
     }
     pub(crate) fn evidence_ids(&self) -> &[String] {
@@ -448,6 +460,8 @@ impl Serialize for ResponseDigestView<'_> {
         out.serialize_field("knowledgeReferences", &input.knowledge_references)?;
         out.serialize_field("identityReferences", &input.identity_references)?;
         out.serialize_field("entityLeases", &input.entity_leases)?;
+        out.serialize_field("lots", &input.lots)?;
+        out.serialize_field("formValues", &input.form_values)?;
         if let Some(value) = &input.situation {
             out.serialize_field(
                 "situationBinding",
@@ -611,6 +625,8 @@ impl HeapBytes for ResponseBindingInput {
             self.knowledge_references.heap_bytes()?,
             self.identity_references.heap_bytes()?,
             self.entity_leases.heap_bytes()?,
+            self.lots.heap_bytes()?,
+            self.form_values.heap_bytes()?,
             self.situation.heap_bytes()?,
             self.appraisal_bindings.heap_bytes()?,
         ])

@@ -61,6 +61,9 @@ impl OutingRecord {
     pub(crate) fn kind(&self) -> OutingKind {
         self.facts.kind
     }
+    pub(crate) fn deadline(&self) -> Option<f64> {
+        self.facts.deadline
+    }
     pub(crate) fn status(&self) -> OutingStatus {
         self.facts.status
     }

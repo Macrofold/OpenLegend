@@ -28,6 +28,7 @@ mod work;
 pub(crate) use work::NpcWorkContext;
 mod activity;
 pub use activity::{NpcActivityChoice, NpcActivityFacts};
+pub(crate) use activity::LotStamp;
 mod descriptions;
 use activity::{NpcActivityPreparation, NpcActivityRead};
 use descriptions::DescriptionContext;
@@ -41,6 +42,7 @@ use cooking::CookingChoices;
 mod fire;
 use fire::FuelChoices;
 mod gifts;
+mod outings;
 use gifts::GiftProposals;
 mod defense;
 mod evasion;
@@ -580,7 +582,7 @@ impl NpcCandidateCursor {
                         // authored wording. The formatter adds no more detail.
                         if matches!(
                             offer.meaning,
-                            NpcOfferMeaning::Handover { .. } | NpcOfferMeaning::PublicAppeal
+                            NpcOfferMeaning::Handover { .. } | NpcOfferMeaning::PublicAppeal | NpcOfferMeaning::OutingReply
                         ) {
                             continue;
                         }

@@ -12,7 +12,10 @@ use crate::worlds::base_outings::{
     travel_work_preview, travel_work_problem,
 };
 
+mod combat;
+mod cooperation;
 pub(super) struct Consent {
+    joint: Option<cooperation::Change>,
     trip: Option<(SqlCell, ByteReservation)>,
     pub(super) notice: Option<TravelNoticePreparation>,
     choice: Option<CommandChoiceCursor>,
@@ -28,6 +31,7 @@ impl Consent {
     fn new(budget: &ByteBudget) -> Result<Box<Self>, ExecutionError> {
         let custody = budget.reserve(size_of::<Self>())?;
         Ok(Box::new(Self {
+            joint: None,
             trip: None,
             notice: None,
             choice: None,
@@ -118,6 +122,24 @@ impl CommandCursor {
     ) -> Result<Option<Progress>, ExecutionError> {
         let installed = core.state.installed.clone();
         let words = &installed.ordinary_actions.value().travel.messages;
+        if let NativeCommand::Outing { parameters, .. } = &self.command {
+            let args = parameters.value();
+            if args.get("operation").and_then(SqlCell::as_str) == Some("help")
+                || args
+                    .get("outingId")
+                    .and_then(SqlCell::as_str)
+                    .and_then(|id| core.state.outings.get(id))
+                    .is_some_and(|r| r.kind() == OutingKind::CombatHelp)
+            {
+                return self.begin_combat_help(core);
+            }
+        }
+        if let NativeCommand::Outing { parameters, .. } = &self.command
+            && cooperation::selected(core.state, parameters.value())
+        {
+            return self.begin_joint(core);
+        }
+
         if !installed.travel || installed.retained.social_offer_read.is_none() {
             self.travel_result(false, "unsupported-command", words.unavailable.as_str())?;
             return Ok(None);
@@ -141,12 +163,7 @@ impl CommandCursor {
                     self.travel_result(false, "not-visible", words.person.as_str())?;
                     return Ok(None);
                 }
-                if ![actor, recipient_id]
-                    .into_iter()
-                    .all(|actor| offers::has_player_control(&core.state.physical, actor))
-                    || !travel_able(core, actor)?
-                    || !travel_able(core, recipient_id)?
-                {
+                if !travel_able(core, actor)? || !travel_able(core, recipient_id)? {
                     self.travel_result(false, "outing-unavailable", words.nearby.as_str())?;
                     return Ok(None);
                 }
@@ -304,6 +321,9 @@ impl CommandCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<GeometryAnswers>,
     ) -> Result<Progress, ExecutionError> {
+        if self.travel.as_ref().is_some_and(|t| t.joint.is_some()) {
+            return self.finish_joint(core, answer);
+        }
         let travel = self.travel.as_mut().ok_or(ExecutionError::Invariant)?;
         let trip = &travel.trip.as_ref().ok_or(ExecutionError::Invariant)?.0;
         travel.other_received_ending = match (travel.ending_reception.take(), answer) {
@@ -709,6 +729,9 @@ impl CommandCursor {
         &mut self,
         core: &mut CoreMutation<'_>,
     ) -> Result<Option<Progress>, ExecutionError> {
+        if self.travel.as_ref().is_some_and(|t| t.joint.is_some()) {
+            return self.next_joint_notice(core);
+        }
         let travel = self.travel.as_mut().ok_or(ExecutionError::Invariant)?;
         let (body, _) = travel.trip.as_ref().ok_or(ExecutionError::Invariant)?;
         let ordinary = core.state.installed.clone();

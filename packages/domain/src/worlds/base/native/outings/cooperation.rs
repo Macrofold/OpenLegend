@@ -47,32 +47,65 @@ use crate::{
     host::{ByteBudget, map_storage},
     simulation::SimulationState,
 };
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CooperationReceipt {
+    pub id: String,
+    pub revision: u64,
+    pub proposer_id: String,
+    pub recipient_id: String,
+    pub status: String,
+    pub expires_at: f64,
+    pub end_at: Option<f64>,
+    pub terms: crate::records::SqlCell,
+    pub amendment: Option<crate::records::SqlCell>,
+}
+
+impl CooperationReceipt {
+    pub(crate) fn available_at(&self, now: f64) -> bool {
+        match self.status.as_str() {
+            "pending" => self.expires_at > now,
+            "accepted" => self.end_at.is_some_and(|at| at > now),
+            _ => false,
+        }
+    }
+}
 pub(crate) fn visit_agreements(
     state: &SimulationState,
     actor: &str,
     budget: &ByteBudget,
     mut emit: impl FnMut(&str, u64, &str) -> Result<(), ExecutionError>,
 ) -> Result<(), ExecutionError> {
+    visit_receipts(state, actor, budget, |r, _, companion| {
+        if r.available_at(state.physical.header.sim_time) {
+            emit(&r.id, r.revision, companion)?;
+        }
+        Ok(())
+    })
+}
+
+/// Visit each newest retained personal agreement once. The record and proof
+/// remain borrowed for the call; copy only the published projection.
+pub(crate) fn visit_receipts(
+    state: &SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+    mut emit: impl FnMut(
+        &CooperationReceipt,
+        &crate::experience::PersonalSourceRef,
+        &str,
+    ) -> Result<(), ExecutionError>,
+) -> Result<(), ExecutionError> {
     use serde::Deserialize;
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct Awareness {
+        retention_class: String,
         event_data: Data,
     }
     #[derive(Deserialize)]
     struct Data {
         agreement: JsText,
-    }
-    #[derive(Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct Acquired {
-        id: String,
-        revision: u64,
-        proposer_id: String,
-        recipient_id: String,
-        status: String,
-        expires_at: f64,
-        end_at: Option<f64>,
     }
     let Some(history) = state.experience.actor(actor) else {
         return Ok(());
@@ -86,7 +119,6 @@ pub(crate) fn visit_agreements(
     if !records.may_have_current_agreements()? {
         return Ok(());
     }
-    let now = state.physical.header.sim_time;
     let mut seen = indexmap::IndexSet::new();
     let mut custody = budget.reserve(0)?;
     let mut keys = 0;
@@ -104,12 +136,15 @@ pub(crate) fn visit_agreements(
         let _scope = budget.reserve(crate::experience::encoded_body_bound(row.payload())?)?;
         let data: Awareness =
             serde_json::from_str(row.payload()).map_err(|_| ExecutionError::InvalidCheckpoint)?;
+        if data.retention_class != "memory" {
+            continue;
+        }
         let text = data
             .event_data
             .agreement
             .json_document()
             .map_err(|_| ExecutionError::InvalidCheckpoint)?;
-        let record: Acquired =
+        let record: CooperationReceipt =
             serde_json::from_str(&text).map_err(|_| ExecutionError::InvalidCheckpoint)?;
         if seen.contains(&record.id) {
             continue;
@@ -122,12 +157,11 @@ pub(crate) fn visit_agreements(
             return Err(ExecutionError::InvalidCheckpoint);
         };
         if match record.status.as_str() {
-            "pending" => record.expires_at > now,
-            "accepted" => record.end_at.is_some_and(|at| at > now),
+            "pending" | "accepted" => true,
             "ended" => false,
             _ => return Err(ExecutionError::InvalidCheckpoint),
         } {
-            emit(&record.id, record.revision, other)?;
+            emit(&record, &header.reference, other)?;
         }
         keys += record.id.capacity();
         custody.resize(

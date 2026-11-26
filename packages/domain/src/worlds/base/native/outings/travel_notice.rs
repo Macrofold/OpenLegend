@@ -14,6 +14,8 @@ use crate::text::JsText;
 use indexmap::IndexMap;
 use serde::Serialize;
 use std::mem::size_of;
+#[path = "joint_notice.rs"]
+mod joint_notice;
 
 #[derive(Clone, Copy, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -88,8 +90,7 @@ pub(crate) struct TravelNoticePreparation {
     other_id: String,
     outing_id: String,
     middle: JsText,
-    surface: JsText,
-    coordinates: [f64; 3],
+    destination: Option<(JsText, [f64; 3])>,
     ending: Option<TravelNoticeCause>,
     ending_actor: Option<String>,
     memory: bool,
@@ -218,12 +219,14 @@ impl TravelNoticePreparation {
             other_id: other.into(),
             outing_id: id.into(),
             middle,
-            surface: surface.clone(),
-            coordinates: [
-                number(point, "x")?,
-                number(point, "y")?,
-                number(point, "z")?,
-            ],
+            destination: Some((
+                surface.clone(),
+                [
+                    number(point, "x")?,
+                    number(point, "y")?,
+                    number(point, "z")?,
+                ],
+            )),
             ending: ending.map(|ending| ending.cause),
             ending_actor: ending_actor.map(str::to_owned),
             memory: actor.has_memory(),
@@ -284,7 +287,12 @@ impl TravelNoticePreparation {
         self.allocation.merge(storage)?;
         let mut data = IndexMap::with_capacity(11);
         data.insert(
-            "outingId".into(),
+            if self.event_type == "cooperation" {
+                "cooperationId"
+            } else {
+                "outingId"
+            }
+            .into(),
             EventScalar::Text(std::mem::take(&mut self.outing_id).into()),
         );
         data.insert("personalAgreement".into(), EventScalar::Boolean(true));
@@ -295,16 +303,15 @@ impl TravelNoticePreparation {
                 data.insert("endingActorId".into(), EventScalar::Text(actor.into()));
             }
         }
-        for (field, value) in ["destinationX", "destinationY", "destinationZ"]
-            .into_iter()
-            .zip(self.coordinates)
-        {
-            data.insert(field.into(), EventScalar::Number(value));
+        if let Some((surface, coordinates)) = self.destination.take() {
+            for (field, value) in ["destinationX", "destinationY", "destinationZ"]
+                .into_iter()
+                .zip(coordinates)
+            {
+                data.insert(field.into(), EventScalar::Number(value));
+            }
+            data.insert("destinationSurface".into(), EventScalar::Text(surface));
         }
-        data.insert(
-            "destinationSurface".into(),
-            EventScalar::Text(std::mem::replace(&mut self.surface, JsText::from(""))),
-        );
         data.insert("semanticTrigger".into(), EventScalar::Boolean(true));
         data.insert("importance".into(), EventScalar::Number(self.importance));
         let audience = if self.memory {

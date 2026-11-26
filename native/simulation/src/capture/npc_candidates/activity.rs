@@ -20,7 +20,7 @@ pub struct NpcActivityChoice {
     pub id: String,
     pub label: JsText,
     pub kind: &'static str,
-    pub roles: Vec<&'static str>,
+    pub roles: Vec<String>,
     pub request_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub distance: Option<f64>,
@@ -38,11 +38,60 @@ pub(super) struct NpcActivityRead {
     #[serde(skip)]
     pub labels: Vec<ActivityLabel>,
     #[serde(skip)]
+    possessions: Vec<Possession>,
+    #[serde(skip)]
+    values: Vec<crate::worlds::base_request_forms::fields::FormValue>,
+    #[serde(skip)]
     storage: ByteReservation,
+}
+
+/// An exact, accessible lot from the decision actor's own custody snapshot.
+pub struct Possession {
+    pub id: String,
+    pub name: crate::state::Named,
+    pub lot: LotStamp,
+}
+#[derive(Clone, Copy, PartialEq, Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LotStamp {
+    pub revision: u64,
+    pub placement_revision: u64,
+    pub quantity: u64,
+    pub available: u64,
+    pub equipped: bool,
+}
+impl LotStamp {
+    fn of(item: &crate::install::OwnedItem<'_>) -> Self {
+        Self {
+            revision: item.revision,
+            placement_revision: item.placement_revision,
+            quantity: item.quantity,
+            available: item.available_quantity,
+            equipped: item.equipped,
+        }
+    }
+    pub(crate) fn current(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor: &str,
+        id: &str,
+    ) -> Result<bool, ExecutionError> {
+        Ok(
+            crate::install::owned_by(&state.physical, &state.installed.retained, actor, id)?
+                .is_some_and(|item| *self == Self::of(&item)),
+        )
+    }
+}
+impl HeapBytes for LotStamp {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
 }
 
 pub struct NpcActivityFacts<'a> {
     pub choices: &'a [NpcActivityChoice],
+    pub possessions: &'a [Possession],
+    pub values: &'a [crate::worlds::base_request_forms::fields::FormValue],
     pub warnings: &'a [JsText],
     pub admitted_bytes: usize,
 }
@@ -51,6 +100,8 @@ impl NpcActivityRead {
     pub(super) fn facts(&self) -> NpcActivityFacts<'_> {
         NpcActivityFacts {
             choices: &self.available.choices,
+            possessions: &self.possessions,
+            values: &self.values,
             warnings: &self.available.warnings,
             admitted_bytes: self.storage.bytes(),
         }
@@ -226,8 +277,42 @@ impl NpcActivityPreparation {
                 warnings: Vec::with_capacity(rules.len()),
             },
             labels: Vec::with_capacity(maximum),
+            possessions: Vec::new(),
+            values: Vec::new(),
             storage: budget.reserve(0)?,
         };
+        let state = &core.state;
+        state.inventory.visit_owned_until(
+            &state.physical.entities,
+            actor,
+            actor,
+            &mut |entity, accessible| {
+                let item = crate::install::project_owned(
+                    &state.installed.retained,
+                    actor,
+                    entity,
+                    accessible,
+                    state.physical.holds.quantity(&entity.id),
+                )?;
+                let bytes = item
+                    .named
+                    .heap_bytes()
+                    .and_then(|n| n.checked_add(item.id.len() + 2 * size_of::<Possession>()))
+                    .ok_or(ExecutionError::Capacity)?;
+                storage.resize(
+                    storage
+                        .bytes()
+                        .checked_add(bytes)
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                read.possessions.push(Possession {
+                    id: item.id.into(),
+                    name: item.named.clone(),
+                    lot: LotStamp::of(&item),
+                });
+                Ok(read.possessions.len() >= crate::install::inventory_display_limit())
+            },
+        )?;
         let names = crate::worlds::InstalledPersonalNameReader::prepare(
             &core.state.physical,
             &core.state.reception,
@@ -329,7 +414,7 @@ impl NpcActivityPreparation {
                         }
                     }
                 }
-                ActivityChoiceKind::Reservoir => {}
+                ActivityChoiceKind::Installed | ActivityChoiceKind::Reservoir => {}
             }
             if self.visibility_count > host.maximum_visible {
                 if let Some(warning) = &host.visible_warning {
@@ -343,6 +428,159 @@ impl NpcActivityPreparation {
                 }
             }
         }
+        let forms = &state
+            .installed
+            .occurrence_rules
+            .value()
+            .response
+            .offers
+            .installed_requests;
+        // Traverse only the current actor's bounded selected bodies and custody
+        // page. Each emitted role keeps its own request ID and projected label.
+        let possessions = std::mem::take(&mut read.possessions);
+        for (id, owned) in std::iter::once((actor, false))
+            .chain(
+                targets
+                    .iter()
+                    .filter(|t| t.visible)
+                    .map(|t| (t.id.as_str(), false)),
+            )
+            .chain(possessions.iter().map(|i| (i.id.as_str(), true)))
+        {
+            let entity = state
+                .physical
+                .entities
+                .get(id)
+                .ok_or(ExecutionError::MissingEntity)?;
+            let mut label = None;
+            let mut prior = indexmap::IndexMap::<&str, usize>::new();
+            for form in forms {
+                for (field, meaning) in &form.fields {
+                    if meaning.kind != crate::worlds::base_decision_offers::FieldKind::Entity
+                        || !crate::worlds::base_request_forms::entity_role(
+                            state, actor, form, field, entity, owned,
+                        )
+                    {
+                        continue;
+                    }
+                    if let Some(&ordinal) = prior.get(field.as_str()) {
+                        storage.resize(
+                            storage
+                                .bytes()
+                                .checked_add(2 * size_of::<String>() + form.id.len())
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        read.available.choices[ordinal]
+                            .request_ids
+                            .push(form.id.clone());
+                        continue;
+                    }
+                    storage.resize(
+                        storage
+                            .bytes()
+                            .checked_add(4 * size_of::<(&str, usize)>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    prior.insert(field.as_str(), read.available.choices.len());
+                    let name = if let Some(name) = label.as_ref() {
+                        name
+                    } else {
+                        label = Some(if owned {
+                            crate::install::owned_by(
+                                &state.physical,
+                                &state.installed.retained,
+                                actor,
+                                id,
+                            )?
+                            .ok_or(ExecutionError::Invariant)?
+                            .named
+                            .clone()
+                        } else {
+                            names.capture_observer_name(id, budget)?.name().clone()
+                        });
+                        label.as_ref().ok_or(ExecutionError::Invariant)?
+                    };
+                    storage.resize(
+                        storage
+                            .bytes()
+                            .checked_add(
+                                name.heap_bytes().ok_or(ExecutionError::Capacity)?
+                                    + 2 * (size_of::<NpcActivityChoice>()
+                                        + size_of::<ActivityLabel>()),
+                            )
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    read.append(
+                        id,
+                        field,
+                        &form.id,
+                        None,
+                        policy.person_label(name),
+                        &mut storage,
+                    )?;
+                }
+            }
+        }
+        let empty = indexmap::IndexMap::new();
+        for form in forms {
+            for (field, rule) in &form.fields {
+                use crate::worlds::base_request_forms::{fields, is_remembered_place};
+                if !fields::sourced(form, field) {
+                    continue;
+                }
+                let kind = if is_remembered_place(field, rule) {
+                    "place"
+                } else if rule.kind == crate::worlds::base_decision_offers::FieldKind::Definition {
+                    "definition"
+                } else {
+                    "choice"
+                };
+                fields::visit(
+                    state,
+                    actor,
+                    form,
+                    field,
+                    &empty,
+                    budget,
+                    |value, label, parent| {
+                        // A selected recipient must already be in this actor's body
+                        // projection before any dependent private term is offered.
+                        if parent.is_some_and(|(name, id)| {
+                            form.fields.get(name).is_some_and(|r| {
+                                r.kind == crate::worlds::base_decision_offers::FieldKind::Entity
+                            }) && id != actor
+                                && !targets.iter().any(|t| t.visible && t.id == id)
+                                && !possessions.iter().any(|lot| lot.id == id)
+                        }) {
+                            return Ok(());
+                        }
+                        let bytes = 2 * size_of::<fields::FormValue>()
+                            + form.id.len()
+                            + field.len()
+                            + value.len()
+                            + label.storage_bytes()
+                            + parent.map_or(0, |(k, v)| k.len() + v.len())
+                            + kind.len();
+                        storage.resize(
+                            storage
+                                .bytes()
+                                .checked_add(bytes)
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        read.values.push(fields::FormValue {
+                            request: form.id.clone(),
+                            field: field.clone(),
+                            value: value.into(),
+                            label: label.clone(),
+                            kind: kind.into(),
+                            parent: parent.map(|(k, v)| (k.into(), v.into())),
+                        });
+                        Ok(())
+                    },
+                )?;
+            }
+        }
+        read.possessions = possessions;
         read.storage = storage;
         Ok(read)
     }
@@ -351,7 +589,7 @@ impl NpcActivityRead {
     fn append(
         &mut self,
         id: &str,
-        role: &'static str,
+        role: &str,
         request: &str,
         distance: Option<f64>,
         label: ActivityLabel,
@@ -360,14 +598,14 @@ impl NpcActivityRead {
         storage.resize(
             storage
                 .bytes()
-                .checked_add(id.len() + request.len() + size_of::<&str>() + size_of::<String>())
+                .checked_add(id.len() + request.len() + role.len() + 2 * size_of::<String>())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         self.available.choices.push(NpcActivityChoice {
             id: id.into(),
             label: JsText::default(),
             kind: "entity",
-            roles: vec![role],
+            roles: vec![role.into()],
             request_ids: vec![request.into()],
             distance,
             accessible: true,

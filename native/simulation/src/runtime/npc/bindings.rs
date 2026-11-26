@@ -708,6 +708,8 @@ impl NativeWorldSession {
             .map_err(failure)?;
         response
             .resolve_entities(
+                &simulation.state.installed,
+                &ticket.bindings.form_values,
                 &ResponseAliases {
                     entities: &ticket.bindings.entity_references,
                     physical: &ticket.bindings.physical_references,
@@ -847,6 +849,8 @@ impl NativeWorldSession {
             knowledge_references: copies::map(&maps.knowledge_references, Clone::clone),
             identity_references: copies::map(&maps.identity_references, Clone::clone),
             entity_leases: copies::map(&maps.entity_leases, Clone::clone),
+            lots: copies::map(&maps.lots, Clone::clone),
+            form_values: maps.form_values.clone(),
             situation: Some(copies::situation(&maps.situation)),
             appraisal_bindings,
         };

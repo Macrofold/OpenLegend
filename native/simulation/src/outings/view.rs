@@ -48,6 +48,8 @@ struct ChoiceCommand {
     outing_id: String,
     expected_revision: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
+    amendment_revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     outing_mode: Option<PlanMode>,
 }
 
@@ -88,7 +90,7 @@ fn known_terms<'a>(
     let mut scratch = budget.reserve(0)?;
     for id in ids {
         let row = state.outings.get(id).ok_or(ExecutionError::Invariant)?;
-        if row.kind() != OutingKind::Travel {
+        if !matches!(row.kind(), OutingKind::Travel | OutingKind::CombatHelp) {
             continue;
         }
         scratch.resize(
@@ -175,6 +177,47 @@ pub(crate) fn knows_current(
     Ok(!known.is_empty())
 }
 
+/// Project reply choices from the same personal receipts as the player's view.
+/// The callback borrows the display and exact revision. The ordinary command
+/// checks the actor's acquired terms again when a selected reply executes.
+pub(crate) fn visit_replies(
+    state: &SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+    mut emit: impl FnMut(
+        &str,
+        &JsText,
+        &JsText,
+        &JsText,
+        crate::commands::PlayerTravelIntent<'_>,
+    ) -> Result<(), ExecutionError>,
+) -> Result<(), ExecutionError> {
+    let Some(read) = PreparedOutings::prepare(state, actor, budget)? else {
+        return Ok(());
+    };
+    if let Some(views) = read.views {
+        for outing in &views.entries {
+            for choice in &outing.choices {
+                let cmd = &choice.command;
+                emit(
+                    choice.id,
+                    &choice.label,
+                    &outing.companion,
+                    &outing.destination,
+                    crate::commands::PlayerTravelIntent::Remedy {
+                        operation: cmd.outing_operation,
+                        invitation: &cmd.outing_id,
+                        revision: cmd.expected_revision,
+                        amendment_revision: cmd.amendment_revision,
+                        mode: cmd.outing_mode,
+                    },
+                )?;
+            }
+        }
+    }
+    Ok(())
+}
+
 impl PreparedOutings {
     /// A detached stream must check the exact prior acquired sources again
     /// before serializing potentially newly withdrawn private terms.
@@ -246,20 +289,26 @@ impl PreparedOutings {
                 .get("label")
                 .and_then(SqlCell::as_text)
                 .ok_or(ExecutionError::Invariant)?;
-            let place = fields.get("point").ok_or(ExecutionError::Invariant)?;
-            let coordinate = |key| {
-                place
-                    .get(key)
-                    .and_then(SqlCell::as_f64)
-                    .ok_or(ExecutionError::Invariant)
-            };
-            let point = Point {
-                x: coordinate("x")?,
-                y: coordinate("y")?,
-                z: coordinate("z")?,
+            let point = if row.kind() == OutingKind::Travel {
+                let place = fields.get("point").ok_or(ExecutionError::Invariant)?;
+                let coordinate = |key| {
+                    place
+                        .get(key)
+                        .and_then(SqlCell::as_f64)
+                        .ok_or(ExecutionError::Invariant)
+                };
+                Some(Point {
+                    x: coordinate("x")?,
+                    y: coordinate("y")?,
+                    z: coordinate("z")?,
+                })
+            } else {
+                None
             };
             let mut status = if row.status() == OutingStatus::Pending {
                 "pending"
+            } else if row.kind() == OutingKind::CombatHelp {
+                "helping"
             } else {
                 "traveling"
             };
@@ -306,6 +355,7 @@ impl PreparedOutings {
                     outing_operation: operation,
                     outing_id: id.clone(),
                     expected_revision: row.revision(),
+                    amendment_revision: None,
                     outing_mode: mode,
                 },
             };
@@ -367,8 +417,9 @@ impl PreparedOutings {
                 companion: name.to_owned(),
                 distance: own
                     .world_position()
-                    .map(|at| crate::spatial::distance(at, point)),
-                kind: rules.kind.clone(),
+                    .zip(point)
+                    .map(|(at, point)| crate::spatial::distance(at, point)),
+                kind: row.kind().name().to_owned(),
                 purpose: purpose.cloned(),
                 status,
                 deadline,
@@ -376,6 +427,165 @@ impl PreparedOutings {
                 description: rules.description.clone(),
                 choices,
             });
+        }
+        if let Some(policy) = installed
+            .retained
+            .social_offer_read
+            .as_ref()
+            .and_then(|policy| policy.cooperation.as_ref())
+        {
+            crate::worlds::base_outings::visit_receipts(
+                state,
+                actor,
+                budget,
+                |received, reference, other| {
+                    if !received.available_at(state.physical.header.sim_time) {
+                        return Ok(());
+                    }
+                    let Some(row) = state.outings.get(&received.id).filter(|row| {
+                        row.revision() == received.revision && row.kind() == OutingKind::Cooperate
+                    }) else {
+                        return Ok(());
+                    };
+                    let companion = names.observer_name(other)?.name.to_owned();
+                    let kind = received
+                        .terms
+                        .get("purpose")
+                        .and_then(SqlCell::as_str)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let label = received
+                        .terms
+                        .get("destination")
+                        .or_else(|| received.terms.get("meetingPlace"))
+                        .and_then(|t| t.get("label"))
+                        .and_then(SqlCell::as_text)
+                        .or_else(|| {
+                            received
+                                .terms
+                                .get("task")
+                                .and_then(|t| t.get("outputLabel").or_else(|| t.get("itemLabel")))
+                                .and_then(SqlCell::as_text)
+                        })
+                        .unwrap_or(&policy.description);
+                    let pending = received.status == "pending";
+                    let amendment = received
+                        .amendment
+                        .as_ref()
+                        .and_then(|v| v.get("revision"))
+                        .and_then(SqlCell::as_u64);
+                    let proposer = received
+                        .amendment
+                        .as_ref()
+                        .and_then(|v| v.get("proposedBy"))
+                        .and_then(SqlCell::as_str)
+                        .unwrap_or(&received.proposer_id);
+                    let build = |key, operation, label_key: &str, amendment_revision| Choice {
+                        id: key,
+                        label: policy
+                            .labels
+                            .get(label_key)
+                            .unwrap_or(&policy.description)
+                            .clone(),
+                        description: policy.description.as_unicode().unwrap_or_default().into(),
+                        command: ChoiceCommand {
+                            kind: crate::worlds::base_outings::travel_command_type(),
+                            outing_operation: operation,
+                            outing_id: received.id.clone(),
+                            expected_revision: received.revision,
+                            amendment_revision,
+                            outing_mode: (operation == TravelOperation::Accept)
+                                .then_some(PlanMode::Enqueue),
+                        },
+                    };
+                    output_storage.resize(
+                        output_storage
+                            .bytes()
+                            .checked_add(
+                                4096 + 8
+                                    * (received.id.len()
+                                        + label.storage_bytes()
+                                        + companion.storage_bytes()
+                                        + policy.description.storage_bytes()
+                                        + policy
+                                            .labels
+                                            .values()
+                                            .map(JsText::storage_bytes)
+                                            .max()
+                                            .unwrap_or_default()),
+                            )
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    let mut choices = Vec::new();
+                    if pending || amendment.is_some() {
+                        if proposer == actor {
+                            choices.push(build(
+                                "cooperation-withdraw",
+                                TravelOperation::Withdraw,
+                                "withdraw",
+                                amendment,
+                            ));
+                        } else {
+                            choices.push(build(
+                                "cooperation-accept",
+                                TravelOperation::Accept,
+                                if amendment.is_some() {
+                                    "acceptAmendment"
+                                } else {
+                                    "accept"
+                                },
+                                amendment,
+                            ));
+                            choices.push(build(
+                                "cooperation-decline",
+                                TravelOperation::Decline,
+                                if amendment.is_some() {
+                                    "declineAmendment"
+                                } else {
+                                    "decline"
+                                },
+                                amendment,
+                            ));
+                        }
+                    }
+                    if !pending {
+                        choices.push(build(
+                            "cooperation-leave",
+                            TravelOperation::Leave,
+                            "leave",
+                            None,
+                        ));
+                        choices.push(build(
+                            "cooperation-conclude",
+                            TravelOperation::Conclude,
+                            "conclude",
+                            None,
+                        ));
+                    }
+                    proof_storage.resize(
+                        proof_storage.bytes() + 512 + received.id.len() + reference.id.len(),
+                    )?;
+                    references.push((row.id().into(), row.revision(), reference.clone()));
+                    views.push(PlayerOuting {
+                        id: received.id.clone(),
+                        revision: received.revision,
+                        destination: label.clone(),
+                        companion,
+                        distance: None,
+                        kind: kind.into(),
+                        purpose: None,
+                        status: if pending { "pending" } else { "accepted" },
+                        deadline: if pending {
+                            Some(received.expires_at)
+                        } else {
+                            received.end_at
+                        },
+                        company: String::new(),
+                        description: policy.description.as_unicode().unwrap_or_default().into(),
+                        choices,
+                    });
+                    Ok(())
+                },
+            )?;
         }
         if views.is_empty() {
             return Ok(None);

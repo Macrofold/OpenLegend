@@ -777,7 +777,17 @@ impl ResponseCursor {
                     op.text("targetEntityId")
                         .and_then(JsText::as_unicode)
                         .filter(|t| !t.is_empty()),
-                    op.text("targetEntityId").and_then(JsText::as_unicode).is_none_or(|id|id.is_empty() || self.bindings.input.entity_ids.iter().any(|permitted| id==permitted)),
+                    op.text("targetEntityId")
+                        .and_then(JsText::as_unicode)
+                        .is_none_or(|id| {
+                            id.is_empty()
+                                || self
+                                    .bindings
+                                    .input
+                                    .entity_ids
+                                    .iter()
+                                    .any(|permitted| id == permitted)
+                        }),
                     false,
                     self.candidate,
                     &self.budget,
@@ -1660,7 +1670,30 @@ impl ResponseCursor {
                                             storage: self.budget.reserve(0)?,
                                         },
                                     )?,
-                                    Ok(command) => {
+                                    Ok(crate::commands::SelectedInvocation::Work(
+                                        input,
+                                        _funding,
+                                    )) => {
+                                        let op = self
+                                            .response
+                                            .operation(self.index)
+                                            .ok_or(ExecutionError::Invariant)?;
+                                        let requested = actions::mode(op.data)?;
+                                        if input.mode != requested
+                                            || !matches!(requested, crate::plans::PlanMode::Enqueue)
+                                                && self.initial_generation
+                                                    != Some(self.bindings.input.expected_plan)
+                                        {
+                                            let outcome=self.result(false,"stale-plan","The requested work mode or the current task changed.")?;
+                                            self.store(core, outcome)?;
+                                        } else {
+                                            self.begin_intent(
+                                                core,
+                                                ActionIntent::Learned { input, _funding },
+                                            )?;
+                                        }
+                                    }
+                                    Ok(crate::commands::SelectedInvocation::Command(command)) => {
                                         let op = self
                                             .response
                                             .operation(self.index)
@@ -1677,27 +1710,23 @@ impl ResponseCursor {
                                             )?;
                                             self.store(core, result)?;
                                         } else {
-                                            let actor = self.bindings.actor_id();
-                                            let revision = core
-                                                .state
-                                                .physical
-                                                .entities
-                                                .get(actor)
-                                                .and_then(|e| e.actor.as_ref())
-                                                .and_then(|a| a.agency.plan.as_ref())
-                                                .map_or(0, |p| p.revision);
-                                            self.begin_intent(
+                                            let invocation = op
+                                                .data
+                                                .get("invocation")
+                                                .ok_or(ExecutionError::Invariant)?;
+                                            let fields = invocation.get("parameters");
+                                            let declared=invocation.get("family").and_then(SqlCell::as_str)
+                                                .and_then(|id|core.state.installed.occurrence_rules.value().response.offers.installed_requests.iter().find(|r|r.id==id))
+                                                .and_then(|form|form.fields.iter().find(|(_,field)|field.kind==crate::worlds::base_decision_offers::FieldKind::Mode))
+                                                .and_then(|(key,_)|fields?.get(key)?.as_str());
+                                            let intent = actions::selected(
                                                 core,
-                                                ActionIntent::Plan(PlanEditInput {
-                                                    id: format!("{}:{}", self.id, op.local_id),
-                                                    actor_id: actor.into(),
-                                                    commands: vec![command],
-                                                    mode,
-                                                    expected_revision: revision,
-                                                    goal_id: None,
-                                                    watch: None,
-                                                }),
+                                                command,
+                                                mode,
+                                                declared,
+                                                &self.budget,
                                             )?;
+                                            self.begin_intent(core, intent)?;
                                         }
                                     }
                                 }
@@ -1822,7 +1851,9 @@ impl ResponseCursor {
                         &self.id,
                         &thought,
                         &self.bindings.input.entity_ids,
-                        self.bindings.native_guard().map(|native| native.thought_references.as_ref()),
+                        self.bindings
+                            .native_guard()
+                            .map(|native| native.thought_references.as_ref()),
                         &self.budget,
                     )?;
                     self.store(core, ComponentResult::from_parts(result.into_parts()))?;

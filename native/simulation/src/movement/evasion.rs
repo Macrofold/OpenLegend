@@ -48,6 +48,25 @@ pub(crate) fn legal_distance(distance: f64, maximum: f64) -> bool {
     distance.is_finite() && distance > MINIMUM_DISTANCE && distance <= maximum + COORDINATE_EPSILON
 }
 
+/// Resolve one authored direction on the actor's current support. The segment
+/// stays within the body's installed three-dimensional range on sloped ground.
+pub(crate) fn destination<'a>(
+    installed: &'a crate::simulation::InstalledWorld,
+    actor: &Entity,
+    direction: &crate::worlds::base_cognition::EvasionDirection,
+    maximum: f64,
+) -> Option<(&'a str, crate::state::Point, f64)> {
+    let (from, support) = actor.world_support()?;
+    let x = from.x + direction.x * maximum;
+    let z = from.z + direction.z * maximum;
+    let (surface, y) = crate::commands::invocation::installed_coordinate(installed,x,z,Some(support)).ok()?;
+    let to = crate::state::Point { x, y, z };
+    let length = crate::spatial::distance(from,to);
+    if !length.is_finite() || length <= 0. {return None;}
+    let point = crate::spatial::interpolate(from,to,(maximum / length).min(1.));
+    let distance=crate::spatial::distance(from,point);
+    legal_distance(distance,maximum).then_some((surface,point,distance))
+}
 pub(crate) fn valid_saved(
     state: &PhysicalState,
     installed: &crate::simulation::InstalledWorld,

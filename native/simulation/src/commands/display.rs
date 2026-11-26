@@ -196,7 +196,7 @@ impl ActivityDisplayCursor {
                 | NativeCommand::TendFire { .. }
                 | NativeCommand::Respawn { .. }
                 | NativeCommand::TreatScar { .. }
-            | NativeCommand::OperateGate { .. }
+                | NativeCommand::OperateGate { .. }
                 | NativeCommand::PlaceHearth { .. }
                 | NativeCommand::Craft { .. }
                 | NativeCommand::Cook { .. }

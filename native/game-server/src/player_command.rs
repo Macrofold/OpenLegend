@@ -159,6 +159,8 @@ struct CommandInput {
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     outing_operation: Option<TravelOperation>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    amendment_revision: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     outing_mode: Option<PlanMode>,
     #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
     outing_id: Option<String>,
@@ -408,9 +410,10 @@ enum CommandKind {
     TreatScar,
     #[serde(rename = "place-hearth")]
     PlaceHearth,
+    #[serde(rename = "operate-gate")]
+    OperateGate,
     Outing,
     Pickup,
-    OperateGate,
     Drop,
     #[serde(rename = "transfer-item")]
     TransferItem,
@@ -1164,8 +1167,6 @@ impl PlayerCommands {
                                 (None, Some((id, life))) => Some(RuntimeRangedTarget::Subject { id, life }),
                                 (None, None) => None,
                             };
-                            let command = if let Some((binding, _)) = &encounter {
-                                let operation = raw.encounter_preference.as_ref().ok_or(StoreError::InvalidRecord)?.operation;
                             if let Some(gate) = &gate {
                                 let selected = begin_references.resolve_contact(
                                     world, &begin_scope.scope, &gate.contact, &begin_budget,
@@ -1180,6 +1181,8 @@ impl PlayerCommands {
                                     RuntimePlayerCommand::OperateGate(&gate.intent), false, materials,
                                 )?));
                             }
+                            let command = if let Some((binding, _)) = &encounter {
+                                let operation = raw.encounter_preference.as_ref().ok_or(StoreError::InvalidRecord)?.operation;
                                 RuntimePlayerCommand::EncounterPreference(operation, binding)
                             } else { begin_facts.command(
                                 position,
@@ -1436,7 +1439,7 @@ impl CommandRequest {
                 && command.expected_revision.is_some())
             || (!matches!(command.kind, CommandKind::Outing)
                 && (command.outing_operation.is_some() || command.outing_mode.is_some()
-                    || command.outing_id.is_some() || command.destination_id.is_some()
+                    || command.outing_id.is_some() || command.amendment_revision.is_some() || command.destination_id.is_some()
                     || command.purpose.is_some()))
             || (!arrangement && !matches!(command.kind, CommandKind::Unequip | CommandKind::LearnRecord)
                 && command.placement_revision.is_some())
@@ -1473,9 +1476,9 @@ impl CommandRequest {
             })
             || (!matches!(command.kind, CommandKind::TendFire) && command.fire_operation.is_some())
             || (!matches!(command.kind, CommandKind::TreatScar) && command.scar_id.is_some())
+            || (matches!(command.kind, CommandKind::OperateGate) != command.gate_choice.is_some())
             || (!matches!(command.kind, CommandKind::PlaceHearth) && command.hearth_plan.is_some())
             || (!matches!(command.kind, CommandKind::Follow)
-            || (matches!(command.kind, CommandKind::OperateGate) != command.gate_choice.is_some())
                 && (command.distance.is_some() || command.follow_until.is_some() || command.complete_follow.is_some()))
             || (!matches!(command.kind, CommandKind::Say)
                 && (command.text.is_some()
@@ -1526,7 +1529,7 @@ impl CommandRequest {
                 let valid = match command.outing_operation {
                     Some(TravelOperation::Invite) => {
                         recipient.is_some_and(id) && command.outing_mode.is_some()
-                            && command.outing_id.is_none() && command.expected_revision.is_none()
+                            && command.outing_id.is_none() && command.amendment_revision.is_none() && command.expected_revision.is_none()
                             && match (command.position.as_ref(), command.destination_id.as_deref()) {
                                 (Some(point), None) => id(&point.surface_id)
                                     && [point.x, point.y, point.z].into_iter().all(f64::is_finite),
@@ -1535,7 +1538,7 @@ impl CommandRequest {
                             }
                     }
                     Some(TravelOperation::Accept) => confirmed && command.outing_mode.is_some(),
-                    Some(TravelOperation::Decline | TravelOperation::Leave) =>
+                    Some(TravelOperation::Decline | TravelOperation::Leave | TravelOperation::Withdraw | TravelOperation::Conclude) =>
                         confirmed && command.outing_mode.is_none(),
                     None => false,
                 };
@@ -1757,8 +1760,6 @@ impl CommandRequest {
                         .is_some_and(openlegend_simulation::values::is_safe_record_id)
                     && command.effect_operation.is_some()
                     && command.facing_heading.is_none_or(f64::is_finite) => Ok(()),
-            CommandKind::PlaceHearth
-                if command.position.is_none() && command.known_place.is_none()
             CommandKind::OperateGate
                 if command.position.is_none() && command.known_place.is_none() && command.target_id.is_none()
                     && command.item_id.is_none() && command.expected_action_id.is_none()
@@ -1768,6 +1769,8 @@ impl CommandRequest {
             {
                 Ok(())
             }
+            CommandKind::PlaceHearth
+                if command.position.is_none() && command.known_place.is_none()
                     && command.expected_action_id.is_none() && command.gathering_mode.is_none()
                     && command.target_id.is_none() && command.item_id.is_none()
                     && command.hearth_plan.as_ref().is_some_and(|plan| plan.valid()) => Ok(()),
@@ -1846,6 +1849,7 @@ impl CommandRequest {
     ) -> Result<PreparedRequest, WorldError> {
         let digest_bytes = self.command.text.as_ref().map_or(0, JsText::units_len)
             .checked_add(self.command.inventory_group.as_ref().map_or(0, String::len))
+            .and_then(|bytes| bytes.checked_add(self.command.gate_choice.as_ref().map_or(0, String::len)))
             .and_then(|bytes| bytes.checked_mul(6))
             .and_then(|bytes| bytes.checked_add(8192))
             .ok_or(StoreError::Capacity)?;
@@ -1987,6 +1991,7 @@ impl PreparedRequest {
                     PlayerTravelIntent::Remedy {
                         operation,
                         invitation: input.outing_id.as_deref().ok_or(StoreError::InvalidRecord)?,
+                        amendment_revision: input.amendment_revision,
                         revision: input.expected_revision.ok_or(StoreError::InvalidRecord)?,
                         mode: input.outing_mode,
                     }
@@ -2134,10 +2139,10 @@ impl PreparedRequest {
                 operation: input.effect_operation.ok_or(StoreError::InvalidRecord)?,
                 facing: input.facing_heading,
             }),
+            CommandKind::OperateGate => Err(StoreError::InvalidRecord.into()),
             CommandKind::PlaceHearth => {
                 let plan = input.hearth_plan.as_ref().ok_or(StoreError::InvalidRecord)?;
                 Ok(RuntimePlayerCommand::PlaceHearth { definition: &plan.definition, site: &plan.site })
-            CommandKind::OperateGate => Err(StoreError::InvalidRecord.into()),
             }
             CommandKind::TreatScar => Ok(RuntimePlayerCommand::TreatScar {
                 target: target.ok_or(StoreError::InvalidRecord)?,

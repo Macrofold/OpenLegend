@@ -80,6 +80,7 @@ pub enum PlayerTravelIntent<'a> {
     Remedy {
         operation: crate::worlds::base_outings::TravelOperation,
         invitation: &'a str,
+        amendment_revision: Option<u64>,
         revision: u64,
         mode: Option<crate::plans::PlanMode>,
     },
@@ -111,10 +112,11 @@ impl PlayerTravelIntent<'_> {
         }
     }
 
-    pub(super) fn bind(
+    pub(crate) fn bind(
         self,
         id: &str,
         actor: &str,
+        human: bool,
     ) -> Result<(NativeCommand, String), serde_json::Error> {
         use crate::records::SqlCell;
         use crate::text::JsText;
@@ -150,7 +152,16 @@ impl PlayerTravelIntent<'_> {
         if let Self::Remedy { revision, .. } = self {
             fields.insert("expectedRevision".into(), SqlCell::Number(revision.into()));
         }
-        fields.insert("humanInitiated".into(), SqlCell::Bool(true));
+        if let Self::Remedy {
+            amendment_revision: Some(revision),
+            ..
+        } = self
+        {
+            fields.insert("amendmentRevision".into(), SqlCell::Number(revision.into()));
+        }
+        if human {
+            fields.insert("humanInitiated".into(), SqlCell::Bool(true));
+        }
         fields.insert("id".into(), text(id));
         let (mode, operation, invitation) = match self {
             Self::Invite { mode, .. } => (Some(mode), TravelOperation::Invite, None),

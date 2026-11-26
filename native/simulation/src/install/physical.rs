@@ -671,6 +671,14 @@ fn validate_entity(
     }
     let pending_family = [
         (entity.replenisher.is_some(), "replenishment source"),
+        // Covering a material must change its elapsed wetting. Until that owner
+        // consumes the installed panel, reject a positive covered opening.
+        (entity.assembly.as_deref().is_some_and(|assembly| match assembly {
+            crate::assembly::Assembly::Shelter { parts, .. } => parts.values().any(|part| {
+                part.role == crate::assembly::ShelterRole::Cover
+            }),
+            crate::assembly::Assembly::Boundary { .. } => false,
+        }), "canopy rain coverage"),
         (
             entity
                 .mechanism_fields

@@ -21,6 +21,8 @@ pub enum TravelOperation {
     Accept,
     Decline,
     Leave,
+    Withdraw,
+    Conclude,
 }
 impl TravelOperation {
     pub(crate) fn as_str(self) -> &'static str {
@@ -29,6 +31,8 @@ impl TravelOperation {
             Self::Accept => "accept",
             Self::Decline => "decline",
             Self::Leave => "leave",
+            Self::Withdraw => "withdraw",
+            Self::Conclude => "conclude",
         }
     }
 }
@@ -216,6 +220,7 @@ impl TravelRules {
                 expected_revision,
                 mode,
             },
+            TravelOperation::Withdraw | TravelOperation::Conclude => return Err(TravelInputError),
             TravelOperation::Invite => unreachable!(),
         })
     }

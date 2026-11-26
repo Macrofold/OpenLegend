@@ -30,6 +30,8 @@ pub(super) enum Intent {
     Command { command: Command },
     #[serde(rename="command")]
     Coaching {command:super::coaching::Command},
+    #[serde(rename = "command")]
+    Gate { command: super::gate::Command },
     Unavailable,
 }
 

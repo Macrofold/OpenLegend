@@ -1,4 +1,4 @@
-//! An invocation binds only a destination. Fresh physical sight and the shared
+//! An invocation binds an issued selection to an ordinary NPC command. Fresh sight and the shared
 //! approach provider supply target stances; ordinary command admission still
 //! checks the resulting intention before any work can be interrupted.
 use super::*;
@@ -127,12 +127,80 @@ fn valid_move(v: &Input, offset: f64) -> bool {
                 && v.surface_id.as_deref().is_none_or(is_safe_record_id)
         }
 }
+impl Input {
+    fn valid_ordinary(&self, world: &crate::simulation::InstalledWorld) -> bool {
+        if self.parameters.is_some()
+            || self.x.is_some()
+            || self.z.is_some()
+            || self.surface_id.is_some()
+            || self.frame.is_some()
+            || self.place.is_some()
+        {
+            return false;
+        }
+        let target = self
+            .target_entity_id
+            .as_deref()
+            .is_some_and(is_safe_record_id);
+        let item = self.item_id.as_deref().is_some_and(is_safe_record_id);
+        if self.family == "follow" {
+            let rule = &world.occurrence_rules.value().response.offers.follow;
+            return target
+                && self.item_id.is_none()
+                && self.quantity.is_none()
+                && self.distance.is_none_or(|n| {
+                    n.is_finite() && (rule.minimum_distance..=rule.maximum_distance).contains(&n)
+                })
+                && self
+                    .relation
+                    .as_deref()
+                    .is_none_or(|v| matches!(v, "near" | "behind" | "beside" | "left" | "right"))
+                && self
+                    .on_lost
+                    .as_deref()
+                    .is_none_or(|v| matches!(v, "stop" | "last-seen"))
+                && self.until.as_ref().is_none_or(|v| {
+                    v.as_str()
+                        .is_some_and(|name| world.status_policy.named_times.contains_key(name))
+                });
+        }
+        if self.distance.is_some()
+            || self.relation.is_some()
+            || self.on_lost.is_some()
+            || self.until.is_some()
+            || self
+                .quantity
+                .as_ref()
+                .is_some_and(|q| q.as_u64().is_none_or(|n| !(1..=999).contains(&n)))
+        {
+            return false;
+        }
+        match self.family.as_str() {
+            "pickup" => target && (item || self.item_id.is_none() && self.quantity.is_none()),
+            "drop" => self.target_entity_id.is_none() && item,
+            _ => false,
+        }
+    }
+}
+
+/// All response commands pass the native command decoder with an NPC actor.
+/// No player control or human-initiated authority is implied by this encoding.
+fn decode_command(value: &serde_json::Value) -> Result<NativeCommand, ExecutionError> {
+    crate::encoding::json_value(value)
+        .and_then(|json| serde_json::from_str(&json))
+        .map_err(|_| ExecutionError::InvalidCheckpoint)
+}
+
+pub(crate) enum SelectedInvocation {
+    Command(NativeCommand),
+    Work(crate::plans::RequestedActivityInput, ByteReservation),
+}
 pub(crate) struct BoundInvocation {
-    value: Result<NativeCommand, Outcome>,
+    value: Result<SelectedInvocation, Outcome>,
     storage: ByteReservation,
 }
 impl BoundInvocation {
-    pub(crate) fn into_parts(self) -> (Result<NativeCommand, Outcome>, ByteReservation) {
+    pub(crate) fn into_parts(self) -> (Result<SelectedInvocation, Outcome>, ByteReservation) {
         (self.value, self.storage)
     }
 }
@@ -156,7 +224,7 @@ pub(crate) struct InvocationCursor {
     candidate: CandidateKey,
     sight: Option<SightBatch>,
     queries: Option<GeometryQueries>,
-    result: Option<Result<NativeCommand, Outcome>>,
+    result: Option<Result<SelectedInvocation, Outcome>>,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
 }
@@ -197,20 +265,72 @@ impl InvocationCursor {
             budget: budget.clone(),
             storage: Some(storage),
         };
-        match result.input.as_ref() {
-            Some(v) if v.family != "move" => result.refuse(
-                "unsupported-action",
-                "That action family is not available in this native execution scope.",
-            )?,
-            Some(v)
-                if valid_move(
+        let valid = result
+            .input
+            .as_ref()
+            .is_some_and(|v| match v.family.as_str() {
+                "move" => valid_move(
                     v,
                     core.state.installed.actor_response_limits.invocation.offset,
-                ) => {}
-            _ => result.refuse(
+                ),
+                "follow" | "pickup" | "drop" => v.valid_ordinary(&core.state.installed),
+                _ => false,
+            });
+        if let Some(input) = result
+            .input
+            .as_ref()
+            .filter(|input| input.parameters.is_some())
+        {
+            let form = core
+                .state
+                .installed
+                .occurrence_rules
+                .value()
+                .response
+                .offers
+                .installed_requests
+                .iter()
+                .find(|f| f.id == input.family);
+            let navigation = input.x.is_some()
+                || input.z.is_some()
+                || input.surface_id.is_some()
+                || input.frame.is_some()
+                || input.place.is_some()
+                || input.target_entity_id.is_some()
+                || input.distance.is_some()
+                || input.relation.is_some()
+                || input.on_lost.is_some()
+                || input.until.is_some()
+                || input.item_id.is_some()
+                || input.quantity.is_some();
+            let command = if let Some((form, args)) =
+                form.filter(|_| !navigation).zip(input.parameters.as_ref())
+            {
+                use crate::worlds::base_request_forms as forms;
+                if forms::work::supports(&form.id) {
+                    forms::compile_work(core.state, actor, id, form, args, budget)?
+                        .map(|(work, storage)| SelectedInvocation::Work(work, storage))
+                } else {
+                    forms::compile(core.state, actor, id, form, args, budget)
+                        .map(SelectedInvocation::Command)
+                }
+            } else {
+                None
+            };
+            if let Some(command) = command {
+                result.result = Some(Ok(command));
+                result.phase = Phase::Done;
+            } else {
+                result.refuse(
+                    "unavailable",
+                    "This installed activity or its selected arguments are unavailable here.",
+                )?;
+            }
+        } else if !valid {
+            result.refuse(
                 "invalid-invocation",
                 "Action arguments do not match an available capability.",
-            )?,
+            )?;
         }
         Ok(result)
     }
@@ -245,13 +365,125 @@ impl InvocationCursor {
         self.phase = Phase::Done;
         Ok(())
     }
+    fn ordinary(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        let input = self.input.as_ref().ok_or(ExecutionError::Invariant)?;
+        let state = &core.state;
+        let actor = state
+            .physical
+            .entities
+            .get(&self.actor)
+            .ok_or(ExecutionError::MissingActor)?;
+        let mut command =
+            serde_json::json!({"id":self.id,"actorId":self.actor,"type":input.family});
+        match input.family.as_str() {
+            "drop" => {
+                let item = input.item_id.as_deref().ok_or(ExecutionError::Invariant)?;
+                let Some(owned) = crate::install::owned_by(
+                    &state.physical,
+                    &state.installed.retained,
+                    &self.actor,
+                    item,
+                )?
+                else {
+                    return self.refuse("target-unavailable", "Choose something you are carrying.");
+                };
+                let quantity = input
+                    .quantity
+                    .as_ref()
+                    .and_then(SqlCell::as_u64)
+                    .unwrap_or(owned.quantity);
+                if let Some(reason) = core.check_drop_item(&self.actor, item, quantity)? {
+                    let reason = reason.to_owned();
+                    return self.refuse("unavailable", &reason);
+                }
+                command["itemId"] = item.into();
+                command["quantity"] = quantity.into();
+            }
+            "pickup" => {
+                let target = input
+                    .target_entity_id
+                    .as_deref()
+                    .ok_or(ExecutionError::Invariant)?;
+                let quantity = input.quantity.as_ref().and_then(SqlCell::as_u64);
+                let available =
+                    crate::ground_items::pickup_pile(state, actor, target).is_some_and(|pile| {
+                        crate::ground_items::can_pick_up(
+                            state,
+                            pile,
+                            input.item_id.as_deref(),
+                            quantity,
+                        )
+                    });
+                if !available {
+                    return self.refuse(
+                        "target-unavailable",
+                        "Choose a visible pile and portable items in it.",
+                    );
+                }
+                command["targetId"] = target.into();
+                if let Some(item) = &input.item_id {
+                    command["itemId"] = item.as_str().into();
+                }
+                if let Some(quantity) = quantity {
+                    command["quantity"] = quantity.into();
+                }
+            }
+            "follow" => {
+                let target = input
+                    .target_entity_id
+                    .as_deref()
+                    .ok_or(ExecutionError::Invariant)?;
+                let body = state
+                    .physical
+                    .entities
+                    .get(target)
+                    .filter(|e| e.actor.as_ref().is_some_and(|a| a.alive));
+                let Some(life) = body.and_then(|e| e.physical_life()) else {
+                    return self.refuse(
+                        "target-unavailable",
+                        "Choose a living person currently in view.",
+                    );
+                };
+                command["targetId"] = target.into();
+                command["targetLife"] = life.into();
+                if let Some(distance) = input.distance {
+                    command["distance"] = distance.into();
+                }
+                if let Some(relation) = input.relation.as_deref().filter(|r| *r != "near") {
+                    command["relation"] = relation.into();
+                }
+                if input.on_lost.as_deref() == Some("last-seen") {
+                    command["onLost"] = "last-seen".into();
+                }
+                if let Some(hour) = input
+                    .until
+                    .as_ref()
+                    .and_then(SqlCell::as_str)
+                    .and_then(|n| state.installed.status_policy.named_times.get(n))
+                {
+                    let now = state.physical.header.sim_time;
+                    let local = crate::time::local_clock::local_hour(
+                        now,
+                        state.installed.status_policy.clock_offset_hours,
+                    );
+                    command["until"] = (now
+                        + crate::time::local_clock::daily_boundary(local, *hour, *hour, 0.))
+                    .into();
+                }
+            }
+            _ => return Err(ExecutionError::Invariant),
+        }
+        self.result = Some(Ok(SelectedInvocation::Command(decode_command(&command)?)));
+        self.phase = Phase::Done;
+        Ok(())
+    }
     fn bind(&mut self, point: SurfacePoint) -> Result<(), ExecutionError> {
         let (command, guard) = movement_destination(&self.actor, &self.id, &point, &self.budget)?;
         self.storage
             .as_mut()
             .ok_or(ExecutionError::Invariant)?
             .merge(guard)?;
-        self.result = Some(Ok(command));
+        self.result = Some(Ok(SelectedInvocation::Command(command)));
         self.phase = Phase::Done;
         Ok(())
     }
@@ -328,6 +560,12 @@ impl InvocationCursor {
                         == Some(true);
                     if !seen {
                         self.unseen(core)?;
+                    } else if self
+                        .input
+                        .as_ref()
+                        .is_some_and(|input| input.family != "move")
+                    {
+                        self.ordinary(core)?;
                     } else {
                         let actor = core
                             .state
@@ -442,7 +680,10 @@ impl InvocationCursor {
                 .filter(|e| e.actor.is_some());
             if actor.is_none() {
                 self.refuse("actor-unavailable", "The actor is unavailable.")?;
-            } else if input.place.is_some() {
+            } else if input.family == "drop" {
+                self.ordinary(core)?;
+            } else if input.place.is_some() || matches!(input.family.as_str(), "pickup" | "follow")
+            {
                 let target = input
                     .target_entity_id
                     .as_deref()
@@ -464,25 +705,33 @@ impl InvocationCursor {
                         &self.budget,
                     )
                     .map_err(|_| ExecutionError::Invariant)?;
-                    let actor = actor.ok_or(ExecutionError::MissingActor)?;
-                    let target = core
-                        .state
-                        .physical
-                        .entities
-                        .get(target)
-                        .ok_or(ExecutionError::MissingEntity)?;
-                    let mut from = actor
-                        .world_position()
-                        .ok_or(ExecutionError::InvalidPosition)?;
-                    from.y += actor.body_profile().interaction_height;
-                    let mut to = target
-                        .world_position()
-                        .ok_or(ExecutionError::InvalidPosition)?;
-                    to.y += target.body_profile().interaction_height;
-                    self.reserve((sight.queries().sight.len() + 1) * size_of::<SightRay>())?;
+                    let approach = if input.family == "move" {
+                        let actor = actor.ok_or(ExecutionError::MissingActor)?;
+                        let target = core
+                            .state
+                            .physical
+                            .entities
+                            .get(target)
+                            .ok_or(ExecutionError::MissingEntity)?;
+                        let mut from = actor
+                            .world_position()
+                            .ok_or(ExecutionError::InvalidPosition)?;
+                        let mut to = target
+                            .world_position()
+                            .ok_or(ExecutionError::InvalidPosition)?;
+                        from.y += actor.body_profile().interaction_height;
+                        to.y += target.body_profile().interaction_height;
+                        Some(SightRay { from, to })
+                    } else {
+                        None
+                    };
+                    self.reserve(
+                        (sight.queries().sight.len() + usize::from(approach.is_some()))
+                            * size_of::<SightRay>(),
+                    )?;
                     let mut queries = GeometryQueries::new(binding);
                     queries.sight.extend(sight.queries().sight.iter().cloned());
-                    queries.sight.push(SightRay { from, to });
+                    queries.sight.extend(approach);
                     self.sight = Some(sight);
                     self.queries = Some(queries);
                     self.phase = Phase::Sight;

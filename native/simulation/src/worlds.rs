@@ -18,6 +18,8 @@ pub(crate) mod base_traits;
 #[path = "../../../packages/domain/src/worlds/base/native/recognition.rs"]
 pub mod base_recognition;
 
+#[path = "../../../packages/domain/src/worlds/base/native/request_forms.rs"]
+pub(crate) mod base_request_forms;
 #[path = "../../../packages/domain/src/worlds/base/native/decision_offers.rs"]
 pub(crate) mod base_decision_offers;
 pub(crate) use base_decision_offers::{

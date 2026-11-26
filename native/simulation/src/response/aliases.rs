@@ -197,6 +197,8 @@ impl ActorResponse {
     /// ticket's maps. The input envelope has already passed its syntax owner.
     pub(crate) fn resolve_entities(
         &mut self,
+        installed: &crate::simulation::InstalledWorld,
+        form_values: &[crate::capture::FormValue],
         aliases: &ResponseAliases<'_>,
         thoughts: &IndexMap<String, crate::capture::npc_thoughts::ThoughtOffer>,
         budget: &ByteBudget,
@@ -274,7 +276,10 @@ impl ActorResponse {
                         {
                             // Carry the issued personal identity, not its current body or alias.
                             *subject = resolved_subject_cell(identity, storage)?;
-                        } else if subject.as_str().is_some_and(|id| aliases.entities.contains_key(id)) {
+                        } else if subject
+                            .as_str()
+                            .is_some_and(|id| aliases.entities.contains_key(id))
+                        {
                             scalar(subject, aliases.entities, storage)?;
                         } else if !subject.as_str().is_some_and(|id| thoughts.contains_key(id)) {
                             // An unavailable annotation never changes its literal.
@@ -305,11 +310,10 @@ impl ActorResponse {
                 if let Some(target) = act.get_mut("targetEntityId") {
                     scalar(target, aliases.physical, storage)?;
                 }
-                let exact_remembered_request = act.get("rememberedPlaceId")
+                let exact_remembered_request = act
+                    .get("rememberedPlaceId")
                     .is_some_and(|selector| !selector.is_null());
-                if !exact_remembered_request
-                    && let Some(description) = act.get_mut("description")
-                {
+                if !exact_remembered_request && let Some(description) = act.get_mut("description") {
                     prose(description, aliases, false, budget, storage)?;
                 }
                 if let Some(slots) = act.get_mut("slots").filter(|value| !value.is_null()) {
@@ -327,11 +331,49 @@ impl ActorResponse {
                             scalar(value, aliases.physical, storage)?;
                         }
                     }
-                    // Move is the selected invocation executor and accepts no
-                    // parameters. Other invocation families remain opaque here
-                    // and receive the action owner's explicit family refusal;
-                    // their fields cannot become authority through a guessed
-                    // activity schema or discard independent response parts.
+                    if let Some(request) = invocation
+                        .get("family")
+                        .and_then(SqlCell::as_str)
+                        .and_then(|id| {
+                            installed
+                                .occurrence_rules
+                                .value()
+                                .response
+                                .offers
+                                .installed_requests
+                                .iter()
+                                .find(|r| r.id == id)
+                        })
+                        && let Some(SqlCell::Object(parameters)) = invocation.get_mut("parameters")
+                    {
+                        for (role, value) in parameters {
+                            if request.fields.get(role).is_some_and(|f| {
+                                f.kind == crate::worlds::base_decision_offers::FieldKind::Entity
+                            }) {
+                                if value
+                                    .as_str()
+                                    .is_some_and(|key| aliases.physical.contains_key(key))
+                                {
+                                    scalar(value, aliases.physical, storage)?;
+                                } else if let Some(place) = value
+                                    .as_str()
+                                    .and_then(|v| v.strip_prefix("known-place-"))
+                                    .and_then(|n| n.parse::<usize>().ok())
+                                    .and_then(|ordinal| form_values.get(ordinal))
+                                    .filter(|place| {
+                                        place.kind == "place"
+                                            && place.request == request.id
+                                            && place.field == *role
+                                    })
+                                {
+                                    reserve(storage, place.value.len())?;
+                                    *value = SqlCell::from(place.value.as_str());
+                                } else {
+                                    *value = SqlCell::Null;
+                                } // Refuse this component without binding a guessed identity.
+                            }
+                        }
+                    }
                 }
             }
         }

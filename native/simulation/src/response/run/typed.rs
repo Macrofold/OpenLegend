@@ -664,7 +664,17 @@ impl TypedGroundingCursor {
                                     Some(Prepared::InvocationRefused { outcome });
                                 self.index += 1;
                             }
-                            Ok(command) => {
+                            Ok(crate::commands::SelectedInvocation::Work(..)) => {
+                                let outcome = crate::commands::outcome(
+                                    false,
+                                    "invalid-invocation",
+                                    "This proposal requires an installed activity request.",
+                                );
+                                self.items[self.index].prepared =
+                                    Some(Prepared::InvocationRefused { outcome });
+                                self.index += 1;
+                            }
+                            Ok(crate::commands::SelectedInvocation::Command(command)) => {
                                 self.begin_preview(core, command)?;
                             }
                         }

@@ -8,17 +8,6 @@ use crate::worlds::base_outings::travel_able;
 
 pub(crate) const REVISION: &str = "revision";
 
-/// This activation closes the browser consent loop. Until the NPC reader and
-/// admitted choice/apply callers are converted, live NPC terms stay closed.
-/// This is supported native execution scope, not an authored participant rule.
-pub(crate) fn has_player_control(physical: &crate::simulation::PhysicalState, actor: &str) -> bool {
-    physical
-        .entities
-        .get(actor)
-        .and_then(|body| body.actor.as_ref())
-        .is_some_and(|body| body.controller == "player")
-}
-
 pub(crate) fn text<'a>(value: &'a SqlCell, key: &str) -> Result<&'a str, ExecutionError> {
     value
         .get(key)

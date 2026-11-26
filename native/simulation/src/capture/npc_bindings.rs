@@ -52,6 +52,9 @@ pub(crate) use actions::prepare_ordinary_actions;
 )]
 pub enum NpcEntityOrdinal {
     Myself,
+    Possession {
+        ordinal: usize,
+    },
     Body {
         ordinal: usize,
     },
@@ -222,6 +225,8 @@ pub(crate) struct NpcBindingMaps {
     pub identity_references: IndexMap<String, ObserverSubject>,
     pub thought_references: Arc<IndexMap<String, ThoughtOffer>>,
     pub entity_leases: IndexMap<String, String>,
+    pub form_values: Vec<crate::capture::FormValue>,
+    pub lots: IndexMap<String, crate::capture::LotStamp>,
     pub expected_encounters: IndexMap<String, String>,
     pub situation: ResponseSituation,
     pub appraisals: Option<Arc<crate::response::PreparedResponseAppraisals>>,
@@ -302,7 +307,10 @@ pub(crate) struct NpcBindingRead<'a> {
     pub invocation_id: &'a str,
 }
 impl NpcBindingRead<'_> {
-    pub(super) fn body(&self, ordinal: usize) -> Result<&super::CapturedBodyBinding, ExecutionError> {
+    pub(super) fn body(
+        &self,
+        ordinal: usize,
+    ) -> Result<&super::CapturedBodyBinding, ExecutionError> {
         if !self
             .current_selection
             .ok_or_else(invalid)?
@@ -660,6 +668,20 @@ impl NpcBindingMaps {
         let mut physical_references = IndexMap::with_capacity(count);
         let mut intention_references = IndexMap::with_capacity(count);
         let mut entity_leases = IndexMap::with_capacity(count);
+        let issued = read
+            .candidates
+            .map(|c| c.activity_facts().values)
+            .unwrap_or_default();
+        let bound = issued
+            .iter()
+            .try_fold(0usize, |sum, v| {
+                sum.checked_add(v.heap_bytes()?)?
+                    .checked_add(size_of::<crate::capture::FormValue>())
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        reserve(&mut storage, bound)?;
+        let form_values = issued.to_vec();
+        let mut lots = IndexMap::new();
         let mut expected_encounters = IndexMap::with_capacity(encounter_count);
         for &ordinal in read
             .current_selection
@@ -679,6 +701,25 @@ impl NpcBindingMaps {
         for selected in &selection.entities {
             let (fact, physical, body_lease, episode) = match selected.source {
                 NpcEntityOrdinal::Myself => (&read.references.myself, true, None, None),
+                NpcEntityOrdinal::Possession { ordinal } => {
+                    let item = read
+                        .candidates
+                        .and_then(|c| c.activity_facts().possessions.get(ordinal))
+                        .ok_or_else(invalid)?;
+                    if !item.lot.current(state, actor, &item.id)? {
+                        return Err(invalid());
+                    }
+                    reserve(
+                        &mut storage,
+                        3 * (selected.alias.len()
+                            + item.id.len()
+                            + size_of::<crate::capture::LotStamp>()),
+                    )?;
+                    insert(&mut entity_references, &selected.alias, item.id.clone())?;
+                    insert(&mut physical_references, &selected.alias, item.id.clone())?;
+                    insert(&mut lots, &item.id, item.lot)?;
+                    continue;
+                }
                 NpcEntityOrdinal::Body { ordinal } => {
                     let body = read.body(ordinal)?;
                     // The actual captured grant authorizes this alias. A later
@@ -1046,9 +1087,15 @@ impl NpcBindingMaps {
                     .ok_or(ExecutionError::Capacity)?,
                 thought_references
                     .heap_bytes()
-                    .and_then(|bytes| bytes.checked_add(size_of::<IndexMap<String, ThoughtOffer>>() + 2 * size_of::<usize>()))
+                    .and_then(|bytes| {
+                        bytes.checked_add(
+                            size_of::<IndexMap<String, ThoughtOffer>>() + 2 * size_of::<usize>(),
+                        )
+                    })
                     .ok_or(ExecutionError::Capacity)?,
                 entity_leases.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                lots.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                form_values.heap_bytes().ok_or(ExecutionError::Capacity)?,
                 expected_encounters
                     .heap_bytes()
                     .ok_or(ExecutionError::Capacity)?,
@@ -1073,6 +1120,8 @@ impl NpcBindingMaps {
             knowledge_references,
             thought_references: Arc::new(thought_references),
             entity_leases,
+            lots,
+            form_values,
             expected_encounters,
             situation,
             appraisals,

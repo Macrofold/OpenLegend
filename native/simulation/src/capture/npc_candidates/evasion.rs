@@ -2,8 +2,7 @@
 //! combat opportunity. The ordinary command owns physical path and recovery.
 
 use super::*;
-use crate::commands::invocation::installed_coordinate;
-use crate::movement::evasion::{legal_distance, profile};
+use crate::movement::evasion::{destination, profile};
 use crate::state::Entity;
 use crate::text::{JsText, substitute_fields, substituted_fields_bound};
 use std::sync::Arc;
@@ -39,32 +38,14 @@ impl NpcCandidateCursor {
         let Some((profile, _)) = profile(installed, actor) else {
             return Ok(false);
         };
-        let Some((from, support)) = actor.world_support() else {
-            return Ok(false);
-        };
         if index == 0 && !self.evasion_relevant(core, actor) {
             return Ok(false);
         }
 
         self.stage = Enumerate::Evade(index + 1);
-        let x = from.x + direction.x * profile.maximum_distance;
-        let z = from.z + direction.z * profile.maximum_distance;
-        let Ok((surface, y)) = installed_coordinate(installed, x, z, Some(support)) else {
+        let Some((surface,point,distance)) = destination(installed,actor,direction,profile.maximum_distance) else {
             return Ok(true);
         };
-        let to = Point { x, y, z };
-        let length = crate::spatial::distance(from, to);
-        if !(length.is_finite() && length > 0.) {
-            return Ok(true);
-        }
-        // Keep the exact current support and cap the 3D segment on slopes.
-        // The shared command preview still checks every intervening obstruction.
-        let point =
-            crate::spatial::interpolate(from, to, (profile.maximum_distance / length).min(1.));
-        let distance = crate::spatial::distance(from, point);
-        if !legal_distance(distance, profile.maximum_distance) {
-            return Ok(true);
-        }
         let _point = self.budget.reserve(surface.len())?;
         let destination = SurfacePoint {
             x: point.x,

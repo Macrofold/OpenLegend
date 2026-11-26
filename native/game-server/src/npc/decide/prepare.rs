@@ -554,6 +554,26 @@ fn project(
             scene.push(body);
         }
     }
+    let mut possessions = Vec::new();
+    if decision {
+        for (ordinal, item) in read
+            .activity_facts()
+            .map_err(packet_failure)?
+            .possessions
+            .iter()
+            .enumerate()
+        {
+            let key = alias(&reference_key, "possession", ordinal);
+            canonical.insert(&item.id, key.clone());
+            refs.push(key.clone());
+            physical.push(key.clone());
+            entities.push(NpcEntityAlias {
+                alias: key.clone(),
+                source: NpcEntityOrdinal::Possession { ordinal },
+            });
+            possessions.push(json!({"entityId":key,"name":prompt_text(&item.name.name),"quantity":item.lot.quantity,"available":item.lot.available,"equipped":item.lot.equipped}));
+        }
+    }
     let mut source_entries = Vec::with_capacity(rows.len());
     if let Some(selected) = selected {
         for &row in rows {
@@ -862,7 +882,7 @@ fn project(
             "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
             "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
             "activityRequests":activity_requests(game,read.activity_facts().map_err(packet_failure)?,&canonical)?,
-            "possessions":[],"notepad":null,
+            "possessions":possessions,"notepad":null,
             "knowledge":knowledge_text,"references":descriptions,"situationQueries":true,
         });
         (fields, speaks, expressions, preview_player)
@@ -1351,6 +1371,23 @@ fn activity_requests(
         formatted.insert("accessible".into(), json!(choice.accessible));
         formatted.insert(key.to_owned(), json!(reference));
         permitted.push(Value::Object(formatted));
+    }
+    for (ordinal, value) in read.values.iter().enumerate() {
+        let mut entry = json!({"label":prompt_text(&value.label),"kind":value.kind,"roles":[value.field],"requestIds":[value.request],"accessible":true});
+        if let Some((field, parent)) = &value.parent {
+            let presented = canonical
+                .get(parent.as_str())
+                .map(String::as_str)
+                .unwrap_or(parent);
+            entry["requires"] = json!({(field):presented});
+        }
+        match value.kind.as_str() {
+            "place" => entry["entityId"] = json!(format!("known-place-{ordinal}")),
+            "definition" => entry["definitionId"] = json!(&value.value),
+            "choice" => entry["value"] = json!(&value.value),
+            _ => return Err(CallFailure::Invalid),
+        }
+        permitted.push(entry);
     }
     let warnings: Vec<_> = read.warnings.iter().map(prompt_text).collect();
     Ok(json!({"requests":game.cognition.requests,"choices":permitted,"warnings":warnings}))
