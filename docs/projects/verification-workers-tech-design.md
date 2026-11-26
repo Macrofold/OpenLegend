@@ -107,7 +107,7 @@ The worker keeps up to four checked Rust executables, each at most 768 MiB, in i
 
 ### Integrated runner follow-up review
 
-The maintained planner executes an untimed preparation case before three matched build pairs. The report qualifies only actual hits of that case's verified executable, with matching inputs, workload and worker. The deployed controller keeps reservations through worker replacement and closes unclaimed assignments that reach their deadline. The [review evidence](../maintainers/verification-workers.md#integrated-runner-follow-up-review--november-25-2026) records local and managed checks. The [rollout record](../maintainers/verification-workers.md#controller-only-scheduler-rollout--november-25-2026) tracks deployment verification and the remaining live replacement check.
+The maintained planner executes an untimed preparation case before three matched build pairs. The report qualifies only actual hits of that case's verified executable, with matching inputs, workload and worker. The deployed controller keeps reservations through worker replacement and closes unclaimed assignments that reach their deadline. The [review evidence](../maintainers/verification-workers.md#integrated-runner-follow-up-review--november-25-2026) records the original local and managed checks. The [rollout record](../maintainers/verification-workers.md#controller-only-scheduler-rollout--november-25-2026) documents deployment and the [live AWS follow-up](../maintainers/verification-workers.md#aws-lifecycle-follow-up--november-25-2026) records replacement and build checks.
 
 ### Controller-only updates with stopped quarantines
 
@@ -122,6 +122,14 @@ Verify with disposable cases for an unrelated infrastructure change, unexpected 
 Preserve the acknowledged export from slot 1 and read the exact failed run's diagnostics for slot 3 from a temporary snapshot of its stopped root disk. Verify the retained bytes before allowing the original disks to be deleted. Leave the failed tests recorded as interrupted and retain their financial history. Verify exact ownership and stopped power before retirement, keep the assignments unavailable until AWS confirms deletion, and reconcile only from supported running intervals. Check that the original disk charges end and remove the temporary snapshot after its selected files have been verified. This operation applies only to the two explicitly approved November workers.
 
 The operator invokes `pnpm verify:worker retire SLOT --quarantine VERIFIED_RECEIPT.json` with the original batch's saved credential. The receipt ties the exact failed test and stopped instance to an independently verified archive and the AWS power events used for estimated compute cost. The controller keeps the failed assignment fenced until it observes termination and then closes it as interrupted. Ordinary `retire SLOT` continues to require an idle worker.
+
+### Follow-up AWS lifecycle checks
+
+Replay the benchmark case that already published and reused an executable on the retained worker after confirming the same instance and disk are stopped. Require the original build identity and checksum, a later worker claim and a fresh database, and retain the ordinary gameplay and cleanup receipts. Use a separate, previously unseen build identity for the interruption check. Stop the real compile through the benchmark's owned deadline and verify it was compiling, published no reusable executable and cleaned up. Then run the same inputs to completion on that worker and compare the receipts.
+
+The first interruption attempt exposed a shared subprocess timeout problem. A build launcher can exit while the compiler processes it started still hold its output pipes open. Use the shared Node process owner to stop the launched process group on its supported Unix hosts, with a local regression that reproduces the inherited pipes. Preserve the first failed attempt and repeat both benchmark cases at the fixed source revision.
+
+Keep live replacement qualification on a disposable worker owned by this task. Reserve its exact slot through the controller, then make its stopped instance differ from its registered hardware so the normal claim path retires it. Verify the original and replacement instance identities, the same assignment and completed output, then retire the test-owned instance. All executed workloads stay on the standard 16 GiB worker type. Verify available capacity and the existing task allocation before each admission, preserve other campaigns and their workers, and reconcile each cost after stop or retirement.
 
 ### Network and execution boundary
 
