@@ -1,0 +1,272 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-concepts-5-sample",
+    "revisionId": "concepts-5-sample-20261121-615d5af9293f",
+    "manifestSha256": "3fdc24dd93a5f4fcc0451449a39034bf4f53debf0abb0de868d36e637bba18bd"
+  },
+  "files": {
+    "concepts-5-sample/batch-manifest.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "78f4aab355fd13c8f9472c42eca28776861c495b892d2e718bae3374dc51ecbd",
+      "bytes": 11763,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/build-sheet.jxa": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b502c6024473540fc90823a5f17d091a99db60ad99a7f2b3aea05b9125aa9fe2",
+      "bytes": 10570,
+      "mediaType": "application/octet-stream"
+    },
+    "concepts-5-sample/candidates/c01-M050-F050-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6480ca3219afbf1bd9e337a48d7b2c626caf34eff7c4986599501e3072639da9",
+      "bytes": 5462111,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c02-M070-F045-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "477c969dfdb59c176eb74be6152832350f9ba8b7a3468a113675c6fec822270c",
+      "bytes": 5372397,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c03-M000-F000-D000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b9a49d5d6a064dc6e41fc7587b6d3c7578a255408d1b8f380e43157172cb619a",
+      "bytes": 6014495,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c04-M100-F000-D100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "8c8f972549e3ca0eff9201e66c13b09ac89425111cd5bfa623a915978b95120d",
+      "bytes": 5948152,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c05-M050-F100-D000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ea7501ed610c2f59067c85ba213a53abac54ab23643c3f1a40eab4d320b5ef56",
+      "bytes": 5399052,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c06-M050-F050-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5fb6ef1fde2ed7a1fbebd5be79bd5e65484c335a4aadff5fb7421542fa58c5da",
+      "bytes": 7598379,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c07-M070-F045-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "10bef8bc1acffb28d2d2c8b401c0b3cbc775ef3994d4e04b5b9f22f6e03d75e8",
+      "bytes": 7631733,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c08-M000-F000-D000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "afe250ec525a40bbc65d8e425557cbba93c5b94e227cdc485416965ebeaeb819",
+      "bytes": 6180852,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c09-M050-F050-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "8c61ff8551fdbe0440f538f23204553dd293467f2f142106b22a1bb5eca2cd69",
+      "bytes": 5217965,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c10-M070-F045-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "95912c3727268f551b68b03356e499977f43a810cac5ceeb07bc59419ba4de1d",
+      "bytes": 5813397,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/candidates/c11-M070-F045-D050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f9976b6cf992bd12ba62f9dd1a3d1607612fdb8b7af0d30b2ba823e5df24fd41",
+      "bytes": 6088678,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/jobs/c01-M050-F050-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1d1a03592cdaf5c510a3bbe6603e16823b89f15716a5b320358e622582915a2c",
+      "bytes": 3372,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c02-M070-F045-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b7f5fcb75a883142654ee2d50eebf377a8bae79302bb8b851ff4fc4f3afdd507",
+      "bytes": 3415,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c03-M000-F000-D000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "48c7fe4907b46dcf0c783b184c8d0a4e9e17336185a4cc2d1ab43b4a0308c36a",
+      "bytes": 3546,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c04-M100-F000-D100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3499f035d5aa1587c282e90d1c5f5e3899a3313d4304e5cf82d0b4232990ab7b",
+      "bytes": 3642,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c05-M050-F100-D000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b6d4c1097d3b1d5d95301d1dbc96fa39ff1e063847f81c49910515aca2d4145d",
+      "bytes": 3550,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c06-M050-F050-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "70e343d3945af623cd579df10e28af7d07ad614a902629719c351a88f2a7a4c0",
+      "bytes": 2940,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c07-M070-F045-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "97099817d00ca34af08dadee3d2754eee2336206cbc2d65a9ea1e40b438dda66",
+      "bytes": 3056,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c08-M000-F000-D000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "52e98e1584a6c82ab5af4ff4b5b55f2cbb2f44a4d14f3cf48a61e59af696b4e5",
+      "bytes": 2656,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c09-M050-F050-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "99f9494f3398d0fb49364ed29179f0b843690a5998f8313166ad14a8bb0cba95",
+      "bytes": 2520,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c10-M070-F045-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a3efad1fd1c66764ea3f0c6758c1f2a59d4a8a26ec34b4ab3c9db0b3be1968d0",
+      "bytes": 2472,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/jobs/c11-M070-F045-D050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d1ceb44850b6b89e9ebde4e48b00c0772d79eafa7329f6764b0974748cb0c9ab",
+      "bytes": 2605,
+      "mediaType": "application/json"
+    },
+    "concepts-5-sample/prompts/c01-M050-F050-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "de3854adb966bf0237e9f704ce70a010a2b3b83417ae07a48febfd127b5439b7",
+      "bytes": 2240,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c02-M070-F045-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "272a68b2d311f90048506127f0d79419823e8434b5d0dc29cf607c87591c0eb1",
+      "bytes": 2282,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c03-M000-F000-D000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d30867f6da1f37b707c566c0e6b57f2a9bdfe537462fde02eb3fd39d770dc1a3",
+      "bytes": 2413,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c04-M100-F000-D100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "53577c158c953ffb4a29e974ef1911d4ee51063fc579976c1b8a3ddad90ddd68",
+      "bytes": 2510,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c05-M050-F100-D000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7fdcf8b26343670300b2448d0858cddb959ecae3d2764210589a5486ad1ba274",
+      "bytes": 2418,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c06-M050-F050-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3f718ecafbfd73785081e82438da3ce11fdfb171865c32598ac0055b805c115e",
+      "bytes": 1493,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c07-M070-F045-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "558087cb8b167cc031e7ce33f7b0974f0c5d13faf17e17094a8e97ccc8d83237",
+      "bytes": 1609,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c08-M000-F000-D000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "77a730fbfd99b73431740232ee88624e5fc8f9738e086738f87b5f2b50aded3d",
+      "bytes": 1522,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c09-M050-F050-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ed5f6e89504328c6589f841a10923e15ba921be997f9c4f166cf24de549e87f7",
+      "bytes": 1386,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c10-M070-F045-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0ea7c1113faa982aefc7391f861732b506c34d2852a08d065b918abad6b6e58a",
+      "bytes": 1338,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/prompts/c11-M070-F045-D050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "161e686b01ba8f730931c0a66f371b3dc6ba4e5f2ef5e0d9a018481f4c16a7d1",
+      "bytes": 1471,
+      "mediaType": "text/plain"
+    },
+    "concepts-5-sample/review/concepts-sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e6c910ed36633067eff7d68125743b3bc28e99743b266949d8e5d2e52d42baf5",
+      "bytes": 9424678,
+      "mediaType": "image/png"
+    },
+    "concepts-5-sample/review/front-profile-lineup.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "8bc794413f9bc4f2a89ea84753d4182add961fabd4ca791e470addc71cd5a935",
+      "bytes": 6275377,
+      "mediaType": "image/png"
+    }
+  }
+}

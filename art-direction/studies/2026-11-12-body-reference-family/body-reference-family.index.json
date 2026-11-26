@@ -1,0 +1,27 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-concepts",
+    "revisionId": "body-reference-design-20261112-ba3ccb028dc6",
+    "manifestSha256": "de481effc0dd2922508791cf6dbb7e0de72cab59fd3dd277084c823728e3fd7c"
+  },
+  "files": {
+    "references/covered-build-overview.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ba3ccb028dc6826aa3c79713b5ed1bfd76c4d2e3ddbde44f95af1579185720f3",
+      "bytes": 1920886,
+      "mediaType": "image/png"
+    },
+    "generation-record.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "13793ed6cb6f9b24435cf25325b59b34716c2ae8242f1b2c8ef4eb5a32c27ce4",
+      "bytes": 5723,
+      "mediaType": "application/json"
+    }
+  }
+}

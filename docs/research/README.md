@@ -4,9 +4,11 @@ Research informs decisions; it grants no implementation or spending authority. C
 
 - [Music and sound sourcing](audio/README.md): original score direction, AI and library licensing, studio practice, sound production, budgets and a bounded audition plan.
 - [Development-agent workflows](agent-workflows/README.md): sources, adoption rationale and unverified efficiency claims.
+- [Art-creation lessons needing design](art-production/lessons-needs-design.md): concept fidelity, mesh transfer, adjustable anatomy, garment fit, complete visual review and preservation; input to existing workflows, not automatic adoption.
 - [Gameplay and systems questions](gameplay-and-systems/README.md): scoped research questions retained from the former archive backlog, with current delivery owners.
 - [Player appreciation of game music](player-music-appreciation/README.md): player feedback, comparative cases, source evidence and limits; no selected music direction.
 
+- [Character bodies, clothing and animation](character-production/README.md): anatomical foundations, native ecosystems versus transfer, proposed staged validation, and the amended research brief; no source adoption or executed proof.
 - [Character model selection](character-models/selection.md): proposed Cognition Lab panel, pinned research, current hosted candidates and evidence limits; no executed quality ranking.
 - [Game inspiration and case studies](../../archive/02-research/game-inspiration/README.md): source dossiers and [cross-game synthesis](../../archive/02-research/game-inspiration/synthesis/README.md) at their established paths; design proposals retain their own authority.
 - [Engine and runtime applications](../engine-research-guide.md): connects the [engine studies](../../research/README.md) to existing design questions, subsystem owners and evaluation work.

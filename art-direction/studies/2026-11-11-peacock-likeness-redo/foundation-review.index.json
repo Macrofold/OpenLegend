@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-likeness-redo",
+    "revisionId": "foundation-review-20261111-da8efde733aa",
+    "manifestSha256": "efde032ee1dbc4584264208f1f4258d98e8cb18eeeb96a8c3a768f2bbcf80860"
+  },
+  "files": {
+    "Peacock-foundation-review.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da8efde733aa54af13fb0aafbd452bc5d6624505ccccce967abe091670326b14",
+      "bytes": 87332018,
+      "mediaType": "application/zip"
+    }
+  }
+}

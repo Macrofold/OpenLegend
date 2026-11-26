@@ -1,0 +1,230 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-build-sample",
+    "revisionId": "build-sample-20261112-6fc669c6689f",
+    "manifestSha256": "e5dfd916a03e7573611ea55e30ef8b394818f160ee376dafd4ecf32757cf2cc3"
+  },
+  "files": {
+    "c01-M050-F050-D050/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3a81de3561eb043356c313bf5ddb00da55265d9bfb8406300fcea8f7a2403c29",
+      "bytes": 2317,
+      "mediaType": "text/plain"
+    },
+    "c01-M050-F050-D050/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7ce87f21b00f020b1b5217010c87d4fb47f08d3844ed0d6886d56ab431a77ab3",
+      "bytes": 3445,
+      "mediaType": "application/json"
+    },
+    "c01-M050-F050-D050/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "89946852e8edc43d80879578a2e7ced70b03a43e5564e1dde05ea5fe4df74592",
+      "bytes": 5355955,
+      "mediaType": "image/png"
+    },
+    "c02-M050-F000-D050/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e4a2deaa8ced0dec983764fb1aa5d364a958f6312cb16d48d21a3307cfc31282",
+      "bytes": 2247,
+      "mediaType": "text/plain"
+    },
+    "c02-M050-F000-D050/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e2b43f250a32dbc44cb17d4dcc21731b99134943c9c78d08d73cbedc242b1683",
+      "bytes": 3375,
+      "mediaType": "application/json"
+    },
+    "c02-M050-F000-D050/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "23d7fded5a070c83ee1d42836acc97edb5b2b103e7c666b968702b6083cd4e7e",
+      "bytes": 5284934,
+      "mediaType": "image/png"
+    },
+    "c03-M000-F000-D000/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cb4e660705e1542a94bf52e404e86b90bd3ddb7bdf7522a95c92193939b8f804",
+      "bytes": 2345,
+      "mediaType": "text/plain"
+    },
+    "c03-M000-F000-D000/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a854d51ffbb80dc9c083e0d81851c759f5704170de772ee4e22c3cf2451438db",
+      "bytes": 3473,
+      "mediaType": "application/json"
+    },
+    "c03-M000-F000-D000/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6c34b37f4cc113285883053c43e9b71e83f3f6bbb3b2025c7e6233af7d175292",
+      "bytes": 5726854,
+      "mediaType": "image/png"
+    },
+    "c04-M100-F000-D100/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "700181d7da82823d4e5562aa88b27d06457e565e915ef430490503efcb7b4da0",
+      "bytes": 2422,
+      "mediaType": "text/plain"
+    },
+    "c04-M100-F000-D100/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7bb681a1c14338a996cc5daddaec067aceff67b3e04e9ce6b7ff432e3c547239",
+      "bytes": 3550,
+      "mediaType": "application/json"
+    },
+    "c04-M100-F000-D100/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "fb9c5c3a4c4faedb63876eac03c222b8e25a7fcd2429a6401731d5099a67bf43",
+      "bytes": 5789624,
+      "mediaType": "image/png"
+    },
+    "c05-M000-F100-D000/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "36bd4a017a97ecc9cec5cc9f296dedb2f8bb5f059fb5e19ae0c9dbc3225560bc",
+      "bytes": 2511,
+      "mediaType": "text/plain"
+    },
+    "c05-M000-F100-D000/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f75eaa981b54e868a8aa5d33f3dc15de6c8dbf2e4ee7aa1195428f842b5e867a",
+      "bytes": 3639,
+      "mediaType": "application/json"
+    },
+    "c05-M000-F100-D000/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1a00ced68e7a592cc9555c9136a6903c335257e287e2ff7230c2819331493246",
+      "bytes": 5904586,
+      "mediaType": "image/png"
+    },
+    "c06-M000-F000-D000/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5a028be5125493aeb467d00dd180284698106c45cb7de90da246c0dd12a57952",
+      "bytes": 2831,
+      "mediaType": "text/plain"
+    },
+    "c06-M000-F000-D000/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "30c1dd5c9cff3218d1850625072cec093069cf73bf62e5228dc3cdfaa16f9960",
+      "bytes": 3959,
+      "mediaType": "application/json"
+    },
+    "c06-M000-F000-D000/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "560f9902590c804087b745b3fc713a7f0ca9c1fbb5f9916065e847cc7186d1a5",
+      "bytes": 5654699,
+      "mediaType": "image/png"
+    },
+    "c07-M050-F000-D050/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "528221acd48e1330aa4fa75484b13731e06719034ae6d6838a5dde56e1f4e5c0",
+      "bytes": 2452,
+      "mediaType": "text/plain"
+    },
+    "c07-M050-F000-D050/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "17ecbd14ba216ec4e90ff3ab7999554637e5fde176b9f24c430cd3e5dfddf0dc",
+      "bytes": 3580,
+      "mediaType": "application/json"
+    },
+    "c07-M050-F000-D050/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "96e4ad38bdb8e997ade1c19372c03021b14f8379f088196d387d2382af72f887",
+      "bytes": 5261716,
+      "mediaType": "image/png"
+    },
+    "c08-M050-F050-D050/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3b713aca22abaedc79c65517865a2bf04af7d908a48f0197d02d75d0ce9ad42c",
+      "bytes": 2715,
+      "mediaType": "text/plain"
+    },
+    "c08-M050-F050-D050/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4e68e44fba7ab2f2f99a24b08ab14191764081864ce0e2840c0b404b979e1435",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "c08-M050-F050-D050/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c9c627470075230b4ec8b3945d9affd807c408a59be86be9c568d216387b3bdf",
+      "bytes": 7032374,
+      "mediaType": "image/png"
+    },
+    "c09-M000-F000-D000/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4eaab27205f5a17ff5948ae30ce6f8cc832c5e7d9b6072980e90d2b092f091a8",
+      "bytes": 2784,
+      "mediaType": "text/plain"
+    },
+    "c09-M000-F000-D000/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5126ea8390fa931c06ec2422a4611fcb6bbf15c3d6716176212ed6fcd9f9b294",
+      "bytes": 3911,
+      "mediaType": "application/json"
+    },
+    "c09-M000-F000-D000/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a2a26882395597c582ca38669583b9674e36e496b05a968856ed878f7be6aa17",
+      "bytes": 5525219,
+      "mediaType": "image/png"
+    },
+    "review/all-candidates-sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "035ce1c114e7401cab8b4380e7a5b474ca3f40877aea1cc6862e4016946a138d",
+      "bytes": 10491008,
+      "mediaType": "image/png"
+    },
+    "review/compare-sheets.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0a19c728fc926e123ecb4e7fc5c199d83747a0e1cc68a0c647ec0ee6b1513e3f",
+      "bytes": 4987,
+      "mediaType": "text/plain"
+    },
+    "review/five-build-sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6fc669c6689f9e4eb96519809ce20b804b9e1f0aaad15b893a219ac7ab438675",
+      "bytes": 6381124,
+      "mediaType": "image/png"
+    },
+    "review/measurements.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ad60d42b7c8f2c8b367506c37717b45a52cf55b0611e7b6d52e605b0ad5d596f",
+      "bytes": 12748,
+      "mediaType": "application/json"
+    }
+  }
+}

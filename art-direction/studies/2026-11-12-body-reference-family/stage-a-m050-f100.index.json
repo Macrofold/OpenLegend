@@ -1,0 +1,335 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-m050-f100",
+    "revisionId": "stage-a-m050-f100-20261116-a066d19139e1",
+    "manifestSha256": "de6b4154b2ba4ca727d52e6ac1cda693fbb66afb20f0507c632142722c70bf14"
+  },
+  "files": {
+    "donors/M050-F100/base_color.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cec3a9d869cc023ff4ea75cb4a3d9a205ae099e03ba9ccc26319d900ea64ccf7",
+      "bytes": 3601173,
+      "mediaType": "image/png"
+    },
+    "donors/M050-F100/model.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "79bb704c8be0aee5f174a10e5e29466358a6a8e0fc4026557f464e5bf8ae8b04",
+      "bytes": 9303088,
+      "mediaType": "model/gltf-binary"
+    },
+    "donors/M050-F100/provider-receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "054bd279893f10f59804aa1164674162e35b7c02b653bf167c7ad079de7cd347",
+      "bytes": 1102,
+      "mediaType": "application/json"
+    },
+    "donors/M050-F100/request-record.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3b328134eb4bd7c904dd12e5ba64c67c965ca5ef9a27c3f345a35ebe5811bcc7",
+      "bytes": 1349,
+      "mediaType": "application/json"
+    },
+    "donors/M050-F100/thumbnail.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9b734176ec28eabe7edc03288eed0edcd044a7abcbdeb3fb798c319cdc984d92",
+      "bytes": 73234,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/clay-6angle-comparison.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5865576fbe373194f52e68216e3474c98e383fd18cf331f2437e44454e20671d",
+      "bytes": 2494193,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/clay-detail-audit.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6ce82a530060b2e7b84f609747929cae96bc44032c1e8297055c364d45fd8f1b",
+      "bytes": 1775003,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/fast-1to1-iteration-sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e15ee2986146246f36cf3fd1821a8403abf5cab103c669457ec540d0b5c4a5f4",
+      "bytes": 2665340,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/headSkin.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f8ce7a5da3a481739a0e426aa6ffec807e1c6502b0e93103b856c4f99c0eae37",
+      "bytes": 303696,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/lod0.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "644490f7b245bca8eed0ac770adc974512534dfb5185a0f057178043992d13b3",
+      "bytes": 1599482,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/lod1.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4a77432f2d20ce92e6fbb4ba63147b642b9070393db891a4791d4cf9b72e6287",
+      "bytes": 231246,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5279fef61f6f3018ee6fe0917b2a7e363fab63b235af1175cbfd28775098faee",
+      "bytes": 46763,
+      "mediaType": "application/json"
+    },
+    "fits/M050-F100/signoff-05-head-neck-jowl-nape-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6c22111fb1d6df88d69c666a3784c7c62a5cc147a36893467d051a4de7717a87",
+      "bytes": 1678896,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-06-hands-wrists-5fingers-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3c874f6acf0317bf1ca77dee7d36437080812116008ceeb9df2ebf66313ae220",
+      "bytes": 1151300,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-07-pec-armpit-back-1to1-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2fb9e0af1d2da44d2d38158372500123c5547a49bf2516952b2ef22a518307f2",
+      "bytes": 2644698,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-08-pelvis-groin-glutes-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c69a4b8e6a440ffd7f6785fa335ff6950ab4adf02a34dc0d200ebe85f101f627",
+      "bytes": 2801647,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-09-profile-back-limbs-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2528abf7cd2abf8f4585a8be915c9a38caca793bad601a293bd1b674bb399dc4",
+      "bytes": 1614970,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-10-rest-lod0-vs-lod1-zoom.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a777a940bb9acd9c07d4ec4ddb44903df4017434c9220f40300582d52d7949ea",
+      "bytes": 1147603,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/signoff-11-raised-arms-5angle-audit.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "874c808c9aea17af741022c6f5105eb2aa839c25fbab3f871f3283837452f83b",
+      "bytes": 1804298,
+      "mediaType": "image/png"
+    },
+    "fits/M050-F100/support-bodySkin.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a066d19139e1cafade9bffe343b8e385f9613b6342cb4198e53f6e91bb54c616",
+      "bytes": 307709,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-eyeLeft.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d029d0ced4e7a01fc5baf050ef6f70c7bfc83e5b5332752a46e22824d03f61c3",
+      "bytes": 9592,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-eyeRight.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e8fac196723302571d87f585f84fbef9e1989a3696f7504d5f870f4d1d3c0860",
+      "bytes": 9647,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-headSkin.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4efa6ed6a98c3c4ed29eca1b734d00081f734808d99062b598059e7b623a8d72",
+      "bytes": 206853,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-lashes.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f66fd562e7f3a21ad4f48baa2115cd9ea2952fa586a2e0abb40c2a3aa7497542",
+      "bytes": 15760,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-oral.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "96df3b761199e02184f04bd8ca4d55ffed0cc4f731eef4c27a99f68b68ec82b5",
+      "bytes": 8581,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-raisedArmCorrective.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "375a49889d2806fb8e6ff16e41963f98ddff5a2d0bd5e11ece1b8a6c4120de6a",
+      "bytes": 36312,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/support-teeth.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4cf45f99e73b722b88233135dd65b314d9fa9e8fdbf696197c1a18d45b9ff294",
+      "bytes": 54538,
+      "mediaType": "application/octet-stream"
+    },
+    "fits/M050-F100/tpose-raised-arms-ref-comparison.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0eeb35d8ba7d8caaa3455447e81fdef1ff1c0047dbcc592c34d81a2cb46db7b4",
+      "bytes": 1177086,
+      "mediaType": "image/png"
+    },
+    "references/M050-F100-raised-arms-ref.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1da2b62cc9dc569eb26ef2e0ef59d11b58579c021f0169b0b44e08a37b604a2a",
+      "bytes": 31088,
+      "mediaType": "image/jpeg"
+    },
+    "sources/crops/M050-F100/back.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7b8c7b0fa470d35162cd5a368c9e72b7e9ff71640afb9106c5173fe9d150ea78",
+      "bytes": 1631066,
+      "mediaType": "image/png"
+    },
+    "sources/crops/M050-F100/front.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9e71d5685019981578aba035455ef62bdf6d121f01466b258686c5854d439523",
+      "bytes": 1643695,
+      "mediaType": "image/png"
+    },
+    "sources/crops/M050-F100/profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "805c6f380e948fe2676f378a0bee8d18cbff372321612c970def4d2fb0392e26",
+      "bytes": 1104544,
+      "mediaType": "image/png"
+    },
+    "supports/M050-F000-lean-v3.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7c5b76214ddf9555cda29891113c78358d813cfd23337a122d42123ba37fc3e9",
+      "bytes": 308733,
+      "mediaType": "application/octet-stream"
+    },
+    "supports/shared-lod0-to-lod1-map.npz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5ae42da8581f04ad2d9ee44b4f0ace452b227d90518b3712907b655573089830",
+      "bytes": 235444,
+      "mediaType": "application/octet-stream"
+    },
+    "tools/audit_sheet.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "59043ce895c5ab0ff7add3175ccd3a2d236738b9308a29ce42bad342be319880",
+      "bytes": 32583,
+      "mediaType": "text/x-python"
+    },
+    "tools/canonical_masks.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9c794cc027e86fe0397763210d1ac96dad3af9bd71b00198edd5415d22ed1027",
+      "bytes": 21842,
+      "mediaType": "text/x-python"
+    },
+    "tools/generate_meshy_donor.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "074153aa00513e9a0590b54996493ca44f355a97c504ea7d9672209fb4f63f64",
+      "bytes": 9493,
+      "mediaType": "text/x-python"
+    },
+    "tools/head_hand_polish.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ad824e502ed52b3e50076ac0c000315a0dfd3ae34a64e329e92fa16cc9057890",
+      "bytes": 42119,
+      "mediaType": "text/x-python"
+    },
+    "tools/mesh_rig_utils.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "afa1cc93e9f73c154b5e0ff6ad7b69022af4927bb8327bad056f7ba58e98aa07",
+      "bytes": 28480,
+      "mediaType": "text/x-python"
+    },
+    "tools/package_and_verify_kit.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ad65ceef866085bdf6dce74922ff03d5bac33687c81b0abb338901631dbed272",
+      "bytes": 10867,
+      "mediaType": "text/x-python"
+    },
+    "tools/post_fit_polish.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0435a253d12e1d58d640b805fc90987d85c77de3625d6815509e6c277d3ffa52",
+      "bytes": 241625,
+      "mediaType": "text/x-python"
+    },
+    "tools/prepare_nine_grid_sources.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f7cbda73c729a746c9ff048249eff69ccd2ae9b2c47b7782f05d6c6b5a604c17",
+      "bytes": 19809,
+      "mediaType": "text/x-python"
+    },
+    "tools/raised_arm_corrective.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "eb9568871296987d89593fbd328c2d3d610bd0adace876cf2ed61a962d19f36a",
+      "bytes": 48577,
+      "mediaType": "text/x-python"
+    },
+    "tools/register_and_fit_donor.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2e5aa6b9ba1d92916fb3cdd85163b913965c52349b2a40309be333d3e42e9a92",
+      "bytes": 264421,
+      "mediaType": "text/x-python"
+    },
+    "tools/verify_evaluator_parity.mts": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cdbf101862705e5960978b16c78e3e796d19c55d215781bab984024e1dddfd96",
+      "bytes": 11699,
+      "mediaType": "text/plain"
+    },
+    "tools/verify_game_renderer.mts": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7a042bbf129c599d38018b7059fc61050ee4e274729584d37f62bcf11552fc7e",
+      "bytes": 13275,
+      "mediaType": "text/plain"
+    }
+  }
+}

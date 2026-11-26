@@ -1,0 +1,90 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-donor-native-pose",
+    "revisionId": "donor-20261112-531ea5af1063",
+    "manifestSha256": "a4393eb74798fb6e212f86828e1b74f31372a788322c127d17ac5fe04d3a783a"
+  },
+  "files": {
+    "body-reference-family/stage-a/donor-native-pose/back.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e83f1bf1efb2fd90c88bcd8e726edc3e89b69a8da6cccd42c0c5c8221fac7b10",
+      "bytes": 404038,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor-native-pose/body.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "531ea5af1063537859e189bc2de62861490a1f84424d13bd7ee5b99d359f88de",
+      "bytes": 7890120,
+      "mediaType": "model/gltf-binary"
+    },
+    "body-reference-family/stage-a/donor-native-pose/front.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "8882c91e58ad6612aa66b6725e02d725d6d2bdcb70937e6ee54521f25b6ad82b",
+      "bytes": 415957,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor-native-pose/profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c5ab96585c39938b23fafa4f813da258a57237d497c8f9f940f1e04d85439296",
+      "bytes": 384052,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor-native-pose/projection-review.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "511adbf8ac02f9397ebc2492f723f8fe3a388d401523d501592c1aa9356f959a",
+      "bytes": 2408,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor-native-pose/provider-and-review.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7d7348d4367f5ca78d14008c4391f34c9527d21218993abd5eb01a7a18468ebc",
+      "bytes": 463,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor-native-pose/quarter.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c1d31b04750f46bc329fd2cec8b3c1807e9ab1781dfd003427c7e20f5c6854cb",
+      "bytes": 418857,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor-native-pose/rear-quarter.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c5b93aec6584e890dab3d748b61a5f8c6bcd71f8d4ffc9e137e173a2d1dc0d66",
+      "bytes": 405281,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor-native-pose/render-receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "78620760dc97c61560d4362c670676ecb46e226d1ea27f561d48e85b0522600d",
+      "bytes": 11282,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor-native-pose/request-record.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9bd97c01f3e9c85d46784236a8cf7a1d39cdd6797578fc6764cbb1454a0a4faa",
+      "bytes": 766,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor-native-pose/source-comparison.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cec95e92d7c615f28d6edaf5c7c6bbdf601cbee224e31e7cc7733e9a34ef0db7",
+      "bytes": 1356476,
+      "mediaType": "image/png"
+    }
+  }
+}
