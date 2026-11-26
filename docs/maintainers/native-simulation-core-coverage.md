@@ -250,9 +250,9 @@ The retired TypeScript paths in this inventory identify the pre-cutover source a
 
 ### Default-server cutover dispositions
 
-**Main publication is blocked.** The combined opening passes Rust startup, a named save and a cold server restart. The current Main game can build shelters and walls, choose repeat work, and negotiate alliances and ceasefires. Switching its default launcher to Rust would lose those player controls. The existing `pnpm dev` workflow also starts without a release argument, while the Rust launchers need a reviewed release directory supplied explicitly.
+**Main publication uses the UE5 client and stand-alone Rust server.** Verify that Rust opens the reviewed combined Main world, persists a player change and a named checkpoint, and reopens both after a cold restart. Stage the [UE5 project and selected artwork](../../apps/unreal/README.md) with the pinned build tools. The [migration tracker](unreal-engine-5-migration.md) records which revisions have been played in Unreal.
 
-The [source branch's cutover scope](../projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope) was narrower. Its release and recovery paths use the stand-alone executable, with Node for tools such as browser builds and offline world preparation. The remaining work for replacing Main's launchers is tracked below. Earlier evidence applies to the recorded source or selected scenario.
+Start Rust with `openlegend-game-server serve "$reviewed_release"`. The [server cutover](../projects/completed/2026/rust-server-completion-feature-spec.md#rust-cutover-scope) retains Node for offline world preparation and browser tools. The table below tracks deferred gameplay and verification separately from publication.
 
 | Area | Current Rust boundary and remaining work |
 | --- | --- |
