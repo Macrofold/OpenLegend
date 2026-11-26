@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "Games",
+  "Modules": [
+    { "Name": "OpenLegend", "Type": "Runtime", "LoadingPhase": "Default" }
+  ],
+  "Plugins": [
+    { "Name": "EnhancedInput", "Enabled": true },
+    { "Name": "ProceduralMeshComponent", "Enabled": true }
+  ],
+  "TargetPlatforms": ["Windows", "Mac"]
+}

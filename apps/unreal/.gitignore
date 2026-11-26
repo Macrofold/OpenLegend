@@ -1,0 +1,9 @@
+/Binaries/
+/Build/
+/Content/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/.vs/
+/*.xcworkspace/
+/*.sln
