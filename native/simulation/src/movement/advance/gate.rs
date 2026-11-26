@@ -177,7 +177,7 @@ impl MoveAdvanceCursor {
         // from the actual approach side, only its actor gets the result.
         let external = changed && operation.moves_leaf();
         let event = core.stage_event(EventEmissionIntent {
-            event_type: result.code.clone(),
+            event_type: if changed { copy().operated_event.clone() } else { copy().checked_event.clone() },
             text: EmissionText::Narration(Narration {
                 parts: vec![
                     NarrationPart::Participant {

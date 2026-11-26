@@ -1131,6 +1131,9 @@ impl CommandCursor {
                         if matches!(self.phase, Phase::FireSight) {
                             return self.fire_sight(core, answer);
                         }
+                        if matches!(self.phase, Phase::GateSight) {
+                            return self.gate_sight(core, answer);
+                        }
                         if matches!(self.phase, Phase::CookSight) {
                             return self.cook_sight(core, answer);
                         }
@@ -1214,7 +1217,6 @@ impl CommandCursor {
                             Phase::TravelReach => return self.travel_reach(core, answer.sight.pop().ok_or(ExecutionError::Invariant)?),
                             Phase::TravelDestination => return self.travel_destination(core, answer.routes.pop()),
                             Phase::HearthGeometry => return self.hearth_geometry(core, answer),
-                            Phase::GateSight => return self.gate_sight(core, answer),
                             Phase::GateRoute => return self.gate_route(core, answer),
                             Phase::DropStanding => return self.finish_drop(core,
                                 answer.standing.pop().ok_or(ExecutionError::Invariant)?,
@@ -2287,7 +2289,8 @@ impl CommandCursor {
                         if matches!(self.command, NativeCommand::PracticeShot { .. }) {
                             return self.practice_started(core, &actor_id);
                         }
-                        if matches!(self.command, NativeCommand::Guard { .. }) {
+                        if matches!(self.command, NativeCommand::Guard { .. } | NativeCommand::OperateGate { .. }) {
+                            // The gate discloses its actual movement at completion.
                             self.phase = Phase::AfterDeparture;
                             continue;
                         }
@@ -2953,9 +2956,9 @@ impl CommandCursor {
                 | Phase::FireSight
                 | Phase::CoachingSight | Phase::CoachingBackSight | Phase::CoachingReach
                 | Phase::TravelStartSight | Phase::TravelReach | Phase::TravelDestination | Phase::TravelEndReception
-                | Phase::HearthGeometry
                 | Phase::GateSight
                 | Phase::GateRoute
+                | Phase::HearthGeometry
                 | Phase::DropStanding
                 | Phase::HearthRoutes
                 | Phase::HearthNavigation
