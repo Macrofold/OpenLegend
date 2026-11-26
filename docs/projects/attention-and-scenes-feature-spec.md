@@ -50,8 +50,8 @@ The later timed-speech mode is described fully in section 7 so its product choic
 Human camera position, selected object, keyboard focus and a character's attention are different. Panning the camera is not hearing through a wall. Selecting a caption must not accidentally walk the character. Turning down audio, hiding captions or reading a transcript changes presentation, not the evidence the character acquired.
 
 ## 4. Stable attention
-The [common perception and attention specification](../features/perception-and-attention/README.md) owns detailed reason priority, brief versus continuing demands, distraction, finite assessment and supported cue combinations. The social focus controls and exact/gist/scene boundaries below retain their own meaning. Winning attention does not select a new action or replace personal evidence.
 
+The [common perception and attention specification](../features/perception-and-attention/README.md) owns detailed reason priority, brief versus continuing demands, distraction, finite assessment and supported cue combinations. The social focus controls and exact/gist/scene boundaries below retain their own meaning. Winning attention does not select a new action or replace personal evidence.
 
 ### 4.1 What remains in focus
 

@@ -11,8 +11,8 @@ The [designed human appearance profile](people-appearance.md) defines the adult 
 [Cognition Lab study characters](cognition-lab-characters.md) owns the isolated study cast and its voice illustrations; these profiles do not add residents to the ordinary opening.
 
 ## Mechanics
-- [Perception and attention](perception-and-attention.md) — specified priority, distraction, assessment, cue-combination and pursuit defaults; implementation and gameplay qualification remain open.
 
+- [Perception and attention](perception-and-attention.md) — specified priority, distraction, assessment, cue-combination and pursuit defaults; implementation and gameplay qualification remain open.
 
 - [Starting wilderness, terrain and population](landscape.md)
 - [Useful discoveries beyond the clearing](rewarding-expeditions.md) — implemented finite expedition rewards, physical recipe learning and compatible equipment; broader qualification remains with AV01.

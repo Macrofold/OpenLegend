@@ -141,8 +141,8 @@ Events retains its scrollable reading region while the compact world composer ke
 An NPC's optional self-explanation is speech with normal hearing/uncertainty, not an exposed chain of thought or verified causal trace. Native action animation/progress should carry ordinary work without a mandatory explanation call after each step. Retain actual pending, failure and exact-retry feedback beside its originating composer draft; Events contains committed perceived occurrences. Provider queue details belong to authorized diagnostics.
 
 ## 5. Attention interfaces and continuation
-The [common attention technical design](perception-and-attention-tech-design.md) owns the proposed incremental reason selection, indexed personal concerns and bounded cue matching. Its [feature collection](../features/perception-and-attention/README.md) supplies the behavioral contract. Integrate through the existing attention, intake and action owners; the social-scene work here does not create a competing selector or imply that the common target is implemented.
 
+The [common attention technical design](perception-and-attention-tech-design.md) owns the proposed incremental reason selection, indexed personal concerns and bounded cue matching. Its [feature collection](../features/perception-and-attention/README.md) supplies the behavioral contract. Integrate through the existing attention, intake and action owners; the social-scene work here does not create a competing selector or imply that the common target is implemented.
 
 The [continuing-life technical design](continuing-lives-tech-design.md) owns interests, chosen bounds, supporting assumptions and reconsideration. This design consumes its actor-permitted current intention and supplies actual social evidence. It creates no second attention state, cooldown, need meter or memory store.
 

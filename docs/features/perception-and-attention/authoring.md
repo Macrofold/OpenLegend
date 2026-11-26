@@ -19,20 +19,20 @@ Rich prose remains useful. “I want to become a great shipbuilder” can guide 
 
 ## 2. What a definition must specify
 
-| Field of meaning | Required definition |
-| --- | --- |
-| Purpose | What useful observation, decision or supported response this concern serves. |
-| Eligible owner | Which installed capability, active work, duty, accepted instruction or sensitivity can activate it. |
-| Roles | Permitted bindings such as self, chosen target, protectee, watched subject/part, workpiece, known area or expected speaker/result. |
-| Observable input | Which personally received event, state, relation, communication or body/work result can support a match. |
-| Evidence requirement | Required detection, classification, association, recognition, understanding, localization, coverage and freshness. Missing values are unknown. |
-| Condition | A supported occurrence, state, comparison, relationship or bounded composition. |
-| Attention target | The supported subject of useful observation, including an anonymous occurrence, region or situation when identity is unavailable. |
-| Priority | The installed mapping from supported meaning and actual concern to reason priority; never an unexplained bonus per sample. |
-| Demand | Brief registration/check or continuing detail, what serves it, and what remains unresolved afterward. |
-| Lifecycle | Initial-state treatment, onset, meaningful update/escalation, clear/rearm conditions, original deadline and terminal outcomes as applicable. |
+| Field of meaning        | Required definition                                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Purpose                 | What useful observation, decision or supported response this concern serves.                                                                                |
+| Eligible owner          | Which installed capability, active work, duty, accepted instruction or sensitivity can activate it.                                                         |
+| Roles                   | Permitted bindings such as self, chosen target, protectee, watched subject/part, workpiece, known area or expected speaker/result.                          |
+| Observable input        | Which personally received event, state, relation, communication or body/work result can support a match.                                                    |
+| Evidence requirement    | Required detection, classification, association, recognition, understanding, localization, coverage and freshness. Missing values are unknown.              |
+| Condition               | A supported occurrence, state, comparison, relationship or bounded composition.                                                                             |
+| Attention target        | The supported subject of useful observation, including an anonymous occurrence, region or situation when identity is unavailable.                           |
+| Priority                | The installed mapping from supported meaning and actual concern to reason priority; never an unexplained bonus per sample.                                  |
+| Demand                  | Brief registration/check or continuing detail, what serves it, and what remains unresolved afterward.                                                       |
+| Lifecycle               | Initial-state treatment, onset, meaningful update/escalation, clear/rearm conditions, original deadline and terminal outcomes as applicable.                |
 | Consequence of matching | Record/report a match, offer consideration, or invoke an independently admitted prepared-response condition. A match itself grants no new action authority. |
-| Supported scope | The limits of the observation, condition complexity and live combinations the request can actually sustain. |
+| Supported scope         | The limits of the observation, condition complexity and live combinations the request can actually sustain.                                                 |
 
 Every field may have a documented installed default. An omitted consequential field cannot acquire an undisclosed runtime guess. Numeric observations include their units; an authored threshold must be compatible with the supplied measurement.
 
@@ -48,17 +48,17 @@ A named role does not disclose current position. Knowing who a person is and whe
 
 The first general system supports the following forms through available trusted observations. A world may omit a family or provide a different sense. Unsupported input remains an explicit capability gap.
 
-| Family | Meaning | Useful contrasting applications |
-| --- | --- | --- |
-| Received occurrence | One actually acquired event or transition, with its own identity and provenance | An impact; an intelligible warning; an observed opening; an action's supported result. |
-| Current received state | A supported state holds now, without claiming when it began | A person is in the watched region; the gate is currently open; a workpiece is visibly damaged. |
-| Change to a bound role | An observed action or change affects the subject, part, place or result of an active concern | Supplies being accessed; an ally losing support; the current test piece changing state. |
-| Relative relationship | Personally supported separation, closing, entry, support, contact or another registered relationship meets its declared condition | Someone closes on self or a protectee; a moving traveler nears an observed drop; an object enters a watched opening. |
-| Understood communication or learned signal | Actual received content has a supported meaning for this observer | Direct address; a request; an expected reply; a known alarm pattern. |
-| Known opportunity or consequence | The owning activity or supported observation provides a relevant state and response window | A supported craft process needs intervention; a route becomes available briefly; a rescue step is blocked. |
-| Bounded combination | A finite conjunction, alternative or sequence of personally supported facts, with declared relationships and time windows | Help call plus compatible battle sounds; smoke plus people fleeing; unusual machine noise plus observed damage. |
-| Expected result or absence | A declared expectation is checked at its deadline with enough evidence to establish success, failure or unknown | A promised arrival not observed during an actually covered watch; an expected work result absent from a completed examination. |
-| Brief unfamiliar or striking cue | A finite check of actually acquired change under the world's sensory/novelty policy | An unexpected blast; unusual wildlife; an unfamiliar device performing a visible effect. |
+| Family                                     | Meaning                                                                                                                           | Useful contrasting applications                                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Received occurrence                        | One actually acquired event or transition, with its own identity and provenance                                                   | An impact; an intelligible warning; an observed opening; an action's supported result.                                         |
+| Current received state                     | A supported state holds now, without claiming when it began                                                                       | A person is in the watched region; the gate is currently open; a workpiece is visibly damaged.                                 |
+| Change to a bound role                     | An observed action or change affects the subject, part, place or result of an active concern                                      | Supplies being accessed; an ally losing support; the current test piece changing state.                                        |
+| Relative relationship                      | Personally supported separation, closing, entry, support, contact or another registered relationship meets its declared condition | Someone closes on self or a protectee; a moving traveler nears an observed drop; an object enters a watched opening.           |
+| Understood communication or learned signal | Actual received content has a supported meaning for this observer                                                                 | Direct address; a request; an expected reply; a known alarm pattern.                                                           |
+| Known opportunity or consequence           | The owning activity or supported observation provides a relevant state and response window                                        | A supported craft process needs intervention; a route becomes available briefly; a rescue step is blocked.                     |
+| Bounded combination                        | A finite conjunction, alternative or sequence of personally supported facts, with declared relationships and time windows         | Help call plus compatible battle sounds; smoke plus people fleeing; unusual machine noise plus observed damage.                |
+| Expected result or absence                 | A declared expectation is checked at its deadline with enough evidence to establish success, failure or unknown                   | A promised arrival not observed during an actually covered watch; an expected work result absent from a completed examination. |
+| Brief unfamiliar or striking cue           | A finite check of actually acquired change under the world's sensory/novelty policy                                               | An unexpected blast; unusual wildlife; an unfamiliar device performing a visible effect.                                       |
 
 The family must distinguish an observed crossing from simply observing the subject inside a boundary. A predicted contact is a supported estimate with assumptions, not a completed collision. A material timer belongs to the material process; attention cannot create one.
 
@@ -95,15 +95,15 @@ If initial coverage is unknown, report-current produces one current-state report
 
 ### Continuing condition
 
-| State/change | Required behavior |
-| --- | --- |
-| Supported false to supported true | Start one condition episode and offer its defined onset result. |
-| True remains true | Maintain the same episode; update useful support and demanded detail without repeated onset. |
-| Meaningful supported escalation | Update the reason and allow the declared reconsideration; do not pretend the whole condition restarted. |
-| True becomes unknown | Preserve uncertainty and prior outcome; release unsupported live claims. No clearance or rearm. |
-| Supported clear evidence begins | Begin the installed clear interval. Interrupted or insufficient clear support cancels that clearance attempt. |
-| Supported clearance completes | End the continuing reason and permit a future supported onset. |
-| Concern ends, expires or is revoked | End future monitoring with the actual termination reason, without declaring the world condition false. |
+| State/change                        | Required behavior                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Supported false to supported true   | Start one condition episode and offer its defined onset result.                                               |
+| True remains true                   | Maintain the same episode; update useful support and demanded detail without repeated onset.                  |
+| Meaningful supported escalation     | Update the reason and allow the declared reconsideration; do not pretend the whole condition restarted.       |
+| True becomes unknown                | Preserve uncertainty and prior outcome; release unsupported live claims. No clearance or rearm.               |
+| Supported clear evidence begins     | Begin the installed clear interval. Interrupted or insufficient clear support cancels that clearance attempt. |
+| Supported clearance completes       | End the continuing reason and permit a future supported onset.                                                |
+| Concern ends, expires or is revoked | End future monitoring with the actual termination reason, without declaring the world condition false.        |
 
 An acknowledged continuing danger can remain high-priority observation without producing another paid decision. Once the observer has chosen a sufficient continuation, equivalent evidence does not reopen that same choice. New support, a changed result, a blocked continuation or escalation can.
 
@@ -131,53 +131,53 @@ These are human-readable specifications, not executable schema syntax. A creator
 
 ### A. Notice access to the subject I am guarding
 
-| Field | Meaning |
-| --- | --- |
-| Active owner | An accepted finite watch of a supported object or part. |
-| Input | A personally observed closed-to-open transition or other explicitly selected access event. |
-| Binding | The event affects the actual watched subject. |
-| Attend to | The associated actor only if the watcher acquired that association; otherwise the object or occurrence. |
-| Reason | The watched subject has changed in a way the accepted watch asks to report or inspect. |
-| Lifecycle | Once for that witnessed access occurrence; future witnessed occurrences remain distinct. |
-| Choice | Continue, ask, inspect, intervene or another supported response according to actual permission, concern and evidence. No automatic theft verdict. |
+| Field        | Meaning                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Active owner | An accepted finite watch of a supported object or part.                                                                                           |
+| Input        | A personally observed closed-to-open transition or other explicitly selected access event.                                                        |
+| Binding      | The event affects the actual watched subject.                                                                                                     |
+| Attend to    | The associated actor only if the watcher acquired that association; otherwise the object or occurrence.                                           |
+| Reason       | The watched subject has changed in a way the accepted watch asks to report or inspect.                                                            |
+| Lifecycle    | Once for that witnessed access occurrence; future witnessed occurrences remain distinct.                                                          |
+| Choice       | Continue, ask, inspect, intervene or another supported response according to actual permission, concern and evidence. No automatic theft verdict. |
 
 This also applies to a guarded gate or test enclosure if its owner supplies the relevant observed change. It does not require the watcher to have already tracked every possible interacting person.
 
 ### B. Someone is closing on the person I am protecting
 
-| Field | Meaning |
-| --- | --- |
-| Active owner | An accepted concern for the protectee with a defined observation/response scope. |
-| Input | Compatible-time received positions/extents and supported change in separation; unknown data stays unknown. |
-| Binding | Protectee and received nearby subject, whether either one moved. |
-| Meaning | A supported approach, not proof of hostile intention. Additional attack or danger evidence can make it urgent. |
-| Lifecycle | One continuing episode; updates maintain it; supported clearance rearms it. |
-| Choice | Keep monitoring, change position, ask, warn, defend or continue, through existing agency. |
+| Field        | Meaning                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| Active owner | An accepted concern for the protectee with a defined observation/response scope.                               |
+| Input        | Compatible-time received positions/extents and supported change in separation; unknown data stays unknown.     |
+| Binding      | Protectee and received nearby subject, whether either one moved.                                               |
+| Meaning      | A supported approach, not proof of hostile intention. Additional attack or danger evidence can make it urgent. |
+| Lifecycle    | One continuing episode; updates maintain it; supported clearance rearms it.                                    |
+| Choice       | Keep monitoring, change position, ask, warn, defend or continue, through existing agency.                      |
 
 Changing the anchor to self, a workpiece or a watched place reuses the relationship where that family supports it. A static world-coordinate sphere must not replace a moving protectee without the author knowing.
 
 ### C. A possible emergency near the gate
 
-| Field | Meaning |
-| --- | --- |
-| Active owner | The world's supported emergency-check policy, plus this observer's actual duty or accepted concern where applicable. |
-| Inputs | An understood request for help and separately acquired combat-compatible sound, in either order. |
-| Relationship | Compatible personally received location/bearing or an understood reference to the known gate within the declared time window. |
-| Conclusion | Possible fighting and a request for help near the gate; neither known attackers nor proof of the speaker's account. |
-| Demand | Prompt finite assessment; continuing monitoring only while a supported unresolved concern or chosen investigation warrants it. |
-| Choice | Actual alternatives remain open. A prepared assessment may activate; movement toward the gate requires accepted action and a supported destination. |
+| Field        | Meaning                                                                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Active owner | The world's supported emergency-check policy, plus this observer's actual duty or accepted concern where applicable.                                |
+| Inputs       | An understood request for help and separately acquired combat-compatible sound, in either order.                                                    |
+| Relationship | Compatible personally received location/bearing or an understood reference to the known gate within the declared time window.                       |
+| Conclusion   | Possible fighting and a request for help near the gate; neither known attackers nor proof of the speaker's account.                                 |
+| Demand       | Prompt finite assessment; continuing monitoring only while a supported unresolved concern or chosen investigation warrants it.                      |
+| Choice       | Actual alternatives remain open. A prepared assessment may activate; movement toward the gate requires accepted action and a supported destination. |
 
 Smoke plus fleeing people and a machine noise plus visible damage use the same composition forms with different supplied observations and permitted conclusions.
 
 ### D. Attend to the useful stage of my current work
 
-| Field | Meaning |
-| --- | --- |
-| Active owner | A supported current task with an actually exposed process state or result. |
-| Input | The workpiece enters a declared useful/dangerous state, or an admitted result becomes available. |
-| Urgency | Comes from that process's actual response window and consequence; no window means no invented timing pressure. |
-| Demand | Maintain useful observation or notify once, as chosen. |
-| Outcome | The actual action determines success, interruption, quality, resource consumption and resumption. Attention creates none of those effects. |
+| Field        | Meaning                                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Active owner | A supported current task with an actually exposed process state or result.                                                                 |
+| Input        | The workpiece enters a declared useful/dangerous state, or an admitted result becomes available.                                           |
+| Urgency      | Comes from that process's actual response window and consequence; no window means no invented timing pressure.                             |
+| Demand       | Maintain useful observation or notify once, as chosen.                                                                                     |
+| Outcome      | The actual action determines success, interruption, quality, resource consumption and resumption. Attention creates none of those effects. |
 
 Ordinary making remains useful without a concentration minigame. The initial clay and fishing designs do not acquire overheating or bite-response failures through this example.
 

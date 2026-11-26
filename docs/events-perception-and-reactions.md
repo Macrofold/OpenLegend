@@ -223,8 +223,8 @@ Threshold recording supplies private bodily evidence under the current [agency s
 Owner-private routing does not imply conscious awareness during sleep: preserve current waking/sleep capability rules, and do not manufacture remembered experiences for an actor that could not perceive them. Routine animals retain native behavior without requiring a mind, a persisted human-style memory, or a model call. Sensory/memory capability determines evidence retention, not whether physical protection is allowed.
 
 ## 8. Ongoing salience, relevance, and reminders
-The [perception and attention target](features/perception-and-attention/README.md) specifies strongest-supported-reason priority, finite brief demands, concern-bound conditions and independent action choice. Its [technical counterpart](projects/perception-and-attention-tech-design.md) defines selective matching without a catalogue scan. This is the detailed target for EPR06; the implemented subsets described below retain their actual evidence and do not establish delivery of that target.
 
+The [perception and attention target](features/perception-and-attention/README.md) specifies strongest-supported-reason priority, finite brief demands, concern-bound conditions and independent action choice. Its [technical counterpart](projects/perception-and-attention-tech-design.md) defines selective matching without a catalogue scan. This is the detailed target for EPR06; the implemented subsets described below retain their actual evidence and do not establish delivery of that target.
 
 Use distinct concepts rather than one overloaded importance field:
 

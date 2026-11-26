@@ -1,8 +1,8 @@
 # Current feature owners
 
 These established documents own supported behavior and explicitly labeled remaining targets. Inclusion does not claim every proposed capability is implemented. New independent behavior owners use `docs/features/<topic>.md`; existing useful paths stay in place.
-[Perception and attention](perception-and-attention/README.md) specifies common noticing, strongest-reason priority, distraction, finite assessment and composable concerns, with complete behavior, authoring and acceptance cases. It is a desired-behavior target; sensory, memory, action and social-scene owners retain their own contracts.
 
+[Perception and attention](perception-and-attention/README.md) specifies common noticing, strongest-reason priority, distraction, finite assessment and composable concerns, with complete behavior, authoring and acceptance cases. It is a desired-behavior target; sensory, memory, action and social-scene owners retain their own contracts.
 
 | Topic                                            | Owner                                                                                                           |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |

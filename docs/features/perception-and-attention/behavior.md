@@ -12,17 +12,17 @@ The feature does not implement new senses, combustion, theft law, morality, comb
 
 ## 2. Terms, inputs and outputs
 
-| Term | Meaning |
-| --- | --- |
-| Occurrence | Something that actually happens, such as an impact, utterance or state transition. Its hidden causes are not automatically known. |
-| Received observation | The facts a particular character acquires through an available sense, bodily channel or permitted communication, with actual time, source association and uncertainty. |
-| Candidate | Something to which useful attention can be directed: a person, object, part, workpiece, occurrence, direction, region, received group or tentative situation. An entity identity is not required. |
-| Concern | An actual reason this character cares: their bodily safety, accepted work, chosen watch, known responsibility, expressed interest, expected reply or useful opportunity. A biography sentence alone is not a continuously monitored condition. |
-| Attention reason | A supported relationship between a candidate and a concern or striking cue, with priority, requested observation, evidence and an ending rule. |
-| Brief demand | A finite need to register or check a cue. Serving it does not imply sustained tracking. |
-| Continuing demand | A need to maintain useful current detail while a supported situation or accepted commitment remains applicable. |
-| Assessment | Accepted finite work to check evidence or consider alternatives, with explicit continuation and ending conditions. It is not the elapsed time taken by a model service. |
-| Interpretation | The character's potentially mistaken account of what observations mean. It remains distinct from a directly received fact. |
+| Term                 | Meaning                                                                                                                                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Occurrence           | Something that actually happens, such as an impact, utterance or state transition. Its hidden causes are not automatically known.                                                                                                              |
+| Received observation | The facts a particular character acquires through an available sense, bodily channel or permitted communication, with actual time, source association and uncertainty.                                                                         |
+| Candidate            | Something to which useful attention can be directed: a person, object, part, workpiece, occurrence, direction, region, received group or tentative situation. An entity identity is not required.                                              |
+| Concern              | An actual reason this character cares: their bodily safety, accepted work, chosen watch, known responsibility, expressed interest, expected reply or useful opportunity. A biography sentence alone is not a continuously monitored condition. |
+| Attention reason     | A supported relationship between a candidate and a concern or striking cue, with priority, requested observation, evidence and an ending rule.                                                                                                 |
+| Brief demand         | A finite need to register or check a cue. Serving it does not imply sustained tracking.                                                                                                                                                        |
+| Continuing demand    | A need to maintain useful current detail while a supported situation or accepted commitment remains applicable.                                                                                                                                |
+| Assessment           | Accepted finite work to check evidence or consider alternatives, with explicit continuation and ending conditions. It is not the elapsed time taken by a model service.                                                                        |
+| Interpretation       | The character's potentially mistaken account of what observations mean. It remains distinct from a directly received fact.                                                                                                                     |
 
 ### Inputs
 
@@ -40,15 +40,15 @@ An attention rule cannot read an unseen destination, an object's secret quality,
 
 The possible outputs are independent:
 
-| Output | Required meaning |
-| --- | --- |
-| Notice | A personally acquired fact or event. It can exist without closer observation, new thought or lasting memory. |
-| Current reason | Why closer observation could help, with evidence, priority, demanded detail and validity. |
-| Selection, continuation or release of detail | Which eligible candidates currently receive optional detailed observation/retention, and why. |
-| Matched condition | One supported watch occurrence or continuing-condition transition, including unknown/incomplete outcomes where appropriate. |
-| Reconsideration opportunity | A meaningful unresolved choice for the observer's existing controller. This is not a promise of a paid call or a particular answer. |
-| Accepted response | A choice admitted through ordinary agency: continue, orient, assess, investigate, speak, help, retreat, pursue or another supported action. |
-| Personal account | Only actual acquired evidence, acknowledged gaps and the character's distinct interpretations, under the memory owner. |
+| Output                                       | Required meaning                                                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notice                                       | A personally acquired fact or event. It can exist without closer observation, new thought or lasting memory.                                |
+| Current reason                               | Why closer observation could help, with evidence, priority, demanded detail and validity.                                                   |
+| Selection, continuation or release of detail | Which eligible candidates currently receive optional detailed observation/retention, and why.                                               |
+| Matched condition                            | One supported watch occurrence or continuing-condition transition, including unknown/incomplete outcomes where appropriate.                 |
+| Reconsideration opportunity                  | A meaningful unresolved choice for the observer's existing controller. This is not a promise of a paid call or a particular answer.         |
+| Accepted response                            | A choice admitted through ordinary agency: continue, orient, assess, investigate, speak, help, retreat, pursue or another supported action. |
+| Personal account                             | Only actual acquired evidence, acknowledged gaps and the character's distinct interpretations, under the memory owner.                      |
 
 The observer may receive none, one or several of these outputs. A notice does not automatically produce all later outputs. A repeated position update may refresh useful steering without creating a new decision or permanent memory.
 
@@ -91,15 +91,15 @@ These meanings must be inspectable. A number without a source-supported explanat
 
 ### Reusable sources of relevance
 
-| Reason family | What establishes it | Examples |
-| --- | --- | --- |
-| Immediate harm or danger | Personally supported injury, dangerous exposure, imminent contact or another installed hazard interpretation | Someone burning nearby; an arrow entering a supported danger scope; a companion falling. |
-| Accepted work needs information | Actual work binds a subject, result, place or opportunity | A pursued person; the current workpiece; an expected recipient arriving. |
-| Something affects a protected interest | An observed interaction concerns an actually bound subject or place | Opening watched supplies; approaching a protectee; damage to a defended gate. |
-| Personally meaningful communication | Acquired address, understood request, known signal or reply connected to a supported concern | An ally asks for help; a customer answers; a warning interrupts work. |
-| An opportunity is closing | A supported process or observation supplies a known response window or consequence | A temporary opening in a defense; a supported material process reaches a useful state; a route is about to become unavailable. |
-| Striking or unexpected change | Received intensity/change and the observer's supported expectation make a brief check useful | A distant blast; a sudden collapse; an unfamiliar mechanical noise. |
-| Positive interest or discovery | An actual interest or a finite opportunity to inspect unfamiliar surroundings | A useful demonstration; unusual wildlife; a striking view; a sought tool. |
+| Reason family                          | What establishes it                                                                                          | Examples                                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Immediate harm or danger               | Personally supported injury, dangerous exposure, imminent contact or another installed hazard interpretation | Someone burning nearby; an arrow entering a supported danger scope; a companion falling.                                       |
+| Accepted work needs information        | Actual work binds a subject, result, place or opportunity                                                    | A pursued person; the current workpiece; an expected recipient arriving.                                                       |
+| Something affects a protected interest | An observed interaction concerns an actually bound subject or place                                          | Opening watched supplies; approaching a protectee; damage to a defended gate.                                                  |
+| Personally meaningful communication    | Acquired address, understood request, known signal or reply connected to a supported concern                 | An ally asks for help; a customer answers; a warning interrupts work.                                                          |
+| An opportunity is closing              | A supported process or observation supplies a known response window or consequence                           | A temporary opening in a defense; a supported material process reaches a useful state; a route is about to become unavailable. |
+| Striking or unexpected change          | Received intensity/change and the observer's supported expectation make a brief check useful                 | A distant blast; a sudden collapse; an unfamiliar mechanical noise.                                                            |
+| Positive interest or discovery         | An actual interest or a finite opportunity to inspect unfamiliar surroundings                                | A useful demonstration; unusual wildlife; a striking view; a sought tool.                                                      |
 
 A merchant who starts pursuing a thief uses the same pursuit reason as a guard. A guard making a tool uses the same workpiece reason as a craftsperson. Adding a new sword, recipe or container does not require a new occupation-specific attention algorithm.
 
@@ -183,14 +183,14 @@ The original activity resumes only under its accepted continuation and current v
 
 These are different:
 
-| Event | Meaning and consequence |
-| --- | --- |
-| Unexpected cue | It differs from a supported expectation and may earn a brief attention demand. It need not induce fear or a bodily penalty. |
+| Event                                   | Meaning and consequence                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unexpected cue                          | It differs from a supported expectation and may earn a brief attention demand. It need not induce fear or a bodily penalty.                                              |
 | Native startle or other bodily response | The installed body/emotion law acts on its supported cause, independently of a model response. Existing startle does not itself paralyse, turn or send a person running. |
-| Registering danger | The preparedness owner records the supported warning according to its own timing and scope. This does not itself choose defense. |
-| Assessment | The character has actually chosen finite work to acquire/check information or reconsider a course. |
-| Deliberate decision | The controller considers permitted alternatives and may choose to continue, change, decline or do nothing. |
-| Technical service wait | Queueing, network or model latency. It never secretly sets fictional surprise or assessment duration. |
+| Registering danger                      | The preparedness owner records the supported warning according to its own timing and scope. This does not itself choose defense.                                         |
+| Assessment                              | The character has actually chosen finite work to acquire/check information or reconsider a course.                                                                       |
+| Deliberate decision                     | The controller considers permitted alternatives and may choose to continue, change, decline or do nothing.                                                               |
+| Technical service wait                  | Queueing, network or model latency. It never secretly sets fictional surprise or assessment duration.                                                                    |
 
 ### Assessment contract
 

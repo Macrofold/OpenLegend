@@ -1,6 +1,6 @@
 # Unfinished project families
-[Perception and attention](../features/perception-and-attention/README.md) has a complete behavioral collection and a separate [technical design](perception-and-attention-tech-design.md) for selective matching, personal evidence and continued work. Implementation and qualification remain with EPR06/EPR08/EPR09 and ATI04/ATI08.
 
+[Perception and attention](../features/perception-and-attention/README.md) has a complete behavioral collection and a separate [technical design](perception-and-attention-tech-design.md) for selective matching, personal evidence and continued work. Implementation and qualification remain with EPR06/EPR08/EPR09 and ATI04/ATI08.
 
 Projects own proposed/accepted scope and delivery plans; their focused trackers own unfinished tasks and acceptance. A design is not implementation, and a completed software slice is not human qualification. Open the family you need, not every linked document.
 

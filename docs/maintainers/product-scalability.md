@@ -60,8 +60,8 @@ Documentation completion is distinct from PS02–PS08 delivery. A checked PS01 d
 **Finite-offer completion:** the selected period adds a worthwhile return beyond simply pausing the same camp, with actual independent choices, credible self-care, useful non-survival activity and measured complete cost. Its advertised maximum needs a complete-period run; a successful meal or coached return explanation does not suffice. **Full PS03 exit:** quiet progression remains coherent at a bounded cost and does not become an unbounded catch-up burst. Completing the finite offer does not check unrelated later scope.
 
 ## PS04 — Coherent scenes and limited attention
-The [common perception and attention target](../features/perception-and-attention/README.md) supplies shared reason ranking, brief/continuing demands and finite interruption behavior. [EPR06](events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance) owns its implementation; PS04 retains social focus, exact/compact meaning and shared-activity integration without duplicating those tasks.
 
+The [common perception and attention target](../features/perception-and-attention/README.md) supplies shared reason ranking, brief/continuing demands and finite interruption behavior. [EPR06](events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance) owns its implementation; PS04 retains social focus, exact/compact meaning and shared-activity integration without duplicating those tasks.
 
 **Owners:** memory, perception, hearing, ordinary speech, model routing. **Depends on:** scoped history/commitment foundations and the selected [SPK ordinary-speech contract](../projects/speech-and-social-perception-feature-spec.md). PS03 supplies an unattended consumer, but ordinary local conversation and small-group scenes do not depend on offering unattended service.
 
